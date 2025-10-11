@@ -87,7 +87,7 @@ const Login = () => {
           </div>
 
           <div className='auth-illustration-img'>
-            <img src='/public/education.png' style={{ width: '60%', height: '60%' }}></img>
+            <img src='/education.png' style={{ width: '60%', height: '60%' }}></img>
           </div>
         </div>
       </div>

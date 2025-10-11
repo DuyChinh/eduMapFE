@@ -80,7 +80,7 @@ const ForgotPassword = () => {
             <p>{t('forgotPassword.subtitle')}</p>
           </div>
           <div className='auth-illustration-img-forgot'>
-              <img src='/public/forgot-password.webp' style={{ width: '80%', height: '80%' }}></img>
+              <img src='/forgot-password.webp' style={{ width: '80%', height: '80%' }}></img>
             </div>
         </div>
       </div>
