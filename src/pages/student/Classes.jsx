@@ -31,7 +31,8 @@ const Classes = () => {
       form.resetFields();
       // TODO: Refresh class list
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('studentPages.classes.modal.joinFailed');
+      // Error is now a string from axios interceptor
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('studentPages.classes.modal.joinFailed'));
       message.error(errorMessage);
     } finally {
       setLoading(false);

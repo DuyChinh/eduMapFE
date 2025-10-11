@@ -43,8 +43,26 @@ axiosInstance.interceptors.response.use(
         console.warn('⚠️ 401 Unauthorized - Token cleared');
       }
       
-      // Return error message from server
-      return Promise.reject(data.message || 'Có lỗi xảy ra');
+      // Extract error message from different possible formats
+      let errorMessage = 'Có lỗi xảy ra';
+      
+      if (data) {
+        // Handle different error response formats
+        if (typeof data === 'string') {
+          errorMessage = data;
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (data.error) {
+          errorMessage = data.error;
+        } else if (data.details) {
+          errorMessage = data.details;
+        } else if (data.errors && Array.isArray(data.errors)) {
+          errorMessage = data.errors[0];
+        }
+      }
+      
+      console.error('API Error:', { status, data, errorMessage });
+      return Promise.reject(errorMessage);
     } else if (error.request) {
       // Request made but no response
       return Promise.reject('Không thể kết nối đến server');

@@ -74,8 +74,10 @@ const useAuthStore = create(
           return { success: true, user: userData };
         } catch (error) {
           console.error('❌ Login failed:', error);
-          set({ loading: false, error: error });
-          throw error;
+          // Error is now a string from axios interceptor
+          const errorMessage = typeof error === 'string' ? error : (error?.message || 'Login failed');
+          set({ loading: false, error: errorMessage });
+          throw errorMessage;
         }
       },
 
@@ -90,8 +92,10 @@ const useAuthStore = create(
           set({ loading: false });
           return { success: true, data: response.data };
         } catch (error) {
-          set({ loading: false, error: error });
-          throw error;
+          // Error is now a string from axios interceptor
+          const errorMessage = typeof error === 'string' ? error : (error?.message || 'Register failed');
+          set({ loading: false, error: errorMessage });
+          throw errorMessage;
         }
       },
 
@@ -124,8 +128,10 @@ const useAuthStore = create(
           });
           return response.data;
         } catch (error) {
-          set({ loading: false, error: error });
-          throw error;
+          // Error is now a string from axios interceptor
+          const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to fetch profile');
+          set({ loading: false, error: errorMessage });
+          throw errorMessage;
         }
       },
 
@@ -142,8 +148,10 @@ const useAuthStore = create(
           });
           return response.data;
         } catch (error) {
-          set({ loading: false, error: error });
-          throw error;
+          // Error is now a string from axios interceptor
+          const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to fetch profile');
+          set({ loading: false, error: errorMessage });
+          throw errorMessage;
         }
       },
 
@@ -171,8 +179,10 @@ const useAuthStore = create(
           return { success: true, user: updatedUser };
         } catch (error) {
           console.error('❌ Update role failed:', error);
-          set({ loading: false, error: error });
-          throw error;
+          // Error is now a string from axios interceptor
+          const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to update role');
+          set({ loading: false, error: errorMessage });
+          throw errorMessage;
         }
       },
 

@@ -66,3 +66,38 @@ export const getPasswordStrength = (password) => {
   return { level: 'Mạnh', color: '#52c41a', percent: 100 };
 };
 
+/**
+ * Password validation rules for Ant Design Form
+ * Returns validation rules array
+ */
+export const getPasswordValidationRules = (t) => [
+  {
+    required: true,
+    message: t('login.passwordRequired')
+  },
+  {
+    min: 8,
+    message: t('register.passwordMinLength')
+  },
+  {
+    max: 128,
+    message: t('register.passwordMaxLength')
+  },
+  {
+    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?~`])/,
+    message: t('register.passwordPattern')
+  },
+  {
+    validator: (_, value) => {
+      if (!value) return Promise.resolve();
+      
+      // Check for repeated characters (more than 2 consecutive)
+      if (/(.)\1{2,}/.test(value)) {
+        return Promise.reject(new Error(t('register.passwordNoRepeat')));
+      }
+      
+      return Promise.resolve();
+    }
+  }
+];
+

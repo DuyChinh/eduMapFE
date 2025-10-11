@@ -135,7 +135,11 @@
     "confirmPasswordRequired": "Please confirm your password!",
     "passwordMismatch": "Passwords do not match!",
     "registerSuccess": "Registration successful! Please login.",
-    "registerFailed": "Registration failed!"
+    "registerFailed": "Registration failed!",
+    "passwordMinLength": "Password must be at least 8 characters!",
+    "passwordMaxLength": "Password must not exceed 128 characters!",
+    "passwordPattern": "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character!",
+    "passwordNoRepeat": "Password cannot have more than 2 consecutive identical characters!"
   },
   "forgotPassword": {
     "title": "Forgot Password",

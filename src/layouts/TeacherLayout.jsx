@@ -81,7 +81,8 @@ const TeacherLayout = () => {
       // Refresh page to update layout
       window.location.reload();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('role.switchFailed');
+      // Error is now a string from axios interceptor
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
       message.error(errorMessage);
     }
   };

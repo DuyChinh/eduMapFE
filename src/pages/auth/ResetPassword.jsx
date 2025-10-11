@@ -4,7 +4,7 @@ import { Form, Input, Button, App, Card, Progress } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import authService from '../../api/authService';
-import { validatePassword, getPasswordStrength } from '../../utils/passwordValidator';
+import { validatePassword, getPasswordStrength, getPasswordValidationRules } from '../../utils/passwordValidator';
 import { ROUTES } from '../../constants/config';
 import './AuthPages.css';
 
@@ -54,7 +54,8 @@ const ResetPassword = () => {
       message.success(t('resetPassword.resetSuccess'));
       navigate(ROUTES.LOGIN);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('resetPassword.resetFailed');
+      // Error is now a string from axios interceptor
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('resetPassword.resetFailed'));
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -95,7 +96,7 @@ const ResetPassword = () => {
             <Form.Item
               label={t('resetPassword.newPassword')}
               name="password"
-              rules={[{ required: true, message: t('resetPassword.passwordRequired') }]}
+              rules={getPasswordValidationRules(t)}
             >
               <Input.Password
                 prefix={<LockOutlined />}

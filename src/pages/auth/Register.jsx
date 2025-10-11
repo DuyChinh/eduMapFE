@@ -4,7 +4,7 @@ import { Form, Input, Button, App, Tabs, Card, Progress } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import useAuthStore from '../../store/authStore';
-import { validatePassword, getPasswordStrength } from '../../utils/passwordValidator';
+import { validatePassword, getPasswordStrength, getPasswordValidationRules } from '../../utils/passwordValidator';
 import { ROUTES } from '../../constants/config';
 import './AuthPages.css';
 
@@ -49,7 +49,8 @@ const Register = () => {
       message.success(t('register.registerSuccess'));
       navigate(ROUTES.LOGIN);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : (error || t('register.registerFailed'));
+      // Error is now a string from axios interceptor
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('register.registerFailed'));
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -81,6 +82,9 @@ const Register = () => {
             <h1>{t('register.joinWith')}</h1>
             <h2 className="brand-name">{t('app.name')}</h2>
             <p>{t('register.startJourney')}</p>
+          </div>
+          <div className='auth-illustration-img'>
+            <img src='/public/education-regis.png' style={{ width: '60%', height: '60%' }}></img>
           </div>
         </div>
       </div>
@@ -142,7 +146,7 @@ const Register = () => {
             <Form.Item
               label={t('auth.password')}
               name="password"
-              rules={[{ required: true, message: t('login.passwordRequired') }]}
+              rules={getPasswordValidationRules(t)}
             >
               <Input.Password
                 prefix={<LockOutlined />}

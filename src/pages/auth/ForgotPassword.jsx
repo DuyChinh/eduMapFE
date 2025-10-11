@@ -20,7 +20,8 @@ const ForgotPassword = () => {
       setEmailSent(true);
       message.success(t('forgotPassword.sendSuccess'));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('forgotPassword.sendFailed');
+       // Error is now a string from axios interceptor
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('forgotPassword.sendFailed'));
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -78,6 +79,9 @@ const ForgotPassword = () => {
             <h2 className="brand-name">{t('app.name')}</h2>
             <p>{t('forgotPassword.subtitle')}</p>
           </div>
+          <div className='auth-illustration-img-forgot'>
+              <img src='/public/forgot-password.webp' style={{ width: '80%', height: '80%' }}></img>
+            </div>
         </div>
       </div>
       

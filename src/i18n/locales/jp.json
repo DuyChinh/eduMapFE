@@ -135,7 +135,11 @@
     "confirmPasswordRequired": "パスワードを確認してください！",
     "passwordMismatch": "パスワードが一致しません！",
     "registerSuccess": "登録成功！ログインしてください。",
-    "registerFailed": "登録失敗！"
+    "registerFailed": "登録失敗！",
+    "passwordMinLength": "パスワードは8文字以上である必要があります！",
+    "passwordMaxLength": "パスワードは128文字を超えてはいけません！",
+    "passwordPattern": "パスワードには大文字、小文字、数字、特殊文字がそれぞれ1つ以上含まれている必要があります！",
+    "passwordNoRepeat": "パスワードに同じ文字が3つ以上連続してはいけません！"
   },
   "forgotPassword": {
     "title": "パスワードを忘れた",

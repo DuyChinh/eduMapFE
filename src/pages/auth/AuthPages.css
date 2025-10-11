@@ -20,9 +20,10 @@
 .auth-illustration {
   text-align: center;
   color: white;
-  position: relative;
-  z-index: 2;
+  /* position: relative; */
+  /* z-index: 2; */
 }
+
 
 .illustration-content h1 {
   font-size: 48px;
@@ -228,13 +229,17 @@
 .google-btn {
   height: 44px;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   border: 1px solid #d9d9d9;
+  background: #ff4b1f;  
+  background: -webkit-linear-gradient(to right, #ff9068, #ff4b1f);  
+  background: linear-gradient(to right, #ff9068, #ff4b1f); 
+  color: white;
 }
 
 .google-btn:hover {
-  border-color: #667eea;
+  border-color: #667eea; 
   color: #667eea;
 }
 

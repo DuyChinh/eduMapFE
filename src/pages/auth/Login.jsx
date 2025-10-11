@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import useAuthStore from '../../store/authStore';
 import authService from '../../api/authService';
 import { ROUTES, USER_ROLES } from '../../constants/config';
+import { FcGoogle } from "react-icons/fc";
 import './AuthPages.css';
 
 const Login = () => {
@@ -36,8 +37,8 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Login error:', error); // Debug log
-      // Convert error to string if it's an Error object
-      const errorMessage = error instanceof Error ? error.message : (error || t('login.loginFailed'));
+      // Error is now a string from axios interceptor
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('login.loginFailed'));
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -83,6 +84,10 @@ const Login = () => {
             <h1>{t('login.welcome')}</h1>
             <h2 className="brand-name">{t('app.name')}</h2>
             <p>{t('app.description')}</p>
+          </div>
+
+          <div className='auth-illustration-img'>
+            <img src='/public/education.png' style={{ width: '60%', height: '60%' }}></img>
           </div>
         </div>
       </div>
@@ -161,7 +166,7 @@ const Login = () => {
             </div>
 
             <Button 
-              icon={<GoogleOutlined />}
+              icon={<FcGoogle style={{ fontSize: '16px' }} />}
               block
               onClick={handleGoogleLogin}
               className="google-btn"

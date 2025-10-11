@@ -135,7 +135,11 @@
     "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu!",
     "passwordMismatch": "Mật khẩu xác nhận không khớp!",
     "registerSuccess": "Đăng ký thành công! Vui lòng đăng nhập.",
-    "registerFailed": "Đăng ký thất bại!"
+    "registerFailed": "Đăng ký thất bại!",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự!",
+    "passwordMaxLength": "Mật khẩu không được quá 128 ký tự!",
+    "passwordPattern": "Mật khẩu phải có ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt!",
+    "passwordNoRepeat": "Mật khẩu không được có hơn 2 ký tự giống nhau liên tiếp!"
   },
   "forgotPassword": {
     "title": "Quên mật khẩu",
