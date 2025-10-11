@@ -84,7 +84,7 @@ const Register = () => {
             <p>{t('register.startJourney')}</p>
           </div>
           <div className='auth-illustration-img'>
-            <img src='/public/education-regis.png' style={{ width: '60%', height: '60%' }}></img>
+            <img src='/education-regis.png' style={{ width: '60%', height: '60%' }}></img>
           </div>
         </div>
       </div>
