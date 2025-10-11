@@ -1,0 +1,253 @@
+{
+  "app": {
+    "name": "EduMap",
+    "description": "Online Exam Platform"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Full Name",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "loginSuccess": "Login successful!",
+    "loginFailed": "Login failed",
+    "registerSuccess": "Registration successful!",
+    "registerFailed": "Registration failed",
+    "rememberMe": "Remember me",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "registerNow": "Register now",
+    "loginNow": "Login now",
+    "googleLogin": "Login with Google"
+  },
+  "dashboard": {
+    "home": "Home",
+    "teacher": "Teacher",
+    "student": "Student",
+    "welcome": "Welcome back"
+  },
+  "teacher": {
+    "dashboard": "Teacher Dashboard",
+    "questionBank": "Question Bank",
+    "examManagement": "Exam Management",
+    "classManagement": "Class Management",
+    "role": "Teacher",
+    "createQuestion": "Create Question",
+    "createExam": "Create Exam",
+    "manageClass": "Manage Classes"
+  },
+  "student": {
+    "dashboard": "Student Dashboard",
+    "myClasses": "My Classes",
+    "examResults": "Exam Results",
+    "role": "Student"
+  },
+  "menu": {
+    "account": "Account",
+    "profile": "Profile",
+    "refresh": "Refresh",
+    "switchRole": "Switch Role",
+    "logout": "Logout",
+    "language": "Language",
+    "switchLanguage": "Switch Language"
+  },
+  "role": {
+    "switchRole": "Switch Role",
+    "currentRole": "Current role",
+    "selectNewRole": "Select new role",
+    "teacher": "Teacher",
+    "student": "Student",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "switchSuccess": "Role switched to",
+    "switchFailed": "Unable to switch role"
+  },
+  "message": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "profileRefreshed": "Profile refreshed successfully",
+    "refreshFailed": "Unable to refresh profile",
+    "pleaseSelectRole": "Please select a new role"
+  },
+  "language": {
+    "en": "English",
+    "vi": "Vietnamese",
+    "jp": "Japanese",
+    "selectLanguage": "Select Language",
+    "languageChanged": "Language changed to"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "viewAll": "View all",
+    "or": "Or"
+  },
+  "login": {
+    "welcome": "Welcome to",
+    "subtitle": "Login to continue and explore with EduMap",
+    "emailPlaceholder": "example@gmail.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot password?",
+    "loginButton": "Login",
+    "orDivider": "Or",
+    "googleLogin": "Login with Google",
+    "noAccount": "Don't have an account?",
+    "registerNow": "Register now",
+    "loginSuccess": "Login successful!",
+    "loginFailed": "Login failed",
+    "emailRequired": "Please enter your email!",
+    "emailInvalid": "Invalid email!",
+    "passwordRequired": "Please enter your password!",
+    "googleRedirecting": "Redirecting to Google...",
+    "googleLoginFailed": "Failed to initiate Google login"
+  },
+  "register": {
+    "joinWith": "Join with",
+    "startJourney": "Start your learning journey",
+    "title": "Create Account",
+    "subtitle": "Enter your information to create an account",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "John Doe",
+    "namePlaceholder": "John Doe",
+    "passwordStrength": "Strength",
+    "confirmPasswordLabel": "Confirm Password",
+    "registerButton": "Register",
+    "haveAccount": "Already have an account?",
+    "loginNow": "Login now",
+    "nameRequired": "Please enter your name!",
+    "nameMinLength": "Name must be at least 2 characters!",
+    "confirmPasswordRequired": "Please confirm your password!",
+    "passwordMismatch": "Passwords do not match!",
+    "registerSuccess": "Registration successful! Please login.",
+    "registerFailed": "Registration failed!"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password",
+    "subtitle": "Enter your email and we'll send you a password recovery link",
+    "emailLabel": "Email",
+    "emailPlaceholder": "example@gmail.com",
+    "emailRequired": "Please enter your email!",
+    "emailInvalid": "Invalid email!",
+    "sendButton": "Send Recovery Email",
+    "backToLogin": "Back to Login",
+    "rememberPassword": "Remember password?",
+    "loginNow": "Login now",
+    "sendSuccess": "Recovery email sent!",
+    "sendFailed": "An error occurred. Please try again!",
+    "checkEmail": "Check your email",
+    "emailSent": "Email sent!",
+    "emailSentSubtitle": "Please check your email inbox and follow the instructions to recover your password."
+  },
+  "resetPassword": {
+    "title": "Reset Password",
+    "subtitle": "Enter a new password for your account",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "••••••••",
+    "confirmPassword": "Confirm Password",
+    "passwordRequired": "Please enter new password!",
+    "confirmPasswordRequired": "Please confirm password!",
+    "passwordMismatch": "Passwords do not match!",
+    "resetButton": "Reset Password",
+    "resetSuccess": "Password reset successful!",
+    "resetFailed": "An error occurred. Token may have expired!",
+    "invalidToken": "Invalid token!",
+    "createNew": "Create New",
+    "strongPassword": "Create a strong and secure password",
+    "passwordStrength": "Strength"
+  },
+  "teacherDashboard": {
+    "welcomeBack": "Welcome back! 🎉",
+    "description": "You can create exercises, exams online or offline with multiple choice sheets.",
+    "statistics": {
+      "questions": "Questions",
+      "exams": "Exams",
+      "classes": "Classes",
+      "students": "Students"
+    },
+    "quickStart": "Quick Start",
+    "actions": {
+      "createExam": "Create exercise or exam",
+      "createExamDesc": "Create questions and build multiple choice exams",
+      "fromBank": "Create exam from shared bank",
+      "fromBankDesc": "Select questions from available question bank",
+      "downloadExam": "Download exam from EduMap",
+      "downloadExamDesc": "Import exams from EduMap library"
+    },
+    "recentActivities": "Recent Activities",
+    "noActivities": "No activities yet"
+  },
+  "studentDashboard": {
+    "welcome": "Welcome to EduMap! 🎓",
+    "description": "Join classes and take online exams easily",
+    "joinClass": "Join Class",
+    "statistics": {
+      "classes": "Classes",
+      "exams": "Exams",
+      "completed": "Completed",
+      "upcoming": "Upcoming"
+    },
+    "upcomingExams": "Upcoming Exams",
+    "noExams": "No exams yet",
+    "recentResults": "Recent Results",
+    "noResults": "No results yet"
+  },
+  "teacherPages": {
+    "questions": {
+      "title": "Question Bank",
+      "createNew": "Create New Question",
+      "noQuestions": "No questions yet. Create your first question!",
+      "emptyDescription": "No questions yet. Create your first question!"
+    },
+    "exams": {
+      "title": "Exam Management",
+      "createNew": "Create New Exam",
+      "noExams": "No exams yet. Create your first exam!",
+      "emptyDescription": "No exams yet. Create your first exam!"
+    },
+    "classes": {
+      "title": "Class Management",
+      "createNew": "Create New Class",
+      "noClasses": "No classes yet. Create your first class!",
+      "emptyDescription": "No classes yet. Create your first class!"
+    }
+  },
+  "studentPages": {
+    "classes": {
+      "title": "My Classes",
+      "joinClass": "Join Class",
+      "noClasses": "You haven't joined any classes yet. Use class code to join!",
+      "emptyDescription": "You haven't joined any classes yet. Use class code to join!",
+      "modal": {
+        "title": "Join Class",
+        "classCode": "Class Code",
+        "classCodePlaceholder": "Enter class code from teacher",
+        "joinButton": "Join",
+        "classCodeRequired": "Please enter class code!",
+        "joinSuccess": "Successfully joined class",
+        "joinFailed": "Unable to join class!"
+      }
+    },
+    "results": {
+      "title": "Exam Results",
+      "noResults": "You don't have any exam results yet!",
+      "emptyDescription": "You don't have any exam results yet!"
+    }
+  }
+}
+

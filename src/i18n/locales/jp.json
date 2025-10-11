@@ -1,0 +1,253 @@
+{
+  "app": {
+    "name": "EduMap",
+    "description": "オンライン試験プラットフォーム"
+  },
+  "auth": {
+    "login": "ログイン",
+    "register": "登録",
+    "logout": "ログアウト",
+    "email": "メール",
+    "password": "パスワード",
+    "confirmPassword": "パスワード確認",
+    "name": "氏名",
+    "forgotPassword": "パスワードを忘れた？",
+    "resetPassword": "パスワードリセット",
+    "loginSuccess": "ログイン成功！",
+    "loginFailed": "ログイン失敗",
+    "registerSuccess": "登録成功！",
+    "registerFailed": "登録失敗",
+    "rememberMe": "ログイン状態を保持",
+    "noAccount": "アカウントをお持ちでない？",
+    "haveAccount": "アカウントをお持ちですか？",
+    "registerNow": "今すぐ登録",
+    "loginNow": "今すぐログイン",
+    "googleLogin": "Googleでログイン"
+  },
+  "dashboard": {
+    "home": "ホーム",
+    "teacher": "教師",
+    "student": "学生",
+    "welcome": "お帰りなさい"
+  },
+  "teacher": {
+    "dashboard": "教師ダッシュボード",
+    "questionBank": "問題バンク",
+    "examManagement": "試験管理",
+    "classManagement": "クラス管理",
+    "role": "教師",
+    "createQuestion": "問題作成",
+    "createExam": "試験作成",
+    "manageClass": "クラス管理"
+  },
+  "student": {
+    "dashboard": "学生ダッシュボード",
+    "myClasses": "マイクラス",
+    "examResults": "試験結果",
+    "role": "学生"
+  },
+  "menu": {
+    "account": "アカウント",
+    "profile": "プロフィール",
+    "refresh": "更新",
+    "switchRole": "役割切替",
+    "logout": "ログアウト",
+    "language": "言語",
+    "switchLanguage": "言語切替"
+  },
+  "role": {
+    "switchRole": "役割切替",
+    "currentRole": "現在の役割",
+    "selectNewRole": "新しい役割を選択",
+    "teacher": "教師",
+    "student": "学生",
+    "confirm": "確認",
+    "cancel": "キャンセル",
+    "switchSuccess": "役割を切り替えました：",
+    "switchFailed": "役割を切り替えられません"
+  },
+  "message": {
+    "success": "成功",
+    "error": "エラー",
+    "warning": "警告",
+    "info": "情報",
+    "profileRefreshed": "プロフィールを更新しました",
+    "refreshFailed": "プロフィールを更新できません",
+    "pleaseSelectRole": "新しい役割を選択してください"
+  },
+  "language": {
+    "en": "英語",
+    "vi": "ベトナム語",
+    "jp": "日本語",
+    "selectLanguage": "言語を選択",
+    "languageChanged": "言語を変更しました："
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "create": "作成",
+    "update": "更新",
+    "search": "検索",
+    "filter": "フィルター",
+    "export": "エクスポート",
+    "import": "インポート",
+    "loading": "読み込み中...",
+    "noData": "データがありません",
+    "viewAll": "すべて表示",
+    "or": "または"
+  },
+  "login": {
+    "welcome": "ようこそ",
+    "subtitle": "ログインしてEduMapを探索",
+    "emailPlaceholder": "example@gmail.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "パスワードを忘れた？",
+    "loginButton": "ログイン",
+    "orDivider": "または",
+    "googleLogin": "Googleでログイン",
+    "noAccount": "アカウントをお持ちでない？",
+    "registerNow": "今すぐ登録",
+    "loginSuccess": "ログイン成功！",
+    "loginFailed": "ログイン失敗",
+    "emailRequired": "メールアドレスを入力してください！",
+    "emailInvalid": "無効なメールアドレス！",
+    "passwordRequired": "パスワードを入力してください！",
+    "googleRedirecting": "Googleにリダイレクト中...",
+    "googleLoginFailed": "Googleログインの開始に失敗しました"
+  },
+  "register": {
+    "joinWith": "参加する",
+    "startJourney": "学習の旅を始めましょう",
+    "title": "アカウント作成",
+    "subtitle": "アカウント作成のために情報を入力してください",
+    "fullName": "氏名",
+    "fullNamePlaceholder": "山田太郎",
+    "namePlaceholder": "山田太郎",
+    "passwordStrength": "強度",
+    "confirmPasswordLabel": "パスワード確認",
+    "registerButton": "登録",
+    "haveAccount": "アカウントをお持ちですか？",
+    "loginNow": "今すぐログイン",
+    "nameRequired": "氏名を入力してください！",
+    "nameMinLength": "氏名は2文字以上である必要があります！",
+    "confirmPasswordRequired": "パスワードを確認してください！",
+    "passwordMismatch": "パスワードが一致しません！",
+    "registerSuccess": "登録成功！ログインしてください。",
+    "registerFailed": "登録失敗！"
+  },
+  "forgotPassword": {
+    "title": "パスワードを忘れた",
+    "subtitle": "メールアドレスを入力すると、パスワード回復リンクを送信します",
+    "emailLabel": "メール",
+    "emailPlaceholder": "example@gmail.com",
+    "emailRequired": "メールアドレスを入力してください！",
+    "emailInvalid": "無効なメールアドレス！",
+    "sendButton": "回復メールを送信",
+    "backToLogin": "ログインに戻る",
+    "rememberPassword": "パスワードを覚えている？",
+    "loginNow": "今すぐログイン",
+    "sendSuccess": "パスワード回復メールを送信しました！",
+    "sendFailed": "エラーが発生しました。もう一度お試しください！",
+    "checkEmail": "メールを確認",
+    "emailSent": "メールを送信しました！",
+    "emailSentSubtitle": "メールボックスを確認し、パスワード回復の手順に従ってください。"
+  },
+  "resetPassword": {
+    "title": "パスワードリセット",
+    "subtitle": "アカウントの新しいパスワードを入力してください",
+    "newPassword": "新しいパスワード",
+    "newPasswordPlaceholder": "••••••••",
+    "confirmPassword": "パスワード確認",
+    "passwordRequired": "新しいパスワードを入力してください！",
+    "confirmPasswordRequired": "パスワードを確認してください！",
+    "passwordMismatch": "パスワードが一致しません！",
+    "resetButton": "パスワードリセット",
+    "resetSuccess": "パスワードリセット成功！",
+    "resetFailed": "エラーが発生しました。トークンの有効期限が切れている可能性があります！",
+    "invalidToken": "無効なトークン！",
+    "createNew": "新規作成",
+    "strongPassword": "強力で安全なパスワードを作成",
+    "passwordStrength": "強度"
+  },
+  "teacherDashboard": {
+    "welcomeBack": "お帰りなさい！ 🎉",
+    "description": "オンラインまたはオフラインで演習、試験、または多肢選択式シートで問題を作成できます。",
+    "statistics": {
+      "questions": "問題",
+      "exams": "試験",
+      "classes": "クラス",
+      "students": "学生"
+    },
+    "quickStart": "クイックスタート",
+    "actions": {
+      "createExam": "演習または試験を作成",
+      "createExamDesc": "問題を作成し、多肢選択式試験を構築",
+      "fromBank": "共有バンクから試験を作成",
+      "fromBankDesc": "利用可能な問題バンクから問題を選択",
+      "downloadExam": "EduMapから試験をダウンロード",
+      "downloadExamDesc": "EduMapライブラリから試験をインポート"
+    },
+    "recentActivities": "最近のアクティビティ",
+    "noActivities": "アクティビティはまだありません"
+  },
+  "studentDashboard": {
+    "welcome": "EduMapへようこそ！ 🎓",
+    "description": "簡単にクラスに参加してオンライン試験を受けましょう",
+    "joinClass": "クラスに参加",
+    "statistics": {
+      "classes": "クラス",
+      "exams": "試験",
+      "completed": "完了",
+      "upcoming": "予定"
+    },
+    "upcomingExams": "予定の試験",
+    "noExams": "試験はまだありません",
+    "recentResults": "最近の結果",
+    "noResults": "結果はまだありません"
+  },
+  "teacherPages": {
+    "questions": {
+      "title": "問題バンク",
+      "createNew": "新しい問題を作成",
+      "noQuestions": "問題はまだありません。最初の問題を作成してください！",
+      "emptyDescription": "問題はまだありません。最初の問題を作成してください！"
+    },
+    "exams": {
+      "title": "試験管理",
+      "createNew": "新しい試験を作成",
+      "noExams": "試験はまだありません。最初の試験を作成してください！",
+      "emptyDescription": "試験はまだありません。最初の試験を作成してください！"
+    },
+    "classes": {
+      "title": "クラス管理",
+      "createNew": "新しいクラスを作成",
+      "noClasses": "クラスはまだありません。最初のクラスを作成してください！",
+      "emptyDescription": "クラスはまだありません。最初のクラスを作成してください！"
+    }
+  },
+  "studentPages": {
+    "classes": {
+      "title": "マイクラス",
+      "joinClass": "クラスに参加",
+      "noClasses": "まだクラスに参加していません。クラスコードを使用して参加してください！",
+      "emptyDescription": "まだクラスに参加していません。クラスコードを使用して参加してください！",
+      "modal": {
+        "title": "クラスに参加",
+        "classCode": "クラスコード",
+        "classCodePlaceholder": "教師からクラスコードを入力",
+        "joinButton": "参加",
+        "classCodeRequired": "クラスコードを入力してください！",
+        "joinSuccess": "クラスに参加しました！",
+        "joinFailed": "クラスに参加できません！"
+      }
+    },
+    "results": {
+      "title": "試験結果",
+      "noResults": "まだ試験結果がありません！",
+      "emptyDescription": "まだ試験結果がありません！"
+    }
+  }
+}
+

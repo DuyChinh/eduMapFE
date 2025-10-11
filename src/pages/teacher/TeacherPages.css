@@ -1,0 +1,150 @@
+/* Teacher Dashboard */
+.teacher-dashboard {
+  padding: 0;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  margin-bottom: 8px;
+}
+
+/* Statistics Cards */
+.statistics-row {
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stat-card-green {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.stat-card-purple {
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+  color: white;
+}
+
+.stat-card-orange {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.stat-card .ant-statistic-title,
+.stat-card .ant-statistic-content {
+  color: white;
+}
+
+.stat-card .ant-statistic-title {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.stat-card .ant-statistic-content-value {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* Quick Actions */
+.quick-actions-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+}
+
+.action-card {
+  border-radius: 12px;
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 2px solid #f0f0f0;
+}
+
+.action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.action-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: white;
+}
+
+.action-icon-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.action-icon-green {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.action-icon-purple {
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+}
+
+.action-card h4 {
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.action-card p {
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+/* Recent Activities */
+.recent-activities-card {
+  border-radius: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state p {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stat-card .ant-statistic-content-value {
+    font-size: 24px;
+  }
+  
+  .action-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .action-icon svg {
+    font-size: 24px !important;
+  }
+  
+  .action-card h4 {
+    font-size: 14px;
+  }
+}
+

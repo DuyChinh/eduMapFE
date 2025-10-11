@@ -1,0 +1,253 @@
+{
+  "app": {
+    "name": "EduMap",
+    "description": "Nền tảng thi trực tuyến"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "name": "Họ và tên",
+    "forgotPassword": "Quên mật khẩu?",
+    "resetPassword": "Đặt lại mật khẩu",
+    "loginSuccess": "Đăng nhập thành công!",
+    "loginFailed": "Đăng nhập thất bại",
+    "registerSuccess": "Đăng ký thành công!",
+    "registerFailed": "Đăng ký thất bại",
+    "rememberMe": "Ghi nhớ đăng nhập",
+    "noAccount": "Chưa có tài khoản?",
+    "haveAccount": "Đã có tài khoản?",
+    "registerNow": "Đăng ký ngay",
+    "loginNow": "Đăng nhập ngay",
+    "googleLogin": "Đăng nhập với Google"
+  },
+  "dashboard": {
+    "home": "Trang chủ",
+    "teacher": "Giáo viên",
+    "student": "Học sinh",
+    "welcome": "Chào mừng trở lại"
+  },
+  "teacher": {
+    "dashboard": "Bảng điều khiển giáo viên",
+    "questionBank": "Ngân hàng câu hỏi",
+    "examManagement": "Quản lý đề thi",
+    "classManagement": "Quản lý lớp học",
+    "role": "Giáo viên",
+    "createQuestion": "Tạo câu hỏi",
+    "createExam": "Tạo đề thi",
+    "manageClass": "Quản lý lớp học"
+  },
+  "student": {
+    "dashboard": "Bảng điều khiển học sinh",
+    "myClasses": "Lớp học của tôi",
+    "examResults": "Kết quả thi",
+    "role": "Học sinh"
+  },
+  "menu": {
+    "account": "Tài khoản",
+    "profile": "Hồ sơ cá nhân",
+    "refresh": "Làm mới",
+    "switchRole": "Chuyển đổi vai trò",
+    "logout": "Đăng xuất",
+    "language": "Ngôn ngữ",
+    "switchLanguage": "Chuyển đổi ngôn ngữ"
+  },
+  "role": {
+    "switchRole": "Chuyển đổi vai trò",
+    "currentRole": "Vai trò hiện tại",
+    "selectNewRole": "Chọn vai trò mới",
+    "teacher": "Giáo viên",
+    "student": "Học sinh",
+    "confirm": "Xác nhận",
+    "cancel": "Hủy",
+    "switchSuccess": "Đã chuyển vai trò thành",
+    "switchFailed": "Không thể chuyển đổi vai trò"
+  },
+  "message": {
+    "success": "Thành công",
+    "error": "Lỗi",
+    "warning": "Cảnh báo",
+    "info": "Thông tin",
+    "profileRefreshed": "Đã làm mới thông tin người dùng",
+    "refreshFailed": "Không thể làm mới thông tin",
+    "pleaseSelectRole": "Vui lòng chọn vai trò mới"
+  },
+  "language": {
+    "en": "Tiếng Anh",
+    "vi": "Tiếng Việt",
+    "jp": "Tiếng Nhật",
+    "selectLanguage": "Chọn ngôn ngữ",
+    "languageChanged": "Đã chuyển ngôn ngữ sang"
+  },
+  "common": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "create": "Tạo",
+    "update": "Cập nhật",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "export": "Xuất",
+    "import": "Nhập",
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "viewAll": "Xem tất cả",
+    "or": "Hoặc"
+  },
+  "login": {
+    "welcome": "Chào mừng đến với",
+    "subtitle": "Đăng nhập để tiếp tục và khám phá với EduMap",
+    "emailPlaceholder": "example@gmail.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Quên mật khẩu?",
+    "loginButton": "Đăng nhập",
+    "orDivider": "Hoặc",
+    "googleLogin": "Đăng nhập với Google",
+    "noAccount": "Chưa có tài khoản?",
+    "registerNow": "Đăng ký ngay",
+    "loginSuccess": "Đăng nhập thành công!",
+    "loginFailed": "Đăng nhập thất bại",
+    "emailRequired": "Vui lòng nhập email!",
+    "emailInvalid": "Email không hợp lệ!",
+    "passwordRequired": "Vui lòng nhập mật khẩu!",
+    "googleRedirecting": "Đang chuyển hướng đến Google...",
+    "googleLoginFailed": "Không thể khởi tạo đăng nhập Google"
+  },
+  "register": {
+    "joinWith": "Tham gia cùng",
+    "startJourney": "Bắt đầu hành trình học tập của bạn",
+    "title": "Đăng ký tài khoản",
+    "subtitle": "Nhập thông tin của bạn để tạo tài khoản",
+    "fullName": "Họ và tên",
+    "fullNamePlaceholder": "Nguyễn Văn A",
+    "namePlaceholder": "Nguyễn Văn A",
+    "passwordStrength": "Độ mạnh",
+    "confirmPasswordLabel": "Xác nhận mật khẩu",
+    "registerButton": "Đăng ký",
+    "haveAccount": "Đã có tài khoản?",
+    "loginNow": "Đăng nhập ngay",
+    "nameRequired": "Vui lòng nhập họ tên!",
+    "nameMinLength": "Họ tên phải có ít nhất 2 ký tự!",
+    "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu!",
+    "passwordMismatch": "Mật khẩu xác nhận không khớp!",
+    "registerSuccess": "Đăng ký thành công! Vui lòng đăng nhập.",
+    "registerFailed": "Đăng ký thất bại!"
+  },
+  "forgotPassword": {
+    "title": "Quên mật khẩu",
+    "subtitle": "Nhập email của bạn và chúng tôi sẽ gửi link khôi phục mật khẩu",
+    "emailLabel": "Email",
+    "emailPlaceholder": "example@gmail.com",
+    "emailRequired": "Vui lòng nhập email!",
+    "emailInvalid": "Email không hợp lệ!",
+    "sendButton": "Gửi email khôi phục",
+    "backToLogin": "Quay lại",
+    "rememberPassword": "Nhớ mật khẩu?",
+    "loginNow": "Đăng nhập ngay",
+    "sendSuccess": "Email khôi phục mật khẩu đã được gửi!",
+    "sendFailed": "Có lỗi xảy ra. Vui lòng thử lại!",
+    "checkEmail": "Kiểm tra email",
+    "emailSent": "Email đã được gửi!",
+    "emailSentSubtitle": "Vui lòng kiểm tra hộp thư email của bạn và làm theo hướng dẫn để khôi phục mật khẩu."
+  },
+  "resetPassword": {
+    "title": "Đặt lại mật khẩu",
+    "subtitle": "Nhập mật khẩu mới cho tài khoản của bạn",
+    "newPassword": "Mật khẩu mới",
+    "newPasswordPlaceholder": "••••••••",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "passwordRequired": "Vui lòng nhập mật khẩu mới!",
+    "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu!",
+    "passwordMismatch": "Mật khẩu xác nhận không khớp!",
+    "resetButton": "Đặt lại mật khẩu",
+    "resetSuccess": "Đặt lại mật khẩu thành công!",
+    "resetFailed": "Có lỗi xảy ra. Token có thể đã hết hạn!",
+    "invalidToken": "Token không hợp lệ!",
+    "createNew": "Đặt lại",
+    "strongPassword": "Tạo mật khẩu mạnh và an toàn",
+    "passwordStrength": "Độ mạnh"
+  },
+  "teacherDashboard": {
+    "welcomeBack": "Chào mừng trở lại! 🎉",
+    "description": "Bạn có thể tạo bài tập, đề thi hoặc làm bài online hoặc offline bằng phiếu trắc nghiệm.",
+    "statistics": {
+      "questions": "Câu hỏi",
+      "exams": "Đề thi",
+      "classes": "Lớp học",
+      "students": "Học sinh"
+    },
+    "quickStart": "Bắt đầu nhanh",
+    "actions": {
+      "createExam": "Tạo bài tập hoặc đề thi",
+      "createExamDesc": "Tạo câu hỏi và xây dựng đề thi trắc nghiệm",
+      "fromBank": "Tạo đề từ ngân hàng chung",
+      "fromBankDesc": "Chọn câu hỏi từ kho đề có sẵn",
+      "downloadExam": "Tải đề từ kho đề EduMap",
+      "downloadExamDesc": "Import đề thi từ thư viện EduMap"
+    },
+    "recentActivities": "Hoạt động gần đây",
+    "noActivities": "Chưa có hoạt động nào"
+  },
+  "studentDashboard": {
+    "welcome": "Chào mừng đến với EduMap! 🎓",
+    "description": "Tham gia lớp học và làm bài thi trực tuyến một cách dễ dàng",
+    "joinClass": "Tham gia lớp học",
+    "statistics": {
+      "classes": "Lớp học",
+      "exams": "Bài thi",
+      "completed": "Đã hoàn thành",
+      "upcoming": "Sắp tới"
+    },
+    "upcomingExams": "Bài thi sắp tới",
+    "noExams": "Chưa có bài thi nào",
+    "recentResults": "Kết quả gần đây",
+    "noResults": "Chưa có kết quả nào"
+  },
+  "teacherPages": {
+    "questions": {
+      "title": "Ngân hàng câu hỏi",
+      "createNew": "Tạo câu hỏi mới",
+      "noQuestions": "Chưa có câu hỏi nào. Hãy tạo câu hỏi đầu tiên!",
+      "emptyDescription": "Chưa có câu hỏi nào. Hãy tạo câu hỏi đầu tiên!"
+    },
+    "exams": {
+      "title": "Quản lý đề thi",
+      "createNew": "Tạo đề thi mới",
+      "noExams": "Chưa có đề thi nào. Hãy tạo đề thi đầu tiên!",
+      "emptyDescription": "Chưa có đề thi nào. Hãy tạo đề thi đầu tiên!"
+    },
+    "classes": {
+      "title": "Quản lý lớp học",
+      "createNew": "Tạo lớp học mới",
+      "noClasses": "Chưa có lớp học nào. Hãy tạo lớp học đầu tiên!",
+      "emptyDescription": "Chưa có lớp học nào. Hãy tạo lớp học đầu tiên!"
+    }
+  },
+  "studentPages": {
+    "classes": {
+      "title": "Lớp học của tôi",
+      "joinClass": "Tham gia lớp học",
+      "noClasses": "Bạn chưa tham gia lớp học nào. Hãy sử dụng mã lớp để tham gia!",
+      "emptyDescription": "Bạn chưa tham gia lớp học nào. Hãy sử dụng mã lớp để tham gia!",
+      "modal": {
+        "title": "Tham gia lớp học",
+        "classCode": "Mã lớp học",
+        "classCodePlaceholder": "Nhập mã lớp học từ giáo viên",
+        "joinButton": "Tham gia",
+        "classCodeRequired": "Vui lòng nhập mã lớp học!",
+        "joinSuccess": "Tham gia lớp thành công!",
+        "joinFailed": "Không thể tham gia lớp học!"
+      }
+    },
+    "results": {
+      "title": "Kết quả các bài thi",
+      "noResults": "Bạn chưa có kết quả bài thi nào!",
+      "emptyDescription": "Bạn chưa có kết quả bài thi nào!"
+    }
+  }
+}
+

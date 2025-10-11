@@ -1,0 +1,90 @@
+/* Student Dashboard */
+.student-dashboard {
+  padding: 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.page-header h2 {
+  margin-bottom: 8px;
+}
+
+/* Statistics Cards */
+.statistics-row {
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stat-card-green {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.stat-card-purple {
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+  color: white;
+}
+
+.stat-card-orange {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.stat-card .ant-statistic-title,
+.stat-card .ant-statistic-content {
+  color: white;
+}
+
+.stat-card .ant-statistic-title {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.stat-card .ant-statistic-content-value {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* Cards */
+.upcoming-exams-card,
+.recent-results-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .page-header button {
+    width: 100%;
+  }
+  
+  .stat-card .ant-statistic-content-value {
+    font-size: 24px;
+  }
+}
+
