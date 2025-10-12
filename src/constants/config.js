@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://edu-map-be.vercel.app/v1/api';
 
 // Routes
 export const ROUTES = {
@@ -7,6 +7,7 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
+  VERIFY_OTP: '/verify-otp',
   RESET_PASSWORD: '/reset-password',
   
   // Dashboard routes

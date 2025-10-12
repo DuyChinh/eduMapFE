@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Form, Input, Button, App, Card, Progress } from 'antd';
-import { LockOutlined } from '@ant-design/icons';
+import { LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import authService from '../../api/authService';
 import { validatePassword, getPasswordStrength, getPasswordValidationRules } from '../../utils/passwordValidator';
@@ -12,18 +12,22 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordStrength, setPasswordStrength] = useState({ level: '', color: '', percent: 0 });
-  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState('');
   const navigate = useNavigate();
-  const token = searchParams.get('token');
+  const location = useLocation();
   const { t } = useTranslation();
   const { message } = App.useApp();
 
   useEffect(() => {
-    if (!token) {
-      message.error(t('resetPassword.invalidToken'));
-      navigate(ROUTES.LOGIN);
+    // Get email and verification status from location state
+    if (location.state?.email && location.state?.verified) {
+      setEmail(location.state.email);
+    } else {
+      // If no email or not verified, redirect to forgot password
+      message.error(t('resetPassword.invalidAccess'));
+      navigate(ROUTES.FORGOT_PASSWORD);
     }
-  }, [token, navigate, message, t]);
+  }, [location.state, navigate, message, t]);
 
   const handlePasswordChange = (e) => {
     const pwd = e.target.value;
@@ -48,7 +52,7 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       await authService.resetPassword({
-        token: token,
+        email: email,
         newPassword: values.password,
       });
       message.success(t('resetPassword.resetSuccess'));
@@ -81,6 +85,10 @@ const ResetPassword = () => {
       
       <div className="auth-right">
         <Card className="auth-card" variant="borderless">
+          <Link to={ROUTES.VERIFY_OTP} className="back-link">
+            <ArrowLeftOutlined /> {t('resetPassword.backToOTP')}
+          </Link>
+
           <h2 className="auth-title">{t('resetPassword.title')}</h2>
           <p className="auth-subtitle">
             {t('resetPassword.subtitle')}

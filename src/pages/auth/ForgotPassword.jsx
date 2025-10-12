@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Form, Input, Button, App, Card, Result } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
+import { Form, Input, Button, App, Card } from 'antd';
 import { MailOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import authService from '../../api/authService';
@@ -9,7 +9,7 @@ import './AuthPages.css';
 
 const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { message } = App.useApp();
 
@@ -17,8 +17,11 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       await authService.forgotPassword(values.email);
-      setEmailSent(true);
       message.success(t('forgotPassword.sendSuccess'));
+      // Navigate to OTP verification page with email
+      navigate(ROUTES.VERIFY_OTP, { 
+        state: { email: values.email } 
+      });
     } catch (error) {
        // Error is now a string from axios interceptor
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('forgotPassword.sendFailed'));
@@ -27,43 +30,6 @@ const ForgotPassword = () => {
       setLoading(false);
     }
   };
-
-  if (emailSent) {
-    return (
-      <div className="auth-container">
-        <div className="auth-left">
-          <div className="auth-illustration">
-            <div className="floating-elements">
-              <div className="element element-1">📧</div>
-              <div className="element element-2">✉️</div>
-              <div className="element element-3">📮</div>
-            </div>
-            <div className="illustration-content">
-              <h1>{t('forgotPassword.checkEmail')}</h1>
-              <h2 className="brand-name">{t('app.name')}</h2>
-            </div>
-          </div>
-        </div>
-        
-        <div className="auth-right">
-          <Card className="auth-card" variant="borderless">
-            <Result
-              status="success"
-              title={t('forgotPassword.emailSent')}
-              subTitle={t('forgotPassword.emailSentSubtitle')}
-              extra={[
-                <Link to={ROUTES.LOGIN} key="login">
-                  <Button type="primary" size="large">
-                    {t('forgotPassword.backToLogin')}
-                  </Button>
-                </Link>,
-              ]}
-            />
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="auth-container">

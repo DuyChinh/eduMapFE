@@ -30,12 +30,20 @@ export const validatePassword = (password) => {
     errors.push('Mật khẩu phải có ít nhất 1 số');
   }
   
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?~`]/.test(password)) {
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
     errors.push('Mật khẩu phải có ít nhất 1 ký tự đặc biệt');
   }
   
   if (/(.)\1{2,}/.test(password)) {
     errors.push('Mật khẩu không được có hơn 2 ký tự giống nhau liên tiếp');
+  }
+  
+  // Check for common words
+  const commonWords = ['password', '123456', 'qwerty', 'admin', 'user', 'login', 'welcome'];
+  const lowerPassword = password.toLowerCase();
+  const hasCommonWord = commonWords.some(word => lowerPassword.includes(word));
+  if (hasCommonWord) {
+    errors.push('Mật khẩu không được chứa các từ thông dụng');
   }
   
   return {
@@ -58,7 +66,7 @@ export const getPasswordStrength = (password) => {
   if (/[A-Z]/.test(password)) score += 20;
   if (/[a-z]/.test(password)) score += 20;
   if (/[0-9]/.test(password)) score += 10;
-  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?~`]/.test(password)) score += 10;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) score += 10;
   
   if (score < 30) return { level: 'Yếu', color: '#ff4d4f', percent: 25 };
   if (score < 60) return { level: 'Trung bình', color: '#faad14', percent: 50 };
@@ -84,7 +92,7 @@ export const getPasswordValidationRules = (t) => [
     message: t('register.passwordMaxLength')
   },
   {
-    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?~`])/,
+    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`])/,
     message: t('register.passwordPattern')
   },
   {

@@ -24,7 +24,7 @@ const authService = {
   },
 
   /**
-   * Forgot Password
+   * Forgot Password - Step 1: Send OTP
    * @param {string} email - User email
    * @returns {Promise} Response message
    */
@@ -33,8 +33,17 @@ const authService = {
   },
 
   /**
-   * Reset Password
-   * @param {Object} data - { token, newPassword }
+   * Verify OTP - Step 2: Verify OTP
+   * @param {Object} data - { email, otp }
+   * @returns {Promise} Response with user data
+   */
+  verifyOTP: async (data) => {
+    return await axiosInstance.post('/auth/verify-otp', data);
+  },
+
+  /**
+   * Reset Password - Step 3: Reset Password
+   * @param {Object} data - { email, newPassword }
    * @returns {Promise} Response message
    */
   resetPassword: async (data) => {

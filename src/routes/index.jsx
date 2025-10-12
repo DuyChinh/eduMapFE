@@ -10,6 +10,7 @@ import StudentLayout from '../layouts/StudentLayout';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import ForgotPassword from '../pages/auth/ForgotPassword';
+import VerifyOTP from '../pages/auth/VerifyOTP';
 import ResetPassword from '../pages/auth/ResetPassword';
 import GoogleCallback from '../pages/auth/GoogleCallback';
 
@@ -59,6 +60,7 @@ const AppRoutes = () => {
       <Route path={ROUTES.LOGIN} element={<Login />} />
       <Route path={ROUTES.REGISTER} element={<Register />} />
       <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
+      <Route path={ROUTES.VERIFY_OTP} element={<VerifyOTP />} />
       <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
       <Route path="/auth/callback" element={<GoogleCallback />} />
       <Route path="/auth/google/callback" element={<GoogleCallback />} />

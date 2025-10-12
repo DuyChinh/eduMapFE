@@ -351,3 +351,48 @@
   margin-bottom: 0;
 }
 
+/* OTP Input Styles */
+.otp-input-container {
+  margin-bottom: 24px;
+}
+
+.otp-label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 500;
+  color: #262626;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.otp-input {
+  transition: all 0.3s ease !important;
+}
+
+.otp-input:focus {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+.otp-input:hover {
+  border-color: #40a9ff !important;
+}
+
+/* Mobile responsive for OTP */
+@media (max-width: 768px) {
+  .otp-inputs {
+    gap: 8px;
+  }
+  
+  .otp-input {
+    width: 45px !important;
+    height: 45px !important;
+    font-size: 18px !important;
+  }
+}
+
