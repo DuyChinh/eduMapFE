@@ -105,6 +105,7 @@ const useAuthStore = create(
       logout: () => {
         localStorage.removeItem(STORAGE_KEYS.TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
+        localStorage.removeItem('auth-storage'); // Clear persist storage
         set({
           user: null,
           token: null,

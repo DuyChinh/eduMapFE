@@ -13,7 +13,22 @@ const axiosInstance = axios.create({
 // Request interceptor - Add token to requests
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    // Try to get token from multiple sources
+    let token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    
+    // If not found, try to get from persist storage
+    if (!token) {
+      try {
+        const persistData = localStorage.getItem('auth-storage');
+        if (persistData) {
+          const parsed = JSON.parse(persistData);
+          token = parsed.state?.token;
+        }
+      } catch (error) {
+        console.warn('Failed to parse persist storage:', error);
+      }
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -40,6 +55,7 @@ axiosInstance.interceptors.response.use(
         // Let the component handle the error
         localStorage.removeItem(STORAGE_KEYS.TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
+        localStorage.removeItem('auth-storage'); // Clear persist storage
         console.warn('⚠️ 401 Unauthorized - Token cleared');
       }
       

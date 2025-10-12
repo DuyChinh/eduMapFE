@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { App, Spin } from 'antd';
 import authService from '../../api/authService';
 import useAuthStore from '../../store/authStore';
-import { ROUTES, USER_ROLES } from '../../constants/config';
+import { ROUTES, USER_ROLES, STORAGE_KEYS } from '../../constants/config';
 
 const GoogleCallback = () => {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ const GoogleCallback = () => {
           console.log('✅ Extracted user data:', user);
           
           // Store token
-          localStorage.setItem('token', token);
+          localStorage.setItem(STORAGE_KEYS.TOKEN, token);
           
           // Update auth store directly (don't call login API)
           useAuthStore.setState({
@@ -109,7 +109,7 @@ const GoogleCallback = () => {
             console.log('✅ Got token and user data:', { token: token ? 'present' : 'missing', user: user?.email });
             
             // Store token
-            localStorage.setItem('token', token);
+            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
             
             // Update auth store directly (don't call login API)
             useAuthStore.setState({
