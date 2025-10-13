@@ -194,7 +194,10 @@ const StudentLayout = () => {
         <div className="sider-footer">
           {!collapsed && (
             <div className="user-info-compact">
-              <Avatar icon={<UserOutlined />} />
+              <Avatar 
+                src={user?.avatar}
+                icon={!user?.avatar && <UserOutlined />}
+              />
               <div className="user-details">
                 <div className="user-name">{user?.name}</div>
                 <div className="user-role">{t('student.role')}</div>
@@ -226,7 +229,10 @@ const StudentLayout = () => {
               arrow
             >
               <div className="user-dropdown">
-                <Avatar icon={<UserOutlined />} />
+                <Avatar 
+                src={user?.avatar}
+                icon={!user?.avatar && <UserOutlined />}
+              />
                 <span className="user-name-header">{user?.name}</span>
               </div>
             </Dropdown>
