@@ -1,94 +1,164 @@
-import { Card, Button, Typography, Empty, Modal, Form, Input, App } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Card, Button, Typography, Table, Tag, Space, message, Input } from 'antd';
+import { PlusOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import classService from '../../api/classService';
+import { ROUTES } from '../../constants/config';
+import JoinClassModal from '../../components/student/JoinClassModal';
 
 const { Title } = Typography;
 
 const Classes = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { t } = useTranslation();
-  const { message } = App.useApp();
+  const navigate = useNavigate();
 
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-    form.resetFields();
-  };
-
-  const handleJoinClass = async (values) => {
+  const fetchMyClasses = async (params = {}) => {
     setLoading(true);
     try {
-      await classService.joinClass(values.code);
-      message.success(t('studentPages.classes.modal.joinSuccess'));
-      setIsModalOpen(false);
-      form.resetFields();
-      // TODO: Refresh class list
+      console.log('🔍 Student fetching classes...', params);
+      
+      // For students, we use getMyClasses which returns their enrolled classes
+      // This doesn't need pagination as students typically have fewer classes
+      const response = await classService.getMyClasses();
+      console.log('📦 Student classes response:', response);
+      
+      // Axios interceptor returns response.data, so response is already the data
+      // API returns { ok: true, items: [...], total: 100, page: 1, limit: 20, pages: 5 }
+      let classesData = response.items || [];
+      console.log('📋 Student classes:', classesData);
+      
+      // Filter classes based on search query
+      if (searchQuery && searchQuery.length >= 2) {
+        classesData = classesData.filter(cls => 
+          cls.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        console.log('🔍 Filtered classes by search:', classesData);
+      }
+      
+      setClasses(classesData);
     } catch (error) {
-      // Error is now a string from axios interceptor
-      const errorMessage = typeof error === 'string' ? error : (error?.message || t('studentPages.classes.modal.joinFailed'));
-      message.error(errorMessage);
+      console.error('❌ Student error fetching classes:', error);
+      message.error(t('studentPages.classes.fetchFailed'));
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchMyClasses();
+  }, [searchQuery]);
+
+  const handleJoinSuccess = (classData) => {
+    message.success(t('studentPages.classes.joinSuccess'));
+    fetchMyClasses(); // Refresh the list
+  };
+
+  const columns = [
+    {
+      title: t('studentPages.classes.name'),
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: t('studentPages.classes.code'),
+      dataIndex: 'code',
+      key: 'code',
+      render: (code) => (
+        <Tag color="blue" style={{ fontFamily: 'monospace' }}>
+          {code}
+        </Tag>
+      ),
+    },
+    {
+      title: t('studentPages.classes.academicYear'),
+      dataIndex: ['metadata', 'academicYear'],
+      key: 'academicYear',
+      render: (year) => year || '-',
+    },
+    {
+      title: t('studentPages.classes.joinedAt'),
+      dataIndex: 'joinedAt',
+      key: 'joinedAt',
+      render: (date) => {
+        if (!date) return '-';
+        const d = new Date(date);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+      },
+    },
+    {
+      title: t('common.actions'),
+      key: 'actions',
+      render: (_, record) => (
+        <Space size="small">
+          <Button 
+            type="text" 
+            icon={<EyeOutlined />}
+            onClick={() => {
+              navigate(`${ROUTES.STUDENT_CLASSES}/${record._id}`);
+            }}
+          >
+            {t('studentPages.classes.viewDetails')}
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={2} style={{ margin: 0 }}>{t('studentPages.classes.title')}</Title>
-        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={showModal}>
-          {t('studentPages.classes.joinClass')}
-        </Button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Input.Search
+            placeholder={t('studentPages.classes.searchPlaceholder')}
+            allowClear
+            style={{ width: 300 }}
+            onSearch={setSearchQuery}
+            prefix={<SearchOutlined />}
+          />
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />} 
+            size="large" 
+            onClick={() => setJoinModalVisible(true)}
+          >
+            {t('studentPages.classes.joinClass')}
+          </Button>
+        </div>
       </div>
       
       <Card>
-        <Empty description={t('studentPages.classes.emptyDescription')} />
+        <Table
+          columns={columns}
+          dataSource={classes}
+          loading={loading}
+          rowKey="_id"
+          locale={{
+            emptyText: t('studentPages.classes.noClasses')
+          }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => 
+              `${range[0]}-${range[1]} of ${total} ${t('studentPages.classes.items')}`,
+          }}
+        />
       </Card>
 
-      <Modal
-        title={t('studentPages.classes.modal.title')}
-        open={isModalOpen}
-        onCancel={handleCancel}
-        footer={null}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleJoinClass}
-        >
-          <Form.Item
-            label={t('studentPages.classes.modal.classCode')}
-            name="code"
-            rules={[
-              { required: true, message: t('studentPages.classes.modal.classCodeRequired') },
-            ]}
-          >
-            <Input 
-              placeholder={t('studentPages.classes.modal.classCodePlaceholder')}
-              size="large"
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              block 
-              loading={loading}
-              size="large"
-            >
-              {t('studentPages.classes.modal.joinButton')}
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
+      <JoinClassModal
+        visible={joinModalVisible}
+        onCancel={() => setJoinModalVisible(false)}
+        onSuccess={handleJoinSuccess}
+      />
     </div>
   );
 };

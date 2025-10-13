@@ -19,10 +19,12 @@ import TeacherDashboard from '../pages/teacher/TeacherDashboard';
 import Questions from '../pages/teacher/Questions';
 import Exams from '../pages/teacher/Exams';
 import TeacherClasses from '../pages/teacher/Classes';
+import TeacherClassDetail from '../pages/teacher/ClassDetail';
 
 // Student Pages
 import StudentDashboard from '../pages/student/StudentDashboard';
 import StudentClasses from '../pages/student/Classes';
+import StudentClassDetail from '../pages/student/ClassDetail';
 import Results from '../pages/student/Results';
 
 // Components
@@ -78,6 +80,7 @@ const AppRoutes = () => {
         <Route path="questions" element={<Questions />} />
         <Route path="exams" element={<Exams />} />
         <Route path="classes" element={<TeacherClasses />} />
+        <Route path="classes/:classId" element={<TeacherClassDetail />} />
       </Route>
 
       {/* Student Routes */}
@@ -91,6 +94,7 @@ const AppRoutes = () => {
       >
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="classes" element={<StudentClasses />} />
+        <Route path="classes/:classId" element={<StudentClassDetail />} />
         <Route path="results" element={<Results />} />
       </Route>
 

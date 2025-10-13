@@ -1,6 +1,6 @@
-import { Card, Button, Typography, Empty } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import ClassList from '../../components/teacher/ClassList';
 
 const { Title } = Typography;
 
@@ -9,16 +9,11 @@ const Classes = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}>{t('teacherPages.classes.title')}</Title>
-        <Button type="primary" icon={<PlusOutlined />} size="large">
-          {t('teacherPages.classes.createNew')}
-        </Button>
       </div>
       
-      <Card>
-        <Empty description={t('teacherPages.classes.emptyDescription')} />
-      </Card>
+      <ClassList />
     </div>
   );
 };
