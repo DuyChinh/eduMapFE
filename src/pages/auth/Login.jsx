@@ -12,6 +12,7 @@ import './AuthPages.css';
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('student');
+  const [emailForForgotPassword, setEmailForForgotPassword] = useState('');
   const navigate = useNavigate();
   const { message } = App.useApp();
   const login = useAuthStore((state) => state.login);
@@ -57,6 +58,25 @@ const Login = () => {
       message.error(t('login.googleLoginFailed'));
       console.error('Google login error:', error);
     }
+  };
+
+  const handleForgotPassword = () => {
+    if (!emailForForgotPassword) {
+      message.error(t('login.emailRequiredForForgotPassword'));
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailForForgotPassword)) {
+      message.error(t('login.emailInvalidForForgotPassword'));
+      return;
+    }
+    
+    // Navigate to forgot password with email
+    navigate(ROUTES.FORGOT_PASSWORD, { 
+      state: { email: emailForForgotPassword } 
+    });
   };
 
   const tabItems = [
@@ -129,6 +149,7 @@ const Login = () => {
               <Input 
                 prefix={<UserOutlined />} 
                 placeholder={t('login.emailPlaceholder')}
+                onChange={(e) => setEmailForForgotPassword(e.target.value)}
               />
             </Form.Item>
 
@@ -144,9 +165,20 @@ const Login = () => {
             </Form.Item>
 
             <div className="auth-actions">
-              <Link to={ROUTES.FORGOT_PASSWORD} className="forgot-link">
+              <button 
+                type="button"
+                onClick={handleForgotPassword}
+                className="forgot-link"
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#1890ff', 
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
                 {t('login.forgotPassword')}
-              </Link>
+              </button>
             </div>
 
             <Form.Item>

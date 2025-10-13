@@ -115,7 +115,9 @@
     "emailInvalid": "Invalid email!",
     "passwordRequired": "Please enter your password!",
     "googleRedirecting": "Redirecting to Google...",
-    "googleLoginFailed": "Failed to initiate Google login"
+    "googleLoginFailed": "Failed to initiate Google login",
+    "emailRequiredForForgotPassword": "Please enter email before forgot password!",
+    "emailInvalidForForgotPassword": "Invalid email format!"
   },
   "register": {
     "joinWith": "Join with",
@@ -153,7 +155,8 @@
     "rememberPassword": "Remember password?",
     "loginNow": "Login now",
     "sendSuccess": "OTP code has been sent to your email!",
-    "sendFailed": "An error occurred while sending OTP!"
+    "sendFailed": "An error occurred while sending OTP!",
+    "emailRequired": "Please enter email from login page!"
   },
   "verifyOTP": {
     "title": "Verify OTP",

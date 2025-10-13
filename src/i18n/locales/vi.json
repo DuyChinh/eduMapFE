@@ -115,7 +115,9 @@
     "emailInvalid": "Email không hợp lệ!",
     "passwordRequired": "Vui lòng nhập mật khẩu!",
     "googleRedirecting": "Đang chuyển hướng đến Google...",
-    "googleLoginFailed": "Không thể khởi tạo đăng nhập Google"
+    "googleLoginFailed": "Không thể khởi tạo đăng nhập Google",
+    "emailRequiredForForgotPassword": "Vui lòng nhập email trước khi quên mật khẩu!",
+    "emailInvalidForForgotPassword": "Email không hợp lệ!"
   },
   "register": {
     "joinWith": "Tham gia cùng",
@@ -153,7 +155,8 @@
     "rememberPassword": "Nhớ mật khẩu?",
     "loginNow": "Đăng nhập ngay",
     "sendSuccess": "Mã OTP đã được gửi đến email của bạn!",
-    "sendFailed": "Có lỗi xảy ra khi gửi mã OTP!"
+    "sendFailed": "Có lỗi xảy ra khi gửi mã OTP!",
+    "emailRequired": "Vui lòng nhập email từ trang đăng nhập!"
   },
   "verifyOTP": {
     "title": "Xác thực mã OTP",

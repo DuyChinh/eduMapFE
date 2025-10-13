@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, App, Card } from 'antd';
 import { MailOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -9,18 +9,36 @@ import './AuthPages.css';
 
 const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { message } = App.useApp();
 
-  const onFinish = async (values) => {
+  useEffect(() => {
+    // Get email from navigation state
+    if (location.state?.email) {
+      setEmail(location.state.email);
+    } else {
+      // If no email provided, redirect back to login
+      message.error(t('forgotPassword.emailRequired'));
+      navigate(ROUTES.LOGIN);
+    }
+  }, [location.state, navigate, message, t]);
+
+  const onFinish = async () => {
+    if (!email) {
+      message.error(t('forgotPassword.emailRequired'));
+      return;
+    }
+
     setLoading(true);
     try {
-      await authService.forgotPassword(values.email);
+      await authService.forgotPassword(email);
       message.success(t('forgotPassword.sendSuccess'));
       // Navigate to OTP verification page with email
       navigate(ROUTES.VERIFY_OTP, { 
-        state: { email: values.email } 
+        state: { email: email } 
       });
     } catch (error) {
        // Error is now a string from axios interceptor
@@ -71,15 +89,15 @@ const ForgotPassword = () => {
           >
             <Form.Item
               label={t('forgotPassword.emailLabel')}
-              name="email"
-              rules={[
-                { required: true, message: t('forgotPassword.emailRequired') },
-                { type: 'email', message: t('forgotPassword.emailInvalid') },
-              ]}
             >
               <Input 
                 prefix={<MailOutlined />} 
-                placeholder={t('forgotPassword.emailPlaceholder')}
+                value={email}
+                readOnly
+                style={{ 
+                  backgroundColor: '#f5f5f5',
+                  cursor: 'not-allowed'
+                }}
               />
             </Form.Item>
 

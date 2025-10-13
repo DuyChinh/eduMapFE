@@ -115,7 +115,9 @@
     "emailInvalid": "無効なメールアドレス！",
     "passwordRequired": "パスワードを入力してください！",
     "googleRedirecting": "Googleにリダイレクト中...",
-    "googleLoginFailed": "Googleログインの開始に失敗しました"
+    "googleLoginFailed": "Googleログインの開始に失敗しました",
+    "emailRequiredForForgotPassword": "パスワードを忘れる前にメールアドレスを入力してください！",
+    "emailInvalidForForgotPassword": "無効なメール形式です！"
   },
   "register": {
     "joinWith": "参加する",
@@ -153,7 +155,8 @@
     "rememberPassword": "パスワードを覚えている？",
     "loginNow": "今すぐログイン",
     "sendSuccess": "OTPコードをメールに送信しました！",
-    "sendFailed": "OTP送信中にエラーが発生しました！"
+    "sendFailed": "OTP送信中にエラーが発生しました！",
+    "emailRequired": "ログインページからメールアドレスを入力してください！"
   },
   "verifyOTP": {
     "title": "OTP認証",
