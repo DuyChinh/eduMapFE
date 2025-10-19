@@ -50,6 +50,15 @@ const questionService = {
   deleteQuestion: async (questionId) => {
     return await axiosInstance.delete(`/questions/${questionId}`);
   },
+
+  /**
+   * Get list of subjects
+   * @param {Object} params - Query parameters including lang
+   * @returns {Promise} Response with subjects list
+   */
+  getSubjects: async (params = {}) => {
+    return await axiosInstance.get('/subjects', { params });
+  },
 };
 
 export default questionService;

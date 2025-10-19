@@ -20,9 +20,10 @@ import {
   SearchOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import questionService from '../../api/questionService';
+import { ROUTES } from '../../constants/config';
 import CreateQuestionModal from './CreateQuestionModal';
-import EditQuestionModal from './EditQuestionModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -44,10 +45,9 @@ const QuestionList = () => {
   
   // Modal states
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState(null);
 
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const fetchQuestions = async (params = {}) => {
     setLoading(true);
@@ -119,13 +119,13 @@ const QuestionList = () => {
 
   const columns = [
     {
-      title: t('questions.text'),
-      dataIndex: 'text',
-      key: 'text',
+      title: t('questions.name'),
+      dataIndex: 'name',
+      key: 'name',
       ellipsis: true,
-      render: (text) => (
-        <div style={{ maxWidth: 300 }}>
-          {text}
+      render: (name) => (
+        <div style={{ maxWidth: 200, fontWeight: 'bold' }}>
+          {name || t('questions.noName')}
         </div>
       ),
     },
@@ -150,20 +150,7 @@ const QuestionList = () => {
       ),
     },
     {
-      title: t('questions.tags'),
-      dataIndex: 'tags',
-      key: 'tags',
-      render: (tags) => (
-        <div>
-          {tags?.slice(0, 2).map(tag => (
-            <Tag key={tag} size="small">{tag}</Tag>
-          ))}
-          {tags?.length > 2 && <Tag size="small">+{tags.length - 2}</Tag>}
-        </div>
-      ),
-    },
-    {
-      title: t('questions.isPublic'),
+      title: t('questions.status'),
       dataIndex: 'isPublic',
       key: 'isPublic',
       render: (isPublic) => (
@@ -176,7 +163,14 @@ const QuestionList = () => {
       title: t('questions.createdAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (date) => {
+        if (!date) return '-';
+        const dateObj = new Date(date);
+        const day = dateObj.getDate().toString().padStart(2, '0');
+        const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+        const year = dateObj.getFullYear();
+        return `${day}/${month}/${year}`;
+      },
     },
     {
       title: t('common.actions'),
@@ -199,15 +193,15 @@ const QuestionList = () => {
               type="text" 
               icon={<EditOutlined />}
               onClick={() => {
-                setSelectedQuestion(record);
-                setEditModalVisible(true);
+                const questionId = record.id || record._id;
+                navigate(`/teacher/questions/edit/${questionId}`);
               }}
             />
           </Tooltip>
           
           <Popconfirm
             title={t('questions.confirmDelete')}
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record.id || record._id)}
             okText={t('common.yes')}
             cancelText={t('common.no')}
           >
@@ -265,7 +259,7 @@ const QuestionList = () => {
         <Button 
           type="primary" 
           icon={<PlusOutlined />}
-          onClick={() => setCreateModalVisible(true)}
+          onClick={() => navigate(ROUTES.TEACHER_QUESTIONS_CREATE)}
         >
           {t('questions.createNew')}
         </Button>
@@ -275,7 +269,7 @@ const QuestionList = () => {
         columns={columns}
         dataSource={questions}
         loading={loading}
-        rowKey="id"
+        rowKey={(record) => record.id || record._id}
         locale={{
           emptyText: t('questions.noQuestions')
         }}
@@ -295,20 +289,6 @@ const QuestionList = () => {
         onCancel={() => setCreateModalVisible(false)}
         onSuccess={() => {
           setCreateModalVisible(false);
-          fetchQuestions();
-        }}
-      />
-
-      <EditQuestionModal
-        visible={editModalVisible}
-        questionData={selectedQuestion}
-        onCancel={() => {
-          setEditModalVisible(false);
-          setSelectedQuestion(null);
-        }}
-        onSuccess={() => {
-          setEditModalVisible(false);
-          setSelectedQuestion(null);
           fetchQuestions();
         }}
       />

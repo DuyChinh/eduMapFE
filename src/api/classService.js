@@ -26,15 +26,18 @@ const classService = {
   /**
    * Search classes by name (optimized for search)
    * @param {string} query - Search query (minimum 2 characters)
+   * @param {string} teacherEmail - Teacher email to filter results
    * @returns {Promise} Response with search results
    */
-  searchClasses: async (query) => {
+  searchClasses: async (query, teacherEmail = null) => {
     if (!query || query.length < 2) {
       return { items: [], total: 0 };
     }
-    return await axiosInstance.get('/classes/search', { 
-      params: { q: query } 
-    });
+    const params = { q: query };
+    if (teacherEmail) {
+      params.teacher_email = teacherEmail;
+    }
+    return await axiosInstance.get('/classes/search', { params });
   },
 
   /**

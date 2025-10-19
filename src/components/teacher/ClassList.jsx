@@ -66,16 +66,18 @@ const ClassList = () => {
       // Use Search API if there's a search query (minimum 2 characters)
       if (filters.q && filters.q.length >= 2) {
         console.log('🔍 Using Search API for query:', filters.q);
-        response = await classService.searchClasses(filters.q);
+        response = await classService.searchClasses(filters.q, user?.email);
       } else {
         // Use List API for dashboard/pagination
         console.log('🔍 Using List API with pagination');
         const listParams = {
           page: pagination.current || 1,
           limit: pagination.pageSize || 10,
+          teacher_email: user?.email, // Add teacher email to filter
           ...filters,
           ...params
         };
+        console.log('📤 List API params:', listParams);
         response = await classService.getClasses(listParams);
       }
       

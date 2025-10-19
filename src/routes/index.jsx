@@ -17,6 +17,8 @@ import GoogleCallback from '../pages/auth/GoogleCallback';
 // Teacher Pages
 import TeacherDashboard from '../pages/teacher/TeacherDashboard';
 import Questions from '../pages/teacher/Questions';
+import CreateQuestion from '../pages/teacher/CreateQuestion';
+import EditQuestion from '../pages/teacher/EditQuestion';
 import Exams from '../pages/teacher/Exams';
 import TeacherClasses from '../pages/teacher/Classes';
 import TeacherClassDetail from '../pages/teacher/ClassDetail';
@@ -78,6 +80,8 @@ const AppRoutes = () => {
       >
         <Route path="dashboard" element={<TeacherDashboard />} />
         <Route path="questions" element={<Questions />} />
+        <Route path="questions/create" element={<CreateQuestion />} />
+        <Route path="questions/edit/:questionId" element={<EditQuestion />} />
         <Route path="exams" element={<Exams />} />
         <Route path="classes" element={<TeacherClasses />} />
         <Route path="classes/:classId" element={<TeacherClassDetail />} />
