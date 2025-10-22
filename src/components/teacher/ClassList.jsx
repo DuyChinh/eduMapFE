@@ -99,7 +99,8 @@ const ClassList = () => {
       console.log('✅ Classes loaded successfully');
     } catch (error) {
       console.error('❌ Error fetching classes:', error);
-      message.error(t('classes.fetchFailed'));
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.fetchFailed'));
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -133,7 +134,9 @@ const ClassList = () => {
       message.success(t('classes.deleteSuccess'));
       fetchClasses();
     } catch (error) {
-      message.error(t('classes.deleteFailed'));
+      console.error('Delete class error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.deleteFailed'));
+      message.error(errorMessage);
     }
   };
 
@@ -143,7 +146,9 @@ const ClassList = () => {
       message.success(t('classes.codeRegenerated'));
       fetchClasses();
     } catch (error) {
-      message.error(t('classes.codeRegenerateFailed'));
+      console.error('Regenerate code error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.codeRegenerateFailed'));
+      message.error(errorMessage);
     }
   };
 

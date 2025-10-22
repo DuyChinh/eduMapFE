@@ -17,7 +17,9 @@ const JoinClassModal = ({ visible, onCancel, onSuccess }) => {
       onSuccess(response.data);
       onCancel(); // Close modal after successful join
     } catch (error) {
-      message.error(t('classes.joinFailed'));
+      console.error('Join class error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.joinFailed'));
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

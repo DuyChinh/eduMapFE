@@ -33,7 +33,9 @@ const CreateClassModal = ({ visible, onCancel, onSuccess }) => {
       form.resetFields();
       onSuccess();
     } catch (error) {
-      message.error(t('classes.createFailed'));
+      console.error('Create class error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.createFailed'));
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

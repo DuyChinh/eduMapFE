@@ -65,7 +65,9 @@ const QuestionList = () => {
         total: response.total || 0
       }));
     } catch (error) {
-      message.error(t('questions.fetchFailed'));
+      console.error('Fetch questions error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.fetchFailed'));
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,9 @@ const QuestionList = () => {
       message.success(t('questions.deleteSuccess'));
       fetchQuestions();
     } catch (error) {
-      message.error(t('questions.deleteFailed'));
+      console.error('Delete question error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.deleteFailed'));
+      message.error(errorMessage);
     }
   };
 

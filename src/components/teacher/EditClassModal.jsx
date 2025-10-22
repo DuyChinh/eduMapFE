@@ -37,7 +37,9 @@ const EditClassModal = ({ visible, classData, onCancel, onSuccess }) => {
       message.success(t('classes.updateSuccess'));
       onSuccess();
     } catch (error) {
-      message.error(t('classes.updateFailed'));
+      console.error('Update class error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.updateFailed'));
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

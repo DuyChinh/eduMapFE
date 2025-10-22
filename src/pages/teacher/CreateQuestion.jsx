@@ -230,7 +230,8 @@ const CreateQuestion = () => {
       if (error.errorFields) {
         message.error('Please fill in all required fields');
       } else {
-        message.error(t('questions.createFailed'));
+        const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.createFailed'));
+        message.error(errorMessage);
       }
     } finally {
       setLoading(false);

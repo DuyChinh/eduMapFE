@@ -38,7 +38,9 @@ const AddStudentsModal = ({ visible, classData, onCancel, onSuccess }) => {
       form.resetFields();
       onSuccess();
     } catch (error) {
-      message.error(t('classes.addStudentsFailed'));
+      console.error('Add students error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.addStudentsFailed'));
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
