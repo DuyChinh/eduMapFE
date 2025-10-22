@@ -126,6 +126,24 @@ const CreateQuestion = () => {
     };
   }, []);
 
+  const [previewKey, setPreviewKey] = useState(0);
+
+  // Get current form values for preview
+  const getCurrentFormData = () => {
+    const formValues = form.getFieldsValue();
+    return {
+      name: formValues.name || questionData.name,
+      text: formValues.text || questionData.text,
+      type: formValues.type || questionData.type,
+      level: formValues.level || questionData.level,
+      subject: formValues.subject || questionData.subject,
+      choices: formValues.choices || questionData.choices,
+      answer: formValues.answer !== undefined ? formValues.answer : questionData.answer,
+      explanation: formValues.explanation || questionData.explanation,
+      isPublic: formValues.isPublic !== undefined ? formValues.isPublic : questionData.isPublic
+    };
+  };
+
   // Update question data when form values change
   const handleFormChange = (changedValues, allValues) => {
     console.log('📝 Form changed:', changedValues, allValues);
@@ -133,6 +151,8 @@ const CreateQuestion = () => {
       ...prev,
       ...allValues
     }));
+    // Trigger preview re-render
+    setPreviewKey(prev => prev + 1);
   };
 
   // Handle choice changes
@@ -144,6 +164,8 @@ const CreateQuestion = () => {
       choices: newChoices
     }));
     form.setFieldsValue({ choices: newChoices });
+    // Trigger preview re-render
+    setPreviewKey(prev => prev + 1);
   };
 
   // Add new choice
@@ -466,7 +488,7 @@ const CreateQuestion = () => {
             }
             style={{ position: 'sticky', top: '24px' }}
           >
-            <QuestionPreview questionData={questionData} subjects={subjects} />
+            <QuestionPreview key={previewKey} questionData={getCurrentFormData()} subjects={subjects} />
           </Card>
         </Col>
       </Row>
