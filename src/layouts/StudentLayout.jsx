@@ -112,6 +112,25 @@ const StudentLayout = () => {
     setIsLanguageModalVisible(true);
   };
 
+  // Function to determine selected menu key based on current path
+  const getSelectedKey = () => {
+    const pathname = location.pathname;
+    
+    // Check if current path starts with any of the main routes
+    if (pathname.startsWith('/student/classes')) {
+      return ROUTES.STUDENT_CLASSES;
+    }
+    if (pathname.startsWith('/student/results')) {
+      return ROUTES.STUDENT_RESULTS;
+    }
+    if (pathname.startsWith('/student/dashboard')) {
+      return ROUTES.STUDENT_DASHBOARD;
+    }
+    
+    // Default fallback
+    return pathname;
+  };
+
   const menuItems = [
     {
       key: ROUTES.STUDENT_DASHBOARD,
@@ -186,7 +205,7 @@ const StudentLayout = () => {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[getSelectedKey()]}
           items={menuItems}
           className="dashboard-menu"
         />

@@ -113,6 +113,28 @@ const TeacherLayout = () => {
     setIsLanguageModalVisible(true);
   };
 
+  // Function to determine selected menu key based on current path
+  const getSelectedKey = () => {
+    const pathname = location.pathname;
+    
+    // Check if current path starts with any of the main routes
+    if (pathname.startsWith('/teacher/questions')) {
+      return ROUTES.TEACHER_QUESTIONS;
+    }
+    if (pathname.startsWith('/teacher/exams')) {
+      return ROUTES.TEACHER_EXAMS;
+    }
+    if (pathname.startsWith('/teacher/classes')) {
+      return ROUTES.TEACHER_CLASSES;
+    }
+    if (pathname.startsWith('/teacher/dashboard')) {
+      return ROUTES.TEACHER_DASHBOARD;
+    }
+    
+    // Default fallback
+    return pathname;
+  };
+
   const menuItems = [
     {
       key: ROUTES.TEACHER_DASHBOARD,
@@ -193,7 +215,7 @@ const TeacherLayout = () => {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[getSelectedKey()]}
           items={menuItems}
           className="dashboard-menu"
         />
