@@ -42,7 +42,7 @@ const CreateQuestion = () => {
     text: '',
     type: 'mcq',
     level: '1',
-    subject: '',
+    subjectId: '',
     choices: ['', '', '', ''],
     answer: '',
     explanation: '',
@@ -56,10 +56,8 @@ const CreateQuestion = () => {
     const fetchSubjects = async () => {
       try {
         const currentLang = localStorage.getItem('language') || 'vi';
-        console.log('🌐 Current language:', currentLang);
         
         const response = await questionService.getSubjects({ lang: currentLang });
-        console.log('📚 Subjects response:', response);
         
         // Handle different response structures
         let subjectsData = [];
@@ -71,7 +69,6 @@ const CreateQuestion = () => {
           subjectsData = response.items;
         }
         
-        console.log('📚 Processed subjects:', subjectsData);
         setSubjects(subjectsData);
       } catch (error) {
         console.error('❌ Error fetching subjects:', error);
@@ -87,10 +84,8 @@ const CreateQuestion = () => {
   const refetchSubjects = async () => {
     try {
       const currentLang = localStorage.getItem('language') || 'vi';
-      console.log('🌐 Refetching subjects with language:', currentLang);
       
       const response = await questionService.getSubjects({ lang: currentLang });
-      console.log('📚 Refetched subjects response:', response);
       
       let subjectsData = [];
       if (Array.isArray(response)) {
@@ -136,7 +131,7 @@ const CreateQuestion = () => {
       text: formValues.text || questionData.text,
       type: formValues.type || questionData.type,
       level: formValues.level || questionData.level,
-      subject: formValues.subject || questionData.subject,
+      subjectId: formValues.subject || questionData.subject,
       choices: formValues.choices || questionData.choices,
       answer: formValues.answer !== undefined ? formValues.answer : questionData.answer,
       explanation: formValues.explanation || questionData.explanation,
@@ -146,7 +141,6 @@ const CreateQuestion = () => {
 
   // Update question data when form values change
   const handleFormChange = (changedValues, allValues) => {
-    console.log('📝 Form changed:', changedValues, allValues);
     setQuestionData(prev => ({
       ...prev,
       ...allValues
@@ -194,8 +188,6 @@ const CreateQuestion = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      console.log('📤 Submitting question:', values);
-
       setLoading(true);
       
       // Prepare question data for API
@@ -221,12 +213,9 @@ const CreateQuestion = () => {
       }
 
       const response = await questionService.createQuestion(questionPayload);
-      console.log('✅ Question created:', response);
-      
       message.success(t('questions.createSuccess'));
       navigate(ROUTES.TEACHER_QUESTIONS);
     } catch (error) {
-      console.error('❌ Error creating question:', error);
       if (error.errorFields) {
         message.error('Please fill in all required fields');
       } else {
@@ -320,7 +309,7 @@ const CreateQuestion = () => {
               {/* Subject */}
               <Form.Item
                 label={t('questions.subject')}
-                name="subject"
+                name="subjectId"
                 rules={[{ required: true, message: t('questions.subjectRequired') }]}
               >
                 <Select 

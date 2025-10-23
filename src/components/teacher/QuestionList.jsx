@@ -31,6 +31,7 @@ const { Option } = Select;
 const QuestionList = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [subjects, setSubjects] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -40,6 +41,7 @@ const QuestionList = () => {
     q: '',
     type: '',
     level: '',
+    subject: '',
     sort: '-createdAt'
   });
   
@@ -52,12 +54,21 @@ const QuestionList = () => {
   const fetchQuestions = async (params = {}) => {
     setLoading(true);
     try {
-      const response = await questionService.getQuestions({
+      // Prepare API parameters
+      const apiParams = {
         page: pagination.current,
         limit: pagination.pageSize,
         ...filters,
         ...params
-      });
+      };
+      
+      // Convert subject filter to subjectId for API
+      if (apiParams.subject) {
+        apiParams.subjectId = apiParams.subject;
+        delete apiParams.subject;
+      }
+      
+      const response = await questionService.getQuestions(apiParams);
       
       setQuestions(response.items || []);
       setPagination(prev => ({
@@ -77,12 +88,84 @@ const QuestionList = () => {
     fetchQuestions();
   }, [pagination.current, pagination.pageSize, filters]);
 
+  // Fetch subjects on component mount
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const currentLang = localStorage.getItem('language') || 'vi';
+        const response = await questionService.getSubjects({ lang: currentLang });
+        
+        // Handle different response structures
+        let subjectsData = [];
+        if (Array.isArray(response)) {
+          subjectsData = response;
+        } else if (response.data && Array.isArray(response.data)) {
+          subjectsData = response.data;
+        } else if (response.items && Array.isArray(response.items)) {
+          subjectsData = response.items;
+        }
+        
+        setSubjects(subjectsData);
+      } catch (error) {
+        console.error('❌ Error fetching subjects:', error);
+        message.error('Failed to load subjects');
+        setSubjects([]);
+      }
+    };
+
+    fetchSubjects();
+  }, []);
+
+  // Listen for language changes and refetch subjects
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      const currentLang = localStorage.getItem('language') || 'vi';
+      
+      // Refetch subjects with new language
+      const refetchSubjects = async () => {
+        try {
+          const response = await questionService.getSubjects({ lang: currentLang });
+          let subjectsData = [];
+          if (Array.isArray(response)) {
+            subjectsData = response;
+          } else if (response.data && Array.isArray(response.data)) {
+            subjectsData = response.data;
+          } else if (response.items && Array.isArray(response.items)) {
+            subjectsData = response.items;
+          }
+          
+          setSubjects(subjectsData);
+        } catch (error) {
+          console.error('❌ Error refetching subjects:', error);
+          message.error('Failed to reload subjects');
+        }
+      };
+      
+      refetchSubjects();
+    };
+
+    // Listen for storage changes (language changes)
+    window.addEventListener('storage', handleLanguageChange);
+    
+    // Also listen for custom language change events
+    window.addEventListener('languageChanged', handleLanguageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleLanguageChange);
+      window.removeEventListener('languageChanged', handleLanguageChange);
+    };
+  }, []);
+
   const handleSearch = (value) => {
     setFilters(prev => ({ ...prev, q: value }));
+    // Reset pagination to page 1 when search changes
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    // Reset pagination to page 1 when filter changes
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleDelete = async (questionId) => {
@@ -144,6 +227,44 @@ const QuestionList = () => {
       ),
     },
     {
+      title: t('questions.subject'),
+      dataIndex: 'subjectId',
+      key: 'subjectId',
+      render: (subjectId, record) => {
+        // Handle case where subjectId might be an object
+        let actualSubjectId = subjectId;
+        if (typeof subjectId === 'object' && subjectId !== null) {
+          actualSubjectId = subjectId._id || subjectId.id;
+        }
+        
+        // Get subject name from subjects array
+        const subjectObj = subjects.find(s => (s._id || s.id) === actualSubjectId);
+        const currentLang = localStorage.getItem('language') || 'vi';
+        
+        let subjectName = actualSubjectId || 'N/A';
+        if (subjectObj) {
+          switch (currentLang) {
+            case 'en':
+              subjectName = subjectObj.name_en || subjectObj.name || actualSubjectId;
+              break;
+            case 'jp':
+              subjectName = subjectObj.name_jp || subjectObj.name || actualSubjectId;
+              break;
+            case 'vi':
+            default:
+              subjectName = subjectObj.name || actualSubjectId;
+              break;
+          }
+        }
+        
+        return (
+          <Tag color="blue">
+            {subjectName}
+          </Tag>
+        );
+      },
+    },
+    {
       title: t('questions.level'),
       dataIndex: 'level',
       key: 'level',
@@ -186,8 +307,8 @@ const QuestionList = () => {
               type="text" 
               icon={<EyeOutlined />}
               onClick={() => {
-                setSelectedQuestion(record);
-                // Navigate to question details
+                const questionId = record.id || record._id;
+                navigate(`/teacher/questions/detail/${questionId}`);
               }}
             />
           </Tooltip>
@@ -257,6 +378,41 @@ const QuestionList = () => {
             <Option value="3">3 - {t('questions.levelMedium')}</Option>
             <Option value="4">4 - {t('questions.levelHard')}</Option>
             <Option value="5">5 - {t('questions.levelHard')}</Option>
+          </Select>
+          
+          <Select
+            placeholder={t('questions.filterBySubject')}
+            style={{ width: 200 }}
+            allowClear
+            showSearch
+            filterOption={(input, option) =>
+              (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            onChange={(value) => handleFilterChange('subject', value)}
+          >
+            {subjects.map(subject => {
+              const currentLang = localStorage.getItem('language') || 'vi';
+              let subjectName = subject.name;
+              
+              switch (currentLang) {
+                case 'en':
+                  subjectName = subject.name_en || subject.name;
+                  break;
+                case 'jp':
+                  subjectName = subject.name_jp || subject.name;
+                  break;
+                case 'vi':
+                default:
+                  subjectName = subject.name;
+                  break;
+              }
+              
+              return (
+                <Option key={subject._id || subject.id} value={subject._id || subject.id}>
+                  {subjectName}
+                </Option>
+              );
+            })}
           </Select>
         </div>
         

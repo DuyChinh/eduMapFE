@@ -7,11 +7,25 @@ const { Title, Text, Paragraph } = Typography;
 const QuestionPreview = ({ questionData, subjects = [] }) => {
   const { t } = useTranslation();
 
-  // Function to get subject name from ID
+  // Function to get subject name from ID based on current language
   const getSubjectName = (subjectId) => {
     if (!subjectId || !Array.isArray(subjects)) return subjectId;
     const subject = subjects.find(s => (s._id || s.id) === subjectId);
-    return subject ? subject.name : subjectId;
+    if (!subject) return subjectId;
+    
+    // Get current language
+    const currentLang = localStorage.getItem('language') || 'vi';
+    
+    // Return appropriate name based on language
+    switch (currentLang) {
+      case 'en':
+        return subject.name_en || subject.name || subjectId;
+      case 'jp':
+        return subject.name_jp || subject.name || subjectId;
+      case 'vi':
+      default:
+        return subject.name || subjectId;
+    }
   };
 
   const mathJaxConfig = {
@@ -44,23 +58,49 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           const hasDollarSigns = line.includes('$') || line.includes('\\(');
           
           if (hasLatex && !hasDollarSigns) {
-            // Wrap LaTeX content in display math
+            // Mixed content - need to parse and render properly
+            // Split by LaTeX patterns and render each part
+            const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
             return (
-              <div key={index}>
-                <MathJax>{`$$${line}$$`}</MathJax>
+              <div key={index} style={{ 
+                fontFamily: 'inherit',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}>
+                {parts.map((part, partIndex) => {
+                  if (part.match(/^\\[a-zA-Z]+/)) {
+                    // This is a LaTeX command, render with MathJax
+                    return (
+                      <MathJax key={partIndex} inline>
+                        {`$${part}$`}
+                      </MathJax>
+                    );
+                  } else {
+                    // This is plain text, render as is
+                    return <span key={partIndex}>{part}</span>;
+                  }
+                })}
               </div>
             );
           } else if (hasDollarSigns) {
             // Already has dollar signs, render as is
             return (
-              <div key={index}>
+              <div key={index} style={{ 
+                fontFamily: 'inherit',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}>
                 <MathJax>{line}</MathJax>
               </div>
             );
           } else {
-            // Plain text, render as is
+            // Plain text, render as is with preserved formatting
             return (
-              <div key={index}>
+              <div key={index} style={{ 
+                fontFamily: 'inherit',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}>
                 {line}
               </div>
             );
@@ -203,7 +243,8 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
             marginTop: '8px',
             wordWrap: 'break-word',
             overflowWrap: 'break-word',
-            whiteSpace: 'pre-wrap'
+            whiteSpace: 'pre-wrap',
+            fontFamily: 'inherit'
           }}>
             {renderMathContent(questionData.text || t('questions.noQuestionText'))}
           </Paragraph>
@@ -230,7 +271,8 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
               marginTop: '8px',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
-              whiteSpace: 'pre-wrap'
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'inherit'
             }}>
               {renderMathContent(questionData.explanation)}
             </Paragraph>

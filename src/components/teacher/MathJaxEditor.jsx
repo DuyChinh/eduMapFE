@@ -100,6 +100,9 @@ const MathJaxEditor = ({
     options: {
       skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
     },
+    svg: {
+      font: 'inherit',
+    },
   };
 
   return (
@@ -190,23 +193,48 @@ const MathJaxEditor = ({
                         const hasDollarSigns = line.includes('$') || line.includes('\\(');
                         
                         if (hasLatex && !hasDollarSigns) {
-                          // Wrap LaTeX content in display math
+                          // Mixed content - parse and render properly
+                          const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
                           return (
-                            <div key={index}>
-                              <MathJax>{`$$${line}$$`}</MathJax>
+                            <div key={index} style={{ 
+                              fontFamily: 'inherit',
+                              whiteSpace: 'pre-wrap',
+                              wordWrap: 'break-word'
+                            }}>
+                              {parts.map((part, partIndex) => {
+                                if (part.match(/^\\[a-zA-Z]+/)) {
+                                  // This is a LaTeX command, render with MathJax
+                                  return (
+                                    <MathJax key={partIndex} inline>
+                                      {`$${part}$`}
+                                    </MathJax>
+                                  );
+                                } else {
+                                  // This is plain text, render as is
+                                  return <span key={partIndex}>{part}</span>;
+                                }
+                              })}
                             </div>
                           );
                         } else if (hasDollarSigns) {
                           // Already has dollar signs, render as is
                           return (
-                            <div key={index}>
+                            <div key={index} style={{ 
+                              fontFamily: 'inherit',
+                              whiteSpace: 'pre-wrap',
+                              wordWrap: 'break-word'
+                            }}>
                               <MathJax>{line}</MathJax>
                             </div>
                           );
                         } else {
-                          // Plain text, render as is
+                          // Plain text, render as is with preserved formatting
                           return (
-                            <div key={index}>
+                            <div key={index} style={{ 
+                              fontFamily: 'inherit',
+                              whiteSpace: 'pre-wrap',
+                              wordWrap: 'break-word'
+                            }}>
                               {line}
                             </div>
                           );

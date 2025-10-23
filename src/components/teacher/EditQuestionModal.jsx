@@ -55,8 +55,6 @@ const EditQuestionModal = ({ visible, questionData, onCancel, onSuccess }) => {
 
   useEffect(() => {
     if (visible && questionData) {
-      console.log('📝 EditQuestionModal - questionData:', questionData);
-      
       // Process choices data
       let processedChoices = ['', '', '', ''];
       if (questionData.choices && Array.isArray(questionData.choices)) {
@@ -89,8 +87,6 @@ const EditQuestionModal = ({ visible, questionData, onCancel, onSuccess }) => {
         explanation: questionData.explanation || '',
         isPublic: questionData.isPublic !== undefined ? questionData.isPublic : true
       };
-      
-      console.log('📝 EditQuestionModal - processed data:', data);
       setEditData(data);
       form.setFieldsValue(data);
     }
@@ -105,10 +101,6 @@ const EditQuestionModal = ({ visible, questionData, onCancel, onSuccess }) => {
         return;
       }
 
-      console.log('📤 EditQuestionModal - submitting values:', values);
-      console.log('📤 EditQuestionModal - editData:', editData);
-
-      // Prepare question data for API
       const questionPayload = {
         ...values,
         choices: values.choices || editData.choices,

@@ -18,6 +18,7 @@ export const ROUTES = {
   TEACHER_QUESTIONS: '/teacher/questions',
   TEACHER_QUESTIONS_CREATE: '/teacher/questions/create',
   TEACHER_QUESTIONS_EDIT: '/teacher/questions/edit/:questionId',
+  TEACHER_QUESTIONS_DETAIL: '/teacher/questions/detail/:questionId',
   TEACHER_EXAMS: '/teacher/exams',
   TEACHER_CLASSES: '/teacher/classes',
   

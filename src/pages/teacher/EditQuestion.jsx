@@ -65,10 +65,8 @@ const EditQuestion = () => {
 
       try {
         setInitialLoading(true);
-        const response = await questionService.getQuestionById(questionId);
-        console.log('📝 EditQuestion - fetched question data:', response);
-        
-        // Process choices data
+        let response = await questionService.getQuestionById(questionId);
+        response = response?.data;
         let processedChoices = ['', '', '', ''];
         let answerIndex = 0;
         
@@ -102,24 +100,19 @@ const EditQuestion = () => {
           text: response.text || '',
           type: response.type || 'mcq',
           level: response.level?.toString() || '1',
-          subject: response.subject || '',
+          subject: response.subjectId?._id || response.subject || '',
           choices: processedChoices,
           answer: response.type === 'mcq' ? answerIndex : response.answer || '',
           explanation: response.explanation || '',
           isPublic: response.isPublic !== undefined ? response.isPublic : true
         };
         
-        console.log('📝 EditQuestion - processed data:', data);
         setQuestionData(data);
         
         // Reset form first, then set values
         form.resetFields();
         form.setFieldsValue(data);
         
-        // Debug: Check form values after setting
-        setTimeout(() => {
-          console.log('📝 EditQuestion - form values after setFieldsValue:', form.getFieldsValue());
-        }, 100);
       } catch (error) {
         console.error('❌ Error fetching question:', error);
         message.error('Failed to load question data');
@@ -137,10 +130,8 @@ const EditQuestion = () => {
     const fetchSubjects = async () => {
       try {
         const currentLang = localStorage.getItem('language') || 'vi';
-        console.log('🌐 Current language:', currentLang);
         
         const response = await questionService.getSubjects({ lang: currentLang });
-        console.log('📚 Subjects response:', response);
         
         // Handle different response structures
         let subjectsData = [];
@@ -152,7 +143,6 @@ const EditQuestion = () => {
           subjectsData = response.items;
         }
         
-        console.log('📚 Processed subjects:', subjectsData);
         setSubjects(subjectsData);
       } catch (error) {
         console.error('❌ Error fetching subjects:', error);
@@ -168,10 +158,8 @@ const EditQuestion = () => {
   const refetchSubjects = async () => {
     try {
       const currentLang = localStorage.getItem('language') || 'vi';
-      console.log('🌐 Refetching subjects with language:', currentLang);
       
       const response = await questionService.getSubjects({ lang: currentLang });
-      console.log('📚 Refetched subjects response:', response);
       
       let subjectsData = [];
       if (Array.isArray(response)) {
@@ -189,7 +177,6 @@ const EditQuestion = () => {
     }
   };
 
-  // Listen for language changes and refetch subjects
   useEffect(() => {
     const handleLanguageChange = () => {
       refetchSubjects();
@@ -225,9 +212,7 @@ const EditQuestion = () => {
     };
   };
 
-  // Update question data when form values change
   const handleFormChange = (changedValues, allValues) => {
-    console.log('📝 Form changed:', changedValues, allValues);
     setQuestionData(prev => ({
       ...prev,
       ...allValues
@@ -275,7 +260,6 @@ const EditQuestion = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      console.log('📤 Submitting question:', values);
 
       setLoading(true);
       
@@ -302,7 +286,6 @@ const EditQuestion = () => {
       }
 
       await questionService.updateQuestion(questionId, questionPayload);
-      console.log('✅ Question updated successfully');
       
       message.success(t('questions.updateSuccess'));
       navigate(ROUTES.TEACHER_QUESTIONS);
