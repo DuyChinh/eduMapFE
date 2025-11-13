@@ -1,0 +1,46 @@
+.exam-result-detail-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.result-summary-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.question-result-card {
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.question-result-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.question-result-card.correct {
+  background-color: #f6ffed;
+}
+
+.question-result-card.incorrect {
+  background-color: #fff1f0;
+}
+
+.question-text {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+.question-text .MathJax {
+  font-size: 1.2em !important;
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .exam-result-detail-container {
+    padding: 16px;
+  }
+}
+

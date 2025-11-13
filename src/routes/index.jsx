@@ -26,12 +26,20 @@ import EditExam from '../pages/teacher/EditExam';
 import ExamDetail from '../pages/teacher/ExamDetail';
 import TeacherClasses from '../pages/teacher/Classes';
 import TeacherClassDetail from '../pages/teacher/ClassDetail';
+import Monitor from '../pages/teacher/Monitor';
+import Reports from '../pages/teacher/Reports';
 
 // Student Pages
 import StudentDashboard from '../pages/student/StudentDashboard';
 import StudentClasses from '../pages/student/Classes';
 import StudentClassDetail from '../pages/student/ClassDetail';
 import Results from '../pages/student/Results';
+import TakeExam from '../pages/student/TakeExam';
+import ExamResultDetail from '../pages/student/ExamResultDetail';
+import ExamError from '../pages/student/ExamError';
+
+// Public Pages
+import PublicTakeExam from '../pages/public/PublicTakeExam';
 
 // Components
 import ProtectedRoute from '../components/common/ProtectedRoute';
@@ -93,6 +101,8 @@ const AppRoutes = () => {
         <Route path="exams/:examId/edit" element={<EditExam />} />
         <Route path="classes" element={<TeacherClasses />} />
         <Route path="classes/:classId" element={<TeacherClassDetail />} />
+        <Route path="exams/:examId/monitor" element={<Monitor />} />
+        <Route path="classes/:classId/reports" element={<Reports />} />
       </Route>
 
       {/* Student Routes */}
@@ -108,7 +118,13 @@ const AppRoutes = () => {
         <Route path="classes" element={<StudentClasses />} />
         <Route path="classes/:classId" element={<StudentClassDetail />} />
         <Route path="results" element={<Results />} />
+        <Route path="results/:submissionId" element={<ExamResultDetail />} />
+        <Route path="exam/:examId/take" element={<TakeExam />} />
+        <Route path="exam-error" element={<ExamError />} />
       </Route>
+
+      {/* Public Routes */}
+      <Route path="/exam/:shareCode" element={<PublicTakeExam />} />
 
       {/* 404 - Not Found */}
       <Route path="*" element={<Navigate to="/" replace />} />

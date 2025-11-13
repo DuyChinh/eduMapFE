@@ -16,7 +16,9 @@ import {
   EditOutlined, 
   DeleteOutlined, 
   EyeOutlined,
-  SearchOutlined
+  SearchOutlined,
+  CopyOutlined,
+  LinkOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -201,6 +203,37 @@ const ExamList = () => {
         const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
         const year = dateObj.getFullYear();
         return `${day}/${month}/${year}`;
+      },
+    },
+    {
+      title: t('exams.shareLink'),
+      dataIndex: 'shareCode',
+      key: 'shareLink',
+      render: (shareCode, record) => {
+        if (record.status !== 'published' || !shareCode) {
+          return <Tag color="default">-</Tag>;
+        }
+        const shareLink = `${window.location.origin}/exam/${shareCode}`;
+        return (
+          <Space>
+            <Tooltip title={shareLink}>
+              <Tag color="blue" icon={<LinkOutlined />}>
+                {shareCode}
+              </Tag>
+            </Tooltip>
+            <Tooltip title={t('exams.copyLink')}>
+              <Button
+                type="text"
+                size="small"
+                icon={<CopyOutlined />}
+                onClick={() => {
+                  navigator.clipboard.writeText(shareLink);
+                  message.success(t('exams.linkCopied'));
+                }}
+              />
+            </Tooltip>
+          </Space>
+        );
       },
     },
     {

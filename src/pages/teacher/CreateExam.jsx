@@ -15,7 +15,8 @@ import {
   Table,
   Tag,
   Popconfirm,
-  Typography
+  Typography,
+  Modal
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -192,7 +193,7 @@ const CreateExam = () => {
     ));
   };
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async (values, status = 'draft') => {
     if (selectedQuestions.length === 0) {
       message.error(t('exams.questionsRequired'));
       return;
@@ -235,12 +236,45 @@ const CreateExam = () => {
           marks: q.marks || 1,
           isRequired: q.isRequired !== false
         })),
-        settings: values.settings || {}
+        settings: values.settings || {},
+        status // 'draft' or 'published'
       };
 
-      await examService.createExam(examData);
-      message.success(t('exams.createSuccess'));
-      navigate(ROUTES.TEACHER_EXAMS);
+      const response = await examService.createExam(examData);
+      const createdExam = response.data || response;
+      
+      if (status === 'published' && createdExam.shareCode) {
+        // Show modal with share link
+        const shareLink = `${window.location.origin}/exam/${createdExam.shareCode}`;
+        Modal.success({
+          title: t('exams.publishSuccess'),
+          content: (
+            <div>
+              <p>{t('exams.shareLinkGenerated')}</p>
+              <Input.Group compact style={{ marginTop: 16 }}>
+                <Input
+                  readOnly
+                  value={shareLink}
+                  style={{ width: 'calc(100% - 100px)' }}
+                />
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    navigator.clipboard.writeText(shareLink);
+                    message.success(t('exams.linkCopied'));
+                  }}
+                >
+                  {t('exams.copyLink')}
+                </Button>
+              </Input.Group>
+            </div>
+          ),
+          onOk: () => navigate(ROUTES.TEACHER_EXAMS),
+        });
+      } else {
+        message.success(t('exams.createSuccess'));
+        navigate(ROUTES.TEACHER_EXAMS);
+      }
     } catch (error) {
       console.error('Create exam error:', error);
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('exams.createFailed'));
@@ -331,7 +365,7 @@ const CreateExam = () => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleSubmit}
+          onFinish={(values) => handleSubmit(values, 'draft')}
           autoComplete="off"
         >
           <Collapse defaultActiveKey={['basic', 'questions']} ghost>
@@ -782,8 +816,26 @@ const CreateExam = () => {
               <Button onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
                 {t('common.cancel')}
               </Button>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                {t('exams.create')}
+              <Button 
+                onClick={() => {
+                  form.validateFields().then(values => {
+                    handleSubmit(values, 'draft');
+                  });
+                }}
+                loading={loading}
+              >
+                {t('exams.saveDraft')}
+              </Button>
+              <Button 
+                type="primary" 
+                onClick={() => {
+                  form.validateFields().then(values => {
+                    handleSubmit(values, 'published');
+                  });
+                }}
+                loading={loading}
+              >
+                {t('exams.publish')}
               </Button>
             </Space>
           </Form.Item>

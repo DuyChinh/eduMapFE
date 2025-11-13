@@ -1,0 +1,314 @@
+.take-exam-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.take-exam-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+}
+
+.take-exam-header {
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.take-exam-header .ant-card-body {
+  padding: 20px 24px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.time-warning {
+  color: #ff4d4f;
+}
+
+.progress-section {
+  margin-top: 16px;
+}
+
+.take-exam-content {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.question-nav-card {
+  height: fit-content;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+}
+
+.question-nav-card .ant-card-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fafafa;
+}
+
+.question-nav-card .ant-card-head-title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.question-nav-card .ant-card-body {
+  padding: 16px;
+}
+
+.question-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.question-nav-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  border: 2px solid #d9d9d9;
+}
+
+/* Câu chưa làm - background trắng */
+.question-unanswered {
+  background-color: #ffffff;
+  color: #595959;
+  border-color: #d9d9d9;
+}
+
+.question-unanswered:hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+/* Câu đã làm - background xanh lá nhạt */
+.question-answered {
+  background-color: #b7eb8f;
+  color: #389e0d;
+  border-color: #95de64;
+  font-weight: 700;
+}
+
+.question-answered:hover {
+  background-color: #95de64;
+  border-color: #73d13d;
+  transform: scale(1.05);
+}
+
+/* Câu đang làm - background xanh dương */
+.question-current {
+  background-color: #1890ff !important;
+  color: #ffffff !important;
+  border-color: #1890ff !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.question-current:hover {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
+}
+
+.question-card {
+  min-height: 500px;
+  overflow: visible;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+}
+
+.question-card .ant-card-head {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fafafa;
+}
+
+.question-card .ant-card-body {
+  padding: 24px;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.question-content {
+  margin: 24px 0;
+  min-height: 300px;
+}
+
+.question-text {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: 24px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.choice-radio {
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.choice-radio:hover {
+  background-color: #f5f5f5;
+}
+
+.choice-radio .ant-radio-inner {
+  width: 20px;
+  height: 20px;
+}
+
+.choice-radio .ant-radio-inner::after {
+  width: 10px;
+  height: 10px;
+}
+
+.choice-radio span {
+  font-size: 16px;
+  line-height: 1.6;
+  display: inline-block;
+  width: 100%;
+}
+
+/* MathJax styling */
+.MathJax {
+  font-size: 1.1em !important;
+  display: inline-block;
+}
+
+.question-text .MathJax {
+  font-size: 1.2em !important;
+  line-height: 1.8;
+  display: inline;
+}
+
+.choice-radio .MathJax {
+  font-size: 1.1em !important;
+  display: inline;
+  vertical-align: middle;
+}
+
+/* Ensure MathJax renders properly */
+.MathJax_Display {
+  margin: 1em 0 !important;
+}
+
+.MathJax_SVG {
+  display: inline-block !important;
+}
+
+.question-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.question-navigation .ant-btn {
+  min-width: 120px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.time-warning-alert {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 1000;
+  max-width: 400px;
+}
+
+@media (max-width: 1200px) {
+  .take-exam-content {
+    grid-template-columns: 240px 1fr;
+  }
+  
+  .question-nav-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .take-exam-container {
+    padding: 16px;
+  }
+  
+  .take-exam-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .question-nav-card {
+    position: static;
+    order: 2;
+  }
+  
+  .question-card {
+    order: 1;
+  }
+
+  .question-nav-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+  
+  .question-nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .question-content {
+    margin: 16px 0;
+  }
+}
+

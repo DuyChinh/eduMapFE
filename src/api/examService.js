@@ -70,6 +70,15 @@ const examService = {
   removeQuestion: async (examId, questionId) => {
     return await axiosInstance.delete(`/exams/${examId}/questions/${questionId}`);
   },
+
+  /**
+   * Get exam by share code (public access)
+   * @param {string} shareCode - Share code
+   * @returns {Promise} Response with exam data
+   */
+  getExamByShareCode: async (shareCode) => {
+    return await axiosInstance.get(`/exams/share/${shareCode}`);
+  },
 };
 
 export default examService;
