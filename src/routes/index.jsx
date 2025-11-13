@@ -21,6 +21,9 @@ import CreateQuestion from '../pages/teacher/CreateQuestion';
 import EditQuestion from '../pages/teacher/EditQuestion';
 import QuestionDetail from '../pages/teacher/QuestionDetail';
 import Exams from '../pages/teacher/Exams';
+import CreateExam from '../pages/teacher/CreateExam';
+import EditExam from '../pages/teacher/EditExam';
+import ExamDetail from '../pages/teacher/ExamDetail';
 import TeacherClasses from '../pages/teacher/Classes';
 import TeacherClassDetail from '../pages/teacher/ClassDetail';
 
@@ -85,6 +88,9 @@ const AppRoutes = () => {
         <Route path="questions/edit/:questionId" element={<EditQuestion />} />
         <Route path="questions/detail/:questionId" element={<QuestionDetail />} />
         <Route path="exams" element={<Exams />} />
+        <Route path="exams/create" element={<CreateExam />} />
+        <Route path="exams/:examId" element={<ExamDetail />} />
+        <Route path="exams/:examId/edit" element={<EditExam />} />
         <Route path="classes" element={<TeacherClasses />} />
         <Route path="classes/:classId" element={<TeacherClassDetail />} />
       </Route>
