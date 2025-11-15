@@ -14,23 +14,24 @@ import {
   Statistic,
   Table,
   Alert,
-  Spin
+  Spin,
+  Tabs,
+  Empty,
 } from 'antd';
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  EditOutlined,
+  CheckOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import { getSubmissionById } from '../../api/submissionService';
 import './ExamResultDetail.css';
 
 const { Title, Text, Paragraph } = Typography;
 
-/**
- * Page to view exam results with answers
- * Shows questions, user answers, correct answers, and score
- */
 const ExamResultDetail = () => {
   const { submissionId } = useParams();
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ const ExamResultDetail = () => {
   const [exam, setExam] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [filterType, setFilterType] = useState('all'); // 'all', 'correct', 'incorrect'
+  const [activeTab, setActiveTab] = useState('mcq');
 
   useEffect(() => {
     const loadSubmission = async () => {
@@ -92,7 +95,6 @@ const ExamResultDetail = () => {
       setLeaderboard(leaderboardData);
     } catch (error) {
       console.error('Error loading leaderboard:', error);
-      // If leaderboard is hidden or error, just don't show it
       setShowLeaderboard(false);
     }
   };
@@ -113,7 +115,7 @@ const ExamResultDetail = () => {
             message={t('takeExam.submissionNotFound') || 'Submission not found'}
             type="error"
             action={
-              <Button onClick={() => navigate('/student/dashboard')}>
+              <Button onClick={() => navigate('/student/results')}>
                 {t('common.back') || 'Back'}
               </Button>
             }
@@ -126,15 +128,130 @@ const ExamResultDetail = () => {
   const examData = exam;
   const questions = examData?.questions || [];
   const answers = submission.answers || [];
-  // viewExamAndAnswer: 0 = never, 1 = afterCompletion, 2 = afterAllFinish
-  // For now, we show answers if viewExamAndAnswer is not 0 (simplified logic)
   const canViewAnswers = examData?.viewExamAndAnswer !== undefined && examData?.viewExamAndAnswer !== 0;
 
   // Create answer map for easy lookup
   const answerMap = {};
   answers.forEach(answer => {
-    answerMap[answer.questionId] = answer;
+    const questionId = answer.questionId || (answer.question?._id?._id || answer.question?._id || answer.question?.id);
+    if (questionId) {
+      answerMap[questionId] = answer;
+    }
   });
+
+  // Get MCQ questions with answers
+  const getMCQQuestions = () => {
+    return questions
+      .map((q, index) => {
+        const question = (q.questionId && typeof q.questionId === 'object' && q.questionId.text !== undefined)
+          ? q.questionId 
+          : null;
+        
+        if (!question || question.type !== 'mcq') return null;
+        
+        const questionId = question._id?.toString() || question.id?.toString();
+        const answer = answerMap[questionId];
+        const isCorrect = answer?.isCorrect;
+        const userAnswer = answer?.value || answer?.selectedAnswer;
+        const correctAnswer = question.answer || question.correctAnswer;
+
+        return {
+          question,
+          questionId,
+          answer,
+          isCorrect,
+          userAnswer,
+          correctAnswer,
+          index,
+          marks: q.marks || 1,
+          earnedMarks: answer?.points || answer?.earnedMarks || 0,
+        };
+      })
+      .filter(q => q !== null);
+  };
+
+  const mcqQuestions = getMCQQuestions();
+
+  // Filter questions based on filterType
+  const filteredQuestions = mcqQuestions.filter(q => {
+    if (filterType === 'all') return true;
+    if (filterType === 'correct') return q.isCorrect;
+    if (filterType === 'incorrect') return !q.isCorrect;
+    return true;
+  });
+
+  const mathJaxConfig = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true,
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    },
+  };
+
+  const renderMathContent = (content) => {
+    if (!content) return '';
+    
+    const lines = content.split('\n');
+    return (
+      <>
+        {lines.map((line, index) => {
+          if (!line.trim()) {
+            return <br key={index} />;
+          }
+          
+          const hasLatex = line.includes('\\') || line.includes('^') || line.includes('_');
+          const hasDollarSigns = line.includes('$') || line.includes('\\(');
+          
+          if (hasLatex && !hasDollarSigns) {
+            const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
+            return (
+              <div key={index} style={{ 
+                fontFamily: 'inherit',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}>
+                {parts.map((part, partIndex) => {
+                  if (part.match(/^\\[a-zA-Z]+/)) {
+                    return (
+                      <MathJax key={partIndex} inline>
+                        {`$${part}$`}
+                      </MathJax>
+                    );
+                  } else {
+                    return <span key={partIndex}>{part}</span>;
+                  }
+                })}
+              </div>
+            );
+          } else if (hasDollarSigns) {
+            return (
+              <div key={index} style={{ 
+                fontFamily: 'inherit',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}>
+                <MathJax>{line}</MathJax>
+              </div>
+            );
+          } else {
+            return (
+              <div key={index} style={{ 
+                fontFamily: 'inherit',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}>
+                {line}
+              </div>
+            );
+          }
+        })}
+      </>
+    );
+  };
 
   const leaderboardColumns = [
     {
@@ -169,29 +286,44 @@ const ExamResultDetail = () => {
   ];
 
   return (
-    <MathJaxContext config={{
-      loader: { load: ["[tex]/html"] },
-      tex: {
-        packages: { "[+]": ["base", "ams", "noerrors", "noundefined", "html"] },
-        inlineMath: [["$", "$"], ["\\(", "\\)"], ["\\[", "\\]"]],
-        displayMath: [["$$", "$$"], ["\\[", "\\]"]],
-        processEscapes: true,
-        processEnvironments: true,
-        macros: {
-          dfrac: ["\\frac{#1}{#2}", 2]
-        }
-      }
-    }}>
+    <MathJaxContext config={mathJaxConfig}>
       <div className="exam-result-detail-container">
-        <div style={{ marginBottom: '24px' }}>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
-            onClick={() => navigate('/student/dashboard')}
-            style={{ marginBottom: '16px' }}
-          >
-            {t('common.back') || 'Back'}
-          </Button>
-          <Title level={2}>{examData?.name || 'Exam Results'}</Title>
+        {/* Header */}
+        <div className="result-header">
+          <div className="header-left">
+            <Button 
+              icon={<ArrowLeftOutlined />} 
+              onClick={() => navigate('/student/results')}
+              style={{ marginBottom: 16 }}
+            >
+              {t('common.back') || 'Back'}
+            </Button>
+            <Title level={2} style={{ margin: 0 }}>
+              {examData?.name || 'Exam Results'}
+            </Title>
+          </div>
+          <div className="header-right">
+            <Button.Group>
+              <Button
+                type={filterType === 'all' ? 'primary' : 'default'}
+                onClick={() => setFilterType('all')}
+              >
+                {t('studentResults.filterAll') || 'Đúng & Sai'}
+              </Button>
+              <Button
+                type={filterType === 'correct' ? 'primary' : 'default'}
+                onClick={() => setFilterType('correct')}
+              >
+                {t('studentResults.filterCorrect') || 'Đúng'}
+              </Button>
+              <Button
+                type={filterType === 'incorrect' ? 'primary' : 'default'}
+                onClick={() => setFilterType('incorrect')}
+              >
+                {t('studentResults.filterIncorrect') || 'Sai'}
+              </Button>
+            </Button.Group>
+          </div>
         </div>
 
         {/* Score Summary */}
@@ -220,11 +352,7 @@ const ExamResultDetail = () => {
               <Statistic
                 title={t('takeExam.status') || 'Status'}
                 value={
-                  <Tag color={submission.status === 'graded' ? 'success' : 'warning'}>
-                    {submission.status === 'graded' ? t('takeExam.graded') || 'Graded' : 
-                     submission.status === 'late' ? t('takeExam.late') || 'Late' : 
-                     t('takeExam.submitted') || 'Submitted'}
-                  </Tag>
+                  submission.status || 'Submitted'
                 }
               />
             </Col>
@@ -256,106 +384,120 @@ const ExamResultDetail = () => {
         )}
 
         {/* Questions and Answers */}
-        {canViewAnswers && (
-          <Card title={t('takeExam.questionsAndAnswers') || 'Questions and Answers'}>
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
-              {questions.map((q, index) => {
-                // q is ExamQuestionSchema: { questionId: ObjectId or populated Question, order, marks, isRequired }
-                // questionId can be ObjectId string or populated Question object
-                const question = (q.questionId && typeof q.questionId === 'object' && q.questionId.text !== undefined)
-                  ? q.questionId 
-                  : null;
-                
-                if (!question) {
-                  console.warn('Question not found or not populated:', q);
-                  return null;
-                }
-                
-                const questionId = question._id?.toString() || question.id?.toString();
-                const answer = answerMap[questionId];
-                const isCorrect = answer?.isCorrect;
-                const userAnswer = answer?.value;
-                const correctAnswer = question.answer;
+        {canViewAnswers ? (
+          <Card>
+            <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              items={[
+                {
+                  key: 'mcq',
+                  label: t('submissionDetail.mcqTab') || 'Trắc nghiệm',
+                  children: (
+                    <div className="questions-list">
+                      {filteredQuestions.length === 0 ? (
+                        <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
+                      ) : (
+                        filteredQuestions.map((item) => {
+                          const { question, isCorrect, userAnswer, correctAnswer, index, questionId } = item;
+                          const choices = question.choices || [];
 
-                return (
-                  <Card
-                    key={index}
-                    className={`question-result-card ${isCorrect ? 'correct' : 'incorrect'}`}
-                    style={{
-                      borderLeft: `4px solid ${isCorrect ? '#52c41a' : '#ff4d4f'}`
-                    }}
-                  >
-                    <div style={{ marginBottom: '16px' }}>
-                      <Space>
-                        <Text strong>Question {index + 1}</Text>
-                        <Tag color={isCorrect ? 'success' : 'error'}>
-                          {isCorrect ? (
-                            <><CheckCircleOutlined /> {t('takeExam.correct') || 'Correct'}</>
-                          ) : (
-                            <><CloseCircleOutlined /> {t('takeExam.incorrect') || 'Incorrect'}</>
-                          )}
-                        </Tag>
-                        <Text type="secondary">
-                          {answer?.points || 0} / {q.marks || 1} {t('takeExam.marks') || 'marks'}
-                        </Text>
-                      </Space>
-                    </div>
+                          return (
+                            <Card
+                              key={questionId || index}
+                              className="question-card"
+                              style={{ marginBottom: 24 }}
+                            >
+                              <div className="question-card-header">
+                                <div className="question-title">
+                                  <Text strong style={{ fontSize: 16 }}>
+                                    {t('submissionDetail.question') || 'Question'} {index + 1}
+                                  </Text>
+                                  <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+                                    ID: {questionId}
+                                  </Text>
+                                </div>
+                                <Button
+                                  type="text"
+                                  icon={<EditOutlined />}
+                                  size="small"
+                                />
+                              </div>
 
-                    <Paragraph className="question-text">
-                      <MathJax inline dynamic>
-                        {question.text || question.name}
-                      </MathJax>
-                    </Paragraph>
+                              <Divider />
 
-                    <Divider />
+                              <div className="question-content">
+                                <div className="question-text-wrapper">
+                                  <Paragraph style={{ 
+                                    fontSize: 16, 
+                                    marginBottom: 16,
+                                    wordWrap: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    whiteSpace: 'pre-wrap',
+                                    fontFamily: 'inherit'
+                                  }}>
+                                    {renderMathContent(question.text || question.name)}
+                                  </Paragraph>
+                                </div>
 
-                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                      <div>
-                        <Text strong style={{ color: '#1890ff' }}>
-                          {t('takeExam.yourAnswer') || 'Your Answer'}: 
-                        </Text>
-                        <div style={{ marginTop: '8px', padding: '12px', background: '#f5f5f5', borderRadius: '4px' }}>
-                          {question.type === 'mcq' || question.type === 'tf' ? (
-                            <Text>
-                              {question.type === 'mcq' 
-                                ? question.choices?.find(c => c.key === userAnswer)?.text || userAnswer
-                                : userAnswer === 'true' ? t('takeExam.true') : t('takeExam.false')
-                              }
-                            </Text>
-                          ) : (
-                            <Text>{userAnswer || t('takeExam.noAnswer') || 'No answer'}</Text>
-                          )}
-                        </div>
-                      </div>
+                                <div className="choices-list">
+                                  {choices.map((choice) => {
+                                    const isSelected = userAnswer === choice.key;
+                                    const isCorrectChoice = correctAnswer === choice.key;
+                                    
+                                    let choiceClassName = 'choice-item';
+                                    if (isCorrectChoice) {
+                                      choiceClassName += ' choice-correct';
+                                    } else if (isSelected && !isCorrect) {
+                                      choiceClassName += ' choice-incorrect';
+                                    }
 
-                      {!isCorrect && (
-                        <div>
-                          <Text strong style={{ color: '#52c41a' }}>
-                            {t('takeExam.correctAnswer') || 'Correct Answer'}: 
-                          </Text>
-                          <div style={{ marginTop: '8px', padding: '12px', background: '#f6ffed', borderRadius: '4px', border: '1px solid #b7eb8f' }}>
-                            {question.type === 'mcq' || question.type === 'tf' ? (
-                              <Text>
-                                {question.type === 'mcq'
-                                  ? question.choices?.find(c => c.key === correctAnswer)?.text || correctAnswer
-                                  : correctAnswer === 'true' ? t('takeExam.true') : t('takeExam.false')
-                                }
-                              </Text>
-                            ) : (
-                              <Text>{correctAnswer}</Text>
-                            )}
-                          </div>
-                        </div>
+                                    return (
+                                      <div key={choice.key} className={choiceClassName}>
+                                        <div className="choice-content">
+                                          <Text strong style={{ marginRight: 8 }}>{choice.key}.</Text>
+                                          <span style={{
+                                            wordWrap: 'break-word',
+                                            overflowWrap: 'break-word',
+                                            whiteSpace: 'pre-wrap',
+                                            fontFamily: 'inherit',
+                                            flex: 1
+                                          }}>
+                                            {renderMathContent(choice.text)}
+                                          </span>
+                                        </div>
+                                        {isCorrectChoice && (
+                                          <div className="choice-icon correct-icon">
+                                            <CheckCircleOutlined />
+                                          </div>
+                                        )}
+                                        {isSelected && !isCorrect && (
+                                          <div className="choice-icon incorrect-icon">
+                                            <CloseCircleOutlined />
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="correct-answer-section">
+                                  <Text style={{ fontSize: 14 }}>
+                                    {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer}</Text>
+                                  </Text>
+                                </div>
+                              </div>
+                            </Card>
+                          );
+                        })
                       )}
-                    </Space>
-                  </Card>
-                );
-              })}
-            </Space>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           </Card>
-        )}
-
-        {!canViewAnswers && (
+        ) : (
           <Card>
             <Alert
               message={t('takeExam.answersNotAvailable') || 'Answers are not available yet'}
@@ -370,4 +512,3 @@ const ExamResultDetail = () => {
 };
 
 export default ExamResultDetail;
-

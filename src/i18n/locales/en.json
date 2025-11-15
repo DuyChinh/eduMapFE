@@ -96,7 +96,19 @@
     "loading": "Loading...",
     "noData": "No data available",
     "viewAll": "View all",
-    "or": "Or"
+    "or": "Or",
+    "hours": "hours",
+    "minutes": "min",
+    "seconds": "sec",
+    "yes": "Yes",
+    "no": "No",
+    "actions": "Actions",
+    "public": "Public",
+    "private": "Private",
+    "back": "Back",
+    "backToDashboard": "Back to Dashboard",
+    "student": "Student",
+    "add": "Add"
   },
   "login": {
     "welcome": "Welcome to",
@@ -156,7 +168,7 @@
     "loginNow": "Login now",
     "sendSuccess": "OTP code has been sent to your email!",
     "sendFailed": "An error occurred while sending OTP!",
-    "emailRequired": "Please enter email from login page!"
+    "emailRequiredForForgotPassword": "Please enter email from login page!"
   },
   "verifyOTP": {
     "title": "Verify OTP",
@@ -403,7 +415,6 @@
     "statusRequired": "Please select status!",
     "selectStatus": "Select status",
     "noName": "No name",
-    "createFailed": "Failed to create question!",
     "question": "Question",
     "noQuestionText": "No question text",
     "correctAnswer": "Correct Answer",
@@ -428,10 +439,8 @@
     "choiceTextPlaceholder": "Enter choice text...",
     "answerKeyPlaceholder": "Enter answer key (e.g., a, b, c)",
     "answerTextPlaceholder": "Enter answer...",
-    "selectAnswer": "Select Answer",
     "true": "True",
     "false": "False",
-    "addChoice": "Add Choice",
     "tagsHelp": "Tags separated by commas",
     "tagsPlaceholder": "math, algebra, equation",
     "fetchFailed": "Failed to load questions",
@@ -466,6 +475,7 @@
     "items": "exams",
     "noExams": "No exams found",
     "examNotFound": "Exam not found",
+    "examHistory": "Exam History",
     "searchPlaceholder": "Search exams...",
     "filterByStatus": "Filter by status",
     "fetchFailed": "Failed to load exams",
@@ -631,7 +641,30 @@
       "fetchFailed": "Failed to load submissions",
       "noData": "No submissions available"
     },
-    "viewDetail": "View Detail"
+    "viewDetail": "View Detail",
+    "subjectsLoadFailed": "Failed to load subjects",
+    "shareLinkGenerated": "Share link has been generated:",
+    "publishSuccess": "Exam published successfully!",
+    "saveDraft": "Save Draft",
+    "publish": "Publish",
+    "currency": "VND"
+  },
+  "studentResults": {
+    "currentScore": "Score",
+    "detailedInfo": "Detailed Information",
+    "timeSpent": "Time Spent",
+    "submittedAt": "Submitted At",
+    "mcq": "Multiple Choice",
+    "questions": "questions",
+    "viewDetail": "View detailed progress:",
+    "copyLinkToTeacher": "Copy link to send to teacher",
+    "filterByAnswer": "Filter by Answer",
+    "allAnswers": "All",
+    "filterAll": "Correct & Incorrect",
+    "filterCorrect": "Correct",
+    "filterIncorrect": "Incorrect",
+    "correctAnswers": "Correct Answers",
+    "incorrectAnswers": "Incorrect Answers"
   },
   "takeExam": {
     "loading": "Loading exam...",
@@ -715,19 +748,6 @@
     "invalidPassword": "Invalid password",
     "startExam": "Start Exam",
     "failedToStart": "Failed to start exam"
-  },
-  "common": {
-    "yes": "Yes",
-    "no": "No",
-    "cancel": "Cancel",
-    "actions": "Actions",
-    "public": "Public",
-    "private": "Private",
-    "back": "Back",
-    "backToDashboard": "Back to Dashboard",
-    "student": "Student",
-    "add": "Add",
-    "search": "Search"
   },
   "reports": {
     "title": "Class Report",
@@ -814,6 +834,26 @@
     "activityTab": "Activity",
     "noQuestions": "No questions",
     "noActivityLog": "No activity log",
+    "activitySummary": "Activity Summary",
+    "tabVisible": "Tab visible",
+    "tabHidden": "Tab hidden",
+    "suspicious": "Suspicious",
+    "severity": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "activityTypes": {
+      "rightClick": "Right Click",
+      "pageUnload": "Page Unload Attempt",
+      "tabSwitch": "Tab Switch",
+      "start": "Start",
+      "answer": "Answer",
+      "change": "Change",
+      "submit": "Submit",
+      "copyAttempt": "Copy Attempt",
+      "pasteAttempt": "Paste Attempt"
+    },
     "question": "Question",
     "correctAnswer": "Correct Answer",
     "studentAnswer": "Student's Answer"

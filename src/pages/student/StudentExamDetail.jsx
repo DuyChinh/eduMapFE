@@ -34,6 +34,7 @@ import {
   HistoryOutlined,
   EyeOutlined,
   ClockCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import examStatsService from '../../api/examStatsService';
@@ -99,8 +100,11 @@ const StudentExamDetail = () => {
       change: <HistoryOutlined style={{ color: '#faad14' }} />,
       submit: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
       tab_switch: <EyeOutlined style={{ color: '#ff4d4f' }} />,
+      visibility: <EyeOutlined style={{ color: '#ff4d4f' }} />,
       copy_attempt: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
       paste_attempt: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
+      right_click: <CloseCircleOutlined style={{ color: '#faad14' }} />,
+      beforeunload: <WarningOutlined style={{ color: '#ff4d4f' }} />,
     };
     return icons[type] || <ClockCircleOutlined />;
   };
@@ -114,8 +118,47 @@ const StudentExamDetail = () => {
       tab_switch: 'red',
       copy_attempt: 'red',
       paste_attempt: 'red',
+      right_click: 'orange',
+      beforeunload: 'red',
+      visibility: 'orange',
     };
     return colors[type] || 'default';
+  };
+
+  const getActivityDisplayText = (activity) => {
+    // Priority: meta.reason > action > type
+    if (activity.meta?.reason) {
+      return activity.meta.reason;
+    }
+    return activity.action || activity.type || activity.event || '-';
+  };
+
+  const getActivitySummary = () => {
+    if (!activityLog || activityLog.length === 0) return {};
+    
+    const summary = {};
+    activityLog.forEach((activity) => {
+      const key = activity.type || activity.event || 'unknown';
+      summary[key] = (summary[key] || 0) + 1;
+    });
+    
+    return summary;
+  };
+
+  const formatActivityType = (type) => {
+    const typeMap = {
+      right_click: t('submissionDetail.activityTypes.rightClick'),
+      beforeunload: t('submissionDetail.activityTypes.pageUnload'),
+      visibility: t('submissionDetail.activityTypes.tabSwitch'),
+      tab_switch: t('submissionDetail.activityTypes.tabSwitch'),
+      start: t('submissionDetail.activityTypes.start'),
+      answer: t('submissionDetail.activityTypes.answer'),
+      change: t('submissionDetail.activityTypes.change'),
+      submit: t('submissionDetail.activityTypes.submit'),
+      copy_attempt: t('submissionDetail.activityTypes.copyAttempt'),
+      paste_attempt: t('submissionDetail.activityTypes.pasteAttempt'),
+    };
+    return typeMap[type] || type;
   };
 
   const handleSaveComment = async () => {
@@ -141,17 +184,17 @@ const StudentExamDetail = () => {
   };
 
   const formatTimeSpent = (seconds) => {
-    if (!seconds) return '0 giây';
+    if (!seconds) return `0 ${t('common.seconds')}`;
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     
     if (hours > 0) {
-      return `${hours} giờ ${minutes} phút ${secs} giây`;
+      return `${hours} ${t('common.hours')} ${minutes} ${t('common.minutes')} ${secs} ${t('common.seconds')}`;
     } else if (minutes > 0) {
-      return `${minutes} phút ${secs} giây`;
+      return `${minutes} ${t('common.minutes')} ${secs} ${t('common.seconds')}`;
     } else {
-      return `${secs} giây`;
+      return `${secs} ${t('common.seconds')}`;
     }
   };
 
@@ -604,42 +647,72 @@ const StudentExamDetail = () => {
                         ) : activityLog.length === 0 ? (
                           <Empty description={t('submissionDetail.noActivityLog')} />
                         ) : (
-                          <Timeline mode="left">
-                            {activityLog.map((activity, index) => (
-                              <Timeline.Item
-                                key={index}
-                                dot={getActivityIcon(activity.type)}
-                                color={getActivityColor(activity.type)}
-                              >
-                                <div>
-                                  <Text strong>{activity.action || activity.type}</Text>
-                                  <br />
-                                  <Text type="secondary" style={{ fontSize: 12 }}>
-                                    {activity.timestamp 
-                                      ? new Date(activity.timestamp).toLocaleString('vi-VN')
-                                      : activity.createdAt
-                                      ? new Date(activity.createdAt).toLocaleString('vi-VN')
-                                      : '-'
-                                    }
-                                  </Text>
-                                  {activity.details && (
-                                    <div style={{ marginTop: 4 }}>
-                                      <Text type="secondary" style={{ fontSize: 12 }}>
-                                        {activity.details}
-                                      </Text>
-                                    </div>
-                                  )}
-                                  {activity.questionId && (
-                                    <div style={{ marginTop: 4 }}>
-                                      <Text type="secondary" style={{ fontSize: 12 }}>
-                                        {t('submissionDetail.question')}: {activity.questionId}
-                                      </Text>
-                                    </div>
-                                  )}
+                          <>
+                            {/* Activity Summary */}
+                            {Object.keys(getActivitySummary()).length > 0 && (
+                              <div style={{ marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
+                                <Text strong>{t('submissionDetail.activitySummary')}: </Text>
+                                <div style={{ marginTop: 8 }}>
+                                  {Object.entries(getActivitySummary()).map(([type, count], index) => (
+                                    <Tag key={type} color={getActivityColor(type)} style={{ marginBottom: 4 }}>
+                                      {formatActivityType(type)}: {count}
+                                    </Tag>
+                                  ))}
                                 </div>
-                              </Timeline.Item>
-                            ))}
-                          </Timeline>
+                              </div>
+                            )}
+
+                            <Timeline mode="left">
+                              {activityLog.map((activity, index) => (
+                                <Timeline.Item
+                                  key={activity._id || index}
+                                  dot={getActivityIcon(activity.type || activity.event)}
+                                  color={getActivityColor(activity.type || activity.event)}
+                                >
+                                  <div>
+                                    <Text strong>{getActivityDisplayText(activity)}</Text>
+                                    <br />
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                      {activity.timestamp 
+                                        ? new Date(activity.timestamp).toLocaleString('vi-VN')
+                                        : activity.createdAt
+                                        ? new Date(activity.createdAt).toLocaleString('vi-VN')
+                                        : '-'
+                                      }
+                                    </Text>
+                                    {activity.meta?.visible !== undefined && (
+                                      <div style={{ marginTop: 4 }}>
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                          {activity.meta.visible 
+                                            ? t('submissionDetail.tabVisible') 
+                                            : t('submissionDetail.tabHidden')
+                                          }
+                                        </Text>
+                                      </div>
+                                    )}
+                                    {activity.severity && (
+                                      <div style={{ marginTop: 4 }}>
+                                        <Tag 
+                                          color={
+                                            activity.severity === 'high' ? 'red' :
+                                            activity.severity === 'medium' ? 'orange' : 'default'
+                                          }
+                                          size="small"
+                                        >
+                                          {t(`submissionDetail.severity.${activity.severity}`)}
+                                        </Tag>
+                                        {activity.isSuspicious && (
+                                          <Tag color="red" size="small" style={{ marginLeft: 4 }}>
+                                            {t('submissionDetail.suspicious')}
+                                          </Tag>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </Timeline.Item>
+                              ))}
+                            </Timeline>
+                          </>
                         )}
                       </div>
                     ),

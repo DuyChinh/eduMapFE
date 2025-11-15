@@ -1,46 +1,140 @@
 .exam-result-detail-container {
   padding: 24px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   background-color: #f5f5f5;
   min-height: 100vh;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  flex: 1;
+  min-width: 200px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
 }
 
 .result-summary-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.question-result-card {
+.questions-list {
+  padding: 16px 0;
+}
+
+.question-card {
+  border-radius: 8px;
+  background: #fff;
+}
+
+.question-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.question-title {
+  display: flex;
+  align-items: center;
+}
+
+.question-content {
+  width: 100%;
+}
+
+.question-text-wrapper {
   margin-bottom: 16px;
-  transition: all 0.3s ease;
 }
 
-.question-result-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.choices-list {
+  margin: 16px 0;
 }
 
-.question-result-card.correct {
-  background-color: #f6ffed;
+.choice-item {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
-.question-result-card.incorrect {
-  background-color: #fff1f0;
+.choice-item.choice-correct {
+  background: #f6ffed;
+  border-color: #b7eb8f;
 }
 
-.question-text {
+.choice-item.choice-incorrect {
+  background: #fff2f0;
+  border-color: #ffccc7;
+}
+
+.choice-content {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.choice-icon {
+  flex-shrink: 0;
+  margin-left: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
-  line-height: 1.8;
-  margin-bottom: 16px;
 }
 
-.question-text .MathJax {
-  font-size: 1.2em !important;
-  display: inline;
+.choice-icon.correct-icon {
+  background: #52c41a;
+  color: #fff;
+}
+
+.choice-icon.incorrect-icon {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+.correct-answer-section {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f6ffed;
+  border-radius: 4px;
+  border: 1px solid #b7eb8f;
 }
 
 @media (max-width: 768px) {
   .exam-result-detail-container {
     padding: 16px;
   }
-}
 
+  .result-header {
+    flex-direction: column;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+}

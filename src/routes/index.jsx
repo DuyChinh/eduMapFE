@@ -122,9 +122,9 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="classes" element={<StudentClasses />} />
         <Route path="classes/:classId" element={<StudentClassDetail />} />
-        <Route path="results" element={<Results />} />
+        <Route path="results" element={<ExamResults />} />
         <Route path="results/:submissionId" element={<ExamResultDetail />} />
-        <Route path="exam-results" element={<ExamResults />} />
+        {/* <Route path="exam-results" element={<ExamResults />} /> */}
       </Route>
 
       {/* Exam-related routes without StudentLayout */}

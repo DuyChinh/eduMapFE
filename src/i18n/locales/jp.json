@@ -96,7 +96,19 @@
     "loading": "読み込み中...",
     "noData": "データがありません",
     "viewAll": "すべて表示",
-    "or": "または"
+    "or": "または",
+    "hours": "時間",
+    "minutes": "分",
+    "seconds": "秒",
+    "yes": "はい",
+    "no": "いいえ",
+    "actions": "操作",
+    "public": "公開",
+    "private": "非公開",
+    "back": "戻る",
+    "backToDashboard": "ダッシュボードに戻る",
+    "student": "学生",
+    "add": "追加"
   },
   "login": {
     "welcome": "ようこそ",
@@ -403,7 +415,6 @@
     "statusRequired": "ステータスを選択してください！",
     "selectStatus": "ステータスを選択",
     "noName": "名前なし",
-    "createFailed": "問題の作成に失敗しました！",
     "question": "問題",
     "noQuestionText": "問題文がありません",
     "correctAnswer": "正解",
@@ -428,10 +439,8 @@
     "choiceTextPlaceholder": "選択肢のテキストを入力...",
     "answerKeyPlaceholder": "答えのキーを入力（例：a、b、c）",
     "answerTextPlaceholder": "答えを入力...",
-    "selectAnswer": "答えを選択",
     "true": "正しい",
     "false": "間違い",
-    "addChoice": "選択肢を追加",
     "tagsHelp": "カンマで区切られたタグ",
     "tagsPlaceholder": "数学、代数、方程式",
     "fetchFailed": "問題の読み込みに失敗しました",
@@ -466,6 +475,7 @@
     "items": "試験",
     "noExams": "試験が見つかりません",
     "examNotFound": "試験が見つかりません",
+    "examHistory": "試験履歴",
     "searchPlaceholder": "試験を検索...",
     "filterByStatus": "ステータスでフィルター",
     "fetchFailed": "試験の読み込みに失敗しました",
@@ -631,7 +641,30 @@
       "fetchFailed": "提出の読み込みに失敗しました",
       "noData": "提出がありません"
     },
-    "viewDetail": "詳細を見る"
+    "viewDetail": "詳細を見る",
+    "subjectsLoadFailed": "科目の読み込みに失敗しました",
+    "shareLinkGenerated": "共有リンクが生成されました:",
+    "publishSuccess": "試験の公開に成功しました！",
+    "saveDraft": "下書き保存",
+    "publish": "公開",
+    "currency": "VND"
+  },
+  "studentResults": {
+    "currentScore": "スコア",
+    "detailedInfo": "詳細情報",
+    "timeSpent": "所要時間",
+    "submittedAt": "提出日時",
+    "mcq": "選択問題",
+    "questions": "問",
+    "viewDetail": "詳細な進捗を表示:",
+    "copyLinkToTeacher": "教師に送信するリンクをコピー",
+    "filterByAnswer": "回答でフィルター",
+    "allAnswers": "すべて",
+    "filterAll": "正解 & 不正解",
+    "filterCorrect": "正解",
+    "filterIncorrect": "不正解",
+    "correctAnswers": "正解",
+    "incorrectAnswers": "不正解"
   },
   "takeExam": {
     "loading": "試験を読み込み中...",
@@ -715,19 +748,6 @@
     "invalidPassword": "パスワードが正しくありません",
     "startExam": "試験を開始",
     "failedToStart": "試験を開始できませんでした"
-  },
-  "common": {
-    "yes": "はい",
-    "no": "いいえ",
-    "cancel": "キャンセル",
-    "actions": "操作",
-    "public": "公開",
-    "private": "非公開",
-    "back": "戻る",
-    "backToDashboard": "ダッシュボードに戻る",
-    "student": "学生",
-    "add": "追加",
-    "search": "検索"
   },
   "reports": {
     "title": "クラスレポート",
@@ -814,6 +834,26 @@
     "activityTab": "アクティビティ",
     "noQuestions": "問題がありません",
     "noActivityLog": "アクティビティログがありません",
+    "activitySummary": "アクティビティ概要",
+    "tabVisible": "タブ表示中",
+    "tabHidden": "タブ非表示",
+    "suspicious": "不審",
+    "severity": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "activityTypes": {
+      "rightClick": "右クリック",
+      "pageUnload": "ページ離脱試行",
+      "tabSwitch": "タブ切り替え",
+      "start": "開始",
+      "answer": "回答",
+      "change": "変更",
+      "submit": "提出",
+      "copyAttempt": "コピー試行",
+      "pasteAttempt": "貼り付け試行"
+    },
     "question": "問題",
     "correctAnswer": "正解",
     "studentAnswer": "学生の回答"

@@ -351,9 +351,9 @@ const ExamDetailNew = () => {
             {t('common.back')}
           </Button>
           <Title level={2} style={{ margin: 0 }}>{examData.name}</Title>
-          <Tag color={getStatusColor(examData.status)}>
+          {/* <Tag color={getStatusColor(examData.status)}>
             {getStatusText(examData.status)}
-          </Tag>
+          </Tag> */}
         </Space>
 
         <Space>

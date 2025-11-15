@@ -137,7 +137,7 @@ const CreateExam = () => {
       setSubjects(subjectsData);
     } catch (error) {
       console.error('Error fetching subjects:', error);
-      message.error('Failed to load subjects');
+      message.error(t('exams.subjectsLoadFailed'));
     }
   };
 
@@ -473,7 +473,7 @@ const CreateExam = () => {
                   name="fee"
                   style={{ flex: 1 }}
                 >
-                  <InputNumber min={0} style={{ width: '100%' }} addonAfter="VND" />
+                  <InputNumber min={0} style={{ width: '100%' }} addonAfter={t('exams.currency')} />
                 </Form.Item>
               </Space>
             </Collapse.Panel>

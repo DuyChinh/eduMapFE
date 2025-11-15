@@ -96,7 +96,19 @@
     "loading": "Đang tải...",
     "noData": "Không có dữ liệu",
     "viewAll": "Xem tất cả",
-    "or": "Hoặc"
+    "or": "Hoặc",
+    "hours": "giờ",
+    "minutes": "phút",
+    "seconds": "giây",
+    "yes": "Có",
+    "no": "Không",
+    "actions": "Thao tác",
+    "public": "Công khai",
+    "private": "Riêng tư",
+    "back": "Quay lại",
+    "backToDashboard": "Về trang chủ",
+    "student": "Học sinh",
+    "add": "Thêm"
   },
   "login": {
     "welcome": "Chào mừng đến với",
@@ -403,7 +415,6 @@
     "statusRequired": "Vui lòng chọn trạng thái!",
     "selectStatus": "Chọn trạng thái",
     "noName": "Chưa có tên",
-    "createFailed": "Tạo câu hỏi thất bại!",
     "question": "Câu hỏi",
     "noQuestionText": "Chưa có nội dung câu hỏi",
     "correctAnswer": "Đáp án đúng",
@@ -428,10 +439,8 @@
     "choiceTextPlaceholder": "Nhập nội dung lựa chọn...",
     "answerKeyPlaceholder": "Nhập key đáp án (ví dụ: a, b, c)",
     "answerTextPlaceholder": "Nhập đáp án...",
-    "selectAnswer": "Chọn đáp án",
     "true": "Đúng",
     "false": "Sai",
-    "addChoice": "Thêm lựa chọn",
     "tagsHelp": "Các thẻ phân cách bằng dấu phẩy",
     "tagsPlaceholder": "toán, đại số, phương trình",
     "fetchFailed": "Không thể tải danh sách câu hỏi",
@@ -466,6 +475,7 @@
     "items": "đề thi",
     "noExams": "Không có đề thi nào",
     "examNotFound": "Không tìm thấy đề thi",
+    "examHistory": "Lịch sử làm bài",
     "searchPlaceholder": "Tìm kiếm đề thi...",
     "filterByStatus": "Lọc theo trạng thái",
     "fetchFailed": "Không thể tải danh sách đề thi",
@@ -631,7 +641,30 @@
       "fetchFailed": "Không thể tải danh sách bài nộp",
       "noData": "Chưa có bài nộp nào"
     },
-    "viewDetail": "Xem chi tiết"
+    "viewDetail": "Xem chi tiết",
+    "subjectsLoadFailed": "Không thể tải danh sách môn học",
+    "shareLinkGenerated": "Link chia sẻ đã được tạo:",
+    "publishSuccess": "Xuất bản đề thi thành công!",
+    "saveDraft": "Lưu nháp",
+    "publish": "Xuất bản",
+    "currency": "VND"
+  },
+  "studentResults": {
+    "currentScore": "Điểm",
+    "detailedInfo": "Thông tin chi tiết",
+    "timeSpent": "Thời gian làm bài",
+    "submittedAt": "Thời gian nộp bài",
+    "mcq": "Trắc nghiệm",
+    "questions": "câu",
+    "viewDetail": "Xem chi tiết quá trình làm bài:",
+    "copyLinkToTeacher": "Copy link gửi giáo viên",
+    "filterByAnswer": "Lọc theo đáp án",
+    "allAnswers": "Tất cả",
+    "filterAll": "Đúng & Sai",
+    "filterCorrect": "Đúng",
+    "filterIncorrect": "Sai",
+    "correctAnswers": "Câu đúng",
+    "incorrectAnswers": "Câu sai"
   },
   "takeExam": {
     "loading": "Đang tải đề thi...",
@@ -715,19 +748,6 @@
     "invalidPassword": "Mật khẩu không đúng",
     "startExam": "Bắt đầu làm bài",
     "failedToStart": "Không thể bắt đầu làm bài"
-  },
-  "common": {
-    "yes": "Có",
-    "no": "Không",
-    "cancel": "Hủy",
-    "actions": "Thao tác",
-    "public": "Công khai",
-    "private": "Riêng tư",
-    "back": "Quay lại",
-    "backToDashboard": "Về trang chủ",
-    "student": "Học sinh",
-    "add": "Thêm",
-    "search": "Tìm kiếm"
   },
   "reports": {
     "title": "Báo cáo lớp học",
@@ -814,6 +834,26 @@
     "activityTab": "Hoạt động",
     "noQuestions": "Không có câu hỏi nào",
     "noActivityLog": "Không có nhật ký hoạt động",
+    "activitySummary": "Tổng kết hoạt động",
+    "tabVisible": "Tab hiển thị",
+    "tabHidden": "Tab bị ẩn",
+    "suspicious": "Đáng ngờ",
+    "severity": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao"
+    },
+    "activityTypes": {
+      "rightClick": "Nhấp chuột phải",
+      "pageUnload": "Cố gắng rời trang",
+      "tabSwitch": "Chuyển tab",
+      "start": "Bắt đầu",
+      "answer": "Trả lời",
+      "change": "Thay đổi",
+      "submit": "Nộp bài",
+      "copyAttempt": "Cố gắng sao chép",
+      "pasteAttempt": "Cố gắng dán"
+    },
     "question": "Câu",
     "correctAnswer": "Đáp án đúng",
     "studentAnswer": "Đáp án học sinh chọn"

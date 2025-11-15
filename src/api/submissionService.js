@@ -84,3 +84,14 @@ export const getExamLeaderboard = async (examId) => {
   return response;
 };
 
+/**
+ * Get current user's submissions
+ * @param {Object} params - Query parameters (subject, status, dateRange, etc.)
+ * @returns {Promise} - List of user's submissions
+ */
+export const getMySubmissions = async (params = {}) => {
+  const response = await axiosInstance.get('/submissions/me', { params });
+  // axiosInstance interceptor already returns response.data
+  return response;
+};
+
