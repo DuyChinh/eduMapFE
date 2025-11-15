@@ -60,7 +60,7 @@ const ClassDetail = () => {
           setTeacher(teacherResponse.data || teacherResponse);
         } catch (error) {
           console.error('❌ Error fetching teacher:', classInfo.teacherId, error);
-          setTeacher({ _id: classInfo.teacherId, name: 'Unknown Teacher', email: 'unknown@example.com' });
+          setTeacher({ _id: classInfo.teacherId, name: t('classes.teacher'), email: 'unknown@example.com' });
         }
       } else if (classInfo.teacher) {
         // If teacher data is already available
@@ -81,7 +81,7 @@ const ClassDetail = () => {
             return studentResponse.data || studentResponse;
           } catch (error) {
             console.error('❌ Error fetching student:', studentId, error);
-            return { _id: studentId, name: 'Unknown Student', email: 'unknown@example.com' };
+            return { _id: studentId, name: t('classes.unknownStudent'), email: 'unknown@example.com' };
           }
         });
         
@@ -120,7 +120,7 @@ const ClassDetail = () => {
             {record.name?.charAt(0)?.toUpperCase() || 'S'}
           </Avatar>
           <div>
-            <div style={{ fontWeight: 500 }}>{record.name || 'Student'}</div>
+            <div style={{ fontWeight: 500 }}>{record.name || t('classes.student')}</div>
             <Text type="secondary" style={{ fontSize: '12px' }}>
               {record.email || 'student@example.com'}
             </Text>
@@ -155,7 +155,7 @@ const ClassDetail = () => {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '40px' }}>
-          <Text type="secondary">Class not found</Text>
+          <Text type="secondary">{t('classes.notFound')}</Text>
         </div>
       </Card>
     );
@@ -214,7 +214,7 @@ const ClassDetail = () => {
                 {teacher?.name?.charAt(0)?.toUpperCase() || 'T'}
               </Avatar>
               <div>
-                <div style={{ fontWeight: 500 }}>{teacher?.name || 'Teacher'}</div>
+                <div style={{ fontWeight: 500 }}>{teacher?.name || t('classes.teacher')}</div>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
                   {teacher?.email || 'teacher@example.com'}
                 </Text>
@@ -259,6 +259,7 @@ const ClassDetail = () => {
             showTotal: (total, range) => 
               `${range[0]}-${range[1]} of ${total} ${t('classes.students')}`,
           }}
+          scroll={{ x: 'max-content' }}
         />
       </Card>
     </div>

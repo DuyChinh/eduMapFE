@@ -5,11 +5,11 @@ import {
   Space, 
   Tag, 
   Popconfirm, 
-  message, 
   Card, 
   Input, 
   Select,
-  Tooltip
+  Tooltip,
+  App
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -17,7 +17,6 @@ import {
   DeleteOutlined, 
   EyeOutlined,
   SearchOutlined,
-  CopyOutlined,
   LinkOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +28,7 @@ const { Search } = Input;
 const { Option } = Select;
 
 const ExamList = () => {
+  const { message } = App.useApp();
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -215,32 +215,28 @@ const ExamList = () => {
         }
         const shareLink = `${window.location.origin}/exam/${shareCode}`;
         return (
-          <Space>
-            <Tooltip title={shareLink}>
-              <Tag color="blue" icon={<LinkOutlined />}>
-                {shareCode}
-              </Tag>
-            </Tooltip>
-            <Tooltip title={t('exams.copyLink')}>
-              <Button
-                type="text"
-                size="small"
-                icon={<CopyOutlined />}
-                onClick={() => {
-                  navigator.clipboard.writeText(shareLink);
-                  message.success(t('exams.linkCopied'));
-                }}
-              />
-            </Tooltip>
-          </Space>
+          <Tooltip title={t('exams.clickToCopy') || 'Click to copy link'}>
+            <Tag 
+              color="blue" 
+              icon={<LinkOutlined />}
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                navigator.clipboard.writeText(shareLink);
+                message.success(t('exams.linkCopied'));
+              }}
+            >
+              {shareCode}
+            </Tag>
+          </Tooltip>
         );
       },
     },
     {
       title: t('common.actions'),
       key: 'actions',
+      width: 120,
       render: (_, record) => (
-        <Space size="small">
+        <Space size="small" wrap={false}>
           <Tooltip title={t('exams.viewDetails')}>
             <Button 
               type="text" 
@@ -331,6 +327,7 @@ const ExamList = () => {
             `${range[0]}-${range[1]} of ${total} ${t('exams.items')}`,
         }}
         onChange={handleTableChange}
+        scroll={{ x: 'max-content' }}
       />
     </Card>
   );

@@ -148,3 +148,18 @@
   }
 }
 
+/* Responsive table with scroll for all teacher pages */
+.ant-table-wrapper {
+  overflow-x: auto;
+}
+
+.ant-table {
+  min-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .ant-table {
+    min-width: 800px;
+  }
+}
+

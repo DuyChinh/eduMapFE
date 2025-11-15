@@ -72,6 +72,15 @@
   border-radius: 12px;
 }
 
+/* Responsive table with scroll for all student pages */
+.ant-table-wrapper {
+  overflow-x: auto;
+}
+
+.ant-table {
+  min-width: 600px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .page-header {
@@ -85,6 +94,10 @@
   
   .stat-card .ant-statistic-content-value {
     font-size: 24px;
+  }
+
+  .ant-table {
+    min-width: 800px;
   }
 }
 

@@ -2,3 +2,26 @@
   padding: 24px;
 }
 
+/* Responsive table with scroll */
+.monitor-container .ant-table-wrapper {
+  overflow-x: auto;
+}
+
+.monitor-container .ant-table {
+  min-width: 800px;
+}
+
+@media (max-width: 768px) {
+  .monitor-container {
+    padding: 16px;
+  }
+
+  .monitor-container .ant-table {
+    min-width: 1000px;
+  }
+
+  .monitor-container .ant-space {
+    flex-wrap: wrap;
+  }
+}
+

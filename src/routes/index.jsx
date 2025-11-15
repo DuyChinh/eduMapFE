@@ -28,6 +28,8 @@ import TeacherClasses from '../pages/teacher/Classes';
 import TeacherClassDetail from '../pages/teacher/ClassDetail';
 import Monitor from '../pages/teacher/Monitor';
 import Reports from '../pages/teacher/Reports';
+import ExamDetailNew from '../pages/teacher/ExamDetailNew';
+import StudentExamDetail from '../pages/student/StudentExamDetail';
 
 // Student Pages
 import StudentDashboard from '../pages/student/StudentDashboard';
@@ -37,6 +39,7 @@ import Results from '../pages/student/Results';
 import TakeExam from '../pages/student/TakeExam';
 import ExamResultDetail from '../pages/student/ExamResultDetail';
 import ExamError from '../pages/student/ExamError';
+import ExamResults from '../pages/student/ExamResults';
 
 // Public Pages
 import PublicTakeExam from '../pages/public/PublicTakeExam';
@@ -97,8 +100,10 @@ const AppRoutes = () => {
         <Route path="questions/detail/:questionId" element={<QuestionDetail />} />
         <Route path="exams" element={<Exams />} />
         <Route path="exams/create" element={<CreateExam />} />
-        <Route path="exams/:examId" element={<ExamDetail />} />
+        {/* <Route path="exams/:examId" element={<ExamDetail />} /> */}
+        <Route path="exams/:examId" element={<ExamDetailNew />} />
         <Route path="exams/:examId/edit" element={<EditExam />} />
+        <Route path="exams/:examId/submissions/:studentId" element={<StudentExamDetail />} />
         <Route path="classes" element={<TeacherClasses />} />
         <Route path="classes/:classId" element={<TeacherClassDetail />} />
         <Route path="exams/:examId/monitor" element={<Monitor />} />
@@ -119,9 +124,34 @@ const AppRoutes = () => {
         <Route path="classes/:classId" element={<StudentClassDetail />} />
         <Route path="results" element={<Results />} />
         <Route path="results/:submissionId" element={<ExamResultDetail />} />
-        <Route path="exam/:examId/take" element={<TakeExam />} />
-        <Route path="exam-error" element={<ExamError />} />
+        <Route path="exam-results" element={<ExamResults />} />
       </Route>
+
+      {/* Exam-related routes without StudentLayout */}
+      <Route
+        path="/student/exam/:examId/take"
+        element={
+          <ProtectedRoute allowedRoles={[USER_ROLES.STUDENT]}>
+            <TakeExam />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/exam-error"
+        element={
+          <ProtectedRoute allowedRoles={[USER_ROLES.STUDENT]}>
+            <ExamError />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/results/:submissionId"
+        element={
+          <ProtectedRoute allowedRoles={[USER_ROLES.STUDENT]}>
+            <ExamResultDetail />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Public Routes */}
       <Route path="/exam/:shareCode" element={<PublicTakeExam />} />

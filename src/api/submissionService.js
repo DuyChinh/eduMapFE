@@ -1,4 +1,4 @@
-import axios from './axios';
+import axiosInstance from './axios';
 import examService from './examService';
 
 /**
@@ -14,14 +14,16 @@ export const startSubmission = async (examId, password = '', isShareCode = false
   // If it's a share code, get the exam first
   if (isShareCode) {
     const examResponse = await examService.getExamByShareCode(examId);
-    actualExamId = examResponse.data._id;
+    // examService returns { ok: true, data: {...} } or just data
+    actualExamId = examResponse.data?._id || examResponse._id;
   }
   
-  const response = await axios.post('/submissions/start', {
+  const response = await axiosInstance.post('/submissions/start', {
     examId: actualExamId,
     password
   });
-  return response.data;
+  // axiosInstance interceptor already returns response.data
+  return response;
 };
 
 /**
@@ -31,10 +33,11 @@ export const startSubmission = async (examId, password = '', isShareCode = false
  * @returns {Promise} - Updated submission
  */
 export const updateSubmissionAnswers = async (submissionId, answers) => {
-  const response = await axios.patch(`/submissions/${submissionId}/answers`, {
+  const response = await axiosInstance.patch(`/submissions/${submissionId}/answers`, {
     answers
   });
-  return response.data;
+  // axiosInstance interceptor already returns response.data
+  return response;
 };
 
 /**
@@ -43,8 +46,9 @@ export const updateSubmissionAnswers = async (submissionId, answers) => {
  * @returns {Promise} - Graded submission
  */
 export const submitExam = async (submissionId) => {
-  const response = await axios.post(`/submissions/${submissionId}/submit`);
-  return response.data;
+  const response = await axiosInstance.post(`/submissions/${submissionId}/submit`);
+  // axiosInstance interceptor already returns response.data
+  return response;
 };
 
 /**
@@ -53,8 +57,9 @@ export const submitExam = async (submissionId) => {
  * @returns {Promise} - Submission data
  */
 export const getSubmissionById = async (submissionId) => {
-  const response = await axios.get(`/submissions/${submissionId}`);
-  return response.data;
+  const response = await axiosInstance.get(`/submissions/${submissionId}`);
+  // axiosInstance interceptor already returns response.data
+  return response;
 };
 
 /**
@@ -63,8 +68,9 @@ export const getSubmissionById = async (submissionId) => {
  * @returns {Promise} - List of submissions
  */
 export const getExamSubmissions = async (examId) => {
-  const response = await axios.get(`/submissions/exam/${examId}`);
-  return response.data;
+  const response = await axiosInstance.get(`/submissions/exam/${examId}`);
+  // axiosInstance interceptor already returns response.data
+  return response;
 };
 
 /**
@@ -73,7 +79,8 @@ export const getExamSubmissions = async (examId) => {
  * @returns {Promise} - Leaderboard data
  */
 export const getExamLeaderboard = async (examId) => {
-  const response = await axios.get(`/submissions/exam/${examId}/leaderboard`);
-  return response.data;
+  const response = await axiosInstance.get(`/submissions/exam/${examId}/leaderboard`);
+  // axiosInstance interceptor already returns response.data
+  return response;
 };
 

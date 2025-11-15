@@ -19,6 +19,7 @@ import {
 } from '@ant-design/icons';
 import { getExamLogs } from '../../api/proctorService';
 import { getExamSubmissions } from '../../api/submissionService';
+import { useTranslation } from 'react-i18next';
 import './Monitor.css';
 
 const { Title, Text } = Typography;
@@ -26,6 +27,7 @@ const { Option } = Select;
 
 const Monitor = () => {
   const { examId } = useParams();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -47,7 +49,7 @@ const Monitor = () => {
       setLogs(logsRes.data || []);
       setSubmissions(submissionsRes.data || []);
     } catch (error) {
-      message.error('Failed to load monitoring data');
+      message.error(t('monitor.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,7 @@ const Monitor = () => {
 
   const logColumns = [
     {
-      title: 'Time',
+      title: t('monitor.time'),
       dataIndex: 'ts',
       key: 'ts',
       render: (ts) => new Date(ts).toLocaleString(),
@@ -97,18 +99,18 @@ const Monitor = () => {
       defaultSortOrder: 'descend'
     },
     {
-      title: 'Student',
+      title: t('monitor.student'),
       dataIndex: ['userId', 'name'],
       key: 'student',
       render: (name, record) => (
         <Space>
-          <Text strong>{name || 'Unknown'}</Text>
+          <Text strong>{name || t('monitor.unknown')}</Text>
           <Text type="secondary">{record.userId?.email}</Text>
         </Space>
       )
     },
     {
-      title: 'Event',
+      title: t('monitor.event'),
       dataIndex: 'event',
       key: 'event',
       render: (event) => (
@@ -119,7 +121,7 @@ const Monitor = () => {
       )
     },
     {
-      title: 'Severity',
+      title: t('monitor.severity'),
       dataIndex: 'severity',
       key: 'severity',
       render: (severity) => (
@@ -129,12 +131,12 @@ const Monitor = () => {
       )
     },
     {
-      title: 'Details',
+      title: t('monitor.details'),
       dataIndex: 'meta',
       key: 'details',
       render: (meta) => (
         <Text type="secondary">
-          {meta?.reason || meta?.action || 'N/A'}
+          {meta?.reason || meta?.action || t('monitor.na')}
         </Text>
       )
     }
@@ -142,18 +144,18 @@ const Monitor = () => {
 
   const submissionColumns = [
     {
-      title: 'Student',
+      title: t('monitor.student'),
       dataIndex: ['userId', 'name'],
       key: 'student',
       render: (name, record) => (
         <Space>
-          <Text strong>{name || 'Unknown'}</Text>
+          <Text strong>{name || t('monitor.unknown')}</Text>
           <Text type="secondary">{record.userId?.email}</Text>
         </Space>
       )
     },
     {
-      title: 'Status',
+      title: t('monitor.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status) => {
@@ -167,7 +169,7 @@ const Monitor = () => {
       }
     },
     {
-      title: 'Score',
+      title: t('monitor.score'),
       dataIndex: 'score',
       key: 'score',
       render: (score, record) => (
@@ -178,28 +180,28 @@ const Monitor = () => {
       )
     },
     {
-      title: 'Started',
+      title: t('monitor.started'),
       dataIndex: 'startedAt',
       key: 'startedAt',
-      render: (date) => date ? new Date(date).toLocaleString() : 'N/A'
+        render: (date) => date ? new Date(date).toLocaleString() : t('monitor.na')
     },
     {
-      title: 'Submitted',
+      title: t('monitor.submitted'),
       dataIndex: 'submittedAt',
       key: 'submittedAt',
-      render: (date) => date ? new Date(date).toLocaleString() : 'N/A'
+        render: (date) => date ? new Date(date).toLocaleString() : t('monitor.na')
     },
     {
-      title: 'Violations',
+      title: t('monitor.violations'),
       key: 'violations',
       render: (_, record) => {
         const violations = record.proctoringData?.violations || [];
         if (violations.length === 0) {
-          return <Tag color="green">None</Tag>;
+          return <Tag color="green">{t('monitor.none')}</Tag>;
         }
         return (
           <Tag color="red">
-            {violations.length} violation{violations.length > 1 ? 's' : ''}
+            {violations.length} {violations.length > 1 ? t('monitor.violationsPlural') : t('monitor.violation')}
           </Tag>
         );
       }
@@ -213,61 +215,63 @@ const Monitor = () => {
   return (
     <div className="monitor-container">
       <Card>
-        <Title level={2}>Exam Monitoring</Title>
+        <Title level={2}>{t('monitor.title')}</Title>
         
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {/* Filters */}
           <Card>
-            <Space>
-              <Text strong>Filter by Submission:</Text>
+            <Space wrap>
+              <Text strong>{t('monitor.filterBySubmission')}:</Text>
               <Select
                 value={selectedSubmission}
                 onChange={setSelectedSubmission}
                 style={{ width: 200 }}
               >
-                <Option value="all">All Submissions</Option>
+                <Option value="all">{t('monitor.allSubmissions')}</Option>
                 {submissions.map(sub => (
                   <Option key={sub._id} value={sub._id}>
-                    {sub.userId?.name || 'Unknown'} - {sub.status}
+                    {sub.userId?.name || t('monitor.unknown')} - {sub.status}
                   </Option>
                 ))}
               </Select>
 
-              <Text strong>Severity:</Text>
+              <Text strong>{t('monitor.severity')}:</Text>
               <Select
                 value={severityFilter}
                 onChange={setSeverityFilter}
                 style={{ width: 150 }}
               >
-                <Option value="all">All</Option>
-                <Option value="critical">Critical</Option>
-                <Option value="high">High</Option>
-                <Option value="medium">Medium</Option>
-                <Option value="low">Low</Option>
+                <Option value="all">{t('monitor.all')}</Option>
+                <Option value="critical">{t('monitor.critical')}</Option>
+                <Option value="high">{t('monitor.high')}</Option>
+                <Option value="medium">{t('monitor.medium')}</Option>
+                <Option value="low">{t('monitor.low')}</Option>
               </Select>
             </Space>
           </Card>
 
           {/* Submissions Overview */}
-          <Card title="Submissions Overview">
+          <Card title={t('monitor.submissionsOverview')}>
             <Table
               dataSource={submissions}
               columns={submissionColumns}
               rowKey="_id"
               pagination={{ pageSize: 10 }}
+              scroll={{ x: 'max-content' }}
             />
           </Card>
 
           {/* Proctoring Logs */}
-          <Card title="Proctoring Logs">
+          <Card title={t('monitor.proctoringLogs')}>
             {filteredLogs.length === 0 ? (
-              <Empty description="No logs found" />
+              <Empty description={t('monitor.noLogs')} />
             ) : (
               <Table
                 dataSource={filteredLogs}
                 columns={logColumns}
                 rowKey="_id"
                 pagination={{ pageSize: 20 }}
+                scroll={{ x: 'max-content' }}
               />
             )}
           </Card>

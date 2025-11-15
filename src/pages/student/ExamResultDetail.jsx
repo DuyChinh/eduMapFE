@@ -250,6 +250,7 @@ const ExamResultDetail = () => {
               rowKey="rank"
               pagination={false}
               size="small"
+              scroll={{ x: 'max-content' }}
             />
           </Card>
         )}

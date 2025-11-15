@@ -151,6 +151,7 @@ const Classes = () => {
             showTotal: (total, range) => 
               `${range[0]}-${range[1]} of ${total} ${t('studentPages.classes.items')}`,
           }}
+          scroll={{ x: 'max-content' }}
         />
       </Card>
 

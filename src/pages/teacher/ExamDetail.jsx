@@ -292,7 +292,11 @@ const ExamDetail = () => {
         <Table
           dataSource={examData.questions || []}
           columns={questionColumns}
-          rowKey={(record, index) => record.questionId?._id || record.questionId || index}
+          rowKey={(record) => {
+            const questionId = record.questionId?._id || record.questionId;
+            const order = record.order;
+            return questionId ? `${questionId}-${order || ''}` : `question-${record._id || Math.random()}`;
+          }}
           pagination={false}
         />
       </Card>

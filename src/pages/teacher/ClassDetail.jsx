@@ -70,7 +70,7 @@ const ClassDetail = () => {
             return studentResponse.data || studentResponse;
           } catch (error) {
             console.error('❌ Error fetching student:', studentId, error);
-            return { _id: studentId, name: 'Unknown Student', email: 'unknown@example.com' };
+            return { _id: studentId, name: t('classes.unknownStudent'), email: 'unknown@example.com' };
           }
         });
         
@@ -139,7 +139,7 @@ const ClassDetail = () => {
             {record.name?.charAt(0)?.toUpperCase() || 'S'}
           </Avatar>
           <div>
-            <div style={{ fontWeight: 500 }}>{record.name || 'Student'}</div>
+            <div style={{ fontWeight: 500 }}>{record.name || t('classes.student')}</div>
             <Text type="secondary" style={{ fontSize: '12px' }}>
               {record.email || 'student@example.com'}
             </Text>
@@ -174,7 +174,7 @@ const ClassDetail = () => {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '40px' }}>
-          <Text type="secondary">Class not found</Text>
+          <Text type="secondary">{t('classes.notFound')}</Text>
         </div>
       </Card>
     );
@@ -287,6 +287,7 @@ const ClassDetail = () => {
             showTotal: (total, range) => 
               `${range[0]}-${range[1]} of ${total} ${t('classes.students')}`,
           }}
+          scroll={{ x: 'max-content' }}
         />
       </Card>
 

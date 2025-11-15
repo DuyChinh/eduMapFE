@@ -22,6 +22,7 @@ import {
   CheckCircleOutlined
 } from '@ant-design/icons';
 import { getClassReport, exportClassReportCSV } from '../../api/reportService';
+import { useTranslation } from 'react-i18next';
 import './Reports.css';
 
 const { Title, Text } = Typography;
@@ -29,6 +30,7 @@ const { Option } = Select;
 
 const Reports = () => {
   const { classId } = useParams();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
@@ -43,7 +45,7 @@ const Reports = () => {
       const response = await getClassReport(classId, selectedExam);
       setReport(response.data);
     } catch (error) {
-      message.error('Failed to load report');
+      message.error(t('reports.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -60,15 +62,15 @@ const Reports = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      message.success('Report exported successfully');
+      message.success(t('reports.exportSuccess'));
     } catch (error) {
-      message.error('Failed to export report');
+      message.error(t('reports.exportFailed'));
     }
   };
 
   const submissionColumns = [
     {
-      title: 'Student',
+      title: t('reports.student'),
       dataIndex: ['userId', 'name'],
       key: 'student',
       render: (name, record) => (
@@ -79,7 +81,7 @@ const Reports = () => {
       )
     },
     {
-      title: 'Score',
+      title: t('reports.score'),
       dataIndex: 'score',
       key: 'score',
       render: (score, record) => (
@@ -90,7 +92,7 @@ const Reports = () => {
       sorter: (a, b) => (a.score || 0) - (b.score || 0)
     },
     {
-      title: 'Percentage',
+      title: t('reports.percentage'),
       dataIndex: 'percentage',
       key: 'percentage',
       render: (percentage) => (
@@ -101,7 +103,7 @@ const Reports = () => {
       sorter: (a, b) => (a.percentage || 0) - (b.percentage || 0)
     },
     {
-      title: 'Status',
+      title: t('reports.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status) => {
@@ -114,7 +116,7 @@ const Reports = () => {
       }
     },
     {
-      title: 'Submitted At',
+      title: t('reports.submittedAt'),
       dataIndex: 'submittedAt',
       key: 'submittedAt',
       render: (date) => date ? new Date(date).toLocaleString() : 'N/A'
@@ -123,32 +125,32 @@ const Reports = () => {
 
   const questionColumns = [
     {
-      title: 'Question',
+      title: t('reports.question'),
       dataIndex: 'questionText',
       key: 'question',
       ellipsis: true,
       render: (text) => <Text>{text}</Text>
     },
     {
-      title: 'Type',
+      title: t('reports.type'),
       dataIndex: 'questionType',
       key: 'type',
       render: (type) => <Tag>{type?.toUpperCase()}</Tag>
     },
     {
-      title: 'Correct',
+      title: t('reports.correct'),
       dataIndex: 'correctCount',
       key: 'correct',
       sorter: (a, b) => a.correctCount - b.correctCount
     },
     {
-      title: 'Incorrect',
+      title: t('reports.incorrect'),
       dataIndex: 'incorrectCount',
       key: 'incorrect',
       sorter: (a, b) => b.incorrectCount - a.incorrectCount
     },
     {
-      title: 'Accuracy',
+      title: t('reports.accuracy'),
       dataIndex: 'accuracyRate',
       key: 'accuracy',
       render: (rate) => (
@@ -165,20 +167,20 @@ const Reports = () => {
   }
 
   if (!report) {
-    return <Empty description="No report data available" />;
+    return <Empty description={t('reports.noData')} />;
   }
 
   return (
     <div className="reports-container">
       <Card>
         <div className="reports-header">
-          <Title level={2}>Class Report</Title>
+          <Title level={2}>{t('reports.title')}</Title>
           <Button 
             type="primary" 
             icon={<DownloadOutlined />}
             onClick={handleExportCSV}
           >
-            Export CSV
+            {t('reports.exportCSV')}
           </Button>
         </div>
 
@@ -188,7 +190,7 @@ const Reports = () => {
             <Col xs={24} sm={12} md={6}>
               <Card>
                 <Statistic
-                  title="Total Students"
+                  title={t('reports.totalStudents')}
                   value={report.totalStudents}
                   prefix={<UserOutlined />}
                 />
@@ -197,7 +199,7 @@ const Reports = () => {
             <Col xs={24} sm={12} md={6}>
               <Card>
                 <Statistic
-                  title="Submissions"
+                  title={t('reports.submissions')}
                   value={report.totalSubmissions}
                   prefix={<CheckCircleOutlined />}
                 />
@@ -206,7 +208,7 @@ const Reports = () => {
             <Col xs={24} sm={12} md={6}>
               <Card>
                 <Statistic
-                  title="Average Score"
+                  title={t('reports.averageScore')}
                   value={report.statistics?.averageScore || 0}
                   suffix={`/ ${report.statistics?.maxScore || 100}`}
                   prefix={<TrophyOutlined />}
@@ -216,7 +218,7 @@ const Reports = () => {
             <Col xs={24} sm={12} md={6}>
               <Card>
                 <Statistic
-                  title="Pass Rate"
+                  title={t('reports.passRate')}
                   value={report.statistics?.passRate || 0}
                   suffix="%"
                   valueStyle={{ color: (report.statistics?.passRate || 0) >= 50 ? '#3f8600' : '#cf1322' }}
@@ -227,7 +229,7 @@ const Reports = () => {
 
           {/* Score Distribution */}
           {report.scoreDistribution && report.scoreDistribution.length > 0 && (
-            <Card title="Score Distribution">
+            <Card title={t('reports.scoreDistribution')}>
               <Row gutter={16}>
                 {report.scoreDistribution.map((dist, index) => (
                   <Col xs={24} sm={12} md={4} key={index}>
@@ -246,24 +248,26 @@ const Reports = () => {
 
           {/* Submissions Table */}
           {report.submissions && report.submissions.length > 0 && (
-            <Card title="Student Submissions">
+            <Card title={t('reports.studentSubmissions')}>
               <Table
                 dataSource={report.submissions}
                 columns={submissionColumns}
                 rowKey={(record) => record.userId?._id || record._id}
                 pagination={{ pageSize: 10 }}
+                scroll={{ x: 'max-content' }}
               />
             </Card>
           )}
 
           {/* Question Analysis */}
           {report.questionAnalysis && report.questionAnalysis.length > 0 && (
-            <Card title="Most Incorrect Questions">
+            <Card title={t('reports.mostIncorrectQuestions')}>
               <Table
                 dataSource={report.questionAnalysis}
                 columns={questionColumns}
                 rowKey="questionId"
                 pagination={{ pageSize: 10 }}
+                scroll={{ x: 'max-content' }}
               />
             </Card>
           )}
