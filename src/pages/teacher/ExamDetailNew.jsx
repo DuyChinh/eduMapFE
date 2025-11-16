@@ -16,7 +16,6 @@ import {
   Progress,
   Empty,
   Tooltip,
-  Descriptions,
   App,
 } from 'antd';
 import {
@@ -31,8 +30,10 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   FileTextOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { Column } from '@ant-design/charts';
 import examService from '../../api/examService';
 import examStatsService from '../../api/examStatsService.js';
 import { ROUTES } from '../../constants/config';
@@ -49,11 +50,13 @@ const ExamDetailNew = () => {
   const [statistics, setStatistics] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [scoreDistribution, setScoreDistribution] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [statsLoading, setStatsLoading] = useState(false);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [scoreDistributionLoading, setScoreDistributionLoading] = useState(false);
 
   useEffect(() => {
     fetchExamDetail();
@@ -110,10 +113,28 @@ const ExamDetailNew = () => {
     }
   };
 
+  const fetchScoreDistribution = async () => {
+    setScoreDistributionLoading(true);
+    try {
+      const response = await examStatsService.getScoreDistribution(examId);
+      setScoreDistribution(response.data || response || []);
+    } catch (error) {
+      console.error('Error fetching score distribution:', error);
+      message.error(t('exams.stats.fetchFailed'));
+    } finally {
+      setScoreDistributionLoading(false);
+    }
+  };
+
   const handleTabChange = (key) => {
     setActiveTab(key);
-    if (key === 'statistics' && !statistics) {
-      fetchStatistics();
+    if (key === 'statistics') {
+      if (!statistics) {
+        fetchStatistics();
+      }
+      if (scoreDistribution.length === 0) {
+        fetchScoreDistribution();
+      }
     } else if (key === 'leaderboard' && leaderboard.length === 0) {
       fetchLeaderboard();
     } else if (key === 'students' && submissions.length === 0) {
@@ -386,29 +407,59 @@ const ExamDetailNew = () => {
               <Row gutter={[16, 16]}>
                 <Col xs={24} lg={16}>
                   <Card>
-                    <Descriptions title={t('exams.basicInfo')} bordered column={{ xs: 1, sm: 2 }}>
-                      <Descriptions.Item label={t('exams.description')} span={2}>
-                        {examData.description || '-'}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={t('exams.examPurpose')}>
-                        <Tag>{examData.examPurpose}</Tag>
-                      </Descriptions.Item>
-                      <Descriptions.Item label={t('exams.duration')}>
-                        {examData.duration} {t('exams.minutes')}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={t('exams.totalMarks')}>
-                        {examData.totalMarks}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={t('exams.maxAttempts')}>
-                        {examData.maxAttempts}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={t('exams.startTime')}>
-                        {examData.startTime ? new Date(examData.startTime).toLocaleString('vi-VN') : '-'}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={t('exams.endTime')}>
-                        {examData.endTime ? new Date(examData.endTime).toLocaleString('vi-VN') : '-'}
-                      </Descriptions.Item>
-                    </Descriptions>
+                    <Title level={4} style={{ marginBottom: 16 }}>{t('exams.basicInfo')}</Title>
+                    <Table
+                      dataSource={[
+                        { key: 'description', label: t('exams.description'), value: examData.description || '-' },
+                        { key: 'purpose', label: t('exams.examPurpose'), value: examData.examPurpose, isTag: true },
+                        { key: 'duration', label: t('exams.duration'), value: `${examData.duration} ${t('exams.minutes')}` },
+                        { key: 'totalMarks', label: t('exams.totalMarks'), value: examData.totalMarks },
+                        { key: 'maxAttempts', label: t('exams.maxAttempts'), value: examData.maxAttempts },
+                        { key: 'startTime', label: t('exams.startTime'), value: examData.startTime ? new Date(examData.startTime).toLocaleString('vi-VN') : '-' },
+                        { key: 'endTime', label: t('exams.endTime'), value: examData.endTime ? new Date(examData.endTime).toLocaleString('vi-VN') : '-' },
+                        { key: 'shareLink', label: t('exams.shareLink'), value: examData.shareCode, isShareLink: true },
+                      ]}
+                      rowKey="key"
+                      pagination={false}
+                      showHeader={false}
+                      columns={[
+                        {
+                          key: 'label',
+                          width: 150,
+                          render: (_, record) => <Text strong>{record.label}:</Text>,
+                        },
+                        {
+                          key: 'value',
+                          render: (_, record) => {
+                            if (record.isShareLink) {
+                              return record.value ? (
+                                <Tooltip title={t('exams.clickToCopy') || 'Click to copy link'}>
+                                  <Tag 
+                                    color="blue" 
+                                    icon={<LinkOutlined />}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => {
+                                      const shareLink = `${window.location.origin}/exam/${record.value}`;
+                                      navigator.clipboard.writeText(shareLink);
+                                      message.success(t('exams.linkCopied') || 'Link copied!');
+                                    }}
+                                  >
+                                    {record.value}
+                                  </Tag>
+                                </Tooltip>
+                              ) : (
+                                <Tag color="default">-</Tag>
+                              );
+                            }
+                            if (record.isTag) {
+                              return <Tag>{record.value}</Tag>;
+                            }
+                            return record.value;
+                          },
+                        },
+                      ]}
+                      scroll={{ x: true }}
+                    />
 
                     {examData.questions && examData.questions.length > 0 && (
                       <div style={{ marginTop: 24 }}>
@@ -488,52 +539,97 @@ const ExamDetailNew = () => {
           {
             key: 'statistics',
             label: <span><BarChartOutlined /> {t('exams.tabs.statistics')}</span>,
-            children: statsLoading ? (
-              <div style={{ textAlign: 'center', padding: '50px' }}>
-                <Spin />
-              </div>
-            ) : statistics ? (
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={6}>
-                  <Card>
-                    <Statistic 
-                      title={t('exams.stats.totalSubmissions')} 
-                      value={statistics.totalSubmissions || 0}
+            children: (
+              <>
+                {statsLoading ? (
+                  <div style={{ textAlign: 'center', padding: '50px' }}>
+                    <Spin />
+                  </div>
+                ) : statistics ? (
+                  <Row gutter={[16, 16]}>
+                    <Col xs={24} sm={12} md={6}>
+                      <Card>
+                        <Statistic 
+                          title={t('exams.stats.totalSubmissions')} 
+                          value={statistics.totalSubmissions || 0}
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={12} md={6}>
+                      <Card>
+                        <Statistic 
+                          title={t('exams.stats.averageScore')} 
+                          value={statistics.averageScore || 0}
+                          suffix={`/ ${examData.totalMarks}`}
+                          precision={1}
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={12} md={6}>
+                      <Card>
+                        <Statistic 
+                          title={t('exams.stats.highestScore')} 
+                          value={statistics.highestScore || 0}
+                          suffix={`/ ${examData.totalMarks}`}
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={12} md={6}>
+                      <Card>
+                        <Statistic 
+                          title={t('exams.stats.lowestScore')} 
+                          value={statistics.lowestScore || 0}
+                          suffix={`/ ${examData.totalMarks}`}
+                        />
+                      </Card>
+                    </Col>
+                  </Row>
+                ) : (
+                  <Empty description={t('exams.stats.noData')} />
+                )}
+                {/* Score Distribution Chart */}
+                {scoreDistributionLoading ? (
+                  <div style={{ textAlign: 'center', padding: '50px', marginTop: 16 }}>
+                    <Spin />
+                  </div>
+                ) : scoreDistribution.length > 0 ? (
+                  <Card 
+                    title={t('exams.stats.scoreDistribution') || 'Phân bố điểm số'} 
+                    style={{ marginTop: 16 }}
+                  >
+                    <Column
+                      data={scoreDistribution}
+                      xField="range"
+                      yField="count"
+                      label={{
+                        position: 'top',
+                        offset: 5,
+                        style: {
+                          fill: '#fff',
+                          fontSize: 16,
+                          fontWeight: 'bold',
+                        },
+                      }}
+                      columnStyle={{
+                        fill: '#1890ff',
+                      }}
+                      height={400}
+                      meta={{
+                        range: {
+                          alias: t('exams.stats.scoreRange') || 'Khoảng điểm',
+                        },
+                        count: {
+                          alias: t('exams.stats.studentCount') || 'Số học sinh',
+                        },
+                      }}
                     />
                   </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                  <Card>
-                    <Statistic 
-                      title={t('exams.stats.averageScore')} 
-                      value={statistics.averageScore || 0}
-                      suffix={`/ ${examData.totalMarks}`}
-                      precision={1}
-                    />
+                ) : statistics ? (
+                  <Card style={{ marginTop: 16 }}>
+                    <Empty description={t('exams.stats.noScoreData') || 'Chưa có dữ liệu điểm số'} />
                   </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                  <Card>
-                    <Statistic 
-                      title={t('exams.stats.highestScore')} 
-                      value={statistics.highestScore || 0}
-                      suffix={`/ ${examData.totalMarks}`}
-                    />
-                  </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                  <Card>
-                    <Statistic 
-                      title={t('exams.stats.passRate')} 
-                      value={statistics.passRate || 0}
-                      suffix="%"
-                      precision={1}
-                    />
-                  </Card>
-                </Col>
-              </Row>
-            ) : (
-              <Empty description={t('exams.stats.noData')} />
+                ) : null}
+              </>
             ),
           },
           {

@@ -6,6 +6,11 @@ const examStatsService = {
     return await axiosInstance.get(`/exams/${examId}/statistics`);
   },
 
+  // Get score distribution for chart
+  getScoreDistribution: async (examId) => {
+    return await axiosInstance.get(`/exams/${examId}/score-distribution`);
+  },
+
   // Get exam leaderboard
   getExamLeaderboard: async (examId, params = {}) => {
     return await axiosInstance.get(`/exams/${examId}/leaderboard`, { params });
