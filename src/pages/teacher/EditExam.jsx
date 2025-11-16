@@ -199,8 +199,8 @@ const EditExam = () => {
     const totalMarks = form.getFieldValue('totalMarks') || 100;
     if (questions.length === 0) return questions;
     
-    // Calculate marks per question with 1 decimal place
-    const marksPerQuestion = parseFloat((totalMarks / questions.length).toFixed(1));
+    // Calculate marks per question - keep all decimal places
+    const marksPerQuestion = totalMarks / questions.length;
     
     return questions.map((q) => ({
       ...q,
@@ -259,11 +259,13 @@ const EditExam = () => {
     return selectedQuestions.reduce((sum, q) => sum + (q.marks || 0), 0);
   };
 
-  // Validate if total question marks equals total marks
+  // Validate if total question marks equals total marks (allow small difference due to decimal precision)
   const validateMarks = () => {
     const totalMarks = form.getFieldValue('totalMarks');
     const totalQuestionMarks = calculateTotalQuestionMarks();
-    return totalMarks && totalQuestionMarks === totalMarks;
+    if (!totalMarks) return false;
+    // Allow small difference (0.01) due to floating point precision
+    return Math.abs(totalQuestionMarks - totalMarks) < 0.01;
   };
 
   const getQuestionTypeText = (type) => {
@@ -314,16 +316,21 @@ const EditExam = () => {
       title: t('exams.marks'),
       key: 'marks',
       width: 120,
-      render: (_, record) => (
-        <InputNumber
-          min={0}
-          step={0.1}
-          precision={1}
-          value={record.marks}
-          onChange={(value) => handleUpdateQuestionMarks(record._id || record.id, value)}
-          style={{ width: '100%' }}
-        />
-      ),
+      render: (_, record) => {
+        const marksValue = record.marks;
+        const marksStr = marksValue?.toString() || '0';
+        
+        return (
+          <InputNumber
+            min={0}
+            step={0.01}
+            value={marksValue}
+            onChange={(value) => handleUpdateQuestionMarks(record._id || record.id, value)}
+            style={{ width: '100%' }}
+            title={marksStr}
+          />
+        );
+      },
     },
     {
       title: t('common.actions'),
@@ -345,7 +352,8 @@ const EditExam = () => {
   const handleSubmit = async (values) => {
     // Validate marks
     const totalQuestionMarks = calculateTotalQuestionMarks();
-    if (totalQuestionMarks !== values.totalMarks) {
+    // Allow small difference (0.01) due to decimal precision
+    if (Math.abs(totalQuestionMarks - values.totalMarks) >= 0.01) {
       message.error(t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks}) phải bằng tổng điểm bài thi (${values.totalMarks})`);
       return;
     }
@@ -473,7 +481,7 @@ const EditExam = () => {
                   ]}
                   style={{ flex: 1 }}
                 >
-                  <InputNumber min={0} step={0.1} precision={1} style={{ width: '100%' }} />
+                  <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
                 </Form.Item>
               </Space>
 
@@ -506,16 +514,12 @@ const EditExam = () => {
                 </Form.Item>
               </Space>
 
-              <Form.Item
-                label={t('exams.examPassword')}
-                name="examPassword"
-                rules={[
-                  { required: true, message: t('exams.examPasswordRequired') },
-                  { min: 1, message: t('exams.examPasswordMinLength') }
-                ]}
-              >
-                <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
-              </Form.Item>
+                <Form.Item
+                  label={t('exams.examPassword')}
+                  name="examPassword"
+                >
+                  <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
+                </Form.Item>
 
               <Space style={{ width: '100%' }} size="large">
                 <Form.Item
@@ -561,19 +565,10 @@ const EditExam = () => {
                 <Select 
                   placeholder={t('exams.selectSubject')}
                   showSearch
+                  disabled
                   filterOption={(input, option) =>
                     (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  onChange={(subjectId) => {
-                    if (subjectId) {
-                      setQuestionSearchQuery('');
-                      loadQuestionsBySubject(subjectId);
-                    } else {
-                      setAllQuestions([]);
-                      setQuestions([]);
-                      setQuestionSearchQuery('');
-                    }
-                  }}
                 >
                   {subjects.map(subject => {
                     const currentLang = localStorage.getItem('language') || 'vi';
@@ -604,8 +599,20 @@ const EditExam = () => {
                   value={questionSearchQuery}
                   onChange={(e) => handleSearchQueryChange(e.target.value)}
                   allowClear
+                  style={{ 
+                    width: '50%',
+                    maxWidth: '100%'
+                  }}
+                  className="question-search-input"
                 />
               </div>
+              <style>{`
+                @media (max-width: 768px) {
+                  .question-search-input {
+                    width: 100% !important;
+                  }
+                }
+              `}</style>
 
               {questions.length > 0 && (
                 <div style={{ marginBottom: 16 }}>
@@ -677,7 +684,8 @@ const EditExam = () => {
                       {() => {
                         const totalMarks = form.getFieldValue('totalMarks');
                         const totalQuestionMarks = calculateTotalQuestionMarks();
-                        const isValid = totalMarks && totalQuestionMarks === totalMarks;
+                        // Allow small difference (0.01) due to floating point precision
+                        const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01;
                         
                         if (totalMarks && !isValid) {
                           return (
@@ -903,7 +911,8 @@ const EditExam = () => {
               {() => {
                 const totalMarks = form.getFieldValue('totalMarks');
                 const totalQuestionMarks = calculateTotalQuestionMarks();
-                const isValid = totalMarks && totalQuestionMarks === totalMarks && selectedQuestions.length > 0;
+                // Allow small difference (0.01) due to floating point precision
+                const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01 && selectedQuestions.length > 0;
                 
                 return (
                   <Space>
