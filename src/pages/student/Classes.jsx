@@ -54,7 +54,7 @@ const Classes = () => {
   }, [searchQuery]);
 
   const handleJoinSuccess = (classData) => {
-    message.success(t('studentPages.classes.joinSuccess'));
+    // Toast is already shown in JoinClassModal, no need to show again
     fetchMyClasses(); // Refresh the list
   };
 
