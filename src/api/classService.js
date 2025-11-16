@@ -103,6 +103,16 @@ const classService = {
   regenerateClassCode: async (classId) => {
     return await axiosInstance.post(`/classes/${classId}/regenerate-code`);
   },
+
+  /**
+   * Remove students from class
+   * @param {string} classId - Class ID
+   * @param {Object} studentData - { studentIds?, studentEmails? }
+   * @returns {Promise} Response with updated class and report
+   */
+  removeStudents: async (classId, studentData) => {
+    return await axiosInstance.delete(`/classes/${classId}/students`, { data: studentData });
+  },
 };
 
 export default classService;

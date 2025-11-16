@@ -11,7 +11,8 @@ import {
   Descriptions,
   Table,
   Avatar,
-  Tooltip
+  Tooltip,
+  Popconfirm
 } from 'antd';
 import { 
   ArrowLeftOutlined, 
@@ -57,20 +58,48 @@ const ClassDetail = () => {
       setClassData(classInfo);
       
       // Extract students from class data and fetch their details
-      if (classInfo.students && Array.isArray(classInfo.students)) {
-        // If students data is already available
+      if (classInfo.students && Array.isArray(classInfo.students) && classInfo.students.length > 0) {
+        // If students data is already available (with joinedAt from API)
         setStudents(classInfo.students);
       } else if (classInfo.studentIds && Array.isArray(classInfo.studentIds)) {
         // If only student IDs are available, fetch student details
         console.log('🔍 Fetching student details for IDs:', classInfo.studentIds);
+        
+        // Create joinMap from studentJoins if available
+        const joinMap = new Map();
+        if (classInfo.studentJoins && Array.isArray(classInfo.studentJoins)) {
+          classInfo.studentJoins.forEach(join => {
+            const studentId = String(
+              join.studentId?._id || 
+              join.studentId?.id || 
+              join.studentId || 
+              (typeof join.studentId === 'object' ? join.studentId.toString() : join.studentId)
+            );
+            if (studentId && studentId !== 'undefined') {
+              joinMap.set(studentId, join.joinedAt);
+            }
+          });
+        }
+        
         const studentPromises = classInfo.studentIds.map(async (studentId) => {
           try {
-            const studentResponse = await userService.getUserById(studentId);
+            const id = typeof studentId === 'object' ? (studentId._id || studentId.id) : studentId;
+            const studentResponse = await userService.getUserById(id);
             console.log('👤 Student detail response:', studentResponse);
-            return studentResponse.data || studentResponse;
+            const studentData = studentResponse.data || studentResponse;
+            return {
+              ...studentData,
+              joinedAt: joinMap.get(String(id)) || null
+            };
           } catch (error) {
             console.error('❌ Error fetching student:', studentId, error);
-            return { _id: studentId, name: t('classes.unknownStudent'), email: 'unknown@example.com' };
+            const id = typeof studentId === 'object' ? (studentId._id || studentId.id) : studentId;
+            return { 
+              _id: id, 
+              name: t('classes.unknownStudent'), 
+              email: 'unknown@example.com',
+              joinedAt: joinMap.get(String(id)) || null
+            };
           }
         });
         
@@ -125,6 +154,24 @@ const ClassDetail = () => {
     }
   };
 
+  const handleRemoveStudent = async (studentId) => {
+    try {
+      const response = await classService.removeStudents(classId, {
+        studentIds: [studentId]
+      });
+      
+      if (response.report?.removed?.length > 0) {
+        message.success(t('classes.removeStudentSuccess') || 'Student removed successfully');
+        fetchClassDetail(); // Refresh data
+      } else {
+        message.warning(t('classes.removeStudentFailed') || 'Failed to remove student');
+      }
+    } catch (error) {
+      console.error('Error removing student:', error);
+      message.error(t('classes.removeStudentFailed') || 'Failed to remove student');
+    }
+  };
+
   const studentColumns = [
     {
       title: t('classes.students'),
@@ -159,6 +206,29 @@ const ClassDetail = () => {
         const year = d.getFullYear();
         return `${day}/${month}/${year}`;
       },
+    },
+    {
+      title: t('common.actions') || 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Popconfirm
+          title={t('classes.removeStudentConfirm') || 'Are you sure you want to remove this student from the class?'}
+          description={t('classes.removeStudentConfirmDesc') || `Remove ${record.name || 'this student'} from the class?`}
+          onConfirm={() => handleRemoveStudent(record._id)}
+          okText={t('common.yes') || 'Yes'}
+          cancelText={t('common.no') || 'No'}
+          okButtonProps={{ danger: true }}
+        >
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+          >
+            {t('classes.remove') || 'Remove'}
+          </Button>
+        </Popconfirm>
+      ),
     },
   ];
 
