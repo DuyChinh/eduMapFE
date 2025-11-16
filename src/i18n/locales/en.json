@@ -531,8 +531,11 @@
     "isRequired": "Required",
     "selectedQuestions": "Selected Questions",
     "searchQuestions": "Search Questions",
+    "searchQuestionsByName": "Search questions by name...",
+    "enterQuestionName": "Please enter question name",
     "selectSubjectFirst": "Please select subject first!",
     "searchQuestionsFailed": "Failed to search questions",
+    "marksMismatch": "Total marks of questions must equal total exam marks",
     "questionAlreadyAdded": "Question already added!",
     "removeQuestionConfirm": "Are you sure you want to remove this question?",
     "subject": "Subject",
@@ -654,7 +657,10 @@
     "publishSuccess": "Exam published successfully!",
     "saveDraft": "Save Draft",
     "publish": "Publish",
-    "currency": "VND"
+    "currency": "VND",
+    "autoDistributeMarks": "Auto Distribute Marks",
+    "marksDistributed": "Marks distributed successfully!",
+    "noQuestionsSelected": "No questions selected!"
   },
   "studentResults": {
     "currentScore": "Score",

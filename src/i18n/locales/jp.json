@@ -531,8 +531,11 @@
     "isRequired": "必須",
     "selectedQuestions": "選択された問題",
     "searchQuestions": "問題を検索",
+    "searchQuestionsByName": "名前で問題を検索...",
+    "enterQuestionName": "問題名を入力してください",
     "selectSubjectFirst": "まず科目を選択してください！",
     "searchQuestionsFailed": "問題の検索に失敗しました",
+    "marksMismatch": "問題の合計点は試験の合計点と等しくなければなりません",
     "questionAlreadyAdded": "問題は既に追加されています！",
     "removeQuestionConfirm": "この問題を削除してもよろしいですか？",
     "subject": "科目",
@@ -654,7 +657,10 @@
     "publishSuccess": "試験の公開に成功しました！",
     "saveDraft": "下書き保存",
     "publish": "公開",
-    "currency": "VND"
+    "currency": "VND",
+    "autoDistributeMarks": "自動配点",
+    "marksDistributed": "配点が完了しました！",
+    "noQuestionsSelected": "問題が選択されていません！"
   },
   "studentResults": {
     "currentScore": "スコア",

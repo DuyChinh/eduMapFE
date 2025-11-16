@@ -13,12 +13,16 @@ import {
   DatePicker,
   Collapse,
   Typography,
-  Spin
+  Spin,
+  Table,
+  Tag,
+  Popconfirm
 } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, SearchOutlined, PartitionOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import examService from '../../api/examService';
+import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -34,6 +38,12 @@ const EditExam = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [subjects, setSubjects] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [allQuestions, setAllQuestions] = useState([]); // Store all questions for client-side filtering
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [questionSearchLoading, setQuestionSearchLoading] = useState(false);
+  const [questionSearchQuery, setQuestionSearchQuery] = useState('');
   const { examId } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -41,8 +51,14 @@ const EditExam = () => {
   useEffect(() => {
     if (examId) {
       fetchExamData();
+      fetchSubjects();
     }
   }, [examId]);
+
+  // Force form update when selectedQuestions changes to update validation
+  useEffect(() => {
+    form.setFieldsValue({ _trigger: Date.now() });
+  }, [selectedQuestions, form]);
 
   const fetchExamData = async () => {
     setInitialLoading(true);
@@ -82,6 +98,25 @@ const EditExam = () => {
         status: examData.status || 'draft',
         settings: examData.settings || {}
       });
+
+      // Load existing questions
+      if (examData.questions && examData.questions.length > 0) {
+        const formattedQuestions = examData.questions.map((q, index) => ({
+          _id: q.questionId?._id || q.questionId,
+          id: q.questionId?._id || q.questionId,
+          name: q.questionId?.name || q.questionId?.text || 'Unknown',
+          type: q.questionId?.type || 'mcq',
+          order: q.order || index + 1,
+          marks: q.marks || 1,
+          isRequired: q.isRequired !== undefined ? q.isRequired : true
+        }));
+        setSelectedQuestions(formattedQuestions);
+      }
+
+      // Load questions of subject if subjectId exists
+      if (examData.subjectId) {
+        loadQuestionsBySubject(examData.subjectId);
+      }
     } catch (error) {
       console.error('Error fetching exam data:', error);
       message.error(t('exams.fetchFailed'));
@@ -91,7 +126,230 @@ const EditExam = () => {
     }
   };
 
+  const fetchSubjects = async () => {
+    try {
+      const currentLang = localStorage.getItem('language') || 'vi';
+      const response = await questionService.getSubjects({ lang: currentLang });
+      
+      let subjectsData = [];
+      if (Array.isArray(response)) {
+        subjectsData = response;
+      } else if (response.data && Array.isArray(response.data)) {
+        subjectsData = response.data;
+      } else if (response.items && Array.isArray(response.items)) {
+        subjectsData = response.items;
+      }
+      
+      setSubjects(subjectsData);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
+  };
+
+  const loadQuestionsBySubject = async (subjectId) => {
+    if (!subjectId) {
+      setAllQuestions([]);
+      setQuestions([]);
+      setQuestionSearchQuery('');
+      return;
+    }
+
+    setQuestionSearchLoading(true);
+    try {
+      const params = {
+        subjectId,
+        limit: 1000 // Load more questions for client-side filtering
+      };
+      
+      const response = await questionService.getQuestions(params);
+      const loadedQuestions = response.items || response.data || [];
+      setAllQuestions(loadedQuestions);
+      // Apply current search filter if any
+      filterQuestions(loadedQuestions, questionSearchQuery);
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      message.error(t('exams.searchQuestionsFailed'));
+    } finally {
+      setQuestionSearchLoading(false);
+    }
+  };
+
+  const filterQuestions = (questionsToFilter, searchQuery) => {
+    if (!searchQuery || searchQuery.trim() === '') {
+      setQuestions(questionsToFilter);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = questionsToFilter.filter(q => {
+      const name = (q.name || '').toLowerCase();
+      const text = (q.text || '').toLowerCase();
+      return name.includes(query) || text.includes(query);
+    });
+    setQuestions(filtered);
+  };
+
+  const handleSearchQueryChange = (value) => {
+    setQuestionSearchQuery(value);
+    filterQuestions(allQuestions, value);
+  };
+
+  // Distribute marks evenly among questions
+  const distributeMarksEvenly = (questions) => {
+    const totalMarks = form.getFieldValue('totalMarks') || 100;
+    if (questions.length === 0) return questions;
+    
+    // Calculate marks per question with 1 decimal place
+    const marksPerQuestion = parseFloat((totalMarks / questions.length).toFixed(1));
+    
+    return questions.map((q) => ({
+      ...q,
+      marks: marksPerQuestion
+    }));
+  };
+
+  const handleAutoDistributeMarks = () => {
+    if (selectedQuestions.length === 0) {
+      message.warning(t('exams.noQuestionsSelected'));
+      return;
+    }
+    const totalMarks = form.getFieldValue('totalMarks');
+    if (!totalMarks || totalMarks <= 0) {
+      message.warning(t('exams.totalMarksRequired'));
+      return;
+    }
+    const questionsWithDistributedMarks = distributeMarksEvenly(selectedQuestions);
+    setSelectedQuestions(questionsWithDistributedMarks);
+    message.success(t('exams.marksDistributed'));
+  };
+
+  const handleAddQuestion = (question) => {
+    const questionId = question._id || question.id;
+    if (selectedQuestions.find(q => (q._id || q.id) === questionId)) {
+      message.warning(t('exams.questionAlreadyAdded'));
+      return;
+    }
+
+    const newQuestion = {
+      ...question,
+      order: selectedQuestions.length + 1,
+      marks: 1,
+      isRequired: true
+    };
+    
+    setSelectedQuestions([...selectedQuestions, newQuestion]);
+  };
+
+  const handleRemoveQuestion = (questionId) => {
+    const updated = selectedQuestions
+      .filter(q => (q._id || q.id) !== questionId)
+      .map((q, index) => ({ ...q, order: index + 1 }));
+    
+    setSelectedQuestions(updated);
+  };
+
+  const handleUpdateQuestionMarks = (questionId, marks) => {
+    setSelectedQuestions(selectedQuestions.map(q => 
+      (q._id || q.id) === questionId ? { ...q, marks } : q
+    ));
+  };
+
+  // Calculate total marks of selected questions
+  const calculateTotalQuestionMarks = () => {
+    return selectedQuestions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  };
+
+  // Validate if total question marks equals total marks
+  const validateMarks = () => {
+    const totalMarks = form.getFieldValue('totalMarks');
+    const totalQuestionMarks = calculateTotalQuestionMarks();
+    return totalMarks && totalQuestionMarks === totalMarks;
+  };
+
+  const getQuestionTypeText = (type) => {
+    const types = {
+      mcq: t('questions.types.mcq'),
+      tf: t('questions.types.tf'),
+      short: t('questions.types.short'),
+      essay: t('questions.types.essay')
+    };
+    return types[type] || type;
+  };
+
+  const getQuestionTypeColor = (type) => {
+    const colors = {
+      mcq: 'blue',
+      tf: 'green',
+      short: 'orange',
+      essay: 'purple'
+    };
+    return colors[type] || 'default';
+  };
+
+  const questionColumns = [
+    {
+      title: t('exams.order'),
+      dataIndex: 'order',
+      key: 'order',
+      width: 60,
+    },
+    {
+      title: t('questions.name'),
+      dataIndex: 'name',
+      key: 'name',
+      ellipsis: true,
+    },
+    {
+      title: t('questions.type'),
+      dataIndex: 'type',
+      key: 'type',
+      width: 120,
+      render: (type) => (
+        <Tag color={getQuestionTypeColor(type)}>
+          {getQuestionTypeText(type)}
+        </Tag>
+      ),
+    },
+    {
+      title: t('exams.marks'),
+      key: 'marks',
+      width: 120,
+      render: (_, record) => (
+        <InputNumber
+          min={0}
+          step={0.1}
+          precision={1}
+          value={record.marks}
+          onChange={(value) => handleUpdateQuestionMarks(record._id || record.id, value)}
+          style={{ width: '100%' }}
+        />
+      ),
+    },
+    {
+      title: t('common.actions'),
+      key: 'actions',
+      width: 80,
+      render: (_, record) => (
+        <Popconfirm
+          title={t('exams.removeQuestionConfirm')}
+          onConfirm={() => handleRemoveQuestion(record._id || record.id)}
+          okText={t('common.yes')}
+          cancelText={t('common.no')}
+        >
+          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+        </Popconfirm>
+      ),
+    },
+  ];
+
   const handleSubmit = async (values) => {
+    // Validate marks
+    const totalQuestionMarks = calculateTotalQuestionMarks();
+    if (totalQuestionMarks !== values.totalMarks) {
+      message.error(t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks}) phải bằng tổng điểm bài thi (${values.totalMarks})`);
+      return;
+    }
+
     setLoading(true);
     try {
       const updateData = {
@@ -122,12 +380,18 @@ const EditExam = () => {
         availableFrom: values.availableFrom ? values.availableFrom.toISOString() : undefined,
         availableUntil: values.availableUntil ? values.availableUntil.toISOString() : undefined,
         status: values.status,
-        settings: values.settings || {}
+        settings: values.settings || {},
+        questions: selectedQuestions.map((q, index) => ({
+          questionId: q._id || q.id,
+          order: q.order || index + 1,
+          marks: q.marks || 1,
+          isRequired: q.isRequired !== undefined ? q.isRequired : true
+        }))
       };
 
       await examService.updateExam(examId, updateData);
       message.success(t('exams.updateSuccess'));
-      navigate(`${ROUTES.TEACHER_EXAMS}/${examId}`);
+      navigate(ROUTES.TEACHER_EXAMS);
     } catch (error) {
       console.error('Update exam error:', error);
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('exams.updateFailed'));
@@ -151,7 +415,7 @@ const EditExam = () => {
         <Space>
           <Button 
             icon={<ArrowLeftOutlined />} 
-            onClick={() => navigate(`${ROUTES.TEACHER_EXAMS}/${examId}`)}
+            onClick={() => navigate(ROUTES.TEACHER_EXAMS)}
           >
             {t('common.back')}
           </Button>
@@ -166,7 +430,7 @@ const EditExam = () => {
           onFinish={handleSubmit}
           autoComplete="off"
         >
-          <Collapse defaultActiveKey={['basic']} ghost>
+          <Collapse defaultActiveKey={['basic', 'questions']} ghost>
             {/* Basic Information */}
             <Collapse.Panel header={t('exams.basicInfo')} key="basic">
               <Form.Item
@@ -209,7 +473,7 @@ const EditExam = () => {
                   ]}
                   style={{ flex: 1 }}
                 >
-                  <InputNumber min={0} style={{ width: '100%' }} />
+                  <InputNumber min={0} step={0.1} precision={1} style={{ width: '100%' }} />
                 </Form.Item>
               </Space>
 
@@ -286,6 +550,148 @@ const EditExam = () => {
                   </Select>
                 </Form.Item>
               </Space>
+            </Collapse.Panel>
+
+            {/* Questions */}
+            <Collapse.Panel header={t('exams.questions')} key="questions">
+              <Form.Item
+                label={t('exams.subject')}
+                name="subjectId"
+              >
+                <Select 
+                  placeholder={t('exams.selectSubject')}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  onChange={(subjectId) => {
+                    if (subjectId) {
+                      setQuestionSearchQuery('');
+                      loadQuestionsBySubject(subjectId);
+                    } else {
+                      setAllQuestions([]);
+                      setQuestions([]);
+                      setQuestionSearchQuery('');
+                    }
+                  }}
+                >
+                  {subjects.map(subject => {
+                    const currentLang = localStorage.getItem('language') || 'vi';
+                    let subjectName = subject.name;
+                    
+                    switch (currentLang) {
+                      case 'en':
+                        subjectName = subject.name_en || subject.name;
+                        break;
+                      case 'jp':
+                        subjectName = subject.name_jp || subject.name;
+                        break;
+                    }
+                    
+                    return (
+                      <Option key={subject._id || subject.id} value={subject._id || subject.id}>
+                        {subjectName}
+                      </Option>
+                    );
+                  })}
+                </Select>
+              </Form.Item>
+
+              <div style={{ marginBottom: 16 }}>
+                <Input
+                  placeholder={t('exams.searchQuestionsByName') || 'Tìm kiếm câu hỏi theo tên...'}
+                  prefix={<SearchOutlined />}
+                  value={questionSearchQuery}
+                  onChange={(e) => handleSearchQueryChange(e.target.value)}
+                  allowClear
+                />
+              </div>
+
+              {questions.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <Table
+                    dataSource={questions}
+                    rowKey={(record) => record._id || record.id}
+                    pagination={false}
+                    size="small"
+                    scroll={{ y: questions.length > 5 ? 200 : undefined }}
+                    columns={[
+                      {
+                        title: t('questions.name'),
+                        dataIndex: 'name',
+                        key: 'name',
+                        ellipsis: true,
+                      },
+                      {
+                        title: t('questions.type'),
+                        dataIndex: 'type',
+                        key: 'type',
+                        width: 120,
+                        render: (type) => (
+                          <Tag color={getQuestionTypeColor(type)}>
+                            {getQuestionTypeText(type)}
+                          </Tag>
+                        ),
+                      },
+                      {
+                        title: t('common.actions'),
+                        key: 'actions',
+                        width: 100,
+                        render: (_, record) => (
+                          <Button
+                            type="link"
+                            icon={<PlusOutlined />}
+                            onClick={() => handleAddQuestion(record)}
+                            disabled={selectedQuestions.some(q => (q._id || q.id) === (record._id || record.id))}
+                          >
+                            {t('common.add')}
+                          </Button>
+                        ),
+                      },
+                    ]}
+                  />
+                </div>
+              )}
+
+              {selectedQuestions.length > 0 && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h4 style={{ margin: 0 }}>{t('exams.selectedQuestions')} ({selectedQuestions.length})</h4>
+                    <Button
+                      type="primary"
+                      icon={<PartitionOutlined />}
+                      onClick={handleAutoDistributeMarks}
+                    >
+                      {t('exams.autoDistributeMarks')}
+                    </Button>
+                  </div>
+                  <Table
+                    dataSource={selectedQuestions}
+                    rowKey={(record) => record._id || record.id}
+                    pagination={false}
+                    columns={questionColumns}
+                    size="small"
+                  />
+                  <div style={{ marginTop: 16 }}>
+                    <Form.Item noStyle shouldUpdate>
+                      {() => {
+                        const totalMarks = form.getFieldValue('totalMarks');
+                        const totalQuestionMarks = calculateTotalQuestionMarks();
+                        const isValid = totalMarks && totalQuestionMarks === totalMarks;
+                        
+                        if (totalMarks && !isValid) {
+                          return (
+                            <Typography.Text type="danger">
+                              {t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks}) phải bằng tổng điểm bài thi (${totalMarks})`}
+                            </Typography.Text>
+                          );
+                        }
+                        return null;
+                      }}
+                    </Form.Item>
+                  </div>
+                </div>
+              )}
             </Collapse.Panel>
 
             {/* Scheduling */}
@@ -493,14 +899,29 @@ const EditExam = () => {
           </Collapse>
 
           <Form.Item style={{ marginTop: 24, marginBottom: 0, textAlign: 'right' }}>
-            <Space>
-              <Button onClick={() => navigate(`${ROUTES.TEACHER_EXAMS}/${examId}`)}>
-                {t('common.cancel')}
-              </Button>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                {t('exams.update')}
-              </Button>
-            </Space>
+            <Form.Item noStyle shouldUpdate>
+              {() => {
+                const totalMarks = form.getFieldValue('totalMarks');
+                const totalQuestionMarks = calculateTotalQuestionMarks();
+                const isValid = totalMarks && totalQuestionMarks === totalMarks && selectedQuestions.length > 0;
+                
+                return (
+                  <Space>
+                    <Button onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
+                      {t('common.cancel')}
+                    </Button>
+                    <Button 
+                      type="primary" 
+                      htmlType="submit" 
+                      loading={loading}
+                      disabled={!isValid}
+                    >
+                      {t('exams.update')}
+                    </Button>
+                  </Space>
+                );
+              }}
+            </Form.Item>
           </Form.Item>
         </Form>
       </Card>

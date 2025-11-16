@@ -531,8 +531,11 @@
     "isRequired": "Bắt buộc",
     "selectedQuestions": "Câu hỏi đã chọn",
     "searchQuestions": "Tìm kiếm câu hỏi",
+    "searchQuestionsByName": "Tìm kiếm câu hỏi theo tên...",
+    "enterQuestionName": "Vui lòng nhập tên câu hỏi",
     "selectSubjectFirst": "Vui lòng chọn môn học trước!",
     "searchQuestionsFailed": "Không thể tìm kiếm câu hỏi",
+    "marksMismatch": "Tổng điểm các câu hỏi phải bằng tổng điểm bài thi",
     "questionAlreadyAdded": "Câu hỏi đã được thêm!",
     "removeQuestionConfirm": "Bạn có chắc chắn muốn xóa câu hỏi này?",
     "subject": "Môn học",
@@ -654,7 +657,10 @@
     "publishSuccess": "Xuất bản đề thi thành công!",
     "saveDraft": "Lưu nháp",
     "publish": "Xuất bản",
-    "currency": "VND"
+    "currency": "VND",
+    "autoDistributeMarks": "Tự động chia điểm",
+    "marksDistributed": "Đã chia điểm thành công!",
+    "noQuestionsSelected": "Chưa có câu hỏi nào được chọn!"
   },
   "studentResults": {
     "currentScore": "Điểm",
