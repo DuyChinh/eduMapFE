@@ -10,14 +10,20 @@ import {
   Input, 
   Select,
   Pagination,
-  Tooltip
+  Tooltip,
+  Modal,
+  Upload,
+  Alert
 } from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
   DeleteOutlined, 
   EyeOutlined,
-  SearchOutlined
+  SearchOutlined,
+  UploadOutlined,
+  DownloadOutlined,
+  FileExcelOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -47,6 +53,10 @@ const QuestionList = () => {
   
   // Modal states
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [importModalVisible, setImportModalVisible] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importResults, setImportResults] = useState(null);
 
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -202,6 +212,131 @@ const QuestionList = () => {
       essay: t('questions.types.essay')
     };
     return types[type] || type;
+  };
+
+  // Handle download template
+  const handleDownloadTemplate = async (format = 'xlsx') => {
+    try {
+      const response = await questionService.downloadTemplate(format);
+      
+      // Create blob and download
+      const blob = new Blob([response], {
+        type: format === 'csv' 
+          ? 'text/csv;charset=utf-8;' 
+          : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `questions_template.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      message.success(t('questions.templateDownloaded') || 'Template downloaded successfully');
+    } catch (error) {
+      console.error('Download template error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.templateDownloadFailed'));
+      message.error(errorMessage);
+    }
+  };
+
+  // Handle export questions
+  const handleExportQuestions = async (format = 'xlsx') => {
+    try {
+      const exportParams = {};
+      if (filters.subject) exportParams.subjectId = filters.subject;
+      if (filters.type) exportParams.type = filters.type;
+      if (filters.level) exportParams.level = filters.level;
+
+      const response = await questionService.exportQuestions({ ...exportParams, format });
+      
+      // Create blob and download
+      const blob = new Blob([response], {
+        type: format === 'csv' 
+          ? 'text/csv;charset=utf-8;' 
+          : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `questions_export_${Date.now()}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      message.success(t('questions.exportSuccess') || 'Questions exported successfully');
+    } catch (error) {
+      console.error('Export questions error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.exportFailed'));
+      message.error(errorMessage);
+    }
+  };
+
+  // Handle import questions
+  const handleImportQuestions = async () => {
+    if (!importFile) {
+      message.warning(t('questions.pleaseSelectFile') || 'Please select a file');
+      return;
+    }
+
+    setImportLoading(true);
+    try {
+      const response = await questionService.importQuestions(importFile);
+      const results = response.results || response.data?.results;
+      
+      setImportResults(results);
+      
+      if (results && results.success > 0) {
+        message.success(
+          t('questions.importSuccess') || 
+          `Successfully imported ${results.success} question(s)`
+        );
+        fetchQuestions(); // Refresh the list
+      }
+      
+      if (results && results.failed > 0) {
+        message.warning(
+          `${results.success} succeeded, ${results.failed} failed out of ${results.total} total`
+        );
+      }
+    } catch (error) {
+      console.error('Import questions error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.importFailed'));
+      message.error(errorMessage);
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleImportModalClose = () => {
+    setImportModalVisible(false);
+    setImportFile(null);
+    setImportResults(null);
+  };
+
+  const beforeUpload = (file) => {
+    const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                    file.type === 'application/vnd.ms-excel' ||
+                    file.name.endsWith('.xlsx') ||
+                    file.name.endsWith('.xls');
+    const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv');
+    
+    if (!isExcel && !isCSV) {
+      message.error(t('questions.invalidFileType') || 'You can only upload CSV or Excel files!');
+      return false;
+    }
+    
+    const isLt10M = file.size / 1024 / 1024 < 10;
+    if (!isLt10M) {
+      message.error(t('questions.fileTooLarge') || 'File must be smaller than 10MB!');
+      return false;
+    }
+    
+    setImportFile(file);
+    return false; // Prevent auto upload
   };
 
   const columns = [
@@ -416,13 +551,36 @@ const QuestionList = () => {
           </Select>
         </div>
         
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={() => navigate(ROUTES.TEACHER_QUESTIONS_CREATE)}
-        >
-          {t('questions.createNew')}
-        </Button>
+        <Space>
+          <Button 
+            icon={<FileExcelOutlined />}
+            onClick={() => handleDownloadTemplate('xlsx')}
+          >
+            {t('questions.downloadTemplate') || 'Download Template'}
+          </Button>
+          
+          <Button 
+            icon={<DownloadOutlined />}
+            onClick={() => handleExportQuestions('xlsx')}
+          >
+            {t('questions.export') || 'Export'}
+          </Button>
+          
+          <Button 
+            icon={<UploadOutlined />}
+            onClick={() => setImportModalVisible(true)}
+          >
+            {t('questions.import') || 'Import'}
+          </Button>
+          
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => navigate(ROUTES.TEACHER_QUESTIONS_CREATE)}
+          >
+            {t('questions.createNew')}
+          </Button>
+        </Space>
       </div>
 
       <Table
@@ -452,6 +610,101 @@ const QuestionList = () => {
           fetchQuestions();
         }}
       />
+
+      {/* Import Modal */}
+      <Modal
+        title={t('questions.importQuestions') || 'Import Questions'}
+        open={importModalVisible}
+        onOk={handleImportQuestions}
+        onCancel={handleImportModalClose}
+        okText={t('questions.import') || 'Import'}
+        cancelText={t('common.cancel')}
+        confirmLoading={importLoading}
+        width={600}
+      >
+        <Space direction="vertical" style={{ width: '100%' }} size="large">
+          <Alert
+            message={t('questions.importInstructions') || 'Import Instructions'}
+            description={
+              <div>
+                <p>{t('questions.importInstructionsDesc') || '1. Download the template file first'}</p>
+                <p>{t('questions.importInstructionsDesc2') || '2. Fill in your questions following the template format'}</p>
+                <p>{t('questions.importInstructionsDesc3') || '3. Upload the completed file (CSV or Excel format)'}</p>
+              </div>
+            }
+            type="info"
+            showIcon
+          />
+
+          <div>
+            <Button 
+              type="link" 
+              icon={<FileExcelOutlined />}
+              onClick={() => handleDownloadTemplate('xlsx')}
+              style={{ padding: 0 }}
+            >
+              {t('questions.downloadExcelTemplate') || 'Download Excel Template'}
+            </Button>
+            {' | '}
+            <Button 
+              type="link" 
+              icon={<FileExcelOutlined />}
+              onClick={() => handleDownloadTemplate('csv')}
+              style={{ padding: 0 }}
+            >
+              {t('questions.downloadCSVTemplate') || 'Download CSV Template'}
+            </Button>
+          </div>
+
+          <Upload
+            beforeUpload={beforeUpload}
+            accept=".csv,.xlsx,.xls"
+            maxCount={1}
+            fileList={importFile ? [importFile] : []}
+            onRemove={() => setImportFile(null)}
+          >
+            <Button icon={<UploadOutlined />}>
+              {t('questions.selectFile') || 'Select File'}
+            </Button>
+          </Upload>
+
+          {importResults && (
+            <div>
+              <Alert
+                message={t('questions.importResults') || 'Import Results'}
+                description={
+                  <div>
+                    <p><strong>{t('questions.total') || 'Total'}:</strong> {importResults.total}</p>
+                    <p style={{ color: '#52c41a' }}>
+                      <strong>{t('questions.success') || 'Success'}:</strong> {importResults.success}
+                    </p>
+                    <p style={{ color: '#ff4d4f' }}>
+                      <strong>{t('questions.failed') || 'Failed'}:</strong> {importResults.failed}
+                    </p>
+                    {importResults.errors && importResults.errors.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <strong>{t('questions.errors') || 'Errors'}:</strong>
+                        <ul style={{ marginTop: 4, paddingLeft: 20 }}>
+                          {importResults.errors.slice(0, 10).map((err, idx) => (
+                            <li key={idx} style={{ color: '#ff4d4f' }}>
+                              Row {err.row}: {err.error}
+                            </li>
+                          ))}
+                          {importResults.errors.length > 10 && (
+                            <li>... and {importResults.errors.length - 10} more errors</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                }
+                type={importResults.failed === 0 ? 'success' : 'warning'}
+                showIcon
+              />
+            </div>
+          )}
+        </Space>
+      </Modal>
     </Card>
   );
 };

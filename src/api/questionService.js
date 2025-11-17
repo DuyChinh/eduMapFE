@@ -59,6 +59,50 @@ const questionService = {
   getSubjects: async (params = {}) => {
     return await axiosInstance.get('/subjects', { params });
   },
+
+  /**
+   * Export questions to Excel/CSV
+   * @param {Object} params - Query parameters (subjectId, type, level, format)
+   * @returns {Promise} Blob response
+   */
+  exportQuestions: async (params = {}) => {
+    const format = params.format || 'xlsx';
+    const response = await axiosInstance.get('/questions/export', {
+      params: { ...params, format },
+      responseType: 'blob'
+    });
+    return response;
+  },
+
+  /**
+   * Download template file for importing questions
+   * @param {string} format - 'xlsx' or 'csv'
+   * @returns {Promise} Blob response
+   */
+  downloadTemplate: async (format = 'xlsx') => {
+    const response = await axiosInstance.get('/questions/template', {
+      params: { format },
+      responseType: 'blob'
+    });
+    return response;
+  },
+
+  /**
+   * Import questions from Excel/CSV file
+   * @param {File} file - The file to upload
+   * @returns {Promise} Response with import results
+   */
+  importQuestions: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await axiosInstance.post('/questions/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response;
+  },
 };
 
 export default questionService;
