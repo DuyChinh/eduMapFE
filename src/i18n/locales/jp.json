@@ -484,6 +484,8 @@
     "examHistory": "試験履歴",
     "searchPlaceholder": "試験を検索...",
     "filterByStatus": "ステータスでフィルター",
+    "filterBySubject": "科目でフィルター",
+    "subject": "科目",
     "fetchFailed": "試験の読み込みに失敗しました",
     "createSuccess": "試験が正常に作成されました！",
     "createFailed": "試験の作成に失敗しました",

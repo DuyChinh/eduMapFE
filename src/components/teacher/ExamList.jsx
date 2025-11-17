@@ -22,6 +22,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import examService from '../../api/examService';
+import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 
 const { Search } = Input;
@@ -30,6 +31,7 @@ const { Option } = Select;
 const ExamList = () => {
   const { message } = App.useApp();
   const [exams, setExams] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -39,10 +41,11 @@ const ExamList = () => {
   const [filters, setFilters] = useState({
     q: '',
     status: '',
+    subjectId: '',
     sort: '-createdAt'
   });
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const fetchExams = async (params = {}) => {
@@ -74,6 +77,31 @@ const ExamList = () => {
   useEffect(() => {
     fetchExams();
   }, [pagination.current, pagination.pageSize, filters]);
+
+  // Fetch subjects on component mount and when language changes
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const currentLang = i18n.language || localStorage.getItem('language') || 'vi';
+        const response = await questionService.getSubjects({ lang: currentLang });
+        
+        let subjectsData = [];
+        if (Array.isArray(response)) {
+          subjectsData = response;
+        } else if (response.data && Array.isArray(response.data)) {
+          subjectsData = response.data;
+        } else if (response.items && Array.isArray(response.items)) {
+          subjectsData = response.items;
+        }
+        
+        setSubjects(subjectsData);
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+      }
+    };
+
+    fetchSubjects();
+  }, [i18n.language]);
 
   const handleSearch = (value) => {
     setFilters(prev => ({ ...prev, q: value }));
@@ -139,6 +167,24 @@ const ExamList = () => {
     return purposes[purpose] || purpose;
   };
 
+  // Get subject name based on current language
+  const getSubjectName = (subject) => {
+    if (!subject) return '-';
+    if (typeof subject === 'string') return subject;
+    
+    const currentLang = i18n.language || localStorage.getItem('language') || 'vi';
+    switch (currentLang) {
+      case 'en':
+        return subject.name_en || subject.name || '-';
+      case 'jp':
+      case 'ja':
+        return subject.name_jp || subject.name || '-';
+      case 'vi':
+      default:
+        return subject.name || '-';
+    }
+  };
+
   const columns = [
     {
       title: t('exams.name'),
@@ -160,6 +206,19 @@ const ExamList = () => {
           {getStatusText(status)}
         </Tag>
       ),
+    },
+    {
+      title: t('exams.subject') || 'Subject',
+      dataIndex: 'subjectId',
+      key: 'subject',
+      render: (subject) => {
+        const subjectName = getSubjectName(subject);
+        return subjectName !== '-' ? (
+          <Tag color="cyan">{subjectName}</Tag>
+        ) : (
+          <span>-</span>
+        );
+      },
     },
     {
       title: t('exams.examPurpose'),
@@ -299,6 +358,24 @@ const ExamList = () => {
             <Option value="draft">{t('exams.statusDraft')}</Option>
             <Option value="published">{t('exams.statusPublished')}</Option>
             <Option value="archived">{t('exams.statusArchived')}</Option>
+          </Select>
+
+          <Select
+            placeholder={t('exams.filterBySubject') || 'Filter by Subject'}
+            style={{ width: 200 }}
+            allowClear
+            showSearch
+            optionFilterProp="children"
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            onChange={(value) => handleFilterChange('subjectId', value)}
+          >
+            {subjects.map((subject) => (
+              <Option key={subject._id} value={subject._id} label={getSubjectName(subject)}>
+                {getSubjectName(subject)}
+              </Option>
+            ))}
           </Select>
         </div>
         

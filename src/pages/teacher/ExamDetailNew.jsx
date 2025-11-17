@@ -44,7 +44,7 @@ const ExamDetailNew = () => {
   const { message } = App.useApp();
   const { examId } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [examData, setExamData] = useState(null);
   const [statistics, setStatistics] = useState(null);
@@ -169,6 +169,27 @@ const ExamDetailNew = () => {
       archived: t('exams.statusArchived')
     };
     return statuses[status] || status;
+  };
+
+  // Get subject name based on current language
+  const getSubjectName = (subject) => {
+    if (!subject) return '-';
+    if (typeof subject === 'string') return subject;
+    if (typeof subject === 'object' && subject._id) {
+      // It's a populated subject object
+      const currentLang = i18n.language || localStorage.getItem('language') || 'vi';
+      switch (currentLang) {
+        case 'en':
+          return subject.name_en || subject.name || '-';
+        case 'jp':
+        case 'ja':
+          return subject.name_jp || subject.name || '-';
+        case 'vi':
+        default:
+          return subject.name || '-';
+      }
+    }
+    return '-';
   };
 
   const leaderboardColumns = [
@@ -412,6 +433,7 @@ const ExamDetailNew = () => {
                       dataSource={[
                         { key: 'description', label: t('exams.description'), value: examData.description || '-' },
                         { key: 'purpose', label: t('exams.examPurpose'), value: examData.examPurpose, isTag: true },
+                        { key: 'subject', label: t('exams.subject') || 'Subject', value: examData.subjectId, isSubject: true },
                         { key: 'duration', label: t('exams.duration'), value: `${examData.duration} ${t('exams.minutes')}` },
                         { key: 'totalMarks', label: t('exams.totalMarks'), value: examData.totalMarks },
                         { key: 'maxAttempts', label: t('exams.maxAttempts'), value: examData.maxAttempts },
@@ -449,6 +471,14 @@ const ExamDetailNew = () => {
                                 </Tooltip>
                               ) : (
                                 <Tag color="default">-</Tag>
+                              );
+                            }
+                            if (record.isSubject) {
+                              const subjectName = getSubjectName(record.value);
+                              return subjectName !== '-' ? (
+                                <Tag color="cyan">{subjectName}</Tag>
+                              ) : (
+                                <span>-</span>
                               );
                             }
                             if (record.isTag) {

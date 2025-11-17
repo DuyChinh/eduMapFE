@@ -484,6 +484,8 @@
     "examHistory": "Exam History",
     "searchPlaceholder": "Search exams...",
     "filterByStatus": "Filter by status",
+    "filterBySubject": "Filter by subject",
+    "subject": "Subject",
     "fetchFailed": "Failed to load exams",
     "createSuccess": "Exam created successfully!",
     "createFailed": "Failed to create exam",

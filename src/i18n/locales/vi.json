@@ -484,6 +484,8 @@
     "examHistory": "Lịch sử làm bài",
     "searchPlaceholder": "Tìm kiếm đề thi...",
     "filterByStatus": "Lọc theo trạng thái",
+    "filterBySubject": "Lọc theo môn học",
+    "subject": "Môn học",
     "fetchFailed": "Không thể tải danh sách đề thi",
     "createSuccess": "Tạo đề thi thành công!",
     "createFailed": "Không thể tạo đề thi",

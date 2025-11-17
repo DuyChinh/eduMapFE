@@ -22,7 +22,7 @@ import './DashboardLayout.css';
 const { Header, Sider, Content } = Layout;
 
 const StudentLayout = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);

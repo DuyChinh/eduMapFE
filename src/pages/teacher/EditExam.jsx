@@ -66,6 +66,20 @@ const EditExam = () => {
       const response = await examService.getExamById(examId);
       const examData = response.data || response;
       
+      // Extract subjectId - handle both object (populated) and string (ID) cases
+      const subjectIdValue = examData.subjectId 
+        ? (typeof examData.subjectId === 'object' && examData.subjectId._id 
+          ? examData.subjectId._id 
+          : examData.subjectId)
+        : undefined;
+
+      // Extract gradeId - handle both object (populated) and string (ID) cases
+      const gradeIdValue = examData.gradeId 
+        ? (typeof examData.gradeId === 'object' && examData.gradeId._id 
+          ? examData.gradeId._id 
+          : examData.gradeId)
+        : undefined;
+
       // Set form values from examData
       form.setFieldsValue({
         name: examData.name,
@@ -78,8 +92,8 @@ const EditExam = () => {
         maxAttempts: examData.maxAttempts,
         viewMark: examData.viewMark,
         viewExamAndAnswer: examData.viewExamAndAnswer,
-        subjectId: examData.subjectId,
-        gradeId: examData.gradeId,
+        subjectId: subjectIdValue,
+        gradeId: gradeIdValue,
         fee: examData.fee || 0,
         timezone: examData.timezone || 'Asia/Ho_Chi_Minh',
         autoMonitoring: examData.autoMonitoring || 'off',
@@ -114,8 +128,8 @@ const EditExam = () => {
       }
 
       // Load questions of subject if subjectId exists
-      if (examData.subjectId) {
-        loadQuestionsBySubject(examData.subjectId);
+      if (subjectIdValue) {
+        loadQuestionsBySubject(subjectIdValue);
       }
     } catch (error) {
       console.error('Error fetching exam data:', error);
