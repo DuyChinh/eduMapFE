@@ -95,3 +95,116 @@
   }
 }
 
+/* Dark Mode Styles */
+body.dark-mode .submission-detail-container {
+  background: #141414;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .choice-item {
+  background: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .choice-item.choice-correct {
+  background: rgba(82, 196, 26, 0.15);
+  border-color: rgba(82, 196, 26, 0.5);
+}
+
+body.dark-mode .choice-item.choice-wrong {
+  background: rgba(255, 77, 79, 0.15);
+  border-color: rgba(255, 77, 79, 0.5);
+}
+
+body.dark-mode .answer-feedback {
+  background: rgba(82, 196, 26, 0.15);
+  border-color: rgba(82, 196, 26, 0.5);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .activity-summary {
+  background: #1f1f1f !important;
+  border: 1px solid #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark Mode - Ant Design Card Override */
+body.dark-mode .submission-detail-container .ant-card {
+  background: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submission-detail-container .ant-card-head {
+  background: #1f1f1f;
+  border-bottom-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submission-detail-container .ant-card-head-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submission-detail-container .ant-card-body {
+  background: #1f1f1f;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark Mode - Question Card */
+body.dark-mode .question-card {
+  background: #1f1f1f !important;
+  border-color: #434343 !important;
+}
+
+body.dark-mode .question-card .ant-card-body {
+  background: #1f1f1f !important;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark Mode - Tabs */
+body.dark-mode .submission-detail-container .ant-tabs {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submission-detail-container .ant-tabs-tab {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .submission-detail-container .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submission-detail-container .ant-tabs-ink-bar {
+  background: #667eea;
+}
+
+body.dark-mode .submission-detail-container .ant-tabs-content-holder {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark Mode - Text colors */
+body.dark-mode .submission-detail-container .ant-typography {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submission-detail-container .ant-typography h2,
+body.dark-mode .submission-detail-container .ant-typography h4,
+body.dark-mode .submission-detail-container .ant-typography h5 {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submission-detail-container .ant-typography.ant-typography-secondary {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Dark Mode - Divider */
+body.dark-mode .submission-detail-container .ant-divider {
+  border-color: #434343;
+}
+
+/* Dark Mode - Empty */
+body.dark-mode .submission-detail-container .ant-empty-description {
+  color: rgba(255, 255, 255, 0.45);
+}
+

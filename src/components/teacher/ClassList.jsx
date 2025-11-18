@@ -51,6 +51,10 @@ const ClassList = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addStudentsModalVisible, setAddStudentsModalVisible] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
+  
+  // Bulk delete states
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -138,6 +142,42 @@ const ClassList = () => {
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.deleteFailed'));
       message.error(errorMessage);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning(t('classes.noItemsSelected') || 'No items selected');
+      return;
+    }
+
+    try {
+      setBulkDeleteLoading(true);
+      const deletePromises = selectedRowKeys.map(id => classService.deleteClass(id));
+      await Promise.all(deletePromises);
+      
+      message.success(
+        t('classes.bulkDeleteSuccess') || 
+        `Successfully deleted ${selectedRowKeys.length} class(es)`
+      );
+      setSelectedRowKeys([]);
+      fetchClasses();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.bulkDeleteFailed'));
+      message.error(errorMessage);
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+    getCheckboxProps: (record) => ({
+      name: record.name,
+    }),
   };
 
   const handleRegenerateCode = async (classId) => {
@@ -279,13 +319,33 @@ const ClassList = () => {
           prefix={<SearchOutlined />}
         />
         
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={() => setCreateModalVisible(true)}
-        >
-          {t('classes.createNew')}
-        </Button>
+        <Space>
+          {selectedRowKeys.length > 0 && (
+            <Popconfirm
+              title={t('classes.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected class(es)?`}
+              onConfirm={handleBulkDelete}
+              okText={t('common.yes')}
+              cancelText={t('common.no')}
+              okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+            >
+              <Button 
+                danger
+                icon={<DeleteOutlined />}
+                loading={bulkDeleteLoading}
+              >
+                {t('classes.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+              </Button>
+            </Popconfirm>
+          )}
+          
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => setCreateModalVisible(true)}
+          >
+            {t('classes.createNew')}
+          </Button>
+        </Space>
       </div>
 
       <Table
@@ -293,6 +353,7 @@ const ClassList = () => {
         dataSource={classes}
         loading={loading}
         rowKey="_id"
+        rowSelection={rowSelection}
         locale={{
           emptyText: t('classes.noClasses')
         }}

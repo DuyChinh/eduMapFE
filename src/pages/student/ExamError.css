@@ -6,6 +6,7 @@
   align-items: center;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 24px;
+  box-sizing: border-box;
 }
 
 .exam-error-content {
@@ -15,11 +16,39 @@
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: 48px 32px;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* Override Ant Design Result component styles */
+.exam-error-content .ant-result {
+  padding: 0;
+}
+
+.exam-error-content .ant-result-icon {
+  margin-bottom: 24px;
+}
+
+.exam-error-content .ant-result-title {
+  margin-bottom: 16px;
+}
+
+.exam-error-content .ant-result-subtitle {
+  margin-top: 0;
+  margin-bottom: 32px;
+}
+
+.exam-error-content .ant-result-extra {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
 }
 
 .error-icon {
   font-size: 80px !important;
   margin-bottom: 24px;
+  display: block;
+  text-align: center;
 }
 
 .error-icon.max-attempts {
@@ -43,6 +72,7 @@
   margin-bottom: 16px !important;
   color: #262626;
   font-weight: 600;
+  text-align: center;
 }
 
 .error-message {
@@ -51,6 +81,8 @@
   color: #595959;
   margin-bottom: 32px;
   text-align: center;
+  max-width: 100%;
+  word-wrap: break-word;
 }
 
 .back-button {
@@ -82,10 +114,13 @@
 @media (max-width: 768px) {
   .exam-error-container {
     padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
   }
 
   .exam-error-content {
     padding: 32px 24px;
+    max-width: 100%;
   }
 
   .error-icon {
@@ -98,10 +133,43 @@
 
   .error-message {
     font-size: 14px;
+    padding: 0 8px;
   }
 
   .back-button {
     width: 100%;
+    max-width: 100%;
   }
+
+  .exam-error-content .ant-result-extra {
+    width: 100%;
+  }
+}
+
+/* Dark Mode Styles */
+body.dark-mode .exam-error-container {
+  background: linear-gradient(135deg, #1f1f1f 0%, #141414 100%);
+}
+
+body.dark-mode .exam-error-content {
+  background: #1f1f1f;
+  border: 1px solid #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .exam-error-content .ant-result-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .error-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .error-message {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .exam-error-content .ant-result-subtitle {
+  color: rgba(255, 255, 255, 0.65);
 }
 

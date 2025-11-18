@@ -44,6 +44,10 @@ const ExamList = () => {
     subjectId: '',
     sort: '-createdAt'
   });
+  
+  // Bulk delete states
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -123,6 +127,42 @@ const ExamList = () => {
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('exams.deleteFailed'));
       message.error(errorMessage);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning(t('exams.noItemsSelected') || 'No items selected');
+      return;
+    }
+
+    try {
+      setBulkDeleteLoading(true);
+      const deletePromises = selectedRowKeys.map(id => examService.deleteExam(id));
+      await Promise.all(deletePromises);
+      
+      message.success(
+        t('exams.bulkDeleteSuccess') || 
+        `Successfully deleted ${selectedRowKeys.length} exam(s)`
+      );
+      setSelectedRowKeys([]);
+      fetchExams();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('exams.bulkDeleteFailed'));
+      message.error(errorMessage);
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+    getCheckboxProps: (record) => ({
+      name: record.name,
+    }),
   };
 
   const handleTableChange = (pagination) => {
@@ -379,13 +419,33 @@ const ExamList = () => {
           </Select>
         </div>
         
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={() => navigate('/teacher/exams/create')}
-        >
-          {t('exams.createNew')}
-        </Button>
+        <Space>
+          {selectedRowKeys.length > 0 && (
+            <Popconfirm
+              title={t('exams.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected exam(s)?`}
+              onConfirm={handleBulkDelete}
+              okText={t('common.yes')}
+              cancelText={t('common.no')}
+              okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+            >
+              <Button 
+                danger
+                icon={<DeleteOutlined />}
+                loading={bulkDeleteLoading}
+              >
+                {t('exams.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+              </Button>
+            </Popconfirm>
+          )}
+          
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/teacher/exams/create')}
+          >
+            {t('exams.createNew')}
+          </Button>
+        </Space>
       </div>
 
       <Table
@@ -393,6 +453,7 @@ const ExamList = () => {
         dataSource={exams}
         loading={loading}
         rowKey={(record) => record._id || record.id}
+        rowSelection={rowSelection}
         locale={{
           emptyText: t('exams.noExams')
         }}

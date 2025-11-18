@@ -53,6 +53,11 @@ const examStatsService = {
       { comment }
     );
   },
+
+  // Reset student attempt (allow retake)
+  resetStudentAttempt: async (examId, studentId) => {
+    return await axiosInstance.delete(`/exams/${examId}/submissions/${studentId}/reset`);
+  },
 };
 
 export default examStatsService;

@@ -57,6 +57,10 @@ const QuestionList = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importResults, setImportResults] = useState(null);
+  
+  // Bulk delete states
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -188,6 +192,42 @@ const QuestionList = () => {
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.deleteFailed'));
       message.error(errorMessage);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning(t('questions.noItemsSelected') || 'No items selected');
+      return;
+    }
+
+    try {
+      setBulkDeleteLoading(true);
+      const deletePromises = selectedRowKeys.map(id => questionService.deleteQuestion(id));
+      await Promise.all(deletePromises);
+      
+      message.success(
+        t('questions.bulkDeleteSuccess') || 
+        `Successfully deleted ${selectedRowKeys.length} question(s)`
+      );
+      setSelectedRowKeys([]);
+      fetchQuestions();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.bulkDeleteFailed'));
+      message.error(errorMessage);
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+    getCheckboxProps: (record) => ({
+      name: record.name,
+    }),
   };
 
   const handleTableChange = (pagination) => {
@@ -552,6 +592,24 @@ const QuestionList = () => {
         </div>
         
         <Space>
+          {selectedRowKeys.length > 0 && (
+            <Popconfirm
+              title={t('questions.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected question(s)?`}
+              onConfirm={handleBulkDelete}
+              okText={t('common.yes')}
+              cancelText={t('common.no')}
+              okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+            >
+              <Button 
+                danger
+                icon={<DeleteOutlined />}
+                loading={bulkDeleteLoading}
+              >
+                {t('questions.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+              </Button>
+            </Popconfirm>
+          )}
+          
           <Button 
             icon={<FileExcelOutlined />}
             onClick={() => handleDownloadTemplate('xlsx')}
@@ -588,6 +646,7 @@ const QuestionList = () => {
         dataSource={questions}
         loading={loading}
         rowKey={(record) => record.id || record._id}
+        rowSelection={rowSelection}
         locale={{
           emptyText: t('questions.noQuestions')
         }}

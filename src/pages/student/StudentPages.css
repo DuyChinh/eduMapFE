@@ -101,3 +101,17 @@
   }
 }
 
+/* Dark Mode Styles */
+/* Note: Stat cards with gradients (stat-card-blue, etc.) keep their colors in dark mode */
+/* Regular cards and other elements need dark mode styling */
+
+body.dark-mode .page-header h2 {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .upcoming-exams-card,
+body.dark-mode .recent-results-card {
+  background: #1f1f1f;
+  border-color: #434343;
+}
+

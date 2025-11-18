@@ -13,10 +13,13 @@ import {
   SwapOutlined,
   ReloadOutlined,
   GlobalOutlined,
+  MoonOutlined,
+  SunOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useAuthStore from '../store/authStore';
+import useThemeStore from '../store/themeStore';
 import { ROUTES, USER_ROLES } from '../constants/config';
 import './DashboardLayout.css';
 
@@ -31,6 +34,7 @@ const TeacherLayout = () => {
   const location = useLocation();
   const { message } = App.useApp();
   const { user, logout, fetchProfile, updateRole } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
   // Auto refresh profile when entering dashboard (only if no user data)
@@ -246,6 +250,14 @@ const TeacherLayout = () => {
           />
 
           <Space size="large" className="header-actions">
+            <Button 
+              type="text" 
+              icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+              onClick={toggleTheme}
+              title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
+              className="theme-toggle-btn"
+            />
+            
             <Button 
               type="text" 
               icon={<BellOutlined />}

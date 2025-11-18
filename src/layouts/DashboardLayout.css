@@ -98,6 +98,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  transition: background-color 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   height: 64px;
 }
@@ -182,5 +183,41 @@
     margin: 12px;
     padding: 12px;
   }
+}
+
+/* Dark Mode Styles */
+body.dark-mode .dashboard-header {
+  background: #141414;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .trigger-btn:hover {
+  background: #262626;
+}
+
+body.dark-mode .notification-btn:hover {
+  background: #262626;
+}
+
+body.dark-mode .user-dropdown:hover {
+  background: #262626;
+}
+
+body.dark-mode .user-name-header {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .dashboard-content {
+  background: #1f1f1f;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .theme-toggle-btn {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .theme-toggle-btn:hover {
+  background: #262626;
+  color: #fff;
 }
 

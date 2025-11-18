@@ -138,3 +138,52 @@
   }
 
 }
+
+/* Dark Mode Styles */
+body.dark-mode .exam-result-detail-container {
+  background-color: #141414;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .question-card {
+  background: #1f1f1f !important;
+  border-color: #434343;
+}
+
+body.dark-mode .choice-item {
+  background: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .choice-item.choice-correct {
+  background: rgba(82, 196, 26, 0.15);
+  border-color: rgba(82, 196, 26, 0.5);
+}
+
+body.dark-mode .choice-item.choice-incorrect {
+  background: rgba(255, 77, 79, 0.15);
+  border-color: rgba(255, 77, 79, 0.5);
+}
+
+body.dark-mode .correct-answer-section {
+  background: rgba(82, 196, 26, 0.15);
+  border-color: rgba(82, 196, 26, 0.5);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark Mode - Ant Design Components */
+body.dark-mode .exam-result-detail-container .ant-card {
+  background: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .exam-result-detail-container .ant-card-body {
+  background: #1f1f1f;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .exam-result-detail-container .ant-typography {
+  color: rgba(255, 255, 255, 0.85);
+}

@@ -35,9 +35,11 @@ import {
   EyeOutlined,
   ClockCircleOutlined,
   WarningOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import examStatsService from '../../api/examStatsService';
+import useAuthStore from '../../store/authStore';
 import { App } from 'antd';
 import './StudentExamDetail.css';
 
@@ -49,6 +51,10 @@ const StudentExamDetail = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { message: messageApi } = App.useApp();
+  const { user } = useAuthStore();
+  
+  // Check if current user is teacher or admin
+  const isTeacherOrAdmin = user && (user.role === 'teacher' || user.role === 'admin');
 
   const [submissionData, setSubmissionData] = useState(null);
   const [activityLog, setActivityLog] = useState([]);
@@ -172,14 +178,16 @@ const StudentExamDetail = () => {
     }
   };
 
-  const handleDeleteSubmission = async (allowRetake = false) => {
+  const handleResetAttempt = async () => {
     try {
-      // TODO: Implement API call to delete submission
-      messageApi.success(t(allowRetake ? 'submissionDetail.deleteAndRetakeSuccess' : 'submissionDetail.deleteAndBanSuccess'));
+      await examStatsService.resetStudentAttempt(examId, studentId);
+      messageApi.success(t('submissionDetail.resetAttemptSuccess') || 'Student attempt reset successfully. Student can now retake the exam.');
+      // Refresh the page or navigate back
       navigate(-1);
     } catch (error) {
-      console.error('Error deleting submission:', error);
-      messageApi.error(t('submissionDetail.deleteFailed'));
+      console.error('Error resetting attempt:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.response?.data?.message || error?.message || t('submissionDetail.resetAttemptFailed'));
+      messageApi.error(errorMessage);
     }
   };
 
@@ -451,35 +459,23 @@ const StudentExamDetail = () => {
                     {t('submissionDetail.viewActivityLog')}
                   </Button>
                   
-                  <Popconfirm
-                    title={t('submissionDetail.deleteAndRetakeConfirm')}
-                    onConfirm={() => handleDeleteSubmission(true)}
-                    okText={t('common.delete')}
-                    cancelText={t('common.cancel')}
-                  >
-                    <Button
-                      icon={<DeleteOutlined />}
-                      block
-                      danger
+                  {isTeacherOrAdmin && (
+                    <Popconfirm
+                      title={t('submissionDetail.resetAttemptConfirm') || `Are you sure you want to reset this student's attempt? This will delete all submissions and allow the student to retake the exam from attempt 1.`}
+                      onConfirm={handleResetAttempt}
+                      okText={t('common.yes')}
+                      cancelText={t('common.no')}
+                      okButtonProps={{ danger: true }}
                     >
-                      {t('submissionDetail.deleteAndRetake')}
-                    </Button>
-                  </Popconfirm>
-
-                  <Popconfirm
-                    title={t('submissionDetail.deleteAndBanConfirm')}
-                    onConfirm={() => handleDeleteSubmission(false)}
-                    okText={t('common.delete')}
-                    cancelText={t('common.cancel')}
-                  >
-                    <Button
-                      icon={<DeleteOutlined />}
-                      block
-                      danger
-                    >
-                      {t('submissionDetail.deleteAndBan')}
-                    </Button>
-                  </Popconfirm>
+                      <Button
+                        icon={<ReloadOutlined />}
+                        block
+                        danger
+                      >
+                        {t('submissionDetail.resetAttempt') || 'Reset Attempt (Allow Retake)'}
+                      </Button>
+                    </Popconfirm>
+                  )}
                 </Space>
 
                 <Divider />
@@ -650,7 +646,7 @@ const StudentExamDetail = () => {
                           <>
                             {/* Activity Summary */}
                             {Object.keys(getActivitySummary()).length > 0 && (
-                              <div style={{ marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
+                              <div className="activity-summary" style={{ marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
                                 <Text strong>{t('submissionDetail.activitySummary')}: </Text>
                                 <div style={{ marginTop: 8 }}>
                                   {Object.entries(getActivitySummary()).map(([type, count], index) => (

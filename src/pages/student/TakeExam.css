@@ -448,3 +448,166 @@
   }
 }
 
+/* Dark Mode Styles */
+body.dark-mode .take-exam-container {
+  background-color: #141414;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .take-exam-header-new {
+  background-color: #1f1f1f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid #434343;
+}
+
+body.dark-mode .candidate-dropdown:hover {
+  background-color: #262626;
+}
+
+body.dark-mode .timer-new {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .question-item-card {
+  background-color: #1f1f1f !important;
+  border-color: #434343;
+}
+
+body.dark-mode .question-item-card .ant-card-body {
+  background-color: #1f1f1f;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .question-number {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .question-text {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .choice-option {
+  background-color: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .choice-option:hover {
+  border-color: #40a9ff;
+  background-color: rgba(64, 169, 255, 0.1);
+}
+
+body.dark-mode .choice-selected {
+  border-color: #ff7a00 !important;
+  background-color: rgba(255, 122, 0, 0.15) !important;
+}
+
+body.dark-mode .choice-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .question-navigation {
+  border-top-color: #434343;
+}
+
+body.dark-mode .question-list-sidebar {
+  background-color: #1f1f1f;
+  border: 1px solid #434343;
+}
+
+body.dark-mode .question-list-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .question-list-btn {
+  border-color: #434343;
+  background-color: #1f1f1f;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .question-unanswered-white {
+  background-color: #1f1f1f;
+  color: rgba(255, 255, 255, 0.65);
+  border-color: #434343;
+}
+
+body.dark-mode .question-unanswered-white:hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+body.dark-mode .question-flag-icon {
+  background-color: #1f1f1f;
+}
+
+body.dark-mode .dropdown-icon {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .flag-button {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .flag-button:hover {
+  color: #faad14;
+}
+
+/* Dark Mode - Ant Design Components */
+body.dark-mode .take-exam-container .ant-card {
+  background: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .take-exam-container .ant-card-body {
+  background: #1f1f1f;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .take-exam-container .ant-typography {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .take-exam-container .ant-radio-wrapper {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .take-exam-container .ant-radio-inner {
+  border-color: #434343;
+  background-color: #1f1f1f;
+}
+
+body.dark-mode .take-exam-container .ant-radio-checked .ant-radio-inner {
+  border-color: #ff7a00;
+}
+
+body.dark-mode .take-exam-container .ant-radio-checked .ant-radio-inner::after {
+  background-color: #ff7a00;
+}
+
+body.dark-mode .take-exam-container .ant-input,
+body.dark-mode .take-exam-container .ant-input-number,
+body.dark-mode .take-exam-container .ant-input-number-input {
+  background-color: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .take-exam-container .ant-input:focus,
+body.dark-mode .take-exam-container .ant-input-focused {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.2);
+}
+
+body.dark-mode .take-exam-container .ant-btn-default {
+  background-color: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .take-exam-container .ant-btn-default:hover {
+  background-color: #262626;
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+

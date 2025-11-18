@@ -25,3 +25,6 @@
   }
 }
 
+/* Dark Mode Styles - Monitor page uses Ant Design components which are already styled via ConfigProvider */
+/* Additional custom dark mode styles can be added here if needed */
+
