@@ -87,6 +87,15 @@ const authService = {
       throw error;
     }
   },
+  /**
+   * Switch current user role and get new token
+   * @param {string} role - 'teacher' or 'student'
+   * @returns {Promise} Response with user and new token
+   */
+  switchRole: async (role) => {
+    return await axiosInstance.post('/users/switch-role', { role });
+  },
+  
 };
 
 export default authService;

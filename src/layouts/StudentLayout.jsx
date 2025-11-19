@@ -32,7 +32,7 @@ const StudentLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const { user, logout, fetchProfile, updateRole } = useAuthStore();
+  const { user, logout, fetchProfile, switchRole } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
@@ -69,26 +69,25 @@ const StudentLayout = () => {
     }
 
     try {
-      const result = await updateRole(user._id, selectedRole);
-      const roleName = selectedRole === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student');
+      const result = await switchRole(selectedRole);
+      const roleName =
+        selectedRole === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student');
       message.success(`${t('role.switchSuccess')} ${roleName}`);
       setIsRoleModalVisible(false);
-      
-      // Navigate to appropriate dashboard
+
       if (result.user.role === USER_ROLES.TEACHER) {
         navigate(ROUTES.TEACHER_DASHBOARD, { replace: true });
       } else if (result.user.role === USER_ROLES.STUDENT) {
         navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
       }
-      
-      // Refresh page to update layout
-      window.location.reload();
+
     } catch (error) {
-      // Error is now a string from axios interceptor
-      const errorMessage = typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
+      const errorMessage =
+        typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
       message.error(errorMessage);
     }
   };
+
 
   const showRoleModal = () => {
     setSelectedRole(user?.role || '');

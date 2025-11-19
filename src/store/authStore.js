@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { STORAGE_KEYS } from '../constants/config';
 import authService from '../api/authService';
 import userService from '../api/userService';
+import { STORAGE_KEYS } from '../constants/config';
 
 /**
  * Authentication Store using Zustand
@@ -187,6 +187,46 @@ const useAuthStore = create(
         }
       },
 
+            /**
+       * User tự switch role + refresh token
+       * @param {string} role - 'teacher' | 'student'
+       */
+        switchRole: async (role) => {
+          set({ loading: true, error: null });
+          try {
+            const response = await authService.switchRole(role);
+  
+            const token = response.data?.token;
+            const userData = response.data?.user;
+  
+            if (!token || !userData) {
+              throw new Error('Missing token or user in switchRole response');
+            }
+  
+            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+  
+            set({
+              user: userData,
+              token,
+              isAuthenticated: true,
+              loading: false,
+              error: null,
+            });
+  
+            console.log('✅ Role switched successfully:', {
+              user: userData.name,
+              newRole: userData.role,
+            });
+  
+            return { success: true, user: userData };
+          } catch (error) {
+            console.error('❌ Switch role failed:', error);
+            const errorMessage =
+              typeof error === 'string' ? error : (error?.message || 'Failed to switch role');
+            set({ loading: false, error: errorMessage });
+            throw errorMessage;
+          }
+        },      
       /**
        * Clear error
        */
@@ -204,4 +244,3 @@ const useAuthStore = create(
 );
 
 export default useAuthStore;
-

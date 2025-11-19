@@ -1,26 +1,26 @@
-import { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Button, Space, Modal, Select, App } from 'antd';
 import {
-  HomeOutlined,
-  FileTextOutlined,
+  BellOutlined,
   BookOutlined,
-  TeamOutlined,
-  UserOutlined,
+  FileTextOutlined,
+  GlobalOutlined,
+  HomeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  BellOutlined,
-  SwapOutlined,
-  ReloadOutlined,
-  GlobalOutlined,
   MoonOutlined,
+  ReloadOutlined,
   SunOutlined,
+  SwapOutlined,
+  TeamOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space } from 'antd';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
-import { ROUTES, USER_ROLES } from '../constants/config';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -33,7 +33,7 @@ const TeacherLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const { user, logout, fetchProfile, updateRole } = useAuthStore();
+  const { user, logout, fetchProfile, switchRole } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
@@ -70,26 +70,25 @@ const TeacherLayout = () => {
     }
 
     try {
-      const result = await updateRole(user._id, selectedRole);
-      const roleName = selectedRole === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student');
+      const result = await switchRole(selectedRole);
+      const roleName =
+        selectedRole === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student');
       message.success(`${t('role.switchSuccess')} ${roleName}`);
       setIsRoleModalVisible(false);
-      
-      // Navigate to appropriate dashboard
+
       if (result.user.role === USER_ROLES.TEACHER) {
         navigate(ROUTES.TEACHER_DASHBOARD, { replace: true });
       } else if (result.user.role === USER_ROLES.STUDENT) {
         navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
       }
-      
-      // Refresh page to update layout
-      window.location.reload();
+
     } catch (error) {
-      // Error is now a string from axios interceptor
-      const errorMessage = typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
+      const errorMessage =
+        typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
       message.error(errorMessage);
     }
   };
+
 
   const showRoleModal = () => {
     setSelectedRole(user?.role || '');
