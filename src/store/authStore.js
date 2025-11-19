@@ -188,7 +188,7 @@ const useAuthStore = create(
       },
 
             /**
-       * User tự switch role + refresh token
+       * User switch role + refresh token
        * @param {string} role - 'teacher' | 'student'
        */
         switchRole: async (role) => {
@@ -226,7 +226,7 @@ const useAuthStore = create(
             set({ loading: false, error: errorMessage });
             throw errorMessage;
           }
-        },      
+        },
       /**
        * Clear error
        */
