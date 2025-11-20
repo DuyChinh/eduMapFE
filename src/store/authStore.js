@@ -156,10 +156,10 @@ const useAuthStore = create(
         }
       },
 
-          /**
-     * User switch role + refresh token
-     * @param {string} role - 'teacher' | 'student'
-     */
+      /**
+       * User switch role + refresh token
+       * @param {string} role - 'teacher' | 'student'
+       */
       switchRole: async (role) => {
         set({ loading: true, error: null });
         try {
@@ -172,8 +172,17 @@ const useAuthStore = create(
             throw new Error('Missing token or user in switchRole response');
           }
 
+          // Set token to localStorage first
           localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+          
+          // Verify token was set
+          const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+          if (savedToken !== token) {
+            console.error('❌ Token not saved correctly to localStorage');
+            throw new Error('Failed to save token to localStorage');
+          }
 
+          // Update state (persist middleware will also save to 'auth-storage')
           set({
             user: userData,
             token,
