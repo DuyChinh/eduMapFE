@@ -32,26 +32,21 @@ const StudentLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const { user, logout, fetchProfile, updateRole } = useAuthStore();
+  const { user, logout, fetchProfile, switchRole } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
   // Auto refresh profile when entering dashboard (only if no user data)
   useEffect(() => {
     const refreshProfile = async () => {
-      // Skip if we already have user data (e.g., from Google OAuth)
       if (user && user._id) {
-        console.log('✅ User data already available, skipping profile refresh');
         return;
       }
       
       try {
         await fetchProfile();
-        console.log('✅ Profile refreshed on dashboard load');
       } catch (error) {
-        console.error('❌ Failed to refresh profile:', error);
-        // Don't redirect to logiDuyChinh/eduMan on profile fetch error
-        // The user might still be authenticated
+        
       }
     };
     refreshProfile();
@@ -69,26 +64,25 @@ const StudentLayout = () => {
     }
 
     try {
-      const result = await updateRole(user._id, selectedRole);
-      const roleName = selectedRole === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student');
+      const result = await switchRole(selectedRole);
+      const roleName =
+        selectedRole === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student');
       message.success(`${t('role.switchSuccess')} ${roleName}`);
       setIsRoleModalVisible(false);
-      
-      // Navigate to appropriate dashboard
+
       if (result.user.role === USER_ROLES.TEACHER) {
         navigate(ROUTES.TEACHER_DASHBOARD, { replace: true });
       } else if (result.user.role === USER_ROLES.STUDENT) {
         navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
       }
-      
-      // Refresh page to update layout
-      window.location.reload();
+
     } catch (error) {
-      // Error is now a string from axios interceptor
-      const errorMessage = typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
+      const errorMessage =
+        typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
       message.error(errorMessage);
     }
   };
+
 
   const showRoleModal = () => {
     setSelectedRole(user?.role || '');

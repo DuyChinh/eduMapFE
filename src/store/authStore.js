@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { STORAGE_KEYS } from '../constants/config';
 import authService from '../api/authService';
 import userService from '../api/userService';
+import { STORAGE_KEYS } from '../constants/config';
 
 /**
  * Authentication Store using Zustand
@@ -28,19 +28,6 @@ const useAuthStore = create(
         try {
           const response = await authService.login(credentials);
           
-          // Debug: Log full response
-          console.log('🔍 Full API Response:', response);
-          
-          // Backend response format:
-          // {
-          //   "success": true,
-          //   "message": "Login successful",
-          //   "data": {
-          //     "user": { ... },
-          //     "token": "..."
-          //   }
-          // }
-          
           const token = response.data?.token;
           const userData = response.data?.user;
           
@@ -56,13 +43,7 @@ const useAuthStore = create(
           
           // Store token
           localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-          
-          console.log('✅ Login successful:', {
-            user: userData.name,
-            role: userData.role,
-            email: userData.email
-          });
-          
+
           set({
             user: userData,
             token: token,
@@ -73,8 +54,6 @@ const useAuthStore = create(
           
           return { success: true, user: userData };
         } catch (error) {
-          console.error('❌ Login failed:', error);
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Login failed');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -92,7 +71,6 @@ const useAuthStore = create(
           set({ loading: false });
           return { success: true, data: response.data };
         } catch (error) {
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Register failed');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -129,7 +107,6 @@ const useAuthStore = create(
           });
           return response.data;
         } catch (error) {
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to fetch profile');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -149,7 +126,6 @@ const useAuthStore = create(
           });
           return response.data;
         } catch (error) {
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to fetch profile');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -172,21 +148,57 @@ const useAuthStore = create(
             loading: false,
           });
           
-          console.log('✅ Role updated successfully:', {
-            user: updatedUser.name,
-            newRole: updatedUser.role
-          });
-          
           return { success: true, user: updatedUser };
         } catch (error) {
-          console.error('❌ Update role failed:', error);
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to update role');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
         }
       },
 
+            /**
+       * User switch role + refresh token
+       * @param {string} role - 'teacher' | 'student'
+       */
+        switchRole: async (role) => {
+          set({ loading: true, error: null });
+          try {
+            const response = await authService.switchRole(role);
+  
+            const token = response.data?.token;
+            const userData = response.data?.user;
+  
+            if (!token || !userData) {
+              throw new Error('Missing token or user in switchRole response');
+            }
+  
+            // Set token to localStorage first
+            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+            
+            // Verify token was set
+            const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            if (savedToken !== token) {
+              console.error('❌ Token not saved correctly to localStorage');
+              throw new Error('Failed to save token to localStorage');
+            }
+  
+            // Update state (persist middleware will also save to 'auth-storage')
+            set({
+              user: userData,
+              token,
+              isAuthenticated: true,
+              loading: false,
+              error: null,
+            });
+  
+            return { success: true, user: userData };
+          } catch (error) {
+            const errorMessage =
+              typeof error === 'string' ? error : (error?.message || 'Failed to switch role');
+            set({ loading: false, error: errorMessage });
+            throw errorMessage;
+          }
+        },
       /**
        * Clear error
        */
@@ -204,4 +216,3 @@ const useAuthStore = create(
 );
 
 export default useAuthStore;
-

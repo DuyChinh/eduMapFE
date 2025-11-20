@@ -51,7 +51,6 @@ axiosInstance.interceptors.response.use(
       const { status, data } = error.response;
       
       if (status === 401) {
-        // Unauthorized - clear token but don't redirect immediately
         // Let the component handle the error
         localStorage.removeItem(STORAGE_KEYS.TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
@@ -80,14 +79,11 @@ axiosInstance.interceptors.response.use(
       console.error('API Error:', { status, data, errorMessage });
       return Promise.reject(errorMessage);
     } else if (error.request) {
-      // Request made but no response
       return Promise.reject('Không thể kết nối đến server');
     } else {
-      // Something else happened
       return Promise.reject(error.message || 'Có lỗi xảy ra');
     }
   }
 );
 
 export default axiosInstance;
-
