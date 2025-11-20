@@ -39,19 +39,14 @@ const StudentLayout = () => {
   // Auto refresh profile when entering dashboard (only if no user data)
   useEffect(() => {
     const refreshProfile = async () => {
-      // Skip if we already have user data (e.g., from Google OAuth)
       if (user && user._id) {
-        console.log('✅ User data already available, skipping profile refresh');
         return;
       }
       
       try {
         await fetchProfile();
-        console.log('✅ Profile refreshed on dashboard load');
       } catch (error) {
-        console.error('❌ Failed to refresh profile:', error);
-        // Don't redirect to logiDuyChinh/eduMan on profile fetch error
-        // The user might still be authenticated
+        
       }
     };
     refreshProfile();

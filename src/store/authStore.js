@@ -28,19 +28,6 @@ const useAuthStore = create(
         try {
           const response = await authService.login(credentials);
           
-          // Debug: Log full response
-          console.log('🔍 Full API Response:', response);
-          
-          // Backend response format:
-          // {
-          //   "success": true,
-          //   "message": "Login successful",
-          //   "data": {
-          //     "user": { ... },
-          //     "token": "..."
-          //   }
-          // }
-          
           const token = response.data?.token;
           const userData = response.data?.user;
           
@@ -56,13 +43,7 @@ const useAuthStore = create(
           
           // Store token
           localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-          
-          console.log('✅ Login successful:', {
-            user: userData.name,
-            role: userData.role,
-            email: userData.email
-          });
-          
+
           set({
             user: userData,
             token: token,
@@ -73,8 +54,6 @@ const useAuthStore = create(
           
           return { success: true, user: userData };
         } catch (error) {
-          console.error('❌ Login failed:', error);
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Login failed');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -92,7 +71,6 @@ const useAuthStore = create(
           set({ loading: false });
           return { success: true, data: response.data };
         } catch (error) {
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Register failed');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -129,7 +107,6 @@ const useAuthStore = create(
           });
           return response.data;
         } catch (error) {
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to fetch profile');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -149,7 +126,6 @@ const useAuthStore = create(
           });
           return response.data;
         } catch (error) {
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to fetch profile');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -172,15 +148,8 @@ const useAuthStore = create(
             loading: false,
           });
           
-          console.log('✅ Role updated successfully:', {
-            user: updatedUser.name,
-            newRole: updatedUser.role
-          });
-          
           return { success: true, user: updatedUser };
         } catch (error) {
-          console.error('❌ Update role failed:', error);
-          // Error is now a string from axios interceptor
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to update role');
           set({ loading: false, error: errorMessage });
           throw errorMessage;
@@ -213,14 +182,8 @@ const useAuthStore = create(
               error: null,
             });
   
-            console.log('✅ Role switched successfully:', {
-              user: userData.name,
-              newRole: userData.role,
-            });
-  
             return { success: true, user: userData };
           } catch (error) {
-            console.error('❌ Switch role failed:', error);
             const errorMessage =
               typeof error === 'string' ? error : (error?.message || 'Failed to switch role');
             set({ loading: false, error: errorMessage });
