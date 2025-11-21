@@ -173,8 +173,7 @@
     "rememberPassword": "Nhớ mật khẩu?",
     "loginNow": "Đăng nhập ngay",
     "sendSuccess": "Mã OTP đã được gửi đến email của bạn!",
-    "sendFailed": "Có lỗi xảy ra khi gửi mã OTP!",
-    "emailRequired": "Vui lòng nhập email từ trang đăng nhập!"
+    "sendFailed": "Có lỗi xảy ra khi gửi mã OTP!"
   },
   "verifyOTP": {
     "title": "Xác thực mã OTP",
@@ -590,9 +589,13 @@
     "selectSubjectFirst": "Vui lòng chọn môn học trước!",
     "searchQuestionsFailed": "Không thể tìm kiếm câu hỏi",
     "marksMismatch": "Tổng điểm các câu hỏi phải bằng tổng điểm bài thi",
+    "marksMismatchWithValues": "Tổng điểm các câu hỏi ({{questionMarks}}) phải bằng tổng điểm bài thi ({{totalMarks}})",
     "questionAlreadyAdded": "Câu hỏi đã được thêm!",
+    "allowedClasses": "Lớp học được phép",
+    "allowedClassesRequired": "Vui lòng chọn ít nhất một lớp học",
+    "selectClasses": "Chọn lớp học",
+    "unknownQuestion": "Không xác định",
     "removeQuestionConfirm": "Bạn có chắc chắn muốn xóa câu hỏi này?",
-    "subject": "Môn học",
     "selectSubject": "Chọn môn học",
     "subjectRequired": "Vui lòng chọn môn học!",
     "scheduling": "Lịch thi",
