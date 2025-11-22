@@ -135,7 +135,7 @@ const TakeExam = () => {
         if (handleAutoSaveRef.current) {
           handleAutoSaveRef.current();
         }
-      }, 60000);
+      }, 5000);
 
       message.success(t('takeExam.examStarted'));
       return true;

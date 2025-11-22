@@ -696,6 +696,7 @@
       "status": "Status",
       "score": "Score",
       "timeSpent": "Time Spent",
+      "startedAt": "Time Start",
       "submittedAt": "Submitted At",
       "submitted": "Submitted",
       "inProgress": "In Progress",

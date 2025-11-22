@@ -696,6 +696,7 @@
       "status": "Trạng thái",
       "score": "Điểm",
       "timeSpent": "Thời gian làm bài",
+      "startedAt": "Thời gian bắt đầu",
       "submittedAt": "Nộp lúc",
       "submitted": "Đã nộp",
       "inProgress": "Đang làm",

@@ -46,6 +46,36 @@ const ExamDetailNew = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
+  // Add CSS for late submission highlight
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .late-submission-row {
+        background-color: #ffe58f !important;
+      }
+      .late-submission-row:hover {
+        background-color: #ffd666 !important;
+      }
+      body.dark-mode .late-submission-row {
+        background-color: rgba(250, 173, 20, 0.3) !important;
+      }
+      body.dark-mode .late-submission-row:hover {
+        background-color: rgba(250, 173, 20, 0.4) !important;
+      }
+      .late-submission-row td [data-column="submittedAt"] {
+        color: #ff4d4f !important;
+        font-weight: 600 !important;
+      }
+      body.dark-mode .late-submission-row td [data-column="submittedAt"] {
+        color: #ff7875 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const [examData, setExamData] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -337,11 +367,22 @@ const ExamDetailNew = () => {
       },
     },
     {
+      title: t('exams.submissions.startedAt'),
+      dataIndex: 'startedAt',
+      key: 'startedAt',
+      width: 170,
+      render: (date) => date ? new Date(date).toLocaleString('vi-VN') : '-',
+    },
+    {
       title: t('exams.submissions.submittedAt'),
       dataIndex: 'submittedAt',
       key: 'submittedAt',
       width: 170,
-      render: (date) => date ? new Date(date).toLocaleString('vi-VN') : '-',
+      render: (date) => (
+        <span data-column="submittedAt">
+          {date ? new Date(date).toLocaleString('vi-VN') : '-'}
+        </span>
+      ),
     },
     {
       title: t('common.actions'),
@@ -712,6 +753,17 @@ const ExamDetailNew = () => {
                       return studentId && submittedAt 
                         ? `submission-${studentId}-${submittedAt}` 
                         : `submission-${studentId || 'unknown'}-${Math.random()}`;
+                    }}
+                    rowClassName={(record) => {
+                      // Highlight if submitted after exam end time
+                      if (examData?.endTime && record.submittedAt) {
+                        const submittedAt = new Date(record.submittedAt);
+                        const examEndTime = new Date(examData.endTime);
+                        if (submittedAt > examEndTime) {
+                          return 'late-submission-row';
+                        }
+                      }
+                      return '';
                     }}
                     pagination={{ pageSize: 10 }}
                     scroll={{ x: 1000 }}

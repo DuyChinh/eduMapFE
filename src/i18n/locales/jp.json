@@ -696,6 +696,7 @@
       "status": "ステータス",
       "score": "スコア",
       "timeSpent": "所要時間",
+      "startedAt": "開始時刻",
       "submittedAt": "提出日時",
       "submitted": "提出済み",
       "inProgress": "進行中",
