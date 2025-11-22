@@ -77,7 +77,12 @@ axiosInstance.interceptors.response.use(
       }
       
       console.error('API Error:', { status, data, errorMessage });
-      return Promise.reject(errorMessage);
+      // Reject with error object to preserve status and data
+      const errorObj = new Error(errorMessage);
+      errorObj.status = status;
+      errorObj.data = data;
+      errorObj.response = error.response; // Preserve original response
+      return Promise.reject(errorObj);
     } else if (error.request) {
       return Promise.reject('Không thể kết nối đến server');
     } else {
