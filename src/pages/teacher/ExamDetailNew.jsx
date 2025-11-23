@@ -1,39 +1,38 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Card,
-  Typography,
-  Tag,
-  Space,
-  Button,
-  Spin,
-  Tabs,
-  Statistic,
-  Row,
-  Col,
-  Table,
-  Avatar,
-  Progress,
-  Empty,
-  Tooltip,
-  App,
-} from 'antd';
+import { Column } from '@ant-design/charts';
 import {
   ArrowLeftOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  TrophyOutlined,
   BarChartOutlined,
-  TeamOutlined,
-  InfoCircleOutlined,
-  EyeOutlined,
-  ClockCircleOutlined,
   CheckCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
   LinkOutlined,
+  TeamOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
+import {
+  App,
+  Avatar,
+  Button,
+  Card,
+  Col,
+  Empty,
+  Progress,
+  Row,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tabs,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Column } from '@ant-design/charts';
+import { useNavigate, useParams } from 'react-router-dom';
 import examService from '../../api/examService';
 import examStatsService from '../../api/examStatsService.js';
 import { ROUTES } from '../../constants/config';
@@ -308,7 +307,8 @@ const ExamDetailNew = () => {
       key: 'score',
       width: 150,
       render: (score, record) => {
-        if (record.status !== 'submitted' && record.status !== 'graded') return '-';
+        // Show score for submitted, graded, and late submissions
+        if (record.status !== 'submitted' && record.status !== 'graded' && record.status !== 'late') return '-';
         return (
           <div>
             <Text strong style={{ fontSize: 14 }}>
