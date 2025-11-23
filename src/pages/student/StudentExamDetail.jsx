@@ -1,53 +1,50 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
-import {
-  Card,
-  Typography,
-  Space,
-  Button,
-  Spin,
-  message,
-  Descriptions,
-  Tag,
-  Row,
-  Col,
-  Divider,
-  Alert,
-  Avatar,
-  Input,
-  Tabs,
-  Popconfirm,
-  Empty,
-  Timeline,
-} from 'antd';
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
-  UserOutlined,
-  FileTextOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  LeftOutlined,
-  RightOutlined,
-  HistoryOutlined,
-  EyeOutlined,
   ClockCircleOutlined,
-  WarningOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  HistoryOutlined,
+  LeftOutlined,
   ReloadOutlined,
+  RightOutlined,
+  UserOutlined,
+  WarningOutlined
 } from '@ant-design/icons';
+import {
+  Alert,
+  App,
+  Avatar,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Empty,
+  Input,
+  Popconfirm,
+  Row,
+  Space,
+  Spin,
+  Tabs,
+  Tag,
+  Timeline,
+  Typography
+} from 'antd';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import examStatsService from '../../api/examStatsService';
 import useAuthStore from '../../store/authStore';
-import { App } from 'antd';
 import './StudentExamDetail.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 const StudentExamDetail = () => {
-  const { examId, studentId } = useParams();
+  const { examId, studentId, submissionId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { message: messageApi } = App.useApp();
@@ -67,17 +64,29 @@ const StudentExamDetail = () => {
 
   useEffect(() => {
     fetchSubmissionDetail();
-    fetchActivityLog();
-  }, [examId, studentId]);
+  }, [examId, studentId, submissionId]);
 
   const fetchSubmissionDetail = async () => {
     setLoading(true);
     try {
-      const response = await examStatsService.getStudentSubmissionDetail(examId, studentId);
+      let response;
+      // If submissionId is provided, use the new API endpoint
+      if (submissionId) {
+        response = await examStatsService.getSubmissionDetailById(examId, submissionId);
+      } else if (studentId) {
+        // Otherwise, use the old API endpoint with studentId
+        response = await examStatsService.getStudentSubmissionDetail(examId, studentId);
+      } else {
+        throw new Error('Missing submissionId or studentId');
+      }
       const data = response.data || response;
       setSubmissionData(data);
       if (data.comment) {
         setComment(data.comment);
+      }
+      // Fetch activity log after getting submission data
+      if (data._id) {
+        fetchActivityLog();
       }
     } catch (error) {
       console.error('Error fetching submission:', error);
@@ -90,8 +99,13 @@ const StudentExamDetail = () => {
   const fetchActivityLog = async () => {
     setActivityLoading(true);
     try {
-      const response = await examStatsService.getSubmissionActivityLog(examId, studentId);
-      setActivityLog(response.data || response || []);
+      // Activity log API currently only supports studentId, not submissionId
+      // So we use studentId if available (from params or from submission data)
+      const targetStudentId = studentId || submissionData?.student?._id;
+      if (targetStudentId) {
+        const response = await examStatsService.getSubmissionActivityLog(examId, targetStudentId);
+        setActivityLog(response.data || response || []);
+      }
     } catch (error) {
       console.error('Error fetching activity log:', error);
     } finally {
@@ -256,7 +270,6 @@ const StudentExamDetail = () => {
 
   const exam = submissionData.exam || {};
   const student = submissionData.student || {};
-  const answers = submissionData.answers || [];
   const mcqAnswers = getMCQAnswers();
 
   const mathJaxConfig = {
@@ -649,7 +662,7 @@ const StudentExamDetail = () => {
                               <div className="activity-summary" style={{ marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
                                 <Text strong>{t('submissionDetail.activitySummary')}: </Text>
                                 <div style={{ marginTop: 8 }}>
-                                  {Object.entries(getActivitySummary()).map(([type, count], index) => (
+                                  {Object.entries(getActivitySummary()).map(([type, count]) => (
                                     <Tag key={type} color={getActivityColor(type)} style={{ marginBottom: 4 }}>
                                       {formatActivityType(type)}: {count}
                                     </Tag>

@@ -21,9 +21,14 @@ const examStatsService = {
     return await axiosInstance.get(`/exams/${examId}/submissions`, { params });
   },
 
-  // Get specific student submission detail
+  // Get specific student submission detail by studentId
   getStudentSubmissionDetail: async (examId, studentId) => {
     return await axiosInstance.get(`/exams/${examId}/submissions/${studentId}`);
+  },
+
+  // Get specific submission detail by submissionId
+  getSubmissionDetailById: async (examId, submissionId) => {
+    return await axiosInstance.get(`/exams/${examId}/submissions/detail/${submissionId}`);
   },
 
   // Get student submission history/activity log
