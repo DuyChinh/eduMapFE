@@ -32,8 +32,9 @@ const examStatsService = {
   },
 
   // Get student submission history/activity log
-  getSubmissionActivityLog: async (examId, studentId) => {
-    return await axiosInstance.get(`/exams/${examId}/submissions/${studentId}/activity`);
+  getSubmissionActivityLog: async (examId, studentId, submissionId = null) => {
+    const params = submissionId ? { submissionId } : {};
+    return await axiosInstance.get(`/exams/${examId}/submissions/${studentId}/activity`, { params });
   },
 
   // Get all exam results for a student (history)

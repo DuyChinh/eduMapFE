@@ -85,8 +85,9 @@ const StudentExamDetail = () => {
         setComment(data.comment);
       }
       // Fetch activity log after getting submission data
+      // Pass data directly to avoid state update delay
       if (data._id) {
-        fetchActivityLog();
+        fetchActivityLog(data);
       }
     } catch (error) {
       console.error('Error fetching submission:', error);
@@ -96,18 +97,41 @@ const StudentExamDetail = () => {
     }
   };
 
-  const fetchActivityLog = async () => {
+  const fetchActivityLog = async (submissionDataParam = null) => {
     setActivityLoading(true);
     try {
-      // Activity log API currently only supports studentId, not submissionId
-      // So we use studentId if available (from params or from submission data)
-      const targetStudentId = studentId || submissionData?.student?._id;
-      if (targetStudentId) {
-        const response = await examStatsService.getSubmissionActivityLog(examId, targetStudentId);
-        setActivityLog(response.data || response || []);
+      const data = submissionDataParam || submissionData;
+      
+      // Get studentId from params or submissionData
+      const targetStudentId = studentId || data?.student?._id;
+      const targetSubmissionId = submissionId || data?._id;
+      
+      if (!targetStudentId) {
+        console.warn('Cannot fetch activity log: studentId not found');
+        setActivityLog([]);
+        return;
+      }
+      
+      if (!targetSubmissionId) {
+        console.warn('Cannot fetch activity log: submissionId not found');
+        setActivityLog([]);
+        return;
+      }
+      
+      const response = await examStatsService.getSubmissionActivityLog(examId, targetStudentId, targetSubmissionId);
+      const logData = response.data || response;
+      
+      // Handle both array and object with data property
+      if (Array.isArray(logData)) {
+        setActivityLog(logData);
+      } else if (logData?.data && Array.isArray(logData.data)) {
+        setActivityLog(logData.data);
+      } else {
+        setActivityLog([]);
       }
     } catch (error) {
       console.error('Error fetching activity log:', error);
+      setActivityLog([]);
     } finally {
       setActivityLoading(false);
     }
@@ -194,7 +218,13 @@ const StudentExamDetail = () => {
 
   const handleResetAttempt = async () => {
     try {
-      await examStatsService.resetStudentAttempt(examId, studentId);
+      // Get studentId from params or from submissionData
+      const targetStudentId = studentId || submissionData?.student?._id;
+      if (!targetStudentId) {
+        messageApi.error(t('submissionDetail.resetAttemptFailed') || 'Cannot reset: Student ID not found');
+        return;
+      }
+      await examStatsService.resetStudentAttempt(examId, targetStudentId);
       messageApi.success(t('submissionDetail.resetAttemptSuccess') || 'Student attempt reset successfully. Student can now retake the exam.');
       // Refresh the page or navigate back
       navigate(-1);
@@ -232,11 +262,8 @@ const StudentExamDetail = () => {
   const getMCQAnswers = () => {
     if (!submissionData?.answers) return [];
     return submissionData.answers.filter(answer => {
-      // Handle nested _id structure from API: answer.question._id contains full question data
-      // Structure: answer.question._id = { _id: "...", text: "...", type: "mcq", ... }
-      const question = answer.question?._id || answer.question;
+      const question = answer.question;
       if (!question) return false;
-      // question itself contains all the question data, including _id, type, text, etc.
       return question?.type === 'mcq';
     });
   };
@@ -532,15 +559,12 @@ const StudentExamDetail = () => {
                           <Empty description={t('submissionDetail.noQuestions')} />
                         ) : (
                           mcqAnswers.map((answer, index) => {
-                            // Handle nested _id structure from API: answer.question._id contains full question data
-                            // Structure: answer.question._id = { _id: "...", text: "...", type: "mcq", choices: [...], answer: "D", ... }
-                            const question = answer.question?._id || answer.question;
+                            const question = answer.question;
                             if (!question) return null;
 
-                            // question._id is the actual question ID, question itself contains all data
                             const questionId = question._id || question.id;
                             const selectedAnswer = answer.selectedAnswer;
-                            const correctAnswer = question.answer;
+                            const correctAnswer = question.correctAnswer || question.answer;
                             const isCorrect = answer.isCorrect;
                             const choices = question.choices || [];
 
@@ -618,18 +642,16 @@ const StudentExamDetail = () => {
                                     <Text strong style={{ color: '#52c41a' }}>
                                       {t('submissionDetail.correctAnswer')}: {correctAnswer}
                                     </Text>
-                                    {selectedAnswer && (
-                                      <div style={{ marginTop: 8 }}>
-                                        <Text>
-                                          {t('submissionDetail.studentAnswer')}: {selectedAnswer}
-                                          {!isCorrect && (
-                                            <CloseCircleOutlined 
-                                              style={{ color: '#ff4d4f', marginLeft: 8 }} 
-                                            />
-                                          )}
-                                        </Text>
-                                      </div>
-                                    )}
+                                    <div style={{ marginTop: 8 }}>
+                                      <Text>
+                                        {t('submissionDetail.studentAnswer')}: {selectedAnswer ?? 'None'}
+                                        {selectedAnswer && !isCorrect && (
+                                          <CloseCircleOutlined 
+                                            style={{ color: '#ff4d4f', marginLeft: 8 }} 
+                                          />
+                                        )}
+                                      </Text>
+                                    </div>
                                   </div>
                                 </div>
                               </Card>
