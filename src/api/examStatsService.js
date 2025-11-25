@@ -21,14 +21,20 @@ const examStatsService = {
     return await axiosInstance.get(`/exams/${examId}/submissions`, { params });
   },
 
-  // Get specific student submission detail
+  // Get specific student submission detail by studentId
   getStudentSubmissionDetail: async (examId, studentId) => {
     return await axiosInstance.get(`/exams/${examId}/submissions/${studentId}`);
   },
 
+  // Get specific submission detail by submissionId
+  getSubmissionDetailById: async (examId, submissionId) => {
+    return await axiosInstance.get(`/exams/${examId}/submissions/detail/${submissionId}`);
+  },
+
   // Get student submission history/activity log
-  getSubmissionActivityLog: async (examId, studentId) => {
-    return await axiosInstance.get(`/exams/${examId}/submissions/${studentId}/activity`);
+  getSubmissionActivityLog: async (examId, studentId, submissionId = null) => {
+    const params = submissionId ? { submissionId } : {};
+    return await axiosInstance.get(`/exams/${examId}/submissions/${studentId}/activity`, { params });
   },
 
   // Get all exam results for a student (history)
