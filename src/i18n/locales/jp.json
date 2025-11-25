@@ -779,6 +779,8 @@
     "false": "間違い",
     "typeAnswer": "ここに回答を入力してください...",
     "maxAttemptsReached": "最大試行回数に達しました",
+    "timeLimitExceeded": "時間制限を超過しました",
+    "submittedLate": "試験は時間制限を過ぎて提出されました。遅刻としてマークされています。",
     "examNotAvailable": "試験は利用できません",
     "examNotAvailableYet": "試験はまだ利用できません",
     "errorTitle": "試験を開始できません",

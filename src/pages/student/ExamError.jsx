@@ -5,7 +5,8 @@ import {
   HomeOutlined, 
   StopOutlined,
   ExclamationCircleOutlined,
-  BlockOutlined
+  BlockOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import './ExamError.css';
@@ -30,6 +31,13 @@ const ExamError = () => {
       return {
         title: t('takeExam.maxAttemptsReached') || 'Maximum Attempts Reached',
         icon: <StopOutlined className="error-icon max-attempts" />,
+        status: 'error'
+      };
+    }
+    if (errorMessage.includes('Time limit exceeded') || errorType === 'timeExceeded') {
+      return {
+        title: t('takeExam.timeLimitExceeded') || 'Time Limit Exceeded',
+        icon: <ClockCircleOutlined className="error-icon time-exceeded" />,
         status: 'error'
       };
     }

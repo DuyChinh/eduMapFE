@@ -255,18 +255,21 @@ const ExamDetailNew = () => {
       dataIndex: 'score',
       key: 'score',
       width: 120,
-      render: (score, record) => (
-        <div>
-          <Text strong style={{ fontSize: 16, color: '#1890ff' }}>
-            {score}/{record.totalMarks}
-          </Text>
-          <Progress 
-            percent={Math.round((score / record.totalMarks) * 100)} 
-            size="small" 
-            showInfo={false}
-          />
-        </div>
-      ),
+      render: (score, record) => {
+        const formattedScore = typeof score === 'number' ? Number(score.toFixed(1)) : (score || 0);
+        return (
+          <div>
+            <Text strong style={{ fontSize: 16, color: '#1890ff' }}>
+              {formattedScore}/{record.totalMarks}
+            </Text>
+            <Progress 
+              percent={Math.round((score / record.totalMarks) * 100)} 
+              size="small" 
+              showInfo={false}
+            />
+          </div>
+        );
+      },
     },
     {
       title: t('exams.leaderboard.timeSpent'),
@@ -339,10 +342,11 @@ const ExamDetailNew = () => {
       width: 150,
       render: (score, record) => {
         if (record.status !== 'submitted' && record.status !== 'graded') return '-';
+        const formattedScore = typeof score === 'number' ? Number(score.toFixed(1)) : (score || 0);
         return (
           <div>
             <Text strong style={{ fontSize: 14 }}>
-              {score || 0}/{record.totalMarks}
+              {formattedScore}/{record.totalMarks}
             </Text>
             <Progress 
               percent={Math.round(((score || 0) / record.totalMarks) * 100)} 

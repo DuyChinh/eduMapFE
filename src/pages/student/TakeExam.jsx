@@ -411,13 +411,32 @@ const TakeExam = () => {
       // Submit exam
       const response = await submitExam(submission._id);
 
-      message.success(t('takeExam.submitSuccess'));
+      // Check if submission is late
+      const submissionData = response.data?.data || response.data || response;
+      if (submissionData?.status === 'late') {
+        message.warning(t('takeExam.submittedLate') || 'Your exam was submitted after the time limit. It has been marked as late.');
+      } else {
+        message.success(t('takeExam.submitSuccess'));
+      }
       
       // Navigate to result detail page to view answers
-      const submissionId = response.data?._id || response.data?.data?._id || response._id;
+      const submissionId = submissionData?._id || response.data?._id || response.data?.data?._id || response._id;
       navigate(`/student/results/${submissionId}`, { replace: true });
     } catch (error) {
-      message.error(error.response?.data?.message || t('takeExam.submitFailed'));
+      const errorMessage = error.response?.data?.message || error.message || t('takeExam.submitFailed');
+      
+      // If time limit exceeded beyond grace period, show error page
+      if (errorMessage.includes('Time limit exceeded') && errorMessage.includes('no longer accepted')) {
+        navigate('/student/exam-error', {
+          state: {
+            errorMessage,
+            errorType: 'timeExceeded'
+          },
+          replace: true
+        });
+      } else {
+        message.error(errorMessage);
+      }
     } finally {
       setSubmitting(false);
       setShowConfirmSubmit(false);

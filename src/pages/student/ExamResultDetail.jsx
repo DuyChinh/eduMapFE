@@ -332,7 +332,7 @@ const ExamResultDetail = () => {
             <Col xs={24} sm={12} md={6}>
               <Statistic
                 title={t('takeExam.yourScore') || 'Your Score'}
-                value={submission.score || 0}
+                value={typeof submission.score === 'number' ? Number(submission.score.toFixed(1)) : (submission.score || 0)}
                 suffix={`/ ${submission.maxScore || 0}`}
                 valueStyle={{ color: '#1890ff' }}
               />
