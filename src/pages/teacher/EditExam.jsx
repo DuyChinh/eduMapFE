@@ -1,31 +1,32 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Card, 
-  Form, 
-  Input, 
-  Button, 
-  message, 
-  Select, 
-  InputNumber, 
-  Switch, 
-  Space, 
-  DatePicker,
+import { ArrowLeftOutlined, DeleteOutlined, PartitionOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Card,
   Collapse,
-  Typography,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Popconfirm,
+  Select,
+  Space,
   Spin,
+  Switch,
   Table,
   Tag,
-  Popconfirm
+  Typography,
+  message
 } from 'antd';
-import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, SearchOutlined, PartitionOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
+import classService from '../../api/classService';
 import examService from '../../api/examService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
-import timezone from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -44,6 +45,8 @@ const EditExam = () => {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [questionSearchLoading, setQuestionSearchLoading] = useState(false);
   const [questionSearchQuery, setQuestionSearchQuery] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
   const { examId } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -52,6 +55,7 @@ const EditExam = () => {
     if (examId) {
       fetchExamData();
       fetchSubjects();
+      fetchClasses();
     }
   }, [examId]);
 
@@ -110,7 +114,8 @@ const EditExam = () => {
         availableFrom: examData.availableFrom ? dayjs(examData.availableFrom) : undefined,
         availableUntil: examData.availableUntil ? dayjs(examData.availableUntil) : undefined,
         status: examData.status || 'draft',
-        settings: examData.settings || {}
+        settings: examData.settings || {},
+        allowedClassIds: examData.allowedClassIds || []
       });
 
       // Load existing questions
@@ -118,7 +123,7 @@ const EditExam = () => {
         const formattedQuestions = examData.questions.map((q, index) => ({
           _id: q.questionId?._id || q.questionId,
           id: q.questionId?._id || q.questionId,
-          name: q.questionId?.name || q.questionId?.text || 'Unknown',
+          name: q.questionId?.name || q.questionId?.text || t('exams.unknownQuestion'),
           type: q.questionId?.type || 'mcq',
           order: q.order || index + 1,
           marks: q.marks || 1,
@@ -157,6 +162,20 @@ const EditExam = () => {
       setSubjects(subjectsData);
     } catch (error) {
       console.error('Error fetching subjects:', error);
+    }
+  };
+
+  const fetchClasses = async () => {
+    setLoadingClasses(true);
+    try {
+      const response = await classService.getMyClasses();
+      const classesData = response.items || response.data || [];
+      setClasses(classesData);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      message.error(t('classes.fetchFailed'));
+    } finally {
+      setLoadingClasses(false);
     }
   };
 
@@ -368,7 +387,10 @@ const EditExam = () => {
     const totalQuestionMarks = calculateTotalQuestionMarks();
     // Allow small difference (0.01) due to decimal precision
     if (Math.abs(totalQuestionMarks - values.totalMarks) >= 0.01) {
-      message.error(t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks}) phải bằng tổng điểm bài thi (${values.totalMarks})`);
+      message.error(t('exams.marksMismatchWithValues', { 
+        questionMarks: totalQuestionMarks, 
+        totalMarks: values.totalMarks 
+      }));
       return;
     }
 
@@ -403,6 +425,7 @@ const EditExam = () => {
         availableUntil: values.availableUntil ? values.availableUntil.toISOString() : undefined,
         status: values.status,
         settings: values.settings || {},
+        allowedClassIds: values.isAllowUser === 'class' ? (values.allowedClassIds || []) : [],
         questions: selectedQuestions.map((q, index) => ({
           questionId: q._id || q.id,
           order: q.order || index + 1,
@@ -528,6 +551,46 @@ const EditExam = () => {
                 </Form.Item>
               </Space>
 
+              <Form.Item
+                noStyle
+                shouldUpdate={(prevValues, currentValues) => prevValues.isAllowUser !== currentValues.isAllowUser}
+              >
+                {({ getFieldValue }) => {
+                  const isAllowUser = getFieldValue('isAllowUser');
+                  if (isAllowUser === 'class') {
+                    return (
+                      <Form.Item
+                        label={t('exams.allowedClasses')}
+                        name="allowedClassIds"
+                        rules={[
+                          { 
+                            required: true, 
+                            message: t('exams.allowedClassesRequired')
+                          }
+                        ]}
+                      >
+                        <Select
+                          mode="multiple"
+                          placeholder={t('exams.selectClasses')}
+                          loading={loadingClasses}
+                          showSearch
+                          filterOption={(input, option) =>
+                            (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                          }
+                        >
+                          {classes.map(cls => (
+                            <Option key={cls._id || cls.id} value={cls._id || cls.id}>
+                              {cls.name}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    );
+                  }
+                  return null;
+                }}
+              </Form.Item>
+
                 <Form.Item
                   label={t('exams.examPassword')}
                   name="examPassword"
@@ -608,7 +671,7 @@ const EditExam = () => {
 
               <div style={{ marginBottom: 16 }}>
                 <Input
-                  placeholder={t('exams.searchQuestionsByName') || 'Tìm kiếm câu hỏi theo tên...'}
+                  placeholder={t('exams.searchQuestionsByName')}
                   prefix={<SearchOutlined />}
                   value={questionSearchQuery}
                   onChange={(e) => handleSearchQueryChange(e.target.value)}
@@ -704,7 +767,10 @@ const EditExam = () => {
                         if (totalMarks && !isValid) {
                           return (
                             <Typography.Text type="danger">
-                              {t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks}) phải bằng tổng điểm bài thi (${totalMarks})`}
+                              {t('exams.marksMismatchWithValues', { 
+                                questionMarks: totalQuestionMarks, 
+                                totalMarks: totalMarks 
+                              })}
                             </Typography.Text>
                           );
                         }

@@ -1,39 +1,32 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
-import { 
-  Card, 
-  Button, 
-  Radio, 
-  Checkbox, 
-  Input, 
-  Space, 
-  Progress, 
-  Modal, 
-  message,
-  Typography,
-  Divider,
-  Alert
-} from 'antd';
-import { 
-  ArrowLeftOutlined, 
-  ArrowRightOutlined, 
-  SaveOutlined, 
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  WarningOutlined,
-  SearchOutlined,
-  MenuOutlined,
+import {
+  ArrowLeftOutlined,
   DownOutlined,
-  FlagOutlined
+  FlagOutlined,
+  MenuOutlined,
+  SearchOutlined,
+  WarningOutlined
 } from '@ant-design/icons';
-import { 
-  startSubmission, 
-  updateSubmissionAnswers, 
-  submitExam 
-} from '../../api/submissionService';
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Radio,
+  Space,
+  Typography,
+  message
+} from 'antd';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import { logProctorEvent } from '../../api/proctorService';
+import {
+  startSubmission,
+  submitExam,
+  updateSubmissionAnswers
+} from '../../api/submissionService';
 import useAuthStore from '../../store/authStore';
 import './TakeExam.css';
 
@@ -64,6 +57,9 @@ const TakeExam = () => {
   const autoSaveIntervalRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const startTimeRef = useRef(null);
+  const initExamRef = useRef(false); // Prevent double initialization in StrictMode
+  const passwordModalShownRef = useRef(false);
+  const examStartedRef = useRef(false);
 
   // Store refs for functions that will be defined later
   const handleTimeUpRef = useRef(null);
@@ -71,7 +67,12 @@ const TakeExam = () => {
 
   // Function to start exam with password (defined early so it can be used in useEffect)
   const startExamWithPassword = useCallback(async (passwordToUse) => {
+    if (examStartedRef.current || submission) {
+      return true;
+    }
+    
     try {
+      examStartedRef.current = true;
       setLoading(true);
       
       const response = await startSubmission(examId, passwordToUse);
@@ -115,6 +116,11 @@ const TakeExam = () => {
       setTimeRemaining(remaining);
       startTimeRef.current = startedAt;
 
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+
       // Start timer
       if (remaining > 0) {
         timerIntervalRef.current = setInterval(() => {
@@ -130,6 +136,11 @@ const TakeExam = () => {
         }, 1000);
       }
 
+      if (autoSaveIntervalRef.current) {
+        clearInterval(autoSaveIntervalRef.current);
+        autoSaveIntervalRef.current = null;
+      }
+
       // Start auto-save
       autoSaveIntervalRef.current = setInterval(() => {
         if (handleAutoSaveRef.current) {
@@ -138,9 +149,15 @@ const TakeExam = () => {
       }, 5000);
 
       message.success(t('takeExam.examStarted'));
+      
+      const storedPassword = sessionStorage.getItem('examPassword');
+      if (storedPassword) {
+        sessionStorage.removeItem('examPassword');
+      }
+      
       return true;
     } catch (error) {
-      // Don't show toast here, error will be handled by error page
+      examStartedRef.current = false;
       throw error;
     } finally {
       setLoading(false);
@@ -251,6 +268,11 @@ const TakeExam = () => {
 
   // Initialize exam
   useEffect(() => {
+    if (initExamRef.current || submission || exam) {
+      return;
+    }
+    initExamRef.current = true;
+
     const initExam = async () => {
       try {
         setLoading(true);
@@ -290,7 +312,10 @@ const TakeExam = () => {
             // If exam requires password and we don't have it, show password modal
             // examPassword is a boolean flag from API (true if password required)
             if (examResponse?.data?.examPassword === true) {
-              setShowPasswordModal(true);
+              if (!passwordModalShownRef.current) {
+                passwordModalShownRef.current = true;
+                setShowPasswordModal(true);
+              }
               setLoading(false);
               return; // Wait for user to enter password
             }
@@ -301,12 +326,8 @@ const TakeExam = () => {
           }
         }
         
-        // Clear password from sessionStorage after reading (for security)
-        if (storedPassword) {
-          sessionStorage.removeItem('examPassword');
-        }
-        
         // Start exam with password
+        // Password will be cleared inside startExamWithPassword after successful start
         await startExamWithPassword(storedPassword);
       } catch (error) {
         // Get error message from API like CreateClassModal pattern
@@ -320,7 +341,10 @@ const TakeExam = () => {
           if (storedShareCode) {
             setShareCode(storedShareCode);
           }
-          setShowPasswordModal(true);
+          if (!passwordModalShownRef.current) {
+            passwordModalShownRef.current = true;
+            setShowPasswordModal(true);
+          }
           setLoading(false);
           return; // Don't redirect, show password modal instead
         }
@@ -346,10 +370,13 @@ const TakeExam = () => {
     return () => {
       if (autoSaveIntervalRef.current) {
         clearInterval(autoSaveIntervalRef.current);
+        autoSaveIntervalRef.current = null;
       }
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
       }
+      initExamRef.current = false;
     };
   }, [examId, navigate]);
 
@@ -428,6 +455,7 @@ const TakeExam = () => {
   const handleTimeUp = useCallback(async () => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
     message.warning(t('takeExam.timeUp'));
     await handleSubmit();
@@ -521,9 +549,12 @@ const TakeExam = () => {
               await startExamWithPassword(examPassword);
               // Clear password from storage
               sessionStorage.removeItem('examPassword');
+              
+              passwordModalShownRef.current = false;
             } catch (error) {
               const errorMessage = error.response?.data?.message || t('takeExam.failedToStart');
               if (errorMessage.includes('password')) {
+                passwordModalShownRef.current = false;
                 setShowPasswordModal(true);
                 setExamPassword('');
               } else {

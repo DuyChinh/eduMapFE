@@ -1,39 +1,38 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Card,
-  Typography,
-  Tag,
-  Space,
-  Button,
-  Spin,
-  Tabs,
-  Statistic,
-  Row,
-  Col,
-  Table,
-  Avatar,
-  Progress,
-  Empty,
-  Tooltip,
-  App,
-} from 'antd';
+import { Column } from '@ant-design/charts';
 import {
   ArrowLeftOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  TrophyOutlined,
   BarChartOutlined,
-  TeamOutlined,
-  InfoCircleOutlined,
-  EyeOutlined,
-  ClockCircleOutlined,
   CheckCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
   LinkOutlined,
+  TeamOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
+import {
+  App,
+  Avatar,
+  Button,
+  Card,
+  Col,
+  Empty,
+  Progress,
+  Row,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tabs,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Column } from '@ant-design/charts';
+import { useNavigate, useParams } from 'react-router-dom';
 import examService from '../../api/examService';
 import examStatsService from '../../api/examStatsService.js';
 import { ROUTES } from '../../constants/config';
@@ -88,11 +87,7 @@ const ExamDetailNew = () => {
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [scoreDistributionLoading, setScoreDistributionLoading] = useState(false);
 
-  useEffect(() => {
-    fetchExamDetail();
-  }, [examId]);
-
-  const fetchExamDetail = async () => {
+  const fetchExamDetail = useCallback(async () => {
     setLoading(true);
     try {
       const response = await examService.getExamById(examId);
@@ -103,7 +98,11 @@ const ExamDetailNew = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [examId, message, t]);
+
+  useEffect(() => {
+    fetchExamDetail();
+  }, [fetchExamDetail]);
 
   const fetchStatistics = async () => {
     setStatsLoading(true);
@@ -136,7 +135,8 @@ const ExamDetailNew = () => {
     try {
       const response = await examStatsService.getStudentSubmissions(examId);
       setSubmissions(response.data || response || []);
-    } catch (error) {
+    } catch (err) {
+      console.error('Error fetching submissions:', err);
       message.error(t('exams.submissions.fetchFailed'));
     } finally {
       setSubmissionsLoading(false);
@@ -181,24 +181,6 @@ const ExamDetailNew = () => {
       console.error('Error deleting exam:', error);
       message.error(t('exams.deleteFailed'));
     }
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      draft: 'default',
-      published: 'green',
-      archived: 'red'
-    };
-    return colors[status] || 'default';
-  };
-
-  const getStatusText = (status) => {
-    const statuses = {
-      draft: t('exams.statusDraft'),
-      published: t('exams.statusPublished'),
-      archived: t('exams.statusArchived')
-    };
-    return statuses[status] || status;
   };
 
   // Get subject name based on current language
@@ -294,7 +276,7 @@ const ExamDetailNew = () => {
         <Button 
           type="link" 
           icon={<EyeOutlined />}
-          onClick={() => navigate(`/teacher/exams/${examId}/submissions/${record.student?._id}`)}
+          onClick={() => navigate(`/teacher/exams/${examId}/submissions/detail/${record._id}`)}
         >
           {t('exams.viewDetail')}
         </Button>
@@ -338,7 +320,8 @@ const ExamDetailNew = () => {
       key: 'score',
       width: 150,
       render: (score, record) => {
-        if (record.status !== 'submitted' && record.status !== 'graded') return '-';
+        // Show score for submitted, graded, and late submissions
+        if (record.status !== 'submitted' && record.status !== 'graded' && record.status !== 'late') return '-';
         return (
           <div>
             <Text strong style={{ fontSize: 14 }}>
@@ -392,7 +375,7 @@ const ExamDetailNew = () => {
         <Button 
           type="link" 
           icon={<EyeOutlined />}
-          onClick={() => navigate(`/teacher/exams/${examId}/submissions/${record.student?._id}`)}
+          onClick={() => navigate(`/teacher/exams/${examId}/submissions/detail/${record._id}`)}
           disabled={record.status === 'in_progress'}
         >
           {t('exams.viewDetail')}

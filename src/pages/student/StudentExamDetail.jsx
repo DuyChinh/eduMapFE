@@ -1,53 +1,50 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
-import {
-  Card,
-  Typography,
-  Space,
-  Button,
-  Spin,
-  message,
-  Descriptions,
-  Tag,
-  Row,
-  Col,
-  Divider,
-  Alert,
-  Avatar,
-  Input,
-  Tabs,
-  Popconfirm,
-  Empty,
-  Timeline,
-} from 'antd';
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
-  UserOutlined,
-  FileTextOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  LeftOutlined,
-  RightOutlined,
-  HistoryOutlined,
-  EyeOutlined,
   ClockCircleOutlined,
-  WarningOutlined,
+  CloseCircleOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  HistoryOutlined,
+  LeftOutlined,
   ReloadOutlined,
+  RightOutlined,
+  UserOutlined,
+  WarningOutlined
 } from '@ant-design/icons';
+import {
+  Alert,
+  App,
+  Avatar,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Empty,
+  Input,
+  Popconfirm,
+  Row,
+  Space,
+  Spin,
+  Tabs,
+  Tag,
+  Timeline,
+  Typography
+} from 'antd';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import examStatsService from '../../api/examStatsService';
 import useAuthStore from '../../store/authStore';
-import { App } from 'antd';
 import './StudentExamDetail.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 const StudentExamDetail = () => {
-  const { examId, studentId } = useParams();
+  const { examId, studentId, submissionId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { message: messageApi } = App.useApp();
@@ -67,17 +64,30 @@ const StudentExamDetail = () => {
 
   useEffect(() => {
     fetchSubmissionDetail();
-    fetchActivityLog();
-  }, [examId, studentId]);
+  }, [examId, studentId, submissionId]);
 
   const fetchSubmissionDetail = async () => {
     setLoading(true);
     try {
-      const response = await examStatsService.getStudentSubmissionDetail(examId, studentId);
+      let response;
+      // If submissionId is provided, use the new API endpoint
+      if (submissionId) {
+        response = await examStatsService.getSubmissionDetailById(examId, submissionId);
+      } else if (studentId) {
+        // Otherwise, use the old API endpoint with studentId
+        response = await examStatsService.getStudentSubmissionDetail(examId, studentId);
+      } else {
+        throw new Error('Missing submissionId or studentId');
+      }
       const data = response.data || response;
       setSubmissionData(data);
       if (data.comment) {
         setComment(data.comment);
+      }
+      // Fetch activity log after getting submission data
+      // Pass data directly to avoid state update delay
+      if (data._id) {
+        fetchActivityLog(data);
       }
     } catch (error) {
       console.error('Error fetching submission:', error);
@@ -87,13 +97,41 @@ const StudentExamDetail = () => {
     }
   };
 
-  const fetchActivityLog = async () => {
+  const fetchActivityLog = async (submissionDataParam = null) => {
     setActivityLoading(true);
     try {
-      const response = await examStatsService.getSubmissionActivityLog(examId, studentId);
-      setActivityLog(response.data || response || []);
+      const data = submissionDataParam || submissionData;
+      
+      // Get studentId from params or submissionData
+      const targetStudentId = studentId || data?.student?._id;
+      const targetSubmissionId = submissionId || data?._id;
+      
+      if (!targetStudentId) {
+        console.warn('Cannot fetch activity log: studentId not found');
+        setActivityLog([]);
+        return;
+      }
+      
+      if (!targetSubmissionId) {
+        console.warn('Cannot fetch activity log: submissionId not found');
+        setActivityLog([]);
+        return;
+      }
+      
+      const response = await examStatsService.getSubmissionActivityLog(examId, targetStudentId, targetSubmissionId);
+      const logData = response.data || response;
+      
+      // Handle both array and object with data property
+      if (Array.isArray(logData)) {
+        setActivityLog(logData);
+      } else if (logData?.data && Array.isArray(logData.data)) {
+        setActivityLog(logData.data);
+      } else {
+        setActivityLog([]);
+      }
     } catch (error) {
       console.error('Error fetching activity log:', error);
+      setActivityLog([]);
     } finally {
       setActivityLoading(false);
     }
@@ -180,7 +218,13 @@ const StudentExamDetail = () => {
 
   const handleResetAttempt = async () => {
     try {
-      await examStatsService.resetStudentAttempt(examId, studentId);
+      // Get studentId from params or from submissionData
+      const targetStudentId = studentId || submissionData?.student?._id;
+      if (!targetStudentId) {
+        messageApi.error(t('submissionDetail.resetAttemptFailed') || 'Cannot reset: Student ID not found');
+        return;
+      }
+      await examStatsService.resetStudentAttempt(examId, targetStudentId);
       messageApi.success(t('submissionDetail.resetAttemptSuccess') || 'Student attempt reset successfully. Student can now retake the exam.');
       // Refresh the page or navigate back
       navigate(-1);
@@ -218,11 +262,8 @@ const StudentExamDetail = () => {
   const getMCQAnswers = () => {
     if (!submissionData?.answers) return [];
     return submissionData.answers.filter(answer => {
-      // Handle nested _id structure from API: answer.question._id contains full question data
-      // Structure: answer.question._id = { _id: "...", text: "...", type: "mcq", ... }
-      const question = answer.question?._id || answer.question;
+      const question = answer.question;
       if (!question) return false;
-      // question itself contains all the question data, including _id, type, text, etc.
       return question?.type === 'mcq';
     });
   };
@@ -256,7 +297,6 @@ const StudentExamDetail = () => {
 
   const exam = submissionData.exam || {};
   const student = submissionData.student || {};
-  const answers = submissionData.answers || [];
   const mcqAnswers = getMCQAnswers();
 
   const mathJaxConfig = {
@@ -519,15 +559,12 @@ const StudentExamDetail = () => {
                           <Empty description={t('submissionDetail.noQuestions')} />
                         ) : (
                           mcqAnswers.map((answer, index) => {
-                            // Handle nested _id structure from API: answer.question._id contains full question data
-                            // Structure: answer.question._id = { _id: "...", text: "...", type: "mcq", choices: [...], answer: "D", ... }
-                            const question = answer.question?._id || answer.question;
+                            const question = answer.question;
                             if (!question) return null;
 
-                            // question._id is the actual question ID, question itself contains all data
                             const questionId = question._id || question.id;
                             const selectedAnswer = answer.selectedAnswer;
-                            const correctAnswer = question.answer;
+                            const correctAnswer = question.correctAnswer || question.answer;
                             const isCorrect = answer.isCorrect;
                             const choices = question.choices || [];
 
@@ -605,18 +642,16 @@ const StudentExamDetail = () => {
                                     <Text strong style={{ color: '#52c41a' }}>
                                       {t('submissionDetail.correctAnswer')}: {correctAnswer}
                                     </Text>
-                                    {selectedAnswer && (
-                                      <div style={{ marginTop: 8 }}>
-                                        <Text>
-                                          {t('submissionDetail.studentAnswer')}: {selectedAnswer}
-                                          {!isCorrect && (
-                                            <CloseCircleOutlined 
-                                              style={{ color: '#ff4d4f', marginLeft: 8 }} 
-                                            />
-                                          )}
-                                        </Text>
-                                      </div>
-                                    )}
+                                    <div style={{ marginTop: 8 }}>
+                                      <Text>
+                                        {t('submissionDetail.studentAnswer')}: {selectedAnswer ?? 'None'}
+                                        {selectedAnswer && !isCorrect && (
+                                          <CloseCircleOutlined 
+                                            style={{ color: '#ff4d4f', marginLeft: 8 }} 
+                                          />
+                                        )}
+                                      </Text>
+                                    </div>
                                   </div>
                                 </div>
                               </Card>
@@ -649,7 +684,7 @@ const StudentExamDetail = () => {
                               <div className="activity-summary" style={{ marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
                                 <Text strong>{t('submissionDetail.activitySummary')}: </Text>
                                 <div style={{ marginTop: 8 }}>
-                                  {Object.entries(getActivitySummary()).map(([type, count], index) => (
+                                  {Object.entries(getActivitySummary()).map(([type, count]) => (
                                     <Tag key={type} color={getActivityColor(type)} style={{ marginBottom: 4 }}>
                                       {formatActivityType(type)}: {count}
                                     </Tag>

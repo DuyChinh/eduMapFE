@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Card, Button, Input, message, Typography, Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { startSubmission } from '../../api/submissionService';
-import TakeExam from '../student/TakeExam';
+import { Button, Card, Input, Space, Typography, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 /**
  * Public exam access page - allows students to access exam via share code
@@ -21,15 +19,38 @@ const PublicTakeExam = () => {
   const [loading, setLoading] = useState(true);
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [examId, setExamId] = useState(null);
+  const [examExpired, setExamExpired] = useState(false);
+  const [examExpiredMessage, setExamExpiredMessage] = useState('');
+  const hasCalledRef = useRef(false); // Track if API has been called for this shareCode
 
   useEffect(() => {
+    if (!shareCode) return;
+    
+    // Reset flag if shareCode changed
+    hasCalledRef.current = false;
+    
+    let isMounted = true;
+    const abortController = new AbortController();
+    
     const loadExam = async () => {
+      // Prevent duplicate calls (React Strict Mode causes double mount in dev)
+      if (hasCalledRef.current) {
+        return;
+      }
+      hasCalledRef.current = true;
+      
       try {
         setLoading(true);
         const examService = (await import('../../api/examService')).default;
         const response = await examService.getExamByShareCode(shareCode);
         
-        if (response.data) {
+        // Check if request was aborted or component unmounted
+        if (abortController.signal.aborted || !isMounted) {
+          return;
+        }
+        
+        // Axios interceptor returns response.data, so response is already { ok: true, data: {...} }
+        if (response && response.ok && response.data) {
           setExamInfo(response.data);
           setExamId(response.data._id);
           
@@ -46,19 +67,60 @@ const PublicTakeExam = () => {
             sessionStorage.removeItem('examPassword');
             navigate(`/student/exam/${response.data._id}/take`, { replace: true });
           }
+        } else {
+          // Response doesn't have expected format, treat as error
+          throw new Error(response?.message || 'Exam not found or not available');
         }
       } catch (error) {
+        if (!isMounted) return; // Component unmounted, don't update state
+        
+        // Handle error - could be string or object
+        let errorMessage = '';
+        let statusCode = null;
+        
+        if (typeof error === 'string') {
+          // Error was transformed to string by axios interceptor
+          errorMessage = error;
+        } else {
+          // Error is an object
+          errorMessage = error?.response?.data?.message || 
+                        error?.data?.message || 
+                        error?.message || 
+                        '';
+          statusCode = error?.response?.status || error?.status;
+        }
+        
+        const isExpiredError = 
+          statusCode === 404 || 
+          statusCode === 403 ||
+          errorMessage.includes('not available') ||
+          errorMessage.includes('no longer available') ||
+          errorMessage.includes('Exam not found') ||
+          errorMessage.includes('Exam not found or not available');
+        
+        if (isExpiredError) {
+          setExamExpired(true);
+          setExamExpiredMessage(errorMessage || t('takeExam.examExpiredDescription'));
+          setLoading(false);
+          return;
+        }
+        
         message.error(t('publicTakeExam.examNotFound'));
         navigate('/');
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (shareCode) {
-      loadExam();
-    }
-  }, [shareCode, navigate]);
+    loadExam();
+    
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, [shareCode, navigate, t]);
 
   const handleStartExam = async () => {
     if (!examId) return;
@@ -83,10 +145,36 @@ const PublicTakeExam = () => {
     }
   };
 
-  if (loading) {
+  if (loading && !examExpired) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Text>{t('publicTakeExam.loading')}</Text>
+      </div>
+    );
+  }
+
+  // Show exam expired screen
+  if (examExpired) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: 24 }}>
+        <Card style={{ maxWidth: 500, textAlign: 'center', padding: '40px' }}>
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <div>
+              <Title level={3} type="danger">{t('takeExam.examExpired')}</Title>
+              <Paragraph type="secondary">
+                {examExpiredMessage || t('takeExam.examExpiredDescription')}
+              </Paragraph>
+            </div>
+            <div style={{ fontSize: '48px' }}>⏰</div>
+            <Button 
+              type="primary" 
+              size="large"
+              onClick={() => navigate('/student/dashboard')}
+            >
+              {t('takeExam.backToDashboard')}
+            </Button>
+          </Space>
+        </Card>
       </div>
     );
   }

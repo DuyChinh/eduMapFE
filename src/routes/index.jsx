@@ -1,45 +1,43 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import useAuthStore from '../store/authStore';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES, USER_ROLES } from '../constants/config';
+import useAuthStore from '../store/authStore';
 
 // Layouts
-import TeacherLayout from '../layouts/TeacherLayout';
 import StudentLayout from '../layouts/StudentLayout';
+import TeacherLayout from '../layouts/TeacherLayout';
 
 // Auth Pages
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import GoogleCallback from '../pages/auth/GoogleCallback';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
-import ForgotPassword from '../pages/auth/ForgotPassword';
-import VerifyOTP from '../pages/auth/VerifyOTP';
 import ResetPassword from '../pages/auth/ResetPassword';
-import GoogleCallback from '../pages/auth/GoogleCallback';
+import VerifyOTP from '../pages/auth/VerifyOTP';
 
 // Teacher Pages
-import TeacherDashboard from '../pages/teacher/TeacherDashboard';
-import Questions from '../pages/teacher/Questions';
-import CreateQuestion from '../pages/teacher/CreateQuestion';
-import EditQuestion from '../pages/teacher/EditQuestion';
-import QuestionDetail from '../pages/teacher/QuestionDetail';
-import Exams from '../pages/teacher/Exams';
-import CreateExam from '../pages/teacher/CreateExam';
-import EditExam from '../pages/teacher/EditExam';
-import ExamDetail from '../pages/teacher/ExamDetail';
-import TeacherClasses from '../pages/teacher/Classes';
-import TeacherClassDetail from '../pages/teacher/ClassDetail';
-import Monitor from '../pages/teacher/Monitor';
-import Reports from '../pages/teacher/Reports';
-import ExamDetailNew from '../pages/teacher/ExamDetailNew';
 import StudentExamDetail from '../pages/student/StudentExamDetail';
+import TeacherClassDetail from '../pages/teacher/ClassDetail';
+import TeacherClasses from '../pages/teacher/Classes';
+import CreateExam from '../pages/teacher/CreateExam';
+import CreateQuestion from '../pages/teacher/CreateQuestion';
+import EditExam from '../pages/teacher/EditExam';
+import EditQuestion from '../pages/teacher/EditQuestion';
+import ExamDetailNew from '../pages/teacher/ExamDetailNew';
+import Exams from '../pages/teacher/Exams';
+import Monitor from '../pages/teacher/Monitor';
+import QuestionDetail from '../pages/teacher/QuestionDetail';
+import Questions from '../pages/teacher/Questions';
+import Reports from '../pages/teacher/Reports';
+import TeacherDashboard from '../pages/teacher/TeacherDashboard';
 
 // Student Pages
-import StudentDashboard from '../pages/student/StudentDashboard';
-import StudentClasses from '../pages/student/Classes';
 import StudentClassDetail from '../pages/student/ClassDetail';
-import Results from '../pages/student/Results';
-import TakeExam from '../pages/student/TakeExam';
-import ExamResultDetail from '../pages/student/ExamResultDetail';
+import StudentClasses from '../pages/student/Classes';
 import ExamError from '../pages/student/ExamError';
+import ExamResultDetail from '../pages/student/ExamResultDetail';
 import ExamResults from '../pages/student/ExamResults';
+import StudentDashboard from '../pages/student/StudentDashboard';
+import TakeExam from '../pages/student/TakeExam';
 
 // Public Pages
 import PublicTakeExam from '../pages/public/PublicTakeExam';
@@ -103,6 +101,7 @@ const AppRoutes = () => {
         {/* <Route path="exams/:examId" element={<ExamDetail />} /> */}
         <Route path="exams/:examId" element={<ExamDetailNew />} />
         <Route path="exams/:examId/edit" element={<EditExam />} />
+        <Route path="exams/:examId/submissions/detail/:submissionId" element={<StudentExamDetail />} />
         <Route path="exams/:examId/submissions/:studentId" element={<StudentExamDetail />} />
         <Route path="classes" element={<TeacherClasses />} />
         <Route path="classes/:classId" element={<TeacherClassDetail />} />
