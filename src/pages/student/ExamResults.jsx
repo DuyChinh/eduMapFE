@@ -415,7 +415,8 @@ const ExamResults = () => {
                     const latest = filteredSubmissions[0];
                     const totalMarks = latest.totalMarks || 1;
                     const percentage = ((latest.score || 0) / totalMarks) * 100;
-                    return `${latest.score || 0}/${totalMarks}`;
+                    const formattedScore = typeof latest.score === 'number' ? Number(latest.score.toFixed(1)) : (latest.score || 0);
+                    return `${formattedScore}/${totalMarks}`;
                   })()
                   : '0/0'}
               </Title>
