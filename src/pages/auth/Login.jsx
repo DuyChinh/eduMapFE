@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, App, Tabs, Card } from 'antd';
 import { UserOutlined, LockOutlined, GoogleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ const Login = () => {
   const [activeTab, setActiveTab] = useState('student');
   const [emailForForgotPassword, setEmailForForgotPassword] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { message } = App.useApp();
   const login = useAuthStore((state) => state.login);
   const { t } = useTranslation();
@@ -23,9 +24,16 @@ const Login = () => {
     try {
       const result = await login(values);
       message.success(t('login.loginSuccess'));
-      
+
       console.log('Login result:', result); // Debug log
-      
+
+      // Check for redirect path
+      const from = location.state?.from?.pathname;
+      if (from) {
+        navigate(from, { replace: true });
+        return;
+      }
+
       // Redirect based on user role
       if (result.user?.role === USER_ROLES.TEACHER) {
         navigate(ROUTES.TEACHER_DASHBOARD, { replace: true });
@@ -50,7 +58,7 @@ const Login = () => {
     try {
       // Show loading message
       message.loading(t('login.googleRedirecting'), 0);
-      
+
       // Redirect to Google OAuth
       authService.loginWithGoogle();
     } catch (error) {
@@ -65,17 +73,17 @@ const Login = () => {
       message.error(t('login.emailRequiredForForgotPassword'));
       return;
     }
-    
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailForForgotPassword)) {
       message.error(t('login.emailInvalidForForgotPassword'));
       return;
     }
-    
+
     // Navigate to forgot password with email
-    navigate(ROUTES.FORGOT_PASSWORD, { 
-      state: { email: emailForForgotPassword } 
+    navigate(ROUTES.FORGOT_PASSWORD, {
+      state: { email: emailForForgotPassword }
     });
   };
 
@@ -111,15 +119,15 @@ const Login = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="auth-right">
         <Card className="auth-card" variant="borderless">
           <div className="auth-header">
             <img src="/logo.png" alt="Logo" className="auth-logo" />
           </div>
-          
-          <Tabs 
-            activeKey={activeTab} 
+
+          <Tabs
+            activeKey={activeTab}
             onChange={setActiveTab}
             items={tabItems}
             centered
@@ -146,8 +154,8 @@ const Login = () => {
                 { type: 'email', message: t('login.emailInvalid') },
               ]}
             >
-              <Input 
-                prefix={<UserOutlined />} 
+              <Input
+                prefix={<UserOutlined />}
                 placeholder={t('login.emailPlaceholder')}
                 onChange={(e) => setEmailForForgotPassword(e.target.value)}
               />
@@ -165,14 +173,14 @@ const Login = () => {
             </Form.Item>
 
             <div className="auth-actions">
-              <button 
+              <button
                 type="button"
                 onClick={handleForgotPassword}
                 className="forgot-link"
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: '#1890ff', 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#1890ff',
                   cursor: 'pointer',
                   textDecoration: 'underline'
                 }}
@@ -182,10 +190,10 @@ const Login = () => {
             </div>
 
             <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                block 
+              <Button
+                type="primary"
+                htmlType="submit"
+                block
                 loading={loading}
                 className="submit-btn"
               >
@@ -197,7 +205,7 @@ const Login = () => {
               <span>{t('login.orDivider')}</span>
             </div>
 
-            <Button 
+            <Button
               icon={<FcGoogle style={{ fontSize: '16px' }} />}
               block
               onClick={handleGoogleLogin}

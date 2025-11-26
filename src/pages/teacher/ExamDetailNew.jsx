@@ -325,6 +325,7 @@ const ExamDetailNew = () => {
       render: (score, record) => {
         // Show score for submitted, graded, and late submissions
         if (record.status !== 'submitted' && record.status !== 'graded' && record.status !== 'late') return '-';
+        const formattedScore = typeof score === 'number' ? Number(score.toFixed(1)) : (score || 0);
         return (
           <div>
             <Text strong style={{ fontSize: 14 }}>

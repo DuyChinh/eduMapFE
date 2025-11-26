@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../constants/config';
 
+import useAuthStore from '../store/authStore';
+
 // Create axios instance
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -15,7 +17,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // Try to get token from multiple sources
     let token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    
+
     // If not found, try to get from persist storage
     if (!token) {
       try {
@@ -28,7 +30,7 @@ axiosInstance.interceptors.request.use(
         console.warn('Failed to parse persist storage:', error);
       }
     }
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -49,18 +51,19 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       const { status, data } = error.response;
-      
+
       if (status === 401) {
         // Let the component handle the error
-        localStorage.removeItem(STORAGE_KEYS.TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER);
-        localStorage.removeItem('auth-storage'); // Clear persist storage
+        // localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        // localStorage.removeItem(STORAGE_KEYS.USER);
+        // localStorage.removeItem('auth-storage'); // Clear persist storage
+        useAuthStore.getState().logout();
         console.warn('⚠️ 401 Unauthorized - Token cleared');
       }
-      
+
       // Extract error message from different possible formats
       let errorMessage = 'Có lỗi xảy ra';
-      
+
       if (data) {
         // Handle different error response formats
         if (typeof data === 'string') {
@@ -75,7 +78,7 @@ axiosInstance.interceptors.response.use(
           errorMessage = data.errors[0];
         }
       }
-      
+
       console.error('API Error:', { status, data, errorMessage });
       // Reject with error object to preserve status and data
       const errorObj = new Error(errorMessage);

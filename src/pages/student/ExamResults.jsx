@@ -75,10 +75,10 @@ const ExamResults = () => {
 
       const response = await getMySubmissions(params);
       const data = Array.isArray(response) ? response : (response.data || response.items || []);
-      
+
       setSubmissions(data);
       setFilteredSubmissions(data);
-      
+
       // Calculate overall stats
       if (data.length > 0) {
         const totalExams = data.length;
@@ -122,19 +122,19 @@ const ExamResults = () => {
 
     const filtered = submissions.filter(submission => {
       if (!submission.answers || submission.answers.length === 0) return false;
-      
+
       const correctCount = submission.answers.filter(a => a.isCorrect).length;
       const incorrectCount = submission.answers.length - correctCount;
-      
+
       if (filters.answerFilter === 'correct') {
         return correctCount > 0;
       } else if (filters.answerFilter === 'incorrect') {
         return incorrectCount > 0;
       }
-      
+
       return true;
     });
-    
+
     setFilteredSubmissions(filtered);
   };
 
@@ -198,10 +198,11 @@ const ExamResults = () => {
       render: (score, record) => {
         const totalMarks = record.totalMarks || 1;
         const percentage = (score / totalMarks) * 100;
+        const formattedScore = typeof score === 'number' ? Number(score.toFixed(1)) : (score || 0);
         return (
           <Space direction="vertical" size="small">
             <Text strong style={{ fontSize: 16, color: getScoreColor(percentage) }}>
-              {score}/{totalMarks}
+              {formattedScore}/{totalMarks}
             </Text>
             <Progress
               percent={Math.round(percentage)}
@@ -411,11 +412,11 @@ const ExamResults = () => {
               <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
                 {overallStats?.totalExams > 0 && filteredSubmissions.length > 0
                   ? (() => {
-                      const latest = filteredSubmissions[0];
-                      const totalMarks = latest.totalMarks || 1;
-                      const percentage = ((latest.score || 0) / totalMarks) * 100;
-                      return `${latest.score || 0}/${totalMarks}`;
-                    })()
+                    const latest = filteredSubmissions[0];
+                    const totalMarks = latest.totalMarks || 1;
+                    const percentage = ((latest.score || 0) / totalMarks) * 100;
+                    return `${latest.score || 0}/${totalMarks}`;
+                  })()
                   : '0/0'}
               </Title>
               <Text type="secondary">{t('studentResults.currentScore')}</Text>
@@ -425,7 +426,7 @@ const ExamResults = () => {
 
             <div>
               <Title level={5}>{t('studentResults.detailedInfo')}</Title>
-              
+
               {filteredSubmissions.length > 0 && (() => {
                 const latest = filteredSubmissions[0];
                 return (
@@ -438,7 +439,7 @@ const ExamResults = () => {
                     <div style={{ marginBottom: 12 }}>
                       <Text strong>{t('studentResults.submittedAt')}: </Text>
                       <Text>
-                        {latest.submittedAt 
+                        {latest.submittedAt
                           ? new Date(latest.submittedAt).toLocaleString('vi-VN')
                           : '-'
                         }
@@ -466,7 +467,7 @@ const ExamResults = () => {
                       >
                         {t('studentResults.viewDetail')}
                       </Button>
-                      
+
                       <Button
                         icon={<CopyOutlined />}
                         block
