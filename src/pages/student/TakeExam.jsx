@@ -783,6 +783,7 @@ const TakeExam = () => {
               type="primary" 
               onClick={() => setShowConfirmSubmit(true)}
               disabled={submitting}
+              loading={submitting}
               className="submit-button"
             >
               {t('takeExam.submit')}

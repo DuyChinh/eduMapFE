@@ -11,6 +11,7 @@ import './AuthPages.css';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('student');
   const [emailForForgotPassword, setEmailForForgotPassword] = useState('');
   const navigate = useNavigate();
@@ -55,13 +56,17 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
+    if (googleLoading) return; // Prevent multiple clicks
+    
     try {
+      setGoogleLoading(true);
       // Show loading message
       message.loading(t('login.googleRedirecting'), 0);
 
       // Redirect to Google OAuth
       authService.loginWithGoogle();
     } catch (error) {
+      setGoogleLoading(false);
       message.destroy(); // Clear loading message
       message.error(t('login.googleLoginFailed'));
       console.error('Google login error:', error);
@@ -209,6 +214,8 @@ const Login = () => {
               icon={<FcGoogle style={{ fontSize: '16px' }} />}
               block
               onClick={handleGoogleLogin}
+              loading={googleLoading}
+              disabled={googleLoading}
               className="google-btn"
             >
               {t('login.googleLogin')}
