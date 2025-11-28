@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Button, Space, Modal, Select, App } from 'antd';
 import {
+  BellOutlined,
+  GlobalOutlined,
   HomeOutlined,
-  TeamOutlined,
-  TrophyOutlined,
-  UserOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  BellOutlined,
-  SwapOutlined,
-  ReloadOutlined,
-  GlobalOutlined,
   MoonOutlined,
+  ReloadOutlined,
   SunOutlined,
+  SwapOutlined,
+  TeamOutlined,
+  TrophyOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space } from 'antd';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { ROUTES, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
-import { ROUTES, USER_ROLES } from '../constants/config';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -46,7 +46,7 @@ const StudentLayout = () => {
       try {
         await fetchProfile();
       } catch (error) {
-        
+        console.error('Failed to fetch student profile', error);
       }
     };
     refreshProfile();
@@ -128,6 +128,12 @@ const StudentLayout = () => {
     // Default fallback
     return pathname;
   };
+
+  const roleLabel = (() => {
+    if (user?.role === USER_ROLES.TEACHER) return t('role.teacher');
+    if (user?.role === USER_ROLES.STUDENT) return t('role.student');
+    return user?.role || '';
+  })();
 
   const menuItems = [
     {
@@ -248,17 +254,16 @@ const StudentLayout = () => {
               className="notification-btn"
             />
             
-            <Dropdown
-              menu={{ items: userMenuItems }}
-              placement="bottomRight"
-              arrow
-            >
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
               <div className="user-dropdown">
-                <Avatar 
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
-              />
-                <span className="user-name-header">{user?.name}</span>
+                <Avatar
+                  src={user?.avatar}
+                  icon={!user?.avatar && <UserOutlined />}
+                />
+                <div className="user-dropdown-info">
+                  <span className="user-name-header">{user?.name}</span>
+                  {roleLabel && <span className="user-role-header">{roleLabel}</span>}
+                </div>
               </div>
             </Dropdown>
           </Space>

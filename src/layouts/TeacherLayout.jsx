@@ -18,7 +18,7 @@ import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space } fro
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
+import { ROUTES, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import './DashboardLayout.css';
@@ -46,7 +46,7 @@ const TeacherLayout = () => {
       try {
         await fetchProfile();
       } catch (error) {
-        
+        console.error('Failed to fetch teacher profile', error);
       }
     };
     refreshProfile();
@@ -131,6 +131,12 @@ const TeacherLayout = () => {
     // Default fallback
     return pathname;
   };
+
+  const roleLabel = (() => {
+    if (user?.role === USER_ROLES.TEACHER) return t('role.teacher');
+    if (user?.role === USER_ROLES.STUDENT) return t('role.student');
+    return user?.role || '';
+  })();
 
   const menuItems = [
     {
@@ -257,17 +263,16 @@ const TeacherLayout = () => {
               className="notification-btn"
             />
             
-            <Dropdown
-              menu={{ items: userMenuItems }}
-              placement="bottomRight"
-              arrow
-            >
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
               <div className="user-dropdown">
-                <Avatar 
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
-              />
-                <span className="user-name-header">{user?.name}</span>
+                <Avatar
+                  src={user?.avatar}
+                  icon={!user?.avatar && <UserOutlined />}
+                />
+                <div className="user-dropdown-info">
+                  <span className="user-name-header">{user?.name}</span>
+                  {roleLabel && <span className="user-role-header">{roleLabel}</span>}
+                </div>
               </div>
             </Dropdown>
           </Space>
