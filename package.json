@@ -37,6 +37,7 @@
     "react-i18next": "^16.0.0",
     "react-icons": "^5.5.0",
     "react-latex": "^2.0.0",
+    "react-markdown": "^10.1.0",
     "react-mathquill": "^1.0.4",
     "react-router-dom": "^7.9.4",
     "zustand": "^5.0.8"

@@ -7,11 +7,14 @@ import enUS from 'antd/locale/en_US';
 import jaJP from 'antd/locale/ja_JP';
 import AppRoutes from './routes';
 import useThemeStore from './store/themeStore';
+import useAuthStore from './store/authStore';
+import ChatWidget from './components/ChatWidget/ChatWidget';
 
 function App() {
   const { i18n } = useTranslation();
   const { theme } = useThemeStore();
-  
+  const { isAuthenticated } = useAuthStore();
+
   // Apply theme to document body
   useEffect(() => {
     if (theme === 'dark') {
@@ -22,7 +25,7 @@ function App() {
       document.documentElement.setAttribute('data-theme', 'light');
     }
   }, [theme]);
-  
+
   // Map i18n language to Ant Design locale
   const getAntdLocale = () => {
     switch (i18n.language) {
@@ -47,13 +50,14 @@ function App() {
   };
 
   return (
-    <ConfigProvider 
+    <ConfigProvider
       locale={getAntdLocale()}
       theme={antdThemeConfig}
     >
       <AntdApp>
         <Router>
           <AppRoutes />
+          {isAuthenticated && <ChatWidget />}
         </Router>
       </AntdApp>
     </ConfigProvider>
