@@ -1,4 +1,4 @@
-import { Column } from '@ant-design/charts';
+import { Column } from "@ant-design/charts";
 import {
   ArrowLeftOutlined,
   BarChartOutlined,
@@ -10,8 +10,8 @@ import {
   InfoCircleOutlined,
   LinkOutlined,
   TeamOutlined,
-  TrophyOutlined
-} from '@ant-design/icons';
+  TrophyOutlined,
+} from "@ant-design/icons";
 import {
   App,
   Avatar,
@@ -29,13 +29,14 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
-import examService from '../../api/examService';
-import examStatsService from '../../api/examStatsService.js';
-import { ROUTES } from '../../constants/config';
+} from "antd";
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate, useParams } from "react-router-dom";
+import examService from "../../api/examService";
+import examStatsService from "../../api/examStatsService.js";
+import { ROUTES } from "../../constants/config";
+import PreviewExamModal from "../../components/teacher/PreviewExamModal";
 
 const { Title, Text } = Typography;
 
@@ -45,17 +46,49 @@ const ExamDetailNew = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
+  // Add CSS for late submission highlight
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      .late-submission-row {
+        background-color: #ffe58f !important;
+      }
+      .late-submission-row:hover {
+        background-color: #ffd666 !important;
+      }
+      body.dark-mode .late-submission-row {
+        background-color: rgba(250, 173, 20, 0.3) !important;
+      }
+      body.dark-mode .late-submission-row:hover {
+        background-color: rgba(250, 173, 20, 0.4) !important;
+      }
+      .late-submission-row td [data-column="submittedAt"] {
+        color: #ff4d4f !important;
+        font-weight: 600 !important;
+      }
+      body.dark-mode .late-submission-row td [data-column="submittedAt"] {
+        color: #ff7875 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const [examData, setExamData] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [scoreDistribution, setScoreDistribution] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [statsLoading, setStatsLoading] = useState(false);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  const [scoreDistributionLoading, setScoreDistributionLoading] = useState(false);
+  const [scoreDistributionLoading, setScoreDistributionLoading] =
+    useState(false);
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
 
   useEffect(() => {
     fetchExamDetail();
@@ -67,8 +100,8 @@ const ExamDetailNew = () => {
       const response = await examService.getExamById(examId);
       setExamData(response.data || response);
     } catch (error) {
-      console.error('Error fetching exam:', error);
-      message.error(t('exams.fetchFailed'));
+      console.error("Error fetching exam:", error);
+      message.error(t("exams.fetchFailed"));
     } finally {
       setLoading(false);
     }
@@ -80,8 +113,8 @@ const ExamDetailNew = () => {
       const response = await examStatsService.getExamStatistics(examId);
       setStatistics(response.data || response);
     } catch (error) {
-      console.error('Error fetching statistics:', error);
-      message.error(t('exams.stats.fetchFailed'));
+      console.error("Error fetching statistics:", error);
+      message.error(t("exams.stats.fetchFailed"));
     } finally {
       setStatsLoading(false);
     }
@@ -93,8 +126,8 @@ const ExamDetailNew = () => {
       const response = await examStatsService.getExamLeaderboard(examId);
       setLeaderboard(response.data || response || []);
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      message.error(t('exams.leaderboard.fetchFailed'));
+      console.error("Error fetching leaderboard:", error);
+      message.error(t("exams.leaderboard.fetchFailed"));
     } finally {
       setLeaderboardLoading(false);
     }
@@ -105,8 +138,9 @@ const ExamDetailNew = () => {
     try {
       const response = await examStatsService.getStudentSubmissions(examId);
       setSubmissions(response.data || response || []);
-    } catch (error) {
-      message.error(t('exams.submissions.fetchFailed'));
+    } catch (err) {
+      console.error("Error fetching submissions:", err);
+      message.error(t("exams.submissions.fetchFailed"));
     } finally {
       setSubmissionsLoading(false);
     }
@@ -118,8 +152,8 @@ const ExamDetailNew = () => {
       const response = await examStatsService.getScoreDistribution(examId);
       setScoreDistribution(response.data || response || []);
     } catch (error) {
-      console.error('Error fetching score distribution:', error);
-      message.error(t('exams.stats.fetchFailed'));
+      console.error("Error fetching score distribution:", error);
+      message.error(t("exams.stats.fetchFailed"));
     } finally {
       setScoreDistributionLoading(false);
     }
@@ -127,16 +161,16 @@ const ExamDetailNew = () => {
 
   const handleTabChange = (key) => {
     setActiveTab(key);
-    if (key === 'statistics') {
+    if (key === "statistics") {
       if (!statistics) {
         fetchStatistics();
       }
       if (scoreDistribution.length === 0) {
         fetchScoreDistribution();
       }
-    } else if (key === 'leaderboard' && leaderboard.length === 0) {
+    } else if (key === "leaderboard" && leaderboard.length === 0) {
       fetchLeaderboard();
-    } else if (key === 'students' && submissions.length === 0) {
+    } else if (key === "students" && submissions.length === 0) {
       fetchSubmissions();
     }
   };
@@ -144,11 +178,11 @@ const ExamDetailNew = () => {
   const handleDelete = async () => {
     try {
       await examService.deleteExam(examId);
-      message.success(t('exams.deleteSuccess'));
+      message.success(t("exams.deleteSuccess"));
       navigate(ROUTES.TEACHER_EXAMS);
     } catch (error) {
-      console.error('Error deleting exam:', error);
-      message.error(t('exams.deleteFailed'));
+      console.error("Error deleting exam:", error);
+      message.error(t("exams.deleteFailed"));
     }
   };
 
@@ -172,75 +206,90 @@ const ExamDetailNew = () => {
 
   // Get subject name based on current language
   const getSubjectName = (subject) => {
-    if (!subject) return '-';
-    if (typeof subject === 'string') return subject;
-    if (typeof subject === 'object' && subject._id) {
+    if (!subject) return "-";
+    if (typeof subject === "string") return subject;
+    if (typeof subject === "object" && subject._id) {
       // It's a populated subject object
-      const currentLang = i18n.language || localStorage.getItem('language') || 'vi';
+      const currentLang =
+        i18n.language || localStorage.getItem("language") || "vi";
       switch (currentLang) {
-        case 'en':
-          return subject.name_en || subject.name || '-';
-        case 'jp':
-        case 'ja':
-          return subject.name_jp || subject.name || '-';
-        case 'vi':
+        case "en":
+          return subject.name_en || subject.name || "-";
+        case "jp":
+        case "ja":
+          return subject.name_jp || subject.name || "-";
+        case "vi":
         default:
-          return subject.name || '-';
+          return subject.name || "-";
       }
     }
-    return '-';
+    return "-";
   };
 
   const leaderboardColumns = [
     {
-      title: t('exams.leaderboard.rank'),
-      dataIndex: 'rank',
-      key: 'rank',
+      title: t("exams.leaderboard.rank"),
+      dataIndex: "rank",
+      key: "rank",
       width: 80,
       render: (rank) => {
-        const colors = { 1: '#ffd700', 2: '#c0c0c0', 3: '#cd7f32' };
+        const colors = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
         return (
-          <Tag color={colors[rank] || 'default'} style={{ fontSize: '16px', fontWeight: 'bold' }}>
+          <Tag
+            color={colors[rank] || "default"}
+            style={{ fontSize: "16px", fontWeight: "bold" }}
+          >
             #{rank}
           </Tag>
         );
       },
     },
     {
-      title: t('exams.leaderboard.student'),
-      key: 'student',
+      title: t("exams.leaderboard.student"),
+      key: "student",
       render: (_, record) => (
         <Space>
-          <Avatar src={record.student?.avatar} icon={!record.student?.avatar && <TeamOutlined />} />
+          <Avatar
+            src={record.student?.avatar}
+            icon={!record.student?.avatar && <TeamOutlined />}
+          />
           <div>
-            <div style={{ fontWeight: 500 }}>{record.student?.name || record.student?.email}</div>
-            <Text type="secondary" style={{ fontSize: 12 }}>{record.student?.studentCode}</Text>
+            <div style={{ fontWeight: 500 }}>
+              {record.student?.name || record.student?.email}
+            </div>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {record.student?.studentCode}
+            </Text>
           </div>
         </Space>
       ),
     },
     {
-      title: t('exams.leaderboard.score'),
-      dataIndex: 'score',
-      key: 'score',
+      title: t("exams.leaderboard.score"),
+      dataIndex: "score",
+      key: "score",
       width: 120,
-      render: (score, record) => (
-        <div>
-          <Text strong style={{ fontSize: 16, color: '#1890ff' }}>
-            {score}/{record.totalMarks}
-          </Text>
-          <Progress 
-            percent={Math.round((score / record.totalMarks) * 100)} 
-            size="small" 
-            showInfo={false}
-          />
-        </div>
-      ),
+      render: (score, record) => {
+        const formattedScore =
+          typeof score === "number" ? Number(score.toFixed(1)) : score || 0;
+        return (
+          <div>
+            <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
+              {formattedScore}/{record.totalMarks}
+            </Text>
+            <Progress
+              percent={Math.round((score / record.totalMarks) * 100)}
+              size="small"
+              showInfo={false}
+            />
+          </div>
+        );
+      },
     },
     {
-      title: t('exams.leaderboard.timeSpent'),
-      dataIndex: 'timeSpent',
-      key: 'timeSpent',
+      title: t("exams.leaderboard.timeSpent"),
+      dataIndex: "timeSpent",
+      key: "timeSpent",
       width: 120,
       render: (minutes) => {
         const hours = Math.floor(minutes / 60);
@@ -249,23 +298,27 @@ const ExamDetailNew = () => {
       },
     },
     {
-      title: t('exams.leaderboard.submittedAt'),
-      dataIndex: 'submittedAt',
-      key: 'submittedAt',
+      title: t("exams.leaderboard.submittedAt"),
+      dataIndex: "submittedAt",
+      key: "submittedAt",
       width: 170,
-      render: (date) => date ? new Date(date).toLocaleString('vi-VN') : '-',
+      render: (date) => (date ? new Date(date).toLocaleString("vi-VN") : "-"),
     },
     {
-      title: t('common.actions'),
-      key: 'actions',
+      title: t("common.actions"),
+      key: "actions",
       width: 100,
       render: (_, record) => (
-        <Button 
-          type="link" 
+        <Button
+          type="link"
           icon={<EyeOutlined />}
-          onClick={() => navigate(`/teacher/exams/${examId}/submissions/detail/${record._id}`)}
+          onClick={() =>
+            navigate(
+              `/teacher/exams/${examId}/submissions/detail/${record._id}`
+            )
+          }
         >
-          {t('exams.viewDetail')}
+          {t("exams.viewDetail")}
         </Button>
       ),
     },
@@ -273,88 +326,129 @@ const ExamDetailNew = () => {
 
   const submissionsColumns = [
     {
-      title: t('exams.submissions.student'),
-      key: 'student',
+      title: t("exams.submissions.student"),
+      key: "student",
       render: (_, record) => (
         <Space>
-          <Avatar src={record.student?.avatar} icon={!record.student?.avatar && <TeamOutlined />} />
+          <Avatar
+            src={record.student?.avatar}
+            icon={!record.student?.avatar && <TeamOutlined />}
+          />
           <div>
-            <div style={{ fontWeight: 500 }}>{record.student?.name || record.student?.email}</div>
-            <Text type="secondary" style={{ fontSize: 12 }}>{record.student?.studentCode}</Text>
+            <div style={{ fontWeight: 500 }}>
+              {record.student?.name || record.student?.email}
+            </div>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {record.student?.studentCode}
+            </Text>
           </div>
         </Space>
       ),
     },
     {
-      title: t('exams.submissions.status'),
-      dataIndex: 'status',
-      key: 'status',
+      title: t("exams.submissions.status"),
+      dataIndex: "status",
+      key: "status",
       width: 120,
       render: (status) => {
         const statusConfig = {
-          'in_progress': { color: 'blue', text: t('exams.submissions.inProgress') },
-          'submitted': { color: 'green', text: t('exams.submissions.submitted') },
-          'graded': { color: 'green', text: t('exams.submissions.graded') },
-          'late': { color: 'orange', text: t('exams.submissions.late') },
+          in_progress: {
+            color: "blue",
+            text: t("exams.submissions.inProgress"),
+          },
+          submitted: { color: "green", text: t("exams.submissions.submitted") },
+          graded: { color: "green", text: t("exams.submissions.graded") },
+          late: { color: "orange", text: t("exams.submissions.late") },
         };
-        const config = statusConfig[status] || { color: 'default', text: status };
+        const config = statusConfig[status] || {
+          color: "default",
+          text: status,
+        };
         return <Tag color={config.color}>{config.text}</Tag>;
       },
     },
     {
-      title: t('exams.submissions.score'),
-      dataIndex: 'score',
-      key: 'score',
+      title: t("exams.submissions.score"),
+      dataIndex: "score",
+      key: "score",
       width: 150,
       render: (score, record) => {
         // Show score for submitted, graded, and late submissions
-        if (record.status !== 'submitted' && record.status !== 'graded' && record.status !== 'late') return '-';
+        if (
+          record.status !== "submitted" &&
+          record.status !== "graded" &&
+          record.status !== "late"
+        )
+          return "-";
+        const formattedScore =
+          typeof score === "number" ? Number(score.toFixed(1)) : score || 0;
         return (
           <div>
             <Text strong style={{ fontSize: 14 }}>
-              {score || 0}/{record.totalMarks}
+              {formattedScore}/{record.totalMarks}
             </Text>
-            <Progress 
-              percent={Math.round(((score || 0) / record.totalMarks) * 100)} 
-              size="small" 
+            <Progress
+              percent={Math.round(((score || 0) / record.totalMarks) * 100)}
+              size="small"
               showInfo={false}
-              status={score >= record.totalMarks * 0.8 ? 'success' : score >= record.totalMarks * 0.5 ? 'normal' : 'exception'}
+              status={
+                score >= record.totalMarks * 0.8
+                  ? "success"
+                  : score >= record.totalMarks * 0.5
+                  ? "normal"
+                  : "exception"
+              }
             />
           </div>
         );
       },
     },
     {
-      title: t('exams.submissions.timeSpent'),
-      dataIndex: 'timeSpent',
-      key: 'timeSpent',
+      title: t("exams.submissions.timeSpent"),
+      dataIndex: "timeSpent",
+      key: "timeSpent",
       width: 120,
       render: (minutes) => {
-        if (!minutes) return '-';
+        if (!minutes) return "-";
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         return `${hours}h ${mins}m`;
       },
     },
     {
-      title: t('exams.submissions.submittedAt'),
-      dataIndex: 'submittedAt',
-      key: 'submittedAt',
+      title: t("exams.submissions.startedAt"),
+      dataIndex: "startedAt",
+      key: "startedAt",
       width: 170,
-      render: (date) => date ? new Date(date).toLocaleString('vi-VN') : '-',
+      render: (date) => (date ? new Date(date).toLocaleString("vi-VN") : "-"),
     },
     {
-      title: t('common.actions'),
-      key: 'actions',
+      title: t("exams.submissions.submittedAt"),
+      dataIndex: "submittedAt",
+      key: "submittedAt",
+      width: 170,
+      render: (date) => (
+        <span data-column="submittedAt">
+          {date ? new Date(date).toLocaleString("vi-VN") : "-"}
+        </span>
+      ),
+    },
+    {
+      title: t("common.actions"),
+      key: "actions",
       width: 100,
       render: (_, record) => (
-        <Button 
-          type="link" 
+        <Button
+          type="link"
           icon={<EyeOutlined />}
-          onClick={() => navigate(`/teacher/exams/${examId}/submissions/detail/${record._id}`)}
-          disabled={record.status === 'in_progress'}
+          onClick={() =>
+            navigate(
+              `/teacher/exams/${examId}/submissions/detail/${record._id}`
+            )
+          }
+          disabled={record.status === "in_progress"}
         >
-          {t('exams.viewDetail')}
+          {t("exams.viewDetail")}
         </Button>
       ),
     },
@@ -362,7 +456,7 @@ const ExamDetailNew = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div style={{ textAlign: "center", padding: "50px" }}>
         <Spin size="large" />
       </div>
     );
@@ -371,11 +465,11 @@ const ExamDetailNew = () => {
   if (!examData) {
     return (
       <Empty
-        description={t('exams.examNotFound')}
+        description={t("exams.examNotFound")}
         image={Empty.PRESENTED_IMAGE_SIMPLE}
       >
         <Button type="primary" onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
-          {t('common.back')}
+          {t("common.back")}
         </Button>
       </Empty>
     );
@@ -384,15 +478,26 @@ const ExamDetailNew = () => {
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+      <div
+        style={{
+          marginBottom: 24,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
         <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(ROUTES.TEACHER_EXAMS)}
           >
-            {t('common.back')}
+            {t("common.back")}
           </Button>
-          <Title level={2} style={{ margin: 0 }}>{examData.name}</Title>
+          <Title level={2} style={{ margin: 0 }}>
+            {examData.name}
+          </Title>
           {/* <Tag color={getStatusColor(examData.status)}>
             {getStatusText(examData.status)}
           </Tag> */}
@@ -400,70 +505,132 @@ const ExamDetailNew = () => {
 
         <Space>
           <Button
+            icon={<EyeOutlined />}
+            onClick={() => setPreviewModalVisible(true)}
+          >
+            {t("exams.preview") || "Preview"}
+          </Button>
+          <Button
             icon={<EditOutlined />}
             onClick={() => navigate(`/teacher/exams/${examId}/edit`)}
           >
-            {t('exams.edit')}
+            {t("exams.edit")}
           </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={handleDelete}
-          >
-            {t('exams.delete')}
+          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+            {t("exams.delete")}
           </Button>
         </Space>
       </div>
 
       {/* Tabs */}
-      <Tabs 
-        activeKey={activeTab} 
-        onChange={handleTabChange} 
+      <Tabs
+        activeKey={activeTab}
+        onChange={handleTabChange}
         size="large"
         items={[
           {
-            key: 'overview',
-            label: <span><InfoCircleOutlined /> {t('exams.tabs.overview')}</span>,
+            key: "overview",
+            label: (
+              <span>
+                <InfoCircleOutlined /> {t("exams.tabs.overview")}
+              </span>
+            ),
             children: (
               <Row gutter={[16, 16]}>
                 <Col xs={24} lg={16}>
                   <Card>
-                    <Title level={4} style={{ marginBottom: 16 }}>{t('exams.basicInfo')}</Title>
+                    <Title level={4} style={{ marginBottom: 16 }}>
+                      {t("exams.basicInfo")}
+                    </Title>
                     <Table
                       dataSource={[
-                        { key: 'description', label: t('exams.description'), value: examData.description || '-' },
-                        { key: 'purpose', label: t('exams.examPurpose'), value: examData.examPurpose, isTag: true },
-                        { key: 'subject', label: t('exams.subject') || 'Subject', value: examData.subjectId, isSubject: true },
-                        { key: 'duration', label: t('exams.duration'), value: `${examData.duration} ${t('exams.minutes')}` },
-                        { key: 'totalMarks', label: t('exams.totalMarks'), value: examData.totalMarks },
-                        { key: 'maxAttempts', label: t('exams.maxAttempts'), value: examData.maxAttempts },
-                        { key: 'startTime', label: t('exams.startTime'), value: examData.startTime ? new Date(examData.startTime).toLocaleString('vi-VN') : '-' },
-                        { key: 'endTime', label: t('exams.endTime'), value: examData.endTime ? new Date(examData.endTime).toLocaleString('vi-VN') : '-' },
-                        { key: 'shareLink', label: t('exams.shareLink'), value: examData.shareCode, isShareLink: true },
+                        {
+                          key: "description",
+                          label: t("exams.description"),
+                          value: examData.description || "-",
+                        },
+                        {
+                          key: "purpose",
+                          label: t("exams.examPurpose"),
+                          value: examData.examPurpose,
+                          isTag: true,
+                        },
+                        {
+                          key: "subject",
+                          label: t("exams.subject") || "Subject",
+                          value: examData.subjectId,
+                          isSubject: true,
+                        },
+                        {
+                          key: "duration",
+                          label: t("exams.duration"),
+                          value: `${examData.duration} ${t("exams.minutes")}`,
+                        },
+                        {
+                          key: "totalMarks",
+                          label: t("exams.totalMarks"),
+                          value: examData.totalMarks,
+                        },
+                        {
+                          key: "maxAttempts",
+                          label: t("exams.maxAttempts"),
+                          value: examData.maxAttempts,
+                        },
+                        {
+                          key: "startTime",
+                          label: t("exams.startTime"),
+                          value: examData.startTime
+                            ? new Date(examData.startTime).toLocaleString(
+                                "vi-VN"
+                              )
+                            : "-",
+                        },
+                        {
+                          key: "endTime",
+                          label: t("exams.endTime"),
+                          value: examData.endTime
+                            ? new Date(examData.endTime).toLocaleString("vi-VN")
+                            : "-",
+                        },
+                        {
+                          key: "shareLink",
+                          label: t("exams.shareLink"),
+                          value: examData.shareCode,
+                          isShareLink: true,
+                        },
                       ]}
                       rowKey="key"
                       pagination={false}
                       showHeader={false}
                       columns={[
                         {
-                          key: 'label',
+                          key: "label",
                           width: 150,
-                          render: (_, record) => <Text strong>{record.label}:</Text>,
+                          render: (_, record) => (
+                            <Text strong>{record.label}:</Text>
+                          ),
                         },
                         {
-                          key: 'value',
+                          key: "value",
                           render: (_, record) => {
                             if (record.isShareLink) {
                               return record.value ? (
-                                <Tooltip title={t('exams.clickToCopy') || 'Click to copy link'}>
-                                  <Tag 
-                                    color="blue" 
+                                <Tooltip
+                                  title={
+                                    t("exams.clickToCopy") ||
+                                    "Click to copy link"
+                                  }
+                                >
+                                  <Tag
+                                    color="blue"
                                     icon={<LinkOutlined />}
-                                    style={{ cursor: 'pointer' }}
+                                    style={{ cursor: "pointer" }}
                                     onClick={() => {
                                       const shareLink = `${window.location.origin}/exam/${record.value}`;
                                       navigator.clipboard.writeText(shareLink);
-                                      message.success(t('exams.linkCopied') || 'Link copied!');
+                                      message.success(
+                                        t("exams.linkCopied") || "Link copied!"
+                                      );
                                     }}
                                   >
                                     {record.value}
@@ -475,7 +642,7 @@ const ExamDetailNew = () => {
                             }
                             if (record.isSubject) {
                               const subjectName = getSubjectName(record.value);
-                              return subjectName !== '-' ? (
+                              return subjectName !== "-" ? (
                                 <Tag color="cyan">{subjectName}</Tag>
                               ) : (
                                 <span>-</span>
@@ -493,40 +660,44 @@ const ExamDetailNew = () => {
 
                     {examData.questions && examData.questions.length > 0 && (
                       <div style={{ marginTop: 24 }}>
-                        <Title level={4}>{t('exams.questions')}</Title>
+                        <Title level={4}>{t("exams.questions")}</Title>
                         <Table
                           dataSource={examData.questions}
                           rowKey={(record) => {
-                            const questionId = record.questionId?._id || record.questionId;
+                            const questionId =
+                              record.questionId?._id || record.questionId;
                             const order = record.order;
-                            return questionId ? `${questionId}-${order || ''}` : `question-${record._id || Math.random()}`;
+                            return questionId
+                              ? `${questionId}-${order || ""}`
+                              : `question-${record._id || Math.random()}`;
                           }}
                           pagination={false}
                           size="small"
                           columns={[
                             {
-                              title: t('exams.order'),
-                              dataIndex: 'order',
-                              key: 'order',
+                              title: t("exams.order"),
+                              dataIndex: "order",
+                              key: "order",
                               width: 80,
                             },
                             {
-                              title: t('questions.name'),
-                              key: 'name',
-                              render: (_, record) => record.questionId?.name || '-',
+                              title: t("questions.name"),
+                              key: "name",
+                              render: (_, record) =>
+                                record.questionId?.name || "-",
                             },
                             {
-                              title: t('questions.type'),
-                              key: 'type',
+                              title: t("questions.type"),
+                              key: "type",
                               width: 120,
                               render: (_, record) => (
                                 <Tag>{record.questionId?.type}</Tag>
                               ),
                             },
                             {
-                              title: t('exams.marks'),
-                              dataIndex: 'marks',
-                              key: 'marks',
+                              title: t("exams.marks"),
+                              dataIndex: "marks",
+                              key: "marks",
                               width: 80,
                             },
                           ]}
@@ -537,27 +708,34 @@ const ExamDetailNew = () => {
                 </Col>
 
                 <Col xs={24} lg={8}>
-                  <Space direction="vertical" style={{ width: '100%' }} size="large">
+                  <Space
+                    direction="vertical"
+                    style={{ width: "100%" }}
+                    size="large"
+                  >
                     <Card>
-                      <Statistic 
-                        title={t('exams.stats.totalQuestions')} 
+                      <Statistic
+                        title={t("exams.stats.totalQuestions")}
                         value={examData.questions?.length || 0}
                         prefix={<FileTextOutlined />}
                       />
                     </Card>
                     <Card>
-                      <Statistic 
-                        title={t('exams.stats.totalSubmissions')} 
+                      <Statistic
+                        title={t("exams.stats.totalSubmissions")}
                         value={statistics?.totalSubmissions || 0}
                         prefix={<CheckCircleOutlined />}
                       />
                     </Card>
                     <Card>
-                      <Statistic 
-                        title={t('exams.stats.averageScore')} 
-                        value={statistics?.averageScore || 0}
+                      <Statistic
+                        title={t("exams.stats.averageScore")}
+                        value={
+                          statistics?.averageScore
+                            ? Number(statistics.averageScore.toFixed(1))
+                            : 0
+                        }
                         suffix={`/ ${examData.totalMarks}`}
-                        precision={1}
                         prefix={<TrophyOutlined />}
                       />
                     </Card>
@@ -567,64 +745,87 @@ const ExamDetailNew = () => {
             ),
           },
           {
-            key: 'statistics',
-            label: <span><BarChartOutlined /> {t('exams.tabs.statistics')}</span>,
+            key: "statistics",
+            label: (
+              <span>
+                <BarChartOutlined /> {t("exams.tabs.statistics")}
+              </span>
+            ),
             children: (
               <>
                 {statsLoading ? (
-                  <div style={{ textAlign: 'center', padding: '50px' }}>
+                  <div style={{ textAlign: "center", padding: "50px" }}>
                     <Spin />
                   </div>
                 ) : statistics ? (
                   <Row gutter={[16, 16]}>
                     <Col xs={24} sm={12} md={6}>
                       <Card>
-                        <Statistic 
-                          title={t('exams.stats.totalSubmissions')} 
+                        <Statistic
+                          title={t("exams.stats.totalSubmissions")}
                           value={statistics.totalSubmissions || 0}
                         />
                       </Card>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
                       <Card>
-                        <Statistic 
-                          title={t('exams.stats.averageScore')} 
-                          value={statistics.averageScore || 0}
-                          suffix={`/ ${examData.totalMarks}`}
-                          precision={1}
-                        />
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={12} md={6}>
-                      <Card>
-                        <Statistic 
-                          title={t('exams.stats.highestScore')} 
-                          value={statistics.highestScore || 0}
+                        <Statistic
+                          title={t("exams.stats.averageScore")}
+                          value={
+                            statistics.averageScore
+                              ? Number(statistics.averageScore.toFixed(1))
+                              : 0
+                          }
                           suffix={`/ ${examData.totalMarks}`}
                         />
                       </Card>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
                       <Card>
-                        <Statistic 
-                          title={t('exams.stats.lowestScore')} 
-                          value={statistics.lowestScore || 0}
+                        <Statistic
+                          title={t("exams.stats.highestScore")}
+                          value={
+                            statistics.highestScore
+                              ? Number(statistics.highestScore.toFixed(1))
+                              : 0
+                          }
+                          suffix={`/ ${examData.totalMarks}`}
+                        />
+                      </Card>
+                    </Col>
+                    <Col xs={24} sm={12} md={6}>
+                      <Card>
+                        <Statistic
+                          title={t("exams.stats.lowestScore")}
+                          value={
+                            statistics.lowestScore
+                              ? Number(statistics.lowestScore.toFixed(1))
+                              : 0
+                          }
                           suffix={`/ ${examData.totalMarks}`}
                         />
                       </Card>
                     </Col>
                   </Row>
                 ) : (
-                  <Empty description={t('exams.stats.noData')} />
+                  <Empty description={t("exams.stats.noData")} />
                 )}
                 {/* Score Distribution Chart */}
                 {scoreDistributionLoading ? (
-                  <div style={{ textAlign: 'center', padding: '50px', marginTop: 16 }}>
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "50px",
+                      marginTop: 16,
+                    }}
+                  >
                     <Spin />
                   </div>
                 ) : scoreDistribution.length > 0 ? (
-                  <Card 
-                    title={t('exams.stats.scoreDistribution') || 'Phân bố điểm số'} 
+                  <Card
+                    title={
+                      t("exams.stats.scoreDistribution") || "Phân bố điểm số"
+                    }
                     style={{ marginTop: 16 }}
                   >
                     <Column
@@ -632,43 +833,52 @@ const ExamDetailNew = () => {
                       xField="range"
                       yField="count"
                       label={{
-                        position: 'top',
+                        position: "top",
                         offset: 5,
                         style: {
-                          fill: '#fff',
+                          fill: "#fff",
                           fontSize: 16,
-                          fontWeight: 'bold',
+                          fontWeight: "bold",
                         },
                       }}
                       columnStyle={{
-                        fill: '#1890ff',
+                        fill: "#1890ff",
                       }}
                       height={400}
                       meta={{
                         range: {
-                          alias: t('exams.stats.scoreRange') || 'Khoảng điểm',
+                          alias: t("exams.stats.scoreRange") || "Khoảng điểm",
                         },
                         count: {
-                          alias: t('exams.stats.studentCount') || 'Số học sinh',
+                          alias: t("exams.stats.studentCount") || "Số học sinh",
                         },
                       }}
                     />
                   </Card>
                 ) : statistics ? (
                   <Card style={{ marginTop: 16 }}>
-                    <Empty description={t('exams.stats.noScoreData') || 'Chưa có dữ liệu điểm số'} />
+                    <Empty
+                      description={
+                        t("exams.stats.noScoreData") ||
+                        "Chưa có dữ liệu điểm số"
+                      }
+                    />
                   </Card>
                 ) : null}
               </>
             ),
           },
           {
-            key: 'leaderboard',
-            label: <span><TrophyOutlined /> {t('exams.tabs.leaderboard')}</span>,
+            key: "leaderboard",
+            label: (
+              <span>
+                <TrophyOutlined /> {t("exams.tabs.leaderboard")}
+              </span>
+            ),
             children: (
               <Card>
                 {leaderboardLoading ? (
-                  <div style={{ textAlign: 'center', padding: '50px' }}>
+                  <div style={{ textAlign: "center", padding: "50px" }}>
                     <Spin />
                   </div>
                 ) : (
@@ -680,23 +890,29 @@ const ExamDetailNew = () => {
                       if (record._id) return record._id;
                       const studentId = record.student?._id;
                       const rank = record.rank;
-                      return studentId && rank ? `leaderboard-${studentId}-${rank}` : `leaderboard-${Math.random()}`;
+                      return studentId && rank
+                        ? `leaderboard-${studentId}-${rank}`
+                        : `leaderboard-${Math.random()}`;
                     }}
                     pagination={{ pageSize: 10 }}
                     scroll={{ x: 800 }}
-                    locale={{ emptyText: t('exams.leaderboard.noData') }}
+                    locale={{ emptyText: t("exams.leaderboard.noData") }}
                   />
                 )}
               </Card>
             ),
           },
           {
-            key: 'students',
-            label: <span><TeamOutlined /> {t('exams.tabs.students')}</span>,
+            key: "students",
+            label: (
+              <span>
+                <TeamOutlined /> {t("exams.tabs.students")}
+              </span>
+            ),
             children: (
               <Card>
                 {submissionsLoading ? (
-                  <div style={{ textAlign: 'center', padding: '50px' }}>
+                  <div style={{ textAlign: "center", padding: "50px" }}>
                     <Spin />
                   </div>
                 ) : (
@@ -709,13 +925,26 @@ const ExamDetailNew = () => {
                       // Fallback: combine student ID with submission timestamp or random
                       const studentId = record.student?._id;
                       const submittedAt = record.submittedAt;
-                      return studentId && submittedAt 
-                        ? `submission-${studentId}-${submittedAt}` 
-                        : `submission-${studentId || 'unknown'}-${Math.random()}`;
+                      return studentId && submittedAt
+                        ? `submission-${studentId}-${submittedAt}`
+                        : `submission-${
+                            studentId || "unknown"
+                          }-${Math.random()}`;
+                    }}
+                    rowClassName={(record) => {
+                      // Highlight if submitted after exam end time
+                      if (examData?.endTime && record.submittedAt) {
+                        const submittedAt = new Date(record.submittedAt);
+                        const examEndTime = new Date(examData.endTime);
+                        if (submittedAt > examEndTime) {
+                          return "late-submission-row";
+                        }
+                      }
+                      return "";
                     }}
                     pagination={{ pageSize: 10 }}
                     scroll={{ x: 1000 }}
-                    locale={{ emptyText: t('exams.submissions.noData') }}
+                    locale={{ emptyText: t("exams.submissions.noData") }}
                   />
                 )}
               </Card>
@@ -723,10 +952,17 @@ const ExamDetailNew = () => {
           },
         ]}
       />
+
+      {/* Preview Modal */}
+      <PreviewExamModal
+        open={previewModalVisible}
+        onCancel={() => setPreviewModalVisible(false)}
+        examData={examData}
+        questions={examData?.questions || []}
+        subjects={[]}
+      />
     </div>
   );
 };
 
 export default ExamDetailNew;
-
- 

@@ -7,6 +7,7 @@ import {
   WarningOutlined
 } from '@ant-design/icons';
 import {
+  App,
   Alert,
   Button,
   Card,
@@ -14,8 +15,7 @@ import {
   Modal,
   Radio,
   Space,
-  Typography,
-  message
+  Typography
 } from 'antd';
 import { MathJax, MathJaxContext } from 'better-react-mathjax';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -37,6 +37,7 @@ const TakeExam = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { message } = App.useApp();
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -60,6 +61,7 @@ const TakeExam = () => {
   const initExamRef = useRef(false); // Prevent double initialization in StrictMode
   const passwordModalShownRef = useRef(false);
   const examStartedRef = useRef(false);
+  const choiceOptionsRefs = useRef({});
 
   // Store refs for functions that will be defined later
   const handleTimeUpRef = useRef(null);
@@ -146,7 +148,7 @@ const TakeExam = () => {
         if (handleAutoSaveRef.current) {
           handleAutoSaveRef.current();
         }
-      }, 60000);
+      }, 5000);
 
       message.success(t('takeExam.examStarted'));
       
@@ -438,13 +440,32 @@ const TakeExam = () => {
       // Submit exam
       const response = await submitExam(submission._id);
 
-      message.success(t('takeExam.submitSuccess'));
+      // Check if submission is late
+      const submissionData = response.data?.data || response.data || response;
+      if (submissionData?.status === 'late') {
+        message.warning(t('takeExam.submittedLate') || 'Your exam was submitted after the time limit. It has been marked as late.');
+      } else {
+        message.success(t('takeExam.submitSuccess'));
+      }
       
       // Navigate to result detail page to view answers
-      const submissionId = response.data?._id || response.data?.data?._id || response._id;
+      const submissionId = submissionData?._id || response.data?._id || response.data?.data?._id || response._id;
       navigate(`/student/results/${submissionId}`, { replace: true });
     } catch (error) {
-      message.error(error.response?.data?.message || t('takeExam.submitFailed'));
+      const errorMessage = error.response?.data?.message || error.message || t('takeExam.submitFailed');
+      
+      // If time limit exceeded beyond grace period, show error page
+      if (errorMessage.includes('Time limit exceeded') && errorMessage.includes('no longer accepted')) {
+        navigate('/student/exam-error', {
+          state: {
+            errorMessage,
+            errorType: 'timeExceeded'
+          },
+          replace: true
+        });
+      } else {
+        message.error(errorMessage);
+      }
     } finally {
       setSubmitting(false);
       setShowConfirmSubmit(false);
@@ -527,6 +548,63 @@ const TakeExam = () => {
       observer.disconnect();
     };
   }, [exam?.questions?.length]);
+
+  // Effect to equalize choice option widths (must be before early returns)
+  useEffect(() => {
+    const equalizeChoiceWidths = () => {
+      if (!exam || !exam.questions) return;
+      
+      exam.questions.forEach((q) => {
+        if (q.questionId?.type !== 'mcq' || !q.questionId?.choices) return;
+        
+        const questionId = q.questionId._id || q.questionId;
+        const choiceRefs = choiceOptionsRefs.current[questionId];
+        if (!choiceRefs || choiceRefs.length === 0) return;
+        
+        // First, reset all widths to auto to get natural width
+        choiceRefs.forEach((ref) => {
+          if (ref) {
+            ref.style.width = 'auto';
+          }
+        });
+        
+        // Wait for layout to update, then calculate max width
+        requestAnimationFrame(() => {
+          let maxWidth = 0;
+          choiceRefs.forEach((ref) => {
+            if (ref) {
+              const width = ref.getBoundingClientRect().width;
+              maxWidth = Math.max(maxWidth, width);
+            }
+          });
+          
+          // Set all to max width
+          if (maxWidth > 0) {
+            choiceRefs.forEach((ref) => {
+              if (ref) {
+                ref.style.width = `${maxWidth}px`;
+              }
+            });
+          }
+        });
+      });
+    };
+    
+    // Run after delays to ensure DOM and MathJax are rendered
+    const timer1 = setTimeout(equalizeChoiceWidths, 100);
+    const timer2 = setTimeout(equalizeChoiceWidths, 500);
+    const timer3 = setTimeout(equalizeChoiceWidths, 1000);
+    
+    // Also run when window resizes
+    window.addEventListener('resize', equalizeChoiceWidths);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      window.removeEventListener('resize', equalizeChoiceWidths);
+    };
+  }, [exam, answers]);
 
   if (loading && !showPasswordModal) {
     return <div className="take-exam-loading">{t('takeExam.loading')}</div>;
@@ -764,6 +842,7 @@ const TakeExam = () => {
               type="primary" 
               onClick={() => setShowConfirmSubmit(true)}
               disabled={submitting}
+              loading={submitting}
               className="submit-button"
             >
               {t('takeExam.submit')}
@@ -814,9 +893,21 @@ const TakeExam = () => {
                     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                       {question.choices?.map((choice, idx) => {
                         const isSelected = answers[questionId] === choice.key;
+                        const choiceRefKey = `${questionId}-${idx}`;
+                        
+                        // Initialize refs array for this question if not exists
+                        if (!choiceOptionsRefs.current[questionId]) {
+                          choiceOptionsRefs.current[questionId] = [];
+                        }
+                        
                         return (
                           <div 
                             key={idx} 
+                            ref={(el) => {
+                              if (el) {
+                                choiceOptionsRefs.current[questionId][idx] = el;
+                              }
+                            }}
                             className={`choice-option ${isSelected ? 'choice-selected' : ''}`}
                           >
                             <Radio value={choice.key} className="choice-radio-new">

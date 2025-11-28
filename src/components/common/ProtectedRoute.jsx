@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import useAuthStore from '../../store/authStore';
 import { ROUTES, USER_ROLES } from '../../constants/config';
@@ -9,10 +9,11 @@ import { ROUTES, USER_ROLES } from '../../constants/config';
  */
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user } = useAuthStore();
+  const location = useLocation();
 
   // Check if user is authenticated
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
   // Check if user role is allowed

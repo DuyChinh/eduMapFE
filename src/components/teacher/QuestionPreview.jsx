@@ -43,8 +43,11 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
   const renderMathContent = (content) => {
     if (!content) return '';
     
+    // Convert to string if not already
+    const contentStr = typeof content === 'string' ? content : String(content);
+    
     // Split by lines and process each line separately
-    const lines = content.split('\n');
+    const lines = contentStr.split('\n');
     return (
       <>
         {lines.map((line, index) => {
@@ -193,16 +196,31 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
         <Text strong>{t('questions.choices')}:</Text>
         <Radio.Group style={{ marginTop: '8px', width: '100%' }}>
           <Space direction="vertical" style={{ width: '100%' }}>
-            {questionData.choices.map((choice, index) => (
-              <Radio key={index} value={index} style={{ 
-                width: '100%',
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {renderMathContent(choice || `${t('questions.choice')} ${index + 1}`)}
-              </Radio>
-            ))}
+            {questionData.choices.map((choice, index) => {
+              // Handle both object format {key, text} and string format
+              const choiceText = typeof choice === 'string' 
+                ? choice 
+                : (choice?.text || choice?.key || `${t('questions.choice')} ${index + 1}`);
+              const choiceKey = typeof choice === 'object' && choice?.key 
+                ? choice.key 
+                : String.fromCharCode(65 + index); // A, B, C, ...
+              
+              return (
+                <Radio key={index} value={index} style={{ 
+                  width: '100%',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'pre-wrap',
+                  display: 'flex',
+                  alignItems: 'flex-start'
+                }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '4px' }}>
+                    <Text strong style={{ whiteSpace: 'nowrap' }}>{choiceKey}.</Text>
+                    <span style={{ flex: 1 }}>{renderMathContent(choiceText)}</span>
+                  </span>
+                </Radio>
+              );
+            })}
           </Space>
         </Radio.Group>
       </div>
@@ -252,14 +270,6 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
 
       {/* Choices */}
       {renderChoices()}
-
-      {/* Answer */}
-      {questionData.answer && (
-        <>
-          <Divider />
-          {renderAnswer()}
-        </>
-      )}
 
       {/* Explanation */}
       {questionData.explanation && (

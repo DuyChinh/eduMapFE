@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
+  App,
   Card, 
   Form, 
   Input, 
   Button, 
-  message, 
   Select, 
   InputNumber, 
   Switch, 
@@ -19,12 +19,13 @@ import {
   Modal,
   Spin
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined, PartitionOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined, PartitionOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import examService from '../../api/examService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
+import PreviewExamModal from '../../components/teacher/PreviewExamModal';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 
@@ -44,8 +45,11 @@ const CreateExam = () => {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [questionSearchLoading, setQuestionSearchLoading] = useState(false);
   const [questionSearchQuery, setQuestionSearchQuery] = useState('');
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [previewExamData, setPreviewExamData] = useState(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   // Fetch subjects on mount
   useEffect(() => {
@@ -937,10 +941,31 @@ const CreateExam = () => {
                 // Allow small difference (0.01) due to floating point precision
                 const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01 && selectedQuestions.length > 0;
                 
+                const handlePreview = async () => {
+                  try {
+                    // Validate and get form values
+                    const formValues = await form.validateFields();
+                    setPreviewExamData(formValues);
+                    setPreviewModalVisible(true);
+                  } catch (error) {
+                    // If validation fails, still show preview with current values
+                    const formValues = form.getFieldsValue();
+                    setPreviewExamData(formValues);
+                    setPreviewModalVisible(true);
+                  }
+                };
+                
                 return (
                   <Space>
                     <Button onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
                       {t('common.cancel')}
+                    </Button>
+                    <Button 
+                      icon={<EyeOutlined />}
+                      onClick={handlePreview}
+                      disabled={selectedQuestions.length === 0}
+                    >
+                      {t('exams.preview') || 'Preview'}
                     </Button>
                     <Button 
                       onClick={() => {
@@ -972,6 +997,18 @@ const CreateExam = () => {
           </Form.Item>
         </Form>
       </Card>
+
+      {/* Preview Modal */}
+      <PreviewExamModal
+        open={previewModalVisible}
+        onCancel={() => {
+          setPreviewModalVisible(false);
+          setPreviewExamData(null);
+        }}
+        examData={previewExamData || form.getFieldsValue()}
+        questions={selectedQuestions}
+        subjects={subjects}
+      />
     </div>
   );
 };

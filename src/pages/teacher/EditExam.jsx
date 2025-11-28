@@ -1,5 +1,6 @@
-import { ArrowLeftOutlined, DeleteOutlined, PartitionOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DeleteOutlined, PartitionOutlined, PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import {
+  App,
   Button,
   Card,
   Collapse,
@@ -14,8 +15,7 @@ import {
   Switch,
   Table,
   Tag,
-  Typography,
-  message
+  Typography
 } from 'antd';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
@@ -27,6 +27,7 @@ import classService from '../../api/classService';
 import examService from '../../api/examService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
+import PreviewExamModal from '../../components/teacher/PreviewExamModal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -47,9 +48,13 @@ const EditExam = () => {
   const [questionSearchQuery, setQuestionSearchQuery] = useState('');
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [previewExamData, setPreviewExamData] = useState(null);
+  const [previewQuestions, setPreviewQuestions] = useState([]);
   const { examId } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   useEffect(() => {
     if (examId) {
@@ -120,15 +125,33 @@ const EditExam = () => {
 
       // Load existing questions
       if (examData.questions && examData.questions.length > 0) {
-        const formattedQuestions = examData.questions.map((q, index) => ({
-          _id: q.questionId?._id || q.questionId,
-          id: q.questionId?._id || q.questionId,
-          name: q.questionId?.name || q.questionId?.text || t('exams.unknownQuestion'),
-          type: q.questionId?.type || 'mcq',
-          order: q.order || index + 1,
-          marks: q.marks || 1,
-          isRequired: q.isRequired !== undefined ? q.isRequired : true
-        }));
+        const formattedQuestions = examData.questions.map((q, index) => {
+          const questionId = q.questionId?._id || q.questionId;
+          const questionObj = typeof q.questionId === 'object' ? q.questionId : null;
+          
+          // If questionId is populated object, preserve full data
+          if (questionObj && questionObj.text) {
+            return {
+              ...questionObj,
+              _id: questionObj._id || questionId,
+              id: questionObj._id || questionId,
+              order: q.order || index + 1,
+              marks: q.marks || 1,
+              isRequired: q.isRequired !== undefined ? q.isRequired : true
+            };
+          }
+          
+          // Otherwise, just store metadata
+          return {
+            _id: questionId,
+            id: questionId,
+            name: questionObj?.name || questionObj?.text || t('exams.unknownQuestion'),
+            type: questionObj?.type || 'mcq',
+            order: q.order || index + 1,
+            marks: q.marks || 1,
+            isRequired: q.isRequired !== undefined ? q.isRequired : true
+          };
+        });
         setSelectedQuestions(formattedQuestions);
       }
 
@@ -994,10 +1017,100 @@ const EditExam = () => {
                 // Allow small difference (0.01) due to floating point precision
                 const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01 && selectedQuestions.length > 0;
                 
+                const handlePreview = async () => {
+                  try {
+                    // Validate and get form values
+                    const formValues = await form.validateFields();
+                    
+                    // Prepare questions with full data for preview
+                    const loadedQuestions = await Promise.all(
+                      selectedQuestions.map(async (q) => {
+                        // If question already has full data (text, choices), use it
+                        if (q.text || q.choices) {
+                          return {
+                            ...q,
+                            order: q.order || 1,
+                            marks: q.marks || 1
+                          };
+                        }
+                        
+                        // If we have question ID, try to fetch full question data
+                        const questionId = q._id || q.id;
+                        if (questionId) {
+                          try {
+                            const questionResponse = await questionService.getQuestionById(questionId);
+                            const fullQuestion = questionResponse.data || questionResponse;
+                            return {
+                              ...fullQuestion,
+                              _id: fullQuestion._id || questionId,
+                              id: fullQuestion._id || questionId,
+                              order: q.order || 1,
+                              marks: q.marks || 1
+                            };
+                          } catch (err) {
+                            console.error('Error loading question:', err);
+                            // Return with available data if fetch fails
+                            return {
+                              ...q,
+                              order: q.order || 1,
+                              marks: q.marks || 1
+                            };
+                          }
+                        }
+                        
+                        return {
+                          ...q,
+                          order: q.order || 1,
+                          marks: q.marks || 1
+                        };
+                      })
+                    );
+                    
+                    setPreviewExamData(formValues);
+                    setPreviewQuestions(loadedQuestions);
+                    setPreviewModalVisible(true);
+                  } catch (error) {
+                    // If validation fails, still show preview with current values
+                    const formValues = form.getFieldsValue();
+                    setPreviewExamData(formValues);
+                    // Try to load questions even if validation fails
+                    const loadedQuestions = await Promise.all(
+                      selectedQuestions.map(async (q) => {
+                        const questionId = q._id || q.id;
+                        if (questionId && !q.text && !q.choices) {
+                          try {
+                            const questionResponse = await questionService.getQuestionById(questionId);
+                            const fullQuestion = questionResponse.data || questionResponse;
+                            return {
+                              ...fullQuestion,
+                              _id: fullQuestion._id || questionId,
+                              id: fullQuestion._id || questionId,
+                              order: q.order || 1,
+                              marks: q.marks || 1
+                            };
+                          } catch (err) {
+                            return { ...q, order: q.order || 1, marks: q.marks || 1 };
+                          }
+                        }
+                        return { ...q, order: q.order || 1, marks: q.marks || 1 };
+                      })
+                    );
+                    setPreviewQuestions(loadedQuestions);
+                    setPreviewModalVisible(true);
+                  }
+                };
+                
                 return (
                   <Space>
                     <Button onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
                       {t('common.cancel')}
+                    </Button>
+                    <Button 
+                      icon={<EyeOutlined />}
+                      onClick={handlePreview}
+                      disabled={selectedQuestions.length === 0}
+                    >
+                      {t('exams.preview') || 'Preview'}
                     </Button>
                     <Button 
                       type="primary" 
@@ -1014,6 +1127,19 @@ const EditExam = () => {
           </Form.Item>
         </Form>
       </Card>
+
+      {/* Preview Modal */}
+      <PreviewExamModal
+        open={previewModalVisible}
+        onCancel={() => {
+          setPreviewModalVisible(false);
+          setPreviewExamData(null);
+          setPreviewQuestions([]);
+        }}
+        examData={previewExamData || form.getFieldsValue()}
+        questions={previewQuestions.length > 0 ? previewQuestions : selectedQuestions}
+        subjects={subjects}
+      />
     </div>
   );
 };

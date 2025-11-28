@@ -205,14 +205,21 @@ const StudentExamDetail = () => {
     return typeMap[type] || type;
   };
 
+  const [savingComment, setSavingComment] = useState(false);
+
   const handleSaveComment = async () => {
+    setSavingComment(true);
     try {
       // TODO: Implement API call to save comment
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
       messageApi.success(t('submissionDetail.commentSaved'));
       setEditingComment(false);
     } catch (error) {
       console.error('Error saving comment:', error);
       messageApi.error(t('submissionDetail.commentSaveFailed'));
+    } finally {
+      setSavingComment(false);
     }
   };
 
@@ -422,7 +429,7 @@ const StudentExamDetail = () => {
                 <div className="detail-item">
                   <Text strong>{t('submissionDetail.score')}: </Text>
                   <Text style={{ fontSize: 18, color: '#1890ff' }}>
-                    {submissionData.score || 0}/{submissionData.totalMarks || 0}
+                    {typeof submissionData.score === 'number' ? Number(submissionData.score.toFixed(1)) : (submissionData.score || 0)}/{submissionData.totalMarks || 0}
                   </Text>
                 </div>
 
@@ -437,7 +444,7 @@ const StudentExamDetail = () => {
                         placeholder={t('submissionDetail.commentPlaceholder')}
                       />
                       <Space style={{ marginTop: 8 }}>
-                        <Button size="small" type="primary" onClick={handleSaveComment}>
+                        <Button size="small" type="primary" onClick={handleSaveComment} loading={savingComment}>
                           {t('common.save')}
                         </Button>
                         <Button size="small" onClick={() => setEditingComment(false)}>
