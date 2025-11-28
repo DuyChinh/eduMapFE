@@ -36,6 +36,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import examService from "../../api/examService";
 import examStatsService from "../../api/examStatsService.js";
 import { ROUTES } from "../../constants/config";
+import PreviewExamModal from "../../components/teacher/PreviewExamModal";
 
 const { Title, Text } = Typography;
 
@@ -87,6 +88,7 @@ const ExamDetailNew = () => {
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [scoreDistributionLoading, setScoreDistributionLoading] =
     useState(false);
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
 
   const fetchExamDetail = useCallback(async () => {
     setLoading(true);
@@ -484,6 +486,12 @@ const ExamDetailNew = () => {
         </Space>
 
         <Space>
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => setPreviewModalVisible(true)}
+          >
+            {t("exams.preview") || "Preview"}
+          </Button>
           <Button
             icon={<EditOutlined />}
             onClick={() => navigate(`/teacher/exams/${examId}/edit`)}
@@ -925,6 +933,15 @@ const ExamDetailNew = () => {
             ),
           },
         ]}
+      />
+
+      {/* Preview Modal */}
+      <PreviewExamModal
+        open={previewModalVisible}
+        onCancel={() => setPreviewModalVisible(false)}
+        examData={examData}
+        questions={examData?.questions || []}
+        subjects={[]}
       />
     </div>
   );
