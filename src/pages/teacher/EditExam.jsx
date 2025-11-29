@@ -20,7 +20,7 @@ import {
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import classService from '../../api/classService';
@@ -51,13 +51,14 @@ const EditExam = () => {
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [previewExamData, setPreviewExamData] = useState(null);
   const [previewQuestions, setPreviewQuestions] = useState([]);
+  const classesFetchedRef = useRef(false); // Track if classes have been fetched
   const { examId } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { message } = App.useApp();
 
   useEffect(() => {
-    if (examId) {
+    if (examId && !classesFetchedRef.current) {
       fetchExamData();
       fetchSubjects();
       fetchClasses();
@@ -189,7 +190,13 @@ const EditExam = () => {
   };
 
   const fetchClasses = async () => {
+    // Prevent multiple calls
+    if (loadingClasses || classesFetchedRef.current) {
+      return;
+    }
+    
     setLoadingClasses(true);
+    classesFetchedRef.current = true;
     try {
       const response = await classService.getMyClasses();
       const classesData = response.items || response.data || [];
@@ -197,6 +204,7 @@ const EditExam = () => {
     } catch (error) {
       console.error('Error fetching classes:', error);
       message.error(t('classes.fetchFailed'));
+      classesFetchedRef.current = false; // Reset on error to allow retry
     } finally {
       setLoadingClasses(false);
     }
@@ -581,6 +589,9 @@ const EditExam = () => {
                 {({ getFieldValue }) => {
                   const isAllowUser = getFieldValue('isAllowUser');
                   if (isAllowUser === 'class') {
+                    // fetchClasses is already called in useEffect on mount
+                    // No need to call again here to avoid infinite loop
+                    
                     return (
                       <Form.Item
                         label={t('exams.allowedClasses')}
@@ -600,6 +611,7 @@ const EditExam = () => {
                           filterOption={(input, option) =>
                             (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                           }
+                          notFoundContent={loadingClasses ? <Spin size="small" /> : t('exams.noClassesFound')}
                         >
                           {classes.map(cls => (
                             <Option key={cls._id || cls.id} value={cls._id || cls.id}>
