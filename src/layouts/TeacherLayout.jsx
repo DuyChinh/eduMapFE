@@ -145,25 +145,25 @@ const TeacherLayout = () => {
   const menuItems = [
     {
       key: ROUTES.TEACHER_DASHBOARD,
-      icon: <HomeOutlined />,
+      icon: <img src="/home.png" alt="Home" className="menu-icon-image" />,
       label: t('dashboard.home'),
       onClick: () => navigate(ROUTES.TEACHER_DASHBOARD),
     },
     {
       key: ROUTES.TEACHER_QUESTIONS,
-      icon: <FileTextOutlined />,
+      icon: <img src="/question.png" alt="Question bank" className="menu-icon-image" />,
       label: t('teacher.questionBank'),
       onClick: () => navigate(ROUTES.TEACHER_QUESTIONS),
     },
     {
       key: ROUTES.TEACHER_EXAMS,
-      icon: <BookOutlined />,
+      icon: <img src="/exam.png" alt="Exams" className="menu-icon-image" />,
       label: t('teacher.examManagement'),
       onClick: () => navigate(ROUTES.TEACHER_EXAMS),
     },
     {
       key: ROUTES.TEACHER_CLASSES,
-      icon: <TeamOutlined />,
+      icon: <img src="/class.png" alt="Classes" className="menu-icon-image" />,
       label: t('teacher.classManagement'),
       onClick: () => navigate(ROUTES.TEACHER_CLASSES),
     },

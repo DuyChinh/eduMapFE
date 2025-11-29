@@ -532,7 +532,8 @@ const ExamDetailNew = () => {
             key: "overview",
             label: (
               <span>
-                <InfoCircleOutlined /> {t("exams.tabs.overview")}
+                <img src="/overview.png" alt="Overview" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.overview")}
               </span>
             ),
             children: (
@@ -717,7 +718,7 @@ const ExamDetailNew = () => {
                       <Statistic
                         title={t("exams.stats.totalQuestions")}
                         value={examData.questions?.length || 0}
-                        prefix={<FileTextOutlined />}
+                        prefix={<img src="/question.png" alt="Questions" style={{ width: 20, height: 20 }} />}
                       />
                     </Card>
                     <Card>
@@ -736,7 +737,7 @@ const ExamDetailNew = () => {
                             : 0
                         }
                         suffix={`/ ${examData.totalMarks}`}
-                        prefix={<TrophyOutlined />}
+                        prefix={<img src="/leaderboard.png" alt="Trophy" style={{ width: 20, height: 20 }} />}
                       />
                     </Card>
                   </Space>
@@ -748,7 +749,8 @@ const ExamDetailNew = () => {
             key: "statistics",
             label: (
               <span>
-                <BarChartOutlined /> {t("exams.tabs.statistics")}
+                <img src="/statistic.png" alt="Statistics" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.statistics")}
               </span>
             ),
             children: (
@@ -872,7 +874,8 @@ const ExamDetailNew = () => {
             key: "leaderboard",
             label: (
               <span>
-                <TrophyOutlined /> {t("exams.tabs.leaderboard")}
+                <img src="/leaderboard.png" alt="Leaderboard" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.leaderboard")}
               </span>
             ),
             children: (
@@ -906,7 +909,8 @@ const ExamDetailNew = () => {
             key: "students",
             label: (
               <span>
-                <TeamOutlined /> {t("exams.tabs.students")}
+                <img src="/students.png" alt="Students" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.students")}
               </span>
             ),
             children: (

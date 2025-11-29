@@ -55,6 +55,12 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+.menu-icon-image {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 /* Sider Footer */
 .sider-footer {
   position: absolute;

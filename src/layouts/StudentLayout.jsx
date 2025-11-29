@@ -141,19 +141,19 @@ const StudentLayout = () => {
   const menuItems = [
     {
       key: ROUTES.STUDENT_DASHBOARD,
-      icon: <HomeOutlined />,
+      icon: <img src="/home.png" alt="Home" className="menu-icon-image" />,
       label: t('dashboard.home'),
       onClick: () => navigate(ROUTES.STUDENT_DASHBOARD),
     },
     {
       key: ROUTES.STUDENT_CLASSES,
-      icon: <TeamOutlined />,
+      icon: <img src="/class.png" alt="Classes" className="menu-icon-image" />,
       label: t('student.myClasses'),
       onClick: () => navigate(ROUTES.STUDENT_CLASSES),
     },
     {
       key: ROUTES.STUDENT_RESULTS,
-      icon: <TrophyOutlined />,
+      icon: <img src="/exam.png" alt="Results" className="menu-icon-image" />,
       label: t('student.examResults'),
       onClick: () => navigate(ROUTES.STUDENT_RESULTS),
     },
