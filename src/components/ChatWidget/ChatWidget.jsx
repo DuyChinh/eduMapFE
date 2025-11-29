@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IoChatbubblesOutline, IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline } from 'react-icons/io5';
+import { useLocation } from 'react-router-dom';
+import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
 import { FiEdit } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
@@ -7,13 +8,25 @@ import chatApi from '../../api/chatApi';
 import './ChatWidget.css';
 
 const ChatWidget = () => {
+    const location = useLocation();
+    
+    // Hide chatbot on exam pages (both student and public routes)
+    const isExamPage = 
+        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
+        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
+        location.pathname.includes('/exam-error'); // Exam error page
+    
+    // If on exam page, don't render chatbot
+    if (isExamPage) {
+        return null;
+    }
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "Hi! I am your AI study assistant. How can I help you today?",
+            text: "Hi! I am your AI assistant. How can I help you today?",
             sender: 'bot'
         }
     ]);
@@ -83,7 +96,7 @@ const ChatWidget = () => {
         setCurrentSessionId(null);
         setMessages([{
             id: Date.now(),
-            text: "Hi! I am your AI study assistant. How can I help you today?",
+            text: "Hi! I am your AI assistant. How can I help you today?",
             sender: 'bot'
         }]);
         if (window.innerWidth < 768) {
@@ -279,7 +292,7 @@ const ChatWidget = () => {
         <div className="chat-widget-container">
             {!isOpen && (
                 <button className="chat-toggle-btn" onClick={toggleChat}>
-                    <IoChatbubblesOutline size={30} />
+                    <img src="/chatbot.gif" alt="Chatbot" style={{ width: 70, height: 70, objectFit: 'contain' }} />
                 </button>
             )}
 
@@ -358,6 +371,7 @@ const ChatWidget = () => {
                                         <TbLayoutSidebarLeftExpand size={24} />
                                     </button>
                                 )}
+                                <img src="/chatbot.gif" alt="Robot" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
                                 <h3>AI Assistant</h3>
                             </div>
                             <div className="header-actions">
