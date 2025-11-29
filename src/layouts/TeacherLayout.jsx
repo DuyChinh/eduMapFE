@@ -14,7 +14,7 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space } from 'antd';
+import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -33,7 +33,7 @@ const TeacherLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const { user, logout, fetchProfile, switchRole } = useAuthStore();
+  const { user, logout, fetchProfile, switchRole, loading } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
@@ -140,6 +140,8 @@ const TeacherLayout = () => {
       ? t('role.student')
       : '';
 
+  const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
+
   const menuItems = [
     {
       key: ROUTES.TEACHER_DASHBOARD,
@@ -225,18 +227,6 @@ const TeacherLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
-        <div className="sider-footer">
-          {!collapsed && (
-            <div className="user-info-compact">
-              <Avatar src={avatarSrc} icon={!avatarSrc && <UserOutlined />} />
-              <div className="user-details">
-                <div className="user-name">{displayName}</div>
-                <div className="user-role">{roleLabel}</div>
-              </div>
-            </div>
-          )}
-        </div>
       </Sider>
 
       <Layout>
@@ -272,7 +262,13 @@ const TeacherLayout = () => {
         </Header>
 
         <Content className="dashboard-content">
-          <Outlet />
+          {isProfileLoading ? (
+            <div className="dashboard-loading">
+              <Spin size="large" />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </Content>
       </Layout>
 

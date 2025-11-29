@@ -176,6 +176,13 @@
   min-height: calc(100vh - 112px);
 }
 
+.dashboard-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .dashboard-content {

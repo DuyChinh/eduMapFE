@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Button, Space, Modal, Select, App } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Button, Space, Modal, Select, App, Spin } from 'antd';
 import {
   HomeOutlined,
   TeamOutlined,
@@ -32,7 +32,7 @@ const StudentLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const { user, logout, fetchProfile, switchRole } = useAuthStore();
+  const { user, logout, fetchProfile, switchRole, loading } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
@@ -136,6 +136,8 @@ const StudentLayout = () => {
       ? t('role.student')
       : '';
 
+  const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
+
   const menuItems = [
     {
       key: ROUTES.STUDENT_DASHBOARD,
@@ -215,18 +217,6 @@ const StudentLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
-        <div className="sider-footer">
-          {!collapsed && (
-            <div className="user-info-compact">
-              <Avatar src={avatarSrc} icon={!avatarSrc && <UserOutlined />} />
-              <div className="user-details">
-                <div className="user-name">{displayName}</div>
-                <div className="user-role">{roleLabel}</div>
-              </div>
-            </div>
-          )}
-        </div>
       </Sider>
 
       <Layout>
@@ -262,7 +252,13 @@ const StudentLayout = () => {
         </Header>
 
         <Content className="dashboard-content">
-          <Outlet />
+          {isProfileLoading ? (
+            <div className="dashboard-loading">
+              <Spin size="large" />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </Content>
       </Layout>
 
