@@ -82,7 +82,6 @@ const ExamDetailNew = () => {
   const [statistics, setStatistics] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [submissions, setSubmissions] = useState([]);
-  const [allSubmissions, setAllSubmissions] = useState([]); // Store all submissions
   const [scoreDistribution, setScoreDistribution] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -95,6 +94,17 @@ const ExamDetailNew = () => {
   const [showAllAttempts, setShowAllAttempts] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchName, setSearchName] = useState("");
+  // Pagination states
+  const [submissionsPagination, setSubmissionsPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+  });
+  const [leaderboardPagination, setLeaderboardPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+  });
 
   useEffect(() => {
     fetchExamDetail();
@@ -126,11 +136,18 @@ const ExamDetailNew = () => {
     }
   };
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = async (page = 1, limit = 20) => {
     setLeaderboardLoading(true);
     try {
-      const response = await examStatsService.getExamLeaderboard(examId);
+      const response = await examStatsService.getExamLeaderboard(examId, { page, limit });
       setLeaderboard(response.data || response || []);
+      if (response.pagination) {
+        setLeaderboardPagination({
+          current: response.pagination.page,
+          pageSize: response.pagination.limit,
+          total: response.pagination.total,
+        });
+      }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       message.error(t("exams.leaderboard.fetchFailed"));
@@ -139,14 +156,26 @@ const ExamDetailNew = () => {
     }
   };
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = async (page = 1, limit = 20, filters = {}) => {
     setSubmissionsLoading(true);
     try {
-      // Always fetch all submissions, then group on frontend if needed
-      const response = await examStatsService.getStudentSubmissions(examId, { all: true });
-      const allData = response.data || response || [];
-      setAllSubmissions(allData);
-      // useEffect will handle filtering and grouping
+      const params = {
+        all: showAllAttempts ? "true" : "false",
+        page,
+        limit,
+        ...(filters.status && filters.status !== "all" ? { status: filters.status } : {}),
+        ...(filters.search ? { search: filters.search } : {}),
+      };
+      const response = await examStatsService.getStudentSubmissions(examId, params);
+      const data = response.data || response || [];
+      setSubmissions(data);
+      if (response.pagination) {
+        setSubmissionsPagination({
+          current: response.pagination.page,
+          pageSize: response.pagination.limit,
+          total: response.pagination.total,
+        });
+      }
     } catch (err) {
       console.error("Error fetching submissions:", err);
       message.error(t("exams.submissions.fetchFailed"));
@@ -155,26 +184,6 @@ const ExamDetailNew = () => {
     }
   };
 
-  // Group submissions by userId and return only the latest one for each user
-  const groupSubmissionsByUser = (submissionsList) => {
-    const grouped = {};
-    submissionsList.forEach((submission) => {
-      const userId = submission.student?._id || submission.studentId;
-      if (!userId) return;
-      
-      if (!grouped[userId]) {
-        grouped[userId] = submission;
-      } else {
-        // Compare submittedAt to find the latest
-        const currentDate = new Date(grouped[userId].submittedAt || grouped[userId].startedAt || 0);
-        const newDate = new Date(submission.submittedAt || submission.startedAt || 0);
-        if (newDate > currentDate) {
-          grouped[userId] = submission;
-        }
-      }
-    });
-    return Object.values(grouped);
-  };
 
   const fetchScoreDistribution = async () => {
     setScoreDistributionLoading(true);
@@ -198,13 +207,14 @@ const ExamDetailNew = () => {
       if (scoreDistribution.length === 0) {
         fetchScoreDistribution();
       }
-    } else if (key === "leaderboard" && leaderboard.length === 0) {
-      fetchLeaderboard();
+    } else if (key === "leaderboard") {
+      fetchLeaderboard(leaderboardPagination.current, leaderboardPagination.pageSize);
     } else if (key === "students") {
-      if (allSubmissions.length === 0) {
-        fetchSubmissions();
-      }
-      // useEffect will handle grouping and filtering
+      fetchSubmissions(
+        submissionsPagination.current,
+        submissionsPagination.pageSize,
+        { status: statusFilter, search: searchName }
+      );
     }
   };
 
@@ -384,44 +394,47 @@ const ExamDetailNew = () => {
     },
   ];
 
-  // Filter and search submissions
-  const getFilteredSubmissions = (dataToFilter) => {
-    let filtered = [...dataToFilter];
-    
-    // Filter by status
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((submission) => submission.status === statusFilter);
-    }
-    
-    // Search by name
-    if (searchName.trim()) {
-      const searchLower = searchName.toLowerCase().trim();
-      filtered = filtered.filter((submission) => {
-        const name = submission.student?.name || submission.student?.email || "";
-        const studentCode = submission.student?.studentCode || "";
-        return (
-          name.toLowerCase().includes(searchLower) ||
-          studentCode.toLowerCase().includes(searchLower)
-        );
-      });
-    }
-    
-    return filtered;
-  };
-
-  // Update submissions when filters change
+  // Refetch submissions when filters change (with debounce for search)
   useEffect(() => {
-    if (allSubmissions.length > 0) {
-      let baseData = showAllAttempts ? allSubmissions : groupSubmissionsByUser(allSubmissions);
-      const filtered = getFilteredSubmissions(baseData);
-      setSubmissions(filtered);
+    if (activeTab === "students") {
+      const timeoutId = setTimeout(() => {
+        setSubmissionsPagination((prev) => ({ ...prev, current: 1 }));
+        fetchSubmissions(1, submissionsPagination.pageSize, {
+          status: statusFilter,
+          search: searchName,
+        });
+      }, searchName ? 500 : 0); // Debounce search by 500ms
+
+      return () => clearTimeout(timeoutId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAllAttempts, statusFilter, searchName, allSubmissions]);
+  }, [showAllAttempts, statusFilter, searchName]);
+
+  // Handle pagination changes for submissions
+  const handleSubmissionsPaginationChange = (page, pageSize) => {
+    setSubmissionsPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize: pageSize,
+    }));
+    fetchSubmissions(page, pageSize, {
+      status: statusFilter,
+      search: searchName,
+    });
+  };
+
+  // Handle pagination changes for leaderboard
+  const handleLeaderboardPaginationChange = (page, pageSize) => {
+    setLeaderboardPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize: pageSize,
+    }));
+    fetchLeaderboard(page, pageSize);
+  };
 
   const handleShowAllAttemptsToggle = () => {
     setShowAllAttempts(!showAllAttempts);
-    // useEffect will handle the update when showAllAttempts changes
   };
 
   const submissionsColumns = [
@@ -997,7 +1010,18 @@ const ExamDetailNew = () => {
                         ? `leaderboard-${studentId}-${rank}`
                         : `leaderboard-${Math.random()}`;
                     }}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{
+                      current: leaderboardPagination.current,
+                      pageSize: leaderboardPagination.pageSize,
+                      total: leaderboardPagination.total,
+                      showSizeChanger: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.leaderboard.items") || "items"}`,
+                      pageSizeOptions: ["10", "20", "50", "100"],
+                      defaultPageSize: 20,
+                      onChange: handleLeaderboardPaginationChange,
+                      onShowSizeChange: handleLeaderboardPaginationChange,
+                    }}
                     scroll={{ x: 800 }}
                     locale={{ emptyText: t("exams.leaderboard.noData") }}
                   />
@@ -1077,7 +1101,18 @@ const ExamDetailNew = () => {
                       }
                       return "";
                     }}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{
+                      current: submissionsPagination.current,
+                      pageSize: submissionsPagination.pageSize,
+                      total: submissionsPagination.total,
+                      showSizeChanger: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.submissions.items") || "items"}`,
+                      pageSizeOptions: ["10", "20", "50", "100"],
+                      defaultPageSize: 20,
+                      onChange: handleSubmissionsPaginationChange,
+                      onShowSizeChange: handleSubmissionsPaginationChange,
+                    }}
                     scroll={{ x: 1000 }}
                     locale={{ emptyText: t("exams.submissions.noData") }}
                   />

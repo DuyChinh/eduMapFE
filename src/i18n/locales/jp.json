@@ -114,7 +114,8 @@
     "back": "戻る",
     "backToDashboard": "ダッシュボードに戻る",
     "student": "学生",
-    "add": "追加"
+    "add": "追加",
+    "of": "の"
   },
   "login": {
     "welcome": "ようこそ",
@@ -689,7 +690,8 @@
       "timeSpent": "所要時間",
       "submittedAt": "提出日時",
       "fetchFailed": "ランキングの読み込みに失敗しました",
-      "noData": "ランキングデータがありません"
+      "noData": "ランキングデータがありません",
+      "items": "項目"
     },
     "submissions": {
       "student": "学生",
@@ -710,7 +712,8 @@
       "filterByStatus": "ステータスでフィルター",
       "allStatuses": "すべてのステータス",
       "searchByName": "名前で検索",
-      "searchPlaceholder": "学生名を入力..."
+      "searchPlaceholder": "学生名を入力...",
+      "items": "項目"
     },
     "viewDetail": "詳細を見る",
     "subjectsLoadFailed": "科目の読み込みに失敗しました",

@@ -114,7 +114,8 @@
     "back": "Back",
     "backToDashboard": "Back to Dashboard",
     "student": "Student",
-    "add": "Add"
+    "add": "Add",
+    "of": "of"
   },
   "login": {
     "welcome": "Welcome to",
@@ -695,7 +696,8 @@
       "timeSpent": "Time Spent",
       "submittedAt": "Submitted At",
       "fetchFailed": "Failed to load leaderboard",
-      "noData": "No leaderboard data available"
+      "noData": "No leaderboard data available",
+      "items": "items"
     },
     "submissions": {
       "student": "Student",
@@ -708,6 +710,7 @@
       "inProgress": "In Progress",
       "graded": "Graded",
       "late": "Late",
+      "items": "items",
       "notStarted": "Not Started",
       "fetchFailed": "Failed to load submissions",
       "noData": "No submissions available",
