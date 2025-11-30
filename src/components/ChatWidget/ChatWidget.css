@@ -348,10 +348,12 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  align-items: center;
 }
 
 .message {
-  max-width: 80%;
+  max-width: 800px;
+  width: 100%;
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 14px;
@@ -361,7 +363,6 @@
 }
 
 .message.user {
-  align-self: flex-end;
   background: transparent;
   color: white;
   padding: 0;
@@ -388,36 +389,82 @@
 }
 
 .message.bot {
-  align-self: flex-start;
-  background: white;
-  color: #1f2937;
-  border: 1px solid #e5e7eb;
-  border-bottom-left-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 14px 18px;
-  transition: box-shadow 0.2s;
+  background: transparent;
+  color: inherit;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  transition: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .message.bot:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: none;
 }
 
 .message.bot .message-text {
   padding: 0;
   margin: 0;
+  position: relative;
+  display: inline-block;
+  width: 100%;
 }
 
 .message.bot .message-text p {
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .message.bot .message-text p:last-child {
   margin-bottom: 0;
 }
 
+/* Copy button for bot messages */
+.copy-message-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-left: 8px;
+  margin-top: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.1s;
+  z-index: 10;
+  color: inherit;
+  vertical-align: middle;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.copy-message-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.copy-message-btn:active {
+  transform: scale(0.9);
+}
+
+.copy-message-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Show checkmark when copied */
+.copy-message-btn svg[data-icon="checkmark"] {
+  color: #10b981;
+}
+
 .message.bot .message-text ul,
 .message.bot .message-text ol {
-  margin: 8px 0;
+  margin: 4px 0;
   padding-left: 24px;
 }
 
@@ -512,16 +559,17 @@
   display: flex;
   gap: 4px;
   padding: 12px 16px;
-  background: white;
+  background: transparent;
   border-radius: 12px;
-  align-self: flex-start;
-  border: 1px solid #e5e7eb;
+  border: none;
+  max-width: 800px;
+  width: 100%;
 }
 
 .dot {
   width: 6px;
   height: 6px;
-  background: #9ca3af;
+  background: #4f46e5;
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out both;
 }
@@ -558,6 +606,9 @@
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .attach-btn {
@@ -763,15 +814,15 @@ body.dark-mode .chat-messages {
 }
 
 body.dark-mode .message.bot {
-  background: #262626;
-  color: rgba(255, 255, 255, 0.85);
-  border-color: #434343;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  color: inherit;
+  border: none;
+  box-shadow: none;
 }
 
 body.dark-mode .message.bot:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-color: #525252;
+  box-shadow: none;
+  border: none;
 }
 
 body.dark-mode .chat-header {
@@ -812,8 +863,8 @@ body.dark-mode .message.bot .message-text table th {
 }
 
 body.dark-mode .typing-indicator {
-  background: #262626;
-  border-color: #434343;
+  background: transparent;
+  border: none;
 }
 
 body.dark-mode .dot {
