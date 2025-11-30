@@ -704,7 +704,13 @@
       "late": "遅刻",
       "notStarted": "未開始",
       "fetchFailed": "提出の読み込みに失敗しました",
-      "noData": "提出がありません"
+      "noData": "提出がありません",
+      "showAllAttempts": "すべての試行を表示",
+      "showLatestOnly": "最新のみ表示",
+      "filterByStatus": "ステータスでフィルター",
+      "allStatuses": "すべてのステータス",
+      "searchByName": "名前で検索",
+      "searchPlaceholder": "学生名を入力..."
     },
     "viewDetail": "詳細を見る",
     "subjectsLoadFailed": "科目の読み込みに失敗しました",

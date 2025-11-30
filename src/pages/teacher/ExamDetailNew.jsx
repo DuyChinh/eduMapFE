@@ -19,8 +19,10 @@ import {
   Card,
   Col,
   Empty,
+  Input,
   Progress,
   Row,
+  Select,
   Space,
   Spin,
   Statistic,
@@ -80,6 +82,7 @@ const ExamDetailNew = () => {
   const [statistics, setStatistics] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [allSubmissions, setAllSubmissions] = useState([]); // Store all submissions
   const [scoreDistribution, setScoreDistribution] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -89,6 +92,9 @@ const ExamDetailNew = () => {
   const [scoreDistributionLoading, setScoreDistributionLoading] =
     useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [showAllAttempts, setShowAllAttempts] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchName, setSearchName] = useState("");
 
   useEffect(() => {
     fetchExamDetail();
@@ -136,14 +142,38 @@ const ExamDetailNew = () => {
   const fetchSubmissions = async () => {
     setSubmissionsLoading(true);
     try {
-      const response = await examStatsService.getStudentSubmissions(examId);
-      setSubmissions(response.data || response || []);
+      // Always fetch all submissions, then group on frontend if needed
+      const response = await examStatsService.getStudentSubmissions(examId, { all: true });
+      const allData = response.data || response || [];
+      setAllSubmissions(allData);
+      // useEffect will handle filtering and grouping
     } catch (err) {
       console.error("Error fetching submissions:", err);
       message.error(t("exams.submissions.fetchFailed"));
     } finally {
       setSubmissionsLoading(false);
     }
+  };
+
+  // Group submissions by userId and return only the latest one for each user
+  const groupSubmissionsByUser = (submissionsList) => {
+    const grouped = {};
+    submissionsList.forEach((submission) => {
+      const userId = submission.student?._id || submission.studentId;
+      if (!userId) return;
+      
+      if (!grouped[userId]) {
+        grouped[userId] = submission;
+      } else {
+        // Compare submittedAt to find the latest
+        const currentDate = new Date(grouped[userId].submittedAt || grouped[userId].startedAt || 0);
+        const newDate = new Date(submission.submittedAt || submission.startedAt || 0);
+        if (newDate > currentDate) {
+          grouped[userId] = submission;
+        }
+      }
+    });
+    return Object.values(grouped);
   };
 
   const fetchScoreDistribution = async () => {
@@ -170,8 +200,11 @@ const ExamDetailNew = () => {
       }
     } else if (key === "leaderboard" && leaderboard.length === 0) {
       fetchLeaderboard();
-    } else if (key === "students" && submissions.length === 0) {
-      fetchSubmissions();
+    } else if (key === "students") {
+      if (allSubmissions.length === 0) {
+        fetchSubmissions();
+      }
+      // useEffect will handle grouping and filtering
     }
   };
 
@@ -350,6 +383,46 @@ const ExamDetailNew = () => {
       ),
     },
   ];
+
+  // Filter and search submissions
+  const getFilteredSubmissions = (dataToFilter) => {
+    let filtered = [...dataToFilter];
+    
+    // Filter by status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((submission) => submission.status === statusFilter);
+    }
+    
+    // Search by name
+    if (searchName.trim()) {
+      const searchLower = searchName.toLowerCase().trim();
+      filtered = filtered.filter((submission) => {
+        const name = submission.student?.name || submission.student?.email || "";
+        const studentCode = submission.student?.studentCode || "";
+        return (
+          name.toLowerCase().includes(searchLower) ||
+          studentCode.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+    
+    return filtered;
+  };
+
+  // Update submissions when filters change
+  useEffect(() => {
+    if (allSubmissions.length > 0) {
+      let baseData = showAllAttempts ? allSubmissions : groupSubmissionsByUser(allSubmissions);
+      const filtered = getFilteredSubmissions(baseData);
+      setSubmissions(filtered);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAllAttempts, statusFilter, searchName, allSubmissions]);
+
+  const handleShowAllAttemptsToggle = () => {
+    setShowAllAttempts(!showAllAttempts);
+    // useEffect will handle the update when showAllAttempts changes
+  };
 
   const submissionsColumns = [
     {
@@ -942,6 +1015,37 @@ const ExamDetailNew = () => {
             ),
             children: (
               <Card>
+                <Space direction="vertical" size="middle" style={{ width: "100%", marginBottom: 16 }}>
+                  <Space wrap>
+                    <Button
+                      type={showAllAttempts ? "default" : "primary"}
+                      onClick={handleShowAllAttemptsToggle}
+                    >
+                      {showAllAttempts
+                        ? t("exams.submissions.showLatestOnly")
+                        : t("exams.submissions.showAllAttempts")}
+                    </Button>
+                    <Select
+                      value={statusFilter}
+                      onChange={setStatusFilter}
+                      style={{ width: 200 }}
+                      placeholder={t("exams.submissions.filterByStatus")}
+                    >
+                      <Select.Option value="all">{t("exams.submissions.allStatuses")}</Select.Option>
+                      <Select.Option value="graded">{t("exams.submissions.graded")}</Select.Option>
+                      <Select.Option value="in_progress">{t("exams.submissions.inProgress")}</Select.Option>
+                      <Select.Option value="late">{t("exams.submissions.late")}</Select.Option>
+                      <Select.Option value="submitted">{t("exams.submissions.submitted")}</Select.Option>
+                    </Select>
+                    <Input
+                      placeholder={t("exams.submissions.searchPlaceholder")}
+                      value={searchName}
+                      onChange={(e) => setSearchName(e.target.value)}
+                      allowClear
+                      style={{ width: 250 }}
+                    />
+                  </Space>
+                </Space>
                 {submissionsLoading ? (
                   <div style={{ textAlign: "center", padding: "50px" }}>
                     <Spin />
