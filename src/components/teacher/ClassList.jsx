@@ -310,42 +310,54 @@ const ClassList = () => {
 
   return (
     <Card>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Search
-          placeholder={t('classes.searchPlaceholder')}
-          allowClear
-          style={{ width: 300 }}
-          onSearch={handleSearch}
-          prefix={<SearchOutlined />}
-        />
-        
-        <Space>
-          {selectedRowKeys.length > 0 && (
-            <Popconfirm
-              title={t('classes.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected class(es)?`}
-              onConfirm={handleBulkDelete}
-              okText={t('common.yes')}
-              cancelText={t('common.no')}
-              okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
-            >
-              <Button 
-                danger
-                icon={<DeleteOutlined />}
-                loading={bulkDeleteLoading}
-              >
-                {t('classes.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
-              </Button>
-            </Popconfirm>
-          )}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12
+        }}>
+          <Search
+            placeholder={t('classes.searchPlaceholder')}
+            allowClear
+            style={{ 
+              width: '100%',
+              maxWidth: 300,
+              minWidth: 200
+            }}
+            onSearch={handleSearch}
+            prefix={<SearchOutlined />}
+          />
           
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalVisible(true)}
-          >
-            {t('classes.createNew')}
-          </Button>
-        </Space>
+          <Space wrap size="small">
+            {selectedRowKeys.length > 0 && (
+              <Popconfirm
+                title={t('classes.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected class(es)?`}
+                onConfirm={handleBulkDelete}
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
+                okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+              >
+                <Button 
+                  danger
+                  icon={<DeleteOutlined />}
+                  loading={bulkDeleteLoading}
+                >
+                  {t('classes.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+                </Button>
+              </Popconfirm>
+            )}
+            
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => setCreateModalVisible(true)}
+            >
+              {t('classes.createNew')}
+            </Button>
+          </Space>
+        </div>
       </div>
 
       <Table
@@ -363,8 +375,10 @@ const ClassList = () => {
           showQuickJumper: true,
           showTotal: (total, range) => 
             `${range[0]}-${range[1]} of ${total} ${t('classes.items')}`,
+          responsive: true,
         }}
         onChange={handleTableChange}
+        scroll={{ x: 'max-content' }}
       />
 
       {/* Modals */}

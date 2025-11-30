@@ -114,20 +114,39 @@ const Classes = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ 
+        marginBottom: 24, 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: 16
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 12,
+          flexWrap: 'wrap'
+        }}>
           <img 
             src="/class.png" 
             alt="Class" 
             style={{ width: 24, height: 24, objectFit: 'contain' }} 
           />
-          <Title level={2} style={{ margin: 0 }}>{t('studentPages.classes.title')}</Title>
+          <Title level={2} style={{ margin: 0, flex: 1 }}>{t('studentPages.classes.title')}</Title>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: 12, 
+          alignItems: 'center',
+          flexWrap: 'wrap'
+        }}>
           <Input.Search
             placeholder={t('studentPages.classes.searchPlaceholder')}
             allowClear
-            style={{ width: 300 }}
+            style={{ 
+              width: '100%',
+              maxWidth: 300,
+              minWidth: 200
+            }}
             onSearch={setSearchQuery}
             prefix={<SearchOutlined />}
           />
@@ -136,6 +155,7 @@ const Classes = () => {
             icon={<PlusOutlined />} 
             size="large" 
             onClick={() => setJoinModalVisible(true)}
+            style={{ whiteSpace: 'nowrap' }}
           >
             {t('studentPages.classes.joinClass')}
           </Button>
@@ -157,6 +177,7 @@ const Classes = () => {
             showQuickJumper: true,
             showTotal: (total, range) => 
               `${range[0]}-${range[1]} of ${total} ${t('studentPages.classes.items')}`,
+            responsive: true,
           }}
           scroll={{ x: 'max-content' }}
         />

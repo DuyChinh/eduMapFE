@@ -9,13 +9,19 @@ const Classes = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ 
+        marginBottom: 24, 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 12,
+        flexWrap: 'wrap'
+      }}>
         <img 
           src="/class.png" 
           alt="Class" 
           style={{ width: 24, height: 24, objectFit: 'contain' }} 
         />
-        <Title level={2} style={{ margin: 0 }}>{t('teacherPages.classes.title')}</Title>
+        <Title level={2} style={{ margin: 0, flex: 1 }}>{t('teacherPages.classes.title')}</Title>
       </div>
       
       <ClassList />
