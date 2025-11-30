@@ -9,7 +9,12 @@ const Classes = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <img 
+          src="/class.png" 
+          alt="Class" 
+          style={{ width: 24, height: 24, objectFit: 'contain' }} 
+        />
         <Title level={2} style={{ margin: 0 }}>{t('teacherPages.classes.title')}</Title>
       </div>
       

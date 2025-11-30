@@ -115,7 +115,14 @@ const Classes = () => {
   return (
     <div>
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={2} style={{ margin: 0 }}>{t('studentPages.classes.title')}</Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img 
+            src="/class.png" 
+            alt="Class" 
+            style={{ width: 24, height: 24, objectFit: 'contain' }} 
+          />
+          <Title level={2} style={{ margin: 0 }}>{t('studentPages.classes.title')}</Title>
+        </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Input.Search
             placeholder={t('studentPages.classes.searchPlaceholder')}

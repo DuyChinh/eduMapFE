@@ -233,6 +233,33 @@ const ExamDetailNew = () => {
       key: "rank",
       width: 80,
       render: (rank) => {
+        if (rank === 1) {
+          return (
+            <img 
+              src="/1st-medal.png" 
+              alt="1st Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
+        if (rank === 2) {
+          return (
+            <img 
+              src="/2nd-medal.png" 
+              alt="2nd Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
+        if (rank === 3) {
+          return (
+            <img 
+              src="/3rd-medal.png" 
+              alt="3rd Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
         const colors = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
         return (
           <Tag

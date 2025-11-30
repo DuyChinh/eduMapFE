@@ -116,9 +116,18 @@ const ExamResult = () => {
   };
 
   const getRankMedal = (rank) => {
-    if (rank === 1) return { icon: <TrophyOutlined />, color: '#FFD700' };
-    if (rank === 2) return { icon: <TrophyOutlined />, color: '#C0C0C0' };
-    if (rank === 3) return { icon: <TrophyOutlined />, color: '#CD7F32' };
+    if (rank === 1) return { 
+      icon: <img src="/1st-medal.png" alt="1st Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />, 
+      color: '#FFD700' 
+    };
+    if (rank === 2) return { 
+      icon: <img src="/2nd-medal.png" alt="2nd Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />, 
+      color: '#C0C0C0' 
+    };
+    if (rank === 3) return { 
+      icon: <img src="/3rd-medal.png" alt="3rd Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />, 
+      color: '#CD7F32' 
+    };
     return null;
   };
 
@@ -129,17 +138,34 @@ const ExamResult = () => {
       key: 'rank',
       width: 80,
       render: (rank) => {
-        const medal = getRankMedal(rank);
-        return medal ? (
-          <Space>
-            <span style={{ color: medal.color, fontSize: 24 }}>
-              {medal.icon}
-            </span>
-            <Text strong>{rank}</Text>
-          </Space>
-        ) : (
-          <Text>{rank}</Text>
-        );
+        if (rank === 1) {
+          return (
+            <img 
+              src="/1st-medal.png" 
+              alt="1st Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
+        if (rank === 2) {
+          return (
+            <img 
+              src="/2nd-medal.png" 
+              alt="2nd Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
+        if (rank === 3) {
+          return (
+            <img 
+              src="/3rd-medal.png" 
+              alt="3rd Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
+        return <Text>{rank}</Text>;
       },
     },
     {
@@ -240,9 +266,9 @@ const ExamResult = () => {
 
           {medal && (
             <div>
-              <span style={{ fontSize: 48, color: medal.color }}>
+              <div>
                 {medal.icon}
-              </span>
+              </div>
               <div>
                 <Title level={3} style={{ margin: '8px 0 0 0', color: medal.color }}>
                   {t('exams.leaderboard.rank')} #{submissionData.rank}
