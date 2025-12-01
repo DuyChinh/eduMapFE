@@ -63,17 +63,14 @@ const ClassList = () => {
   const fetchClasses = async (params = {}) => {
     setLoading(true);
     try {
-      console.log('🔍 Fetching classes...', { filters, pagination });
       
       let response;
       
       // Use Search API if there's a search query (minimum 2 characters)
       if (filters.q && filters.q.length >= 2) {
-        console.log('🔍 Using Search API for query:', filters.q);
         response = await classService.searchClasses(filters.q, user?.email);
       } else {
         // Use List API for dashboard/pagination
-        console.log('🔍 Using List API with pagination');
         const listParams = {
           page: pagination.current || 1,
           limit: pagination.pageSize || 10,
@@ -81,16 +78,13 @@ const ClassList = () => {
           ...filters,
           ...params
         };
-        console.log('📤 List API params:', listParams);
         response = await classService.getClasses(listParams);
       }
       
-      console.log('📦 Classes response:', response);
       
       // Axios interceptor returns response.data, so response is already the data
       // API returns { ok: true, items: [...], total: 100, page: 1, limit: 20, pages: 5 }
       const classesData = response.items || [];
-      console.log('📋 Classes data:', classesData);
 
       setClasses(classesData);
       setPagination(prev => ({
@@ -100,7 +94,6 @@ const ClassList = () => {
         pageSize: response.limit || prev.pageSize,
       }));
       
-      console.log('✅ Classes loaded successfully');
     } catch (error) {
       console.error('❌ Error fetching classes:', error);
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.fetchFailed'));
@@ -113,7 +106,6 @@ const ClassList = () => {
   useEffect(() => {
     // Check authentication
     if (!isAuthenticated) {
-      console.log('❌ User not authenticated, redirecting to login');
       navigate(ROUTES.LOGIN);
       return;
     }
@@ -121,7 +113,6 @@ const ClassList = () => {
     // Debug token
     const token = localStorage.getItem('auth_token');
     const authStorage = localStorage.getItem('auth-storage');
-    console.log('🔑 Token check:', { token, authStorage, user: user?.email, role: user?.role });
     
     fetchClasses();
   }, [filters, isAuthenticated, navigate]);

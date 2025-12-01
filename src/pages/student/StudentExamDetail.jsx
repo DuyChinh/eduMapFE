@@ -107,13 +107,11 @@ const StudentExamDetail = () => {
       const targetSubmissionId = submissionId || data?._id;
       
       if (!targetStudentId) {
-        console.warn('Cannot fetch activity log: studentId not found');
         setActivityLog([]);
         return;
       }
       
       if (!targetSubmissionId) {
-        console.warn('Cannot fetch activity log: submissionId not found');
         setActivityLog([]);
         return;
       }

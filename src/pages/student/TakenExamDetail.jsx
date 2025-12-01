@@ -59,7 +59,6 @@ const TakeExamNew = () => {
   const [examStartTime, setExamStartTime] = useState(null);
 
   useEffect(() => {
-    console.log('useEffect', examId);
     fetchExamInfo();
     return () => {
       if (timerRef.current) {
@@ -85,7 +84,6 @@ const TakeExamNew = () => {
   }, [timeRemaining, examStarted]);
 
   const fetchExamInfo = async () => {
-    console.log('fetchExamInfo', examId);
     setLoading(true);
     try {
       const response = await examService.getExamById(examId);
@@ -101,7 +99,6 @@ const TakeExamNew = () => {
   };
 
   const handleStartExam = async () => {
-    console.log('handleStartExam', examData.examPassword, password);
     if (examData.examPassword && !password) {
       message.error(t('takeExam.pleaseEnterPassword'));
       return;

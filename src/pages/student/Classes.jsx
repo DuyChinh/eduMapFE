@@ -20,24 +20,20 @@ const Classes = () => {
   const fetchMyClasses = async (params = {}) => {
     setLoading(true);
     try {
-      console.log('🔍 Student fetching classes...', params);
       
       // For students, we use getMyClasses which returns their enrolled classes
       // This doesn't need pagination as students typically have fewer classes
       const response = await classService.getMyClasses();
-      console.log('📦 Student classes response:', response);
       
       // Axios interceptor returns response.data, so response is already the data
       // API returns { ok: true, items: [...], total: 100, page: 1, limit: 20, pages: 5 }
       let classesData = response.items || [];
-      console.log('📋 Student classes:', classesData);
       
       // Filter classes based on search query
       if (searchQuery && searchQuery.length >= 2) {
         classesData = classesData.filter(cls => 
           cls.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
-        console.log('🔍 Filtered classes by search:', classesData);
       }
       
       setClasses(classesData);

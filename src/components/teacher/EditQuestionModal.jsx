@@ -109,7 +109,6 @@ const EditQuestionModal = ({ visible, questionData, onCancel, onSuccess }) => {
         isPublic: values.isPublic !== undefined ? values.isPublic : true // Default to public
       };
 
-      console.log('📤 EditQuestionModal - final payload:', questionPayload);
 
       await questionService.updateQuestion(questionId, questionPayload);
       message.success(t('questions.updateSuccess'));
@@ -124,7 +123,6 @@ const EditQuestionModal = ({ visible, questionData, onCancel, onSuccess }) => {
 
   // Update edit data when form values change
   const handleFormChange = (changedValues, allValues) => {
-    console.log('📝 EditQuestionModal - form changed:', changedValues, allValues);
     setEditData(prev => ({
       ...prev,
       ...allValues

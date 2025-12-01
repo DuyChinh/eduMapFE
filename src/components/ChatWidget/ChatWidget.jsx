@@ -34,6 +34,7 @@ const ChatWidget = () => {
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessions, setSessions] = useState([]);
+    const [sessionsLoading, setSessionsLoading] = useState(false);
     const [currentSessionId, setCurrentSessionId] = useState(null);
     const [activeMenuSessionId, setActiveMenuSessionId] = useState(null);
     const [isRenamingSessionId, setIsRenamingSessionId] = useState(null);
@@ -85,11 +86,14 @@ const ChatWidget = () => {
     }, []);
 
     const fetchSessions = async () => {
+        setSessionsLoading(true);
         try {
             const response = await chatApi.getSessions();
             setSessions(response.data);
         } catch (error) {
             console.error('Failed to fetch sessions:', error);
+        } finally {
+            setSessionsLoading(false);
         }
     };
 
@@ -346,6 +350,20 @@ const ChatWidget = () => {
                                 </div>
                             </div>
                             <div className="session-list">
+                                {sessionsLoading && sessions.length === 0 && (
+                                    <div className="session-loading">
+                                        <div className="session-loading-item" />
+                                        <div className="session-loading-item" />
+                                        <div className="session-loading-item" />
+                                    </div>
+                                )}
+
+                                {!sessionsLoading && sessions.length === 0 && (
+                                    <div className="session-empty-text">
+                                        No conversations yet
+                                    </div>
+                                )}
+
                                 {sessions.map(session => (
                                     <div
                                         key={session._id}
@@ -386,6 +404,12 @@ const ChatWidget = () => {
                                         )}
                                     </div>
                                 ))}
+
+                                {sessionsLoading && sessions.length > 0 && (
+                                    <div className="session-loading-inline">
+                                        Loading...
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

@@ -122,6 +122,43 @@
   padding: 0 8px;
 }
 
+/* Loading state for session list */
+.session-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 8px 0;
+}
+
+.session-loading-item {
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: session-skeleton 1.2s ease-in-out infinite;
+}
+
+.session-empty-text {
+  padding: 4px 8px 8px 8px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.session-loading-inline {
+  padding: 4px 8px 8px 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+@keyframes session-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .session-item {
   padding: 10px 12px;
   cursor: pointer;
@@ -142,8 +179,8 @@
 }
 
 .session-item.active {
-  background-color: #e5e7eb;
-  color: #111827;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
   font-weight: 500;
 }
 
@@ -179,6 +216,16 @@
 .session-menu-btn.active {
   color: #4b5563;
   background: rgba(0, 0, 0, 0.05);
+}
+
+.session-item.active .session-menu-btn {
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+}
+
+.session-item.active .session-menu-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .session-menu-dropdown {
@@ -916,14 +963,24 @@ body.dark-mode .session-item:hover {
 }
 
 body.dark-mode .session-item.active {
-  background-color: #262626;
-  color: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
 }
 
 body.dark-mode .session-menu-btn:hover,
 body.dark-mode .session-menu-btn.active {
   color: #9ca3af;
   background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .session-item.active .session-menu-btn {
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+}
+
+body.dark-mode .session-item.active .session-menu-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 body.dark-mode .session-menu-dropdown {
