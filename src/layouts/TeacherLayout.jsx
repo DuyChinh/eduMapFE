@@ -13,6 +13,7 @@ import {
   SwapOutlined,
   TeamOutlined,
   UserOutlined,
+  ShareAltOutlined,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space } from 'antd';
 import { useEffect, useState } from 'react';
@@ -42,11 +43,11 @@ const TeacherLayout = () => {
       if (user && user._id) {
         return;
       }
-      
+
       try {
         await fetchProfile();
       } catch (error) {
-        
+
       }
     };
     refreshProfile();
@@ -113,7 +114,7 @@ const TeacherLayout = () => {
   // Function to determine selected menu key based on current path
   const getSelectedKey = () => {
     const pathname = location.pathname;
-    
+
     // Check if current path starts with any of the main routes
     if (pathname.startsWith('/teacher/questions')) {
       return ROUTES.TEACHER_QUESTIONS;
@@ -127,7 +128,10 @@ const TeacherLayout = () => {
     if (pathname.startsWith('/teacher/dashboard')) {
       return ROUTES.TEACHER_DASHBOARD;
     }
-    
+    if (pathname.startsWith('/teacher/mindmaps')) {
+      return 'mindmaps';
+    }
+
     // Default fallback
     return pathname;
   };
@@ -156,6 +160,12 @@ const TeacherLayout = () => {
       icon: <TeamOutlined />,
       label: t('teacher.classManagement'),
       onClick: () => navigate(ROUTES.TEACHER_CLASSES),
+    },
+    {
+      key: 'mindmaps',
+      icon: <ShareAltOutlined />,
+      label: 'Mindmaps',
+      onClick: () => navigate('/teacher/mindmaps'),
     },
   ];
 
@@ -197,9 +207,9 @@ const TeacherLayout = () => {
 
   return (
     <Layout className="dashboard-layout">
-      <Sider 
-        trigger={null} 
-        collapsible 
+      <Sider
+        trigger={null}
+        collapsible
         collapsed={collapsed}
         className="dashboard-sider"
         width={250}
@@ -208,7 +218,7 @@ const TeacherLayout = () => {
           <img src="/logo.png" alt="Logo" className="logo" />
           {!collapsed && <span className="logo-text">{t('app.name')}</span>}
         </div>
-        
+
         <Menu
           theme="dark"
           mode="inline"
@@ -220,7 +230,7 @@ const TeacherLayout = () => {
         <div className="sider-footer">
           {!collapsed && (
             <div className="user-info-compact">
-              <Avatar 
+              <Avatar
                 src={user?.avatar}
                 icon={!user?.avatar && <UserOutlined />}
               />
@@ -243,30 +253,30 @@ const TeacherLayout = () => {
           />
 
           <Space size="large" className="header-actions">
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
               className="theme-toggle-btn"
             />
-            
-            <Button 
-              type="text" 
+
+            <Button
+              type="text"
               icon={<BellOutlined />}
               className="notification-btn"
             />
-            
+
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
               arrow
             >
               <div className="user-dropdown">
-                <Avatar 
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
-              />
+                <Avatar
+                  src={user?.avatar}
+                  icon={!user?.avatar && <UserOutlined />}
+                />
                 <span className="user-name-header">{user?.name}</span>
               </div>
             </Dropdown>
