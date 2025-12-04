@@ -195,3 +195,51 @@ body.dark-mode .empty-state p {
   color: rgba(255, 255, 255, 0.65);
 }
 
+/* Responsive buttons */
+.responsive-button .button-text {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .responsive-button .button-text {
+    display: none;
+  }
+  
+  .responsive-button {
+    min-width: auto;
+    padding: 4px 8px;
+  }
+  
+  /* Make filters stack on mobile */
+  .ant-select,
+  .ant-input-search {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+  }
+  
+  /* Page headers responsive */
+  .page-header h2 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header h2 {
+    font-size: 18px;
+  }
+  
+  /* Stack action buttons on very small screens */
+  .ant-space {
+    width: 100%;
+  }
+  
+  .ant-space-item {
+    width: 100%;
+  }
+  
+  .ant-space-item .ant-btn {
+    width: 100%;
+  }
+}
+

@@ -114,7 +114,8 @@
     "back": "Quay lại",
     "backToDashboard": "Về trang chủ",
     "student": "Học sinh",
-    "add": "Thêm"
+    "add": "Thêm",
+    "of": "của"
   },
   "login": {
     "welcome": "Chào mừng đến với",
@@ -694,7 +695,8 @@
       "timeSpent": "Thời gian làm bài",
       "submittedAt": "Nộp lúc",
       "fetchFailed": "Không thể tải bảng xếp hạng",
-      "noData": "Chưa có dữ liệu bảng xếp hạng"
+      "noData": "Chưa có dữ liệu bảng xếp hạng",
+      "items": "mục"
     },
     "submissions": {
       "student": "Học sinh",
@@ -709,7 +711,14 @@
       "late": "Nộp muộn",
       "notStarted": "Chưa bắt đầu",
       "fetchFailed": "Không thể tải danh sách bài nộp",
-      "noData": "Chưa có bài nộp nào"
+      "noData": "Chưa có bài nộp nào",
+      "showAllAttempts": "Hiển thị tất cả lần làm",
+      "showLatestOnly": "Chỉ hiển thị lần làm gần nhất",
+      "filterByStatus": "Lọc theo trạng thái",
+      "allStatuses": "Tất cả trạng thái",
+      "searchByName": "Tìm kiếm theo tên",
+      "searchPlaceholder": "Nhập tên học sinh...",
+      "items": "mục"
     },
     "viewDetail": "Xem chi tiết",
     "subjectsLoadFailed": "Không thể tải danh sách môn học",

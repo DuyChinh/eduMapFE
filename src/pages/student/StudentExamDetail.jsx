@@ -107,13 +107,11 @@ const StudentExamDetail = () => {
       const targetSubmissionId = submissionId || data?._id;
       
       if (!targetStudentId) {
-        console.warn('Cannot fetch activity log: studentId not found');
         setActivityLog([]);
         return;
       }
       
       if (!targetSubmissionId) {
-        console.warn('Cannot fetch activity log: submissionId not found');
         setActivityLog([]);
         return;
       }
@@ -392,22 +390,27 @@ const StudentExamDetail = () => {
     <MathJaxContext config={mathJaxConfig}>
       <div className="submission-detail-container">
         {/* Header */}
-        <div className="submission-header">
+        <div className="submission-header" style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          gap: 12,
+          marginBottom: 24
+        }}>
           <Button 
             icon={<ArrowLeftOutlined />} 
             onClick={() => navigate(-1)}
-            style={{ marginBottom: 16 }}
+            style={{ alignSelf: 'flex-start' }}
           >
             {t('common.back')}
           </Button>
-          <Title level={2} style={{ margin: 0 }}>
+          <Title level={2} style={{ margin: 0, wordBreak: 'break-word' }}>
             {exam.name || t('submissionDetail.examName')}
           </Title>
         </div>
 
         <Row gutter={[24, 24]}>
           {/* Left Sidebar */}
-          <Col xs={24} lg={8}>
+          <Col xs={24} sm={24} md={24} lg={8} xl={8}>
             <Card className="student-info-card">
               <div className="student-profile">
                 <Avatar 
@@ -500,10 +503,13 @@ const StudentExamDetail = () => {
                     icon={<FileTextOutlined />}
                     block
                     onClick={() => {
-                      // TODO: Navigate to activity log
+                      setActiveTab('activity');
                     }}
+                    style={{ whiteSpace: 'normal', height: 'auto', padding: '8px 16px' }}
                   >
-                    {t('submissionDetail.viewActivityLog')}
+                    <span style={{ fontSize: '14px', wordBreak: 'break-word' }}>
+                      {t('submissionDetail.viewActivityLog')}
+                    </span>
                   </Button>
                   
                   {isTeacherOrAdmin && (
@@ -518,8 +524,11 @@ const StudentExamDetail = () => {
                         icon={<ReloadOutlined />}
                         block
                         danger
+                        style={{ whiteSpace: 'normal', height: 'auto', padding: '8px 16px' }}
                       >
-                        {t('submissionDetail.resetAttempt') || 'Reset Attempt (Allow Retake)'}
+                        <span style={{ fontSize: '14px', wordBreak: 'break-word' }}>
+                          {t('submissionDetail.resetAttempt') || 'Reset Attempt (Allow Retake)'}
+                        </span>
                       </Button>
                     </Popconfirm>
                   )}
@@ -527,8 +536,13 @@ const StudentExamDetail = () => {
 
                 <Divider />
 
-                <Button block>
-                  {t('submissionDetail.viewAllAttempts')} ({submissionData.attemptNumber || 1})
+                <Button 
+                  block
+                  style={{ whiteSpace: 'normal', height: 'auto', padding: '8px 16px' }}
+                >
+                  <span style={{ fontSize: '14px', wordBreak: 'break-word' }}>
+                    {t('submissionDetail.viewAllAttempts')} ({submissionData.attemptNumber || 1})
+                  </span>
                 </Button>
 
                 <div className="pagination-controls" style={{ marginTop: 16, textAlign: 'center' }}>
@@ -551,7 +565,7 @@ const StudentExamDetail = () => {
           </Col>
 
           {/* Main Content */}
-          <Col xs={24} lg={16}>
+          <Col xs={24} sm={24} md={24} lg={16} xl={16}>
             <Card>
               <Tabs
                 activeKey={activeTab}
@@ -582,11 +596,11 @@ const StudentExamDetail = () => {
                                 style={{ marginBottom: 24 }}
                               >
                                 <div className="question-header">
-                                  <Space>
+                                  <Space wrap>
                                     <Text strong style={{ fontSize: 16 }}>
                                       {t('submissionDetail.question')} {index + 1}
                                     </Text>
-                                    <Text type="secondary">ID: {questionId}</Text>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>ID: {questionId}</Text>
                                     <Button
                                       type="text"
                                       icon={<EditOutlined />}

@@ -13,6 +13,7 @@ export const ROUTES = {
   // Dashboard routes
   TEACHER_DASHBOARD: '/teacher/dashboard',
   STUDENT_DASHBOARD: '/student/dashboard',
+  PROFILE: '/profile',
   
   // Teacher routes
   TEACHER_QUESTIONS: '/teacher/questions',

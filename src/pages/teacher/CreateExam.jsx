@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   App,
@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import examService from '../../api/examService';
 import questionService from '../../api/questionService';
+import classService from '../../api/classService';
 import { ROUTES } from '../../constants/config';
 import PreviewExamModal from '../../components/teacher/PreviewExamModal';
 import timezone from 'dayjs/plugin/timezone';
@@ -45,8 +46,11 @@ const CreateExam = () => {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [questionSearchLoading, setQuestionSearchLoading] = useState(false);
   const [questionSearchQuery, setQuestionSearchQuery] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [previewExamData, setPreviewExamData] = useState(null);
+  const classesFetchedRef = useRef(false); // Track if classes have been fetched
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { message } = App.useApp();
@@ -165,6 +169,27 @@ const CreateExam = () => {
     } catch (error) {
       console.error('Error fetching subjects:', error);
       message.error(t('exams.subjectsLoadFailed'));
+    }
+  };
+
+  const fetchClasses = async () => {
+    // Prevent multiple calls
+    if (loadingClasses || classesFetchedRef.current) {
+      return;
+    }
+    
+    setLoadingClasses(true);
+    classesFetchedRef.current = true;
+    try {
+      const response = await classService.getMyClasses();
+      const classesData = response.items || response.data || [];
+      setClasses(classesData);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      message.error(t('classes.fetchFailed'));
+      classesFetchedRef.current = false; // Reset on error to allow retry
+    } finally {
+      setLoadingClasses(false);
     }
   };
 
@@ -300,6 +325,7 @@ const CreateExam = () => {
         isAllowUser: values.isAllowUser,
         examPassword: values.examPassword,
         maxAttempts: values.maxAttempts,
+        allowedClassIds: values.isAllowUser === 'class' ? (values.allowedClassIds || []) : [],
         viewMark: values.viewMark,
         viewExamAndAnswer: values.viewExamAndAnswer,
         subjectId: values.subjectId,
@@ -539,6 +565,56 @@ const CreateExam = () => {
                   </Select>
                 </Form.Item>
               </Space>
+
+              <Form.Item
+                noStyle
+                shouldUpdate={(prevValues, currentValues) => prevValues.isAllowUser !== currentValues.isAllowUser}
+              >
+                {({ getFieldValue }) => {
+                  const isAllowUser = getFieldValue('isAllowUser');
+                  if (isAllowUser === 'class') {
+                    // fetchClasses is already called when needed
+                    // No need to call again here to avoid infinite loop
+                    
+                    return (
+                      <Form.Item
+                        label={t('exams.allowedClasses')}
+                        name="allowedClassIds"
+                        rules={[
+                          { 
+                            required: true, 
+                            message: t('exams.allowedClassesRequired')
+                          }
+                        ]}
+                      >
+                        <Select
+                          mode="multiple"
+                          placeholder={t('exams.selectClasses')}
+                          loading={loadingClasses}
+                          showSearch
+                          filterOption={(input, option) =>
+                            (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                          }
+                          notFoundContent={loadingClasses ? <Spin size="small" /> : t('exams.noClassesFound')}
+                          onFocus={() => {
+                            // Fetch classes when dropdown is focused if not already fetched
+                            if (!classesFetchedRef.current && !loadingClasses) {
+                              fetchClasses();
+                            }
+                          }}
+                        >
+                          {classes.map(cls => (
+                            <Option key={cls._id || cls.id} value={cls._id || cls.id}>
+                              {cls.name}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    );
+                  }
+                  return null;
+                }}
+              </Form.Item>
 
                 <Form.Item
                   label={t('exams.examPassword')}

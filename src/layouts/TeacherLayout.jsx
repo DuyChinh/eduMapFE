@@ -14,7 +14,7 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space } from 'antd';
+import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -33,20 +33,21 @@ const TeacherLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const { user, logout, fetchProfile, switchRole } = useAuthStore();
+  const { user, logout, fetchProfile, switchRole, loading } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const refreshProfile = async () => {
-      if (user && user._id) {
+      // Only skip when we already have profile (with avatar)
+      if (user && user._id && user.profile && user.profile.avatar) {
         return;
       }
-      
+
       try {
         await fetchProfile();
-      } catch (error) {
-        
+      } catch {
+        // silent
       }
     };
     refreshProfile();
@@ -75,14 +76,12 @@ const TeacherLayout = () => {
       } else if (result.user.role === USER_ROLES.STUDENT) {
         navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
       }
-
     } catch (error) {
       const errorMessage =
-        typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
+        typeof error === 'string' ? error : error?.message || t('role.switchFailed');
       message.error(errorMessage);
     }
   };
-
 
   const showRoleModal = () => {
     setSelectedRole(user?.role || '');
@@ -113,8 +112,7 @@ const TeacherLayout = () => {
   // Function to determine selected menu key based on current path
   const getSelectedKey = () => {
     const pathname = location.pathname;
-    
-    // Check if current path starts with any of the main routes
+
     if (pathname.startsWith('/teacher/questions')) {
       return ROUTES.TEACHER_QUESTIONS;
     }
@@ -127,33 +125,45 @@ const TeacherLayout = () => {
     if (pathname.startsWith('/teacher/dashboard')) {
       return ROUTES.TEACHER_DASHBOARD;
     }
-    
-    // Default fallback
+
     return pathname;
   };
+
+  const displayName = user?.name || user?.email || '';
+
+  const avatarSrc = user?.profile?.avatar || user?.avatar;
+
+  const roleLabel =
+    user?.role === USER_ROLES.TEACHER
+      ? t('role.teacher')
+      : user?.role === USER_ROLES.STUDENT
+      ? t('role.student')
+      : '';
+
+  const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
 
   const menuItems = [
     {
       key: ROUTES.TEACHER_DASHBOARD,
-      icon: <HomeOutlined />,
+      icon: <img src="/home.png" alt="Home" className="menu-icon-image" />,
       label: t('dashboard.home'),
       onClick: () => navigate(ROUTES.TEACHER_DASHBOARD),
     },
     {
       key: ROUTES.TEACHER_QUESTIONS,
-      icon: <FileTextOutlined />,
+      icon: <img src="/question.png" alt="Question bank" className="menu-icon-image" />,
       label: t('teacher.questionBank'),
       onClick: () => navigate(ROUTES.TEACHER_QUESTIONS),
     },
     {
       key: ROUTES.TEACHER_EXAMS,
-      icon: <BookOutlined />,
+      icon: <img src="/exam.png" alt="Exams" className="menu-icon-image" />,
       label: t('teacher.examManagement'),
       onClick: () => navigate(ROUTES.TEACHER_EXAMS),
     },
     {
       key: ROUTES.TEACHER_CLASSES,
-      icon: <TeamOutlined />,
+      icon: <img src="/class.png" alt="Classes" className="menu-icon-image" />,
       label: t('teacher.classManagement'),
       onClick: () => navigate(ROUTES.TEACHER_CLASSES),
     },
@@ -164,6 +174,7 @@ const TeacherLayout = () => {
       key: 'profile',
       icon: <UserOutlined />,
       label: t('menu.account'),
+      onClick: () => navigate('/teacher/profile'),
     },
     {
       key: 'language',
@@ -197,9 +208,9 @@ const TeacherLayout = () => {
 
   return (
     <Layout className="dashboard-layout">
-      <Sider 
-        trigger={null} 
-        collapsible 
+      <Sider
+        trigger={null}
+        collapsible
         collapsed={collapsed}
         className="dashboard-sider"
         width={250}
@@ -208,7 +219,7 @@ const TeacherLayout = () => {
           <img src="/logo.png" alt="Logo" className="logo" />
           {!collapsed && <span className="logo-text">{t('app.name')}</span>}
         </div>
-        
+
         <Menu
           theme="dark"
           mode="inline"
@@ -216,21 +227,6 @@ const TeacherLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
-        <div className="sider-footer">
-          {!collapsed && (
-            <div className="user-info-compact">
-              <Avatar 
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
-              />
-              <div className="user-details">
-                <div className="user-name">{user?.name}</div>
-                <div className="user-role">{t('teacher.role')}</div>
-              </div>
-            </div>
-          )}
-        </div>
       </Sider>
 
       <Layout>
@@ -243,38 +239,36 @@ const TeacherLayout = () => {
           />
 
           <Space size="large" className="header-actions">
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
               className="theme-toggle-btn"
             />
-            
-            <Button 
-              type="text" 
-              icon={<BellOutlined />}
-              className="notification-btn"
-            />
-            
-            <Dropdown
-              menu={{ items: userMenuItems }}
-              placement="bottomRight"
-              arrow
-            >
+
+            <Button type="text" icon={<BellOutlined />} className="notification-btn" />
+
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
               <div className="user-dropdown">
-                <Avatar 
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
-              />
-                <span className="user-name-header">{user?.name}</span>
+                <Avatar src={avatarSrc} icon={!avatarSrc && <UserOutlined />} />
+                <div className="user-dropdown-info">
+                  <span className="user-name-header">{displayName}</span>
+                  <span className="user-role-header">{roleLabel}</span>
+                </div>
               </div>
             </Dropdown>
           </Space>
         </Header>
 
         <Content className="dashboard-content">
-          <Outlet />
+          {isProfileLoading ? (
+            <div className="dashboard-loading">
+              <Spin size="large" />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </Content>
       </Layout>
 
@@ -288,7 +282,10 @@ const TeacherLayout = () => {
         cancelText={t('role.cancel')}
       >
         <p style={{ marginBottom: 16 }}>
-          {t('role.currentRole')}: <strong>{user?.role === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student')}</strong>
+          {t('role.currentRole')}:{' '}
+          <strong>
+            {user?.role === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student')}
+          </strong>
         </p>
         <Select
           style={{ width: '100%' }}
@@ -344,4 +341,5 @@ const TeacherLayout = () => {
 };
 
 export default TeacherLayout;
+
 
