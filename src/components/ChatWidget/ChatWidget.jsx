@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark } from 'react-icons/io5';
+import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoSearch } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
 import { FiEdit } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
@@ -10,13 +10,13 @@ import './ChatWidget.css';
 
 const ChatWidget = () => {
     const location = useLocation();
-    
+
     // Hide chatbot on exam pages (both student and public routes)
-    const isExamPage = 
+    const isExamPage =
         (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
         location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
         location.pathname.includes('/exam-error'); // Exam error page
-    
+
     // If on exam page, don't render chatbot
     if (isExamPage) {
         return null;
@@ -43,10 +43,15 @@ const ChatWidget = () => {
 
     const [selectedFiles, setSelectedFiles] = useState([]);
 
+    // Search state
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
     const renameInputRef = useRef(null);
     const fileInputRef = useRef(null);
+    const searchInputRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -85,6 +90,12 @@ const ChatWidget = () => {
         };
     }, []);
 
+    useEffect(() => {
+        if (isSearchOpen && searchInputRef.current) {
+            searchInputRef.current.focus();
+        }
+    }, [isSearchOpen]);
+
     const fetchSessions = async () => {
         setSessionsLoading(true);
         try {
@@ -95,6 +106,55 @@ const ChatWidget = () => {
         } finally {
             setSessionsLoading(false);
         }
+    };
+
+    const groupSessions = (sessionsToGroup) => {
+        const groups = {
+            'Today': [],
+            'Yesterday': [],
+            'Previous 7 Days': [],
+            'Previous 30 Days': [],
+            'Older': []
+        };
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const last7Days = new Date(today);
+        last7Days.setDate(last7Days.getDate() - 7);
+        const last30Days = new Date(today);
+        last30Days.setDate(last30Days.getDate() - 30);
+
+        sessionsToGroup.forEach(session => {
+            const date = new Date(session.updatedAt || session.createdAt || Date.now());
+            if (date >= today) {
+                groups['Today'].push(session);
+            } else if (date >= yesterday) {
+                groups['Yesterday'].push(session);
+            } else if (date >= last7Days) {
+                groups['Previous 7 Days'].push(session);
+            } else if (date >= last30Days) {
+                groups['Previous 30 Days'].push(session);
+            } else {
+                groups['Older'].push(session);
+            }
+        });
+
+        return groups;
+    };
+
+    const filteredSessions = useMemo(() => {
+        if (!searchQuery.trim()) return groupSessions(sessions);
+        const filtered = sessions.filter(s =>
+            (s.title || '').toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        return groupSessions(filtered);
+    }, [sessions, searchQuery]);
+
+    const toggleSearch = () => {
+        setIsSearchOpen(!isSearchOpen);
+        setSearchQuery('');
     };
 
     const handleNewChat = () => {
@@ -344,9 +404,14 @@ const ChatWidget = () => {
                                     >
                                         <TbLayoutSidebarLeftCollapse size={24} />
                                     </button>
-                                    <button className="new-chat-icon-btn" onClick={handleNewChat} title="New chat">
-                                        <FiEdit size={20} />
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                        <button className="new-chat-icon-btn" onClick={toggleSearch} title="Search chats">
+                                            <IoSearch size={20} />
+                                        </button>
+                                        <button className="new-chat-icon-btn" onClick={handleNewChat} title="New chat">
+                                            <FiEdit size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="session-list">
@@ -526,6 +591,53 @@ const ChatWidget = () => {
                             </form>
                         </div>
                     </div>
+
+                    {isSearchOpen && (
+                        <div className="search-modal-overlay" onClick={toggleSearch}>
+                            <div className="search-modal" onClick={(e) => e.stopPropagation()}>
+                                <div className="search-header">
+                                    <IoSearch size={20} className="search-icon" />
+                                    <input
+                                        ref={searchInputRef}
+                                        type="text"
+                                        placeholder="Search chats..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                    <button className="close-search-btn" onClick={toggleSearch}>
+                                        <IoClose size={20} />
+                                    </button>
+                                </div>
+                                <div className="search-results">
+                                    {Object.entries(filteredSessions).map(([group, groupSessions]) => (
+                                        groupSessions.length > 0 && (
+                                            <div key={group} className="search-group">
+                                                <div className="group-header">{group}</div>
+                                                {groupSessions.map(session => (
+                                                    <div
+                                                        key={session._id}
+                                                        className="search-result-item"
+                                                        onClick={() => {
+                                                            handleSessionClick(session._id);
+                                                            toggleSearch();
+                                                        }}
+                                                    >
+                                                        <span className="session-title">{session.title || 'New Chat'}</span>
+                                                        <span className="session-date">
+                                                            {new Date(session.updatedAt || session.createdAt).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    ))}
+                                    {Object.values(filteredSessions).every(g => g.length === 0) && (
+                                        <div className="no-results">No chats found</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
