@@ -38,7 +38,7 @@ const TakeExam = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { message } = App.useApp();
-  
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submission, setSubmission] = useState(null);
@@ -54,7 +54,7 @@ const TakeExam = () => {
   const [showCandidateDropdown, setShowCandidateDropdown] = useState(false);
   const [currentVisibleQuestion, setCurrentVisibleQuestion] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
-  
+
   const autoSaveIntervalRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -72,11 +72,11 @@ const TakeExam = () => {
     if (examStartedRef.current || submission) {
       return true;
     }
-    
+
     try {
       examStartedRef.current = true;
       setLoading(true);
-      
+
       const response = await startSubmission(examId, passwordToUse);
       let result;
       if (response.ok && response.data) {
@@ -88,18 +88,18 @@ const TakeExam = () => {
       } else {
         throw new Error('Invalid response format from server');
       }
-      
+
       const submissionResult = result.submission;
       const examData = result.exam;
-      
+
       if (!submissionResult || !examData) {
         console.error('Missing submission or exam in response:', result);
         throw new Error('Invalid response format from server');
       }
-      
+
       setSubmission(submissionResult);
       setExam(examData);
-      
+
       // Initialize answers
       const initialAnswers = {};
       if (submissionResult.answers) {
@@ -151,12 +151,12 @@ const TakeExam = () => {
       }, 5000);
 
       message.success(t('takeExam.examStarted'));
-      
+
       const storedPassword = sessionStorage.getItem('examPassword');
       if (storedPassword) {
         sessionStorage.removeItem('examPassword');
       }
-      
+
       return true;
     } catch (error) {
       examStartedRef.current = false;
@@ -278,23 +278,23 @@ const TakeExam = () => {
     const initExam = async () => {
       try {
         setLoading(true);
-        
+
         // Check if came from public link (shareCode)
         const storedShareCode = sessionStorage.getItem('shareCode');
         if (storedShareCode) {
           setShareCode(storedShareCode);
         }
-        
+
         // Get password from sessionStorage if available (from public link)
         let storedPassword = sessionStorage.getItem('examPassword') || '';
-        
+
         // Always check if exam requires password before calling API
         // If no password in storage, fetch exam info to check if password is required
         if (!storedPassword) {
           try {
             const examService = (await import('../../api/examService')).default;
             let examResponse;
-            
+
             // If we have shareCode, use it to get exam info (public endpoint)
             if (storedShareCode) {
               examResponse = await examService.getExamByShareCode(storedShareCode);
@@ -310,7 +310,7 @@ const TakeExam = () => {
                 examResponse = null;
               }
             }
-            
+
             // If exam requires password and we don't have it, show password modal
             // examPassword is a boolean flag from API (true if password required)
             if (examResponse?.data?.examPassword === true) {
@@ -327,16 +327,16 @@ const TakeExam = () => {
             // The API will return error if password is required
           }
         }
-        
+
         // Start exam with password
         // Password will be cleared inside startExamWithPassword after successful start
         await startExamWithPassword(storedPassword);
       } catch (error) {
         // Get error message from API like CreateClassModal pattern
-        const errorMessage = typeof error === 'string' 
-          ? error 
+        const errorMessage = typeof error === 'string'
+          ? error
           : (error?.response?.data?.message || error?.message || t('takeExam.failedToStart'));
-        
+
         // If password error, show password modal
         if (errorMessage.includes('password') || errorMessage.includes('Invalid exam password')) {
           const storedShareCode = sessionStorage.getItem('shareCode');
@@ -350,14 +350,14 @@ const TakeExam = () => {
           setLoading(false);
           return; // Don't redirect, show password modal instead
         }
-        
+
         // For other errors (max attempts, not available, etc.), show error page
         // No toast needed since we have error page
         navigate('/student/exam-error', {
           state: {
             errorMessage,
-            errorType: errorMessage.includes('maximum') || errorMessage.includes('attempts') 
-              ? 'maxAttempts' 
+            errorType: errorMessage.includes('maximum') || errorMessage.includes('attempts')
+              ? 'maxAttempts'
               : 'error'
           },
           replace: true
@@ -416,10 +416,10 @@ const TakeExam = () => {
   // Handle submit (defined before handleTimeUp)
   const handleSubmit = useCallback(async () => {
     if (!submission) return;
-    
+
     try {
       setSubmitting(true);
-      
+
       // Clear intervals ngay từ đầu để tránh tiếp tục auto-save
       if (autoSaveIntervalRef.current) {
         clearInterval(autoSaveIntervalRef.current);
@@ -429,7 +429,7 @@ const TakeExam = () => {
         clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
       }
-      
+
       // Final save before submit
       const answersArray = Object.entries(answers).map(([questionId, value]) => ({
         questionId,
@@ -447,13 +447,13 @@ const TakeExam = () => {
       } else {
         message.success(t('takeExam.submitSuccess'));
       }
-      
+
       // Navigate to result detail page to view answers
       const submissionId = submissionData?._id || response.data?._id || response.data?.data?._id || response._id;
       navigate(`/student/results/${submissionId}`, { replace: true });
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || t('takeExam.submitFailed');
-      
+
       // If time limit exceeded beyond grace period, show error page
       if (errorMessage.includes('Time limit exceeded') && errorMessage.includes('no longer accepted')) {
         navigate('/student/exam-error', {
@@ -553,21 +553,21 @@ const TakeExam = () => {
   useEffect(() => {
     const equalizeChoiceWidths = () => {
       if (!exam || !exam.questions) return;
-      
+
       exam.questions.forEach((q) => {
         if (q.questionId?.type !== 'mcq' || !q.questionId?.choices) return;
-        
+
         const questionId = q.questionId._id || q.questionId;
         const choiceRefs = choiceOptionsRefs.current[questionId];
         if (!choiceRefs || choiceRefs.length === 0) return;
-        
+
         // First, reset all widths to auto to get natural width
         choiceRefs.forEach((ref) => {
           if (ref) {
             ref.style.width = 'auto';
           }
         });
-        
+
         // Wait for layout to update, then calculate max width
         requestAnimationFrame(() => {
           let maxWidth = 0;
@@ -577,7 +577,7 @@ const TakeExam = () => {
               maxWidth = Math.max(maxWidth, width);
             }
           });
-          
+
           // Set all to max width
           if (maxWidth > 0) {
             choiceRefs.forEach((ref) => {
@@ -589,15 +589,15 @@ const TakeExam = () => {
         });
       });
     };
-    
+
     // Run after delays to ensure DOM and MathJax are rendered
     const timer1 = setTimeout(equalizeChoiceWidths, 100);
     const timer2 = setTimeout(equalizeChoiceWidths, 500);
     const timer3 = setTimeout(equalizeChoiceWidths, 1000);
-    
+
     // Also run when window resizes
     window.addEventListener('resize', equalizeChoiceWidths);
-    
+
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
@@ -621,13 +621,13 @@ const TakeExam = () => {
               message.error(t('takeExam.pleaseEnterPassword'));
               return;
             }
-            
+
             try {
               setShowPasswordModal(false);
               await startExamWithPassword(examPassword);
               // Clear password from storage
               sessionStorage.removeItem('examPassword');
-              
+
               passwordModalShownRef.current = false;
             } catch (error) {
               const errorMessage = error.response?.data?.message || t('takeExam.failedToStart');
@@ -726,7 +726,7 @@ const TakeExam = () => {
 
   const renderMathContent = (content) => {
     if (!content) return '';
-    
+
     // Split by lines and process each line separately
     const lines = content.split('\n');
     return (
@@ -736,17 +736,17 @@ const TakeExam = () => {
           if (!line.trim()) {
             return <br key={index} />;
           }
-          
+
           // Check if line contains LaTeX commands
           const hasLatex = line.includes('\\') || line.includes('^') || line.includes('_');
           const hasDollarSigns = line.includes('$') || line.includes('\\(');
-          
+
           if (hasLatex && !hasDollarSigns) {
             // Mixed content - need to parse and render properly
             // Split by LaTeX patterns and render each part
             const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
             return (
-              <span key={index} style={{ 
+              <span key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word',
@@ -770,7 +770,7 @@ const TakeExam = () => {
           } else if (hasDollarSigns) {
             // Already has dollar signs, render as is
             return (
-              <span key={index} style={{ 
+              <span key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word',
@@ -782,7 +782,7 @@ const TakeExam = () => {
           } else {
             // Plain text, render as is with preserved formatting
             return (
-              <span key={index} style={{ 
+              <span key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word',
@@ -799,255 +799,305 @@ const TakeExam = () => {
 
   return (
     <MathJaxContext config={mathJaxConfig}>
-    <div className="take-exam-container">
-      {/* Header */}
-      <div className="take-exam-header-new">
-        <div className="header-left">
-          <Button 
-            type="text" 
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(-1)}
-            className="back-button"
-          >
-            {t('takeExam.goBack')}
-          </Button>
-        </div>
-        <div className="header-center">
-          <div 
-            className="candidate-dropdown"
-            onClick={() => setShowCandidateDropdown(!showCandidateDropdown)}
-          >
-            <span>{t('takeExam.candidateLabel')}: {candidateName}</span>
-            <DownOutlined className="dropdown-icon" />
+      <div className="take-exam-container">
+        {/* Header */}
+        <div className="take-exam-header-new">
+          <div className="header-left">
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+              className="back-button"
+            >
+              {t('takeExam.goBack')}
+            </Button>
+          </div>
+          <div className="header-center">
+            <div
+              className="candidate-dropdown"
+              onClick={() => setShowCandidateDropdown(!showCandidateDropdown)}
+            >
+              <span>{t('takeExam.candidateLabel')}: {candidateName}</span>
+              <DownOutlined className="dropdown-icon" />
+            </div>
+          </div>
+          <div className="header-right">
+            <Space size="middle">
+              <div className="timer-new">
+                <Text strong className={timeRemaining < 300 ? 'time-warning' : ''}>
+                  {formatTime(timeRemaining)}
+                </Text>
+              </div>
+              <Button
+                type="text"
+                icon={<SearchOutlined />}
+                className="header-icon-btn"
+              />
+              <Button
+                type="text"
+                icon={<MenuOutlined />}
+                className="header-icon-btn"
+              />
+              <Button
+                type="primary"
+                onClick={() => setShowConfirmSubmit(true)}
+                disabled={submitting}
+                loading={submitting}
+                className="submit-button"
+              >
+                {t('takeExam.submit')}
+              </Button>
+            </Space>
           </div>
         </div>
-        <div className="header-right">
-          <Space size="middle">
-            <div className="timer-new">
-              <Text strong className={timeRemaining < 300 ? 'time-warning' : ''}>
-                {formatTime(timeRemaining)}
-              </Text>
-            </div>
-            <Button 
-              type="text" 
-              icon={<SearchOutlined />}
-              className="header-icon-btn"
-            />
-            <Button 
-              type="text" 
-              icon={<MenuOutlined />}
-              className="header-icon-btn"
-            />
-            <Button 
-              type="primary" 
-              onClick={() => setShowConfirmSubmit(true)}
-              disabled={submitting}
-              loading={submitting}
-              className="submit-button"
-            >
-              {t('takeExam.submit')}
-            </Button>
-          </Space>
-        </div>
-      </div>
 
-      {/* Main Content with Sidebar */}
-      <div className="take-exam-wrapper">
-        {/* Main Content - All Questions List */}
-        <div className="take-exam-content-new">
-          {exam.questions.map((q, index) => {
-          const questionId = q.questionId._id || q.questionId;
-          const question = q.questionId;
-          const isAnswered = answers[questionId] !== undefined && answers[questionId] !== '';
-          
-          return (
-            <Card key={index} className="question-item-card">
-              <div className="question-item-header">
-                <Text strong className="question-number">{t('takeExam.questionNumber')} {index + 1}</Text>
-                <Button
-                  type="text"
-                  icon={<FlagOutlined />}
-                  onClick={(e) => toggleFlag(index, e)}
-                  className={`flag-button ${flaggedQuestions.has(index) ? 'flagged' : ''}`}
-                  title={flaggedQuestions.has(index) ? t('takeExam.unflagQuestion') : t('takeExam.flagQuestion')}
-                />
-              </div>
-              
-              <div className="question-item-content">
-                <Paragraph className="question-text" style={{
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  whiteSpace: 'pre-wrap',
-                  fontFamily: 'inherit'
-                }}>
-                  {renderMathContent(question.text || question.name)}
-                </Paragraph>
-
-                {/* Render question based on type */}
-                {question.type === 'mcq' && (
-                  <Radio.Group
-                    value={answers[questionId]}
-                    onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-                    className="question-options"
-                  >
-                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                      {question.choices?.map((choice, idx) => {
-                        const isSelected = answers[questionId] === choice.key;
-                        const choiceRefKey = `${questionId}-${idx}`;
-                        
-                        // Initialize refs array for this question if not exists
-                        if (!choiceOptionsRefs.current[questionId]) {
-                          choiceOptionsRefs.current[questionId] = [];
-                        }
-                        
-                        return (
-                          <div 
-                            key={idx} 
-                            ref={(el) => {
-                              if (el) {
-                                choiceOptionsRefs.current[questionId][idx] = el;
-                              }
-                            }}
-                            className={`choice-option ${isSelected ? 'choice-selected' : ''}`}
-                          >
-                            <Radio value={choice.key} className="choice-radio-new">
-                              <span className="choice-label" style={{ display: 'inline', marginRight: '4px' }}>
-                                {String.fromCharCode(65 + idx)}:
-                              </span>
-                              <span style={{
-                                display: 'inline',
-                                wordWrap: 'break-word',
-                                overflowWrap: 'break-word',
-                                whiteSpace: 'pre-wrap',
-                                fontFamily: 'inherit'
-                              }}>
-                                {renderMathContent(choice.text)}
-                              </span>
-                            </Radio>
-                          </div>
-                        );
-                      })}
-                    </Space>
-                  </Radio.Group>
-                )}
-
-                {question.type === 'tf' && (
-                  <Radio.Group
-                    value={answers[questionId]}
-                    onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-                    className="question-options"
-                  >
-                    <Space direction="vertical" size="middle">
-                      <div className={`choice-option ${answers[questionId] === 'true' ? 'choice-selected' : ''}`}>
-                        <Radio value="true" className="choice-radio-new">
-                          <span className="choice-label">A:</span>
-                          {t('takeExam.true')}
-                        </Radio>
-                      </div>
-                      <div className={`choice-option ${answers[questionId] === 'false' ? 'choice-selected' : ''}`}>
-                        <Radio value="false" className="choice-radio-new">
-                          <span className="choice-label">B:</span>
-                          {t('takeExam.false')}
-                        </Radio>
-                      </div>
-                    </Space>
-                  </Radio.Group>
-                )}
-
-                {(question.type === 'short' || question.type === 'essay') && (
-                  <Input.TextArea
-                    rows={question.type === 'essay' ? 8 : 4}
-                    value={answers[questionId] || ''}
-                    onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-                    placeholder={t('takeExam.enterYourAnswer')}
-                    className="answer-textarea"
-                  />
-                )}
-
-                {(question.type === 'mcq' || question.type === 'tf') && !isAnswered && (
-                  <div className="question-placeholder">
-                    <Text type="secondary">{t('takeExam.selectCorrectAnswer')}</Text>
-                  </div>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-        </div>
-
-        {/* Question List Sidebar */}
-        <div className="question-list-sidebar">
-          <div className="question-list-title">{t('takeExam.questionList')}</div>
-          <div className="question-list-grid">
+        {/* Main Content with Sidebar */}
+        <div className="take-exam-wrapper">
+          {/* Main Content - All Questions List */}
+          <div className="take-exam-content-new">
             {exam.questions.map((q, index) => {
               const questionId = q.questionId._id || q.questionId;
+              const question = q.questionId;
               const isAnswered = answers[questionId] !== undefined && answers[questionId] !== '';
-              const isCurrent = index === currentVisibleQuestion;
-              const isFlagged = flaggedQuestions.has(index);
-              
-              let buttonClass = 'question-list-btn';
-              if (isFlagged) {
-                // Câu được gắn cờ - màu vàng
-                buttonClass += ' question-flagged-yellow';
-              } else if (isCurrent) {
-                // Câu đang làm - màu xanh da trời
-                buttonClass += ' question-current-blue';
-              } else if (isAnswered) {
-                // Câu đã làm - màu xanh lá
-                buttonClass += ' question-answered-green';
-              } else {
-                // Câu chưa làm - màu trắng
-                buttonClass += ' question-unanswered-white';
-              }
-              
+
               return (
-                <div key={index} className="question-list-item">
-                  <Button
-                    className={buttonClass}
-                    onClick={() => scrollToQuestion(index)}
-                    shape="round"
-                  >
-                    {(index + 1).toString().padStart(2, '0')}
-                  </Button>
-                  {isFlagged && (
-                    <FlagOutlined className="question-flag-icon" />
-                  )}
-                </div>
+                <Card key={index} className="question-item-card">
+                  <div className="question-item-header">
+                    <Text strong className="question-number">{t('takeExam.questionNumber')} {index + 1}</Text>
+                    <Button
+                      type="text"
+                      icon={<FlagOutlined />}
+                      onClick={(e) => toggleFlag(index, e)}
+                      className={`flag-button ${flaggedQuestions.has(index) ? 'flagged' : ''}`}
+                      title={flaggedQuestions.has(index) ? t('takeExam.unflagQuestion') : t('takeExam.flagQuestion')}
+                    />
+                  </div>
+
+                  <div className="question-item-content">
+                    <Paragraph className="question-text" style={{
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'inherit'
+                    }}>
+                      {renderMathContent(question.text || question.name)}
+                    </Paragraph>
+
+                    {/* Render question images */}
+                    {question.images && question.images.length > 0 ? (
+                      <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                        {question.images.map((imgUrl, idx) => (
+                          <img
+                            key={idx}
+                            src={imgUrl}
+                            alt={`Question Illustration ${idx + 1}`}
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '400px',
+                              objectFit: 'contain',
+                              borderRadius: '8px',
+                              border: '1px solid #f0f0f0'
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : question.image ? (
+                      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                        <img
+                          src={question.image}
+                          alt="Question Illustration"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '400px',
+                            objectFit: 'contain',
+                            borderRadius: '8px',
+                            border: '1px solid #f0f0f0'
+                          }}
+                        />
+                      </div>
+                    ) : null}
+
+                    {/* Render question based on type */}
+                    {question.type === 'mcq' && (
+                      <Radio.Group
+                        value={answers[questionId]}
+                        onChange={(e) => handleAnswerChange(questionId, e.target.value)}
+                        className="question-options"
+                      >
+                        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                          {question.choices?.map((choice, idx) => {
+                            const isSelected = answers[questionId] === choice.key;
+                            const choiceRefKey = `${questionId}-${idx}`;
+
+                            // Initialize refs array for this question if not exists
+                            if (!choiceOptionsRefs.current[questionId]) {
+                              choiceOptionsRefs.current[questionId] = [];
+                            }
+
+                            return (
+                              <div
+                                key={idx}
+                                ref={(el) => {
+                                  if (el) {
+                                    choiceOptionsRefs.current[questionId][idx] = el;
+                                  }
+                                }}
+                                className={`choice-option ${isSelected ? 'choice-selected' : ''}`}
+                              >
+                                <Radio value={choice.key} className="choice-radio-new">
+                                  <span className="choice-label" style={{ display: 'inline', marginRight: '4px' }}>
+                                    {String.fromCharCode(65 + idx)}:
+                                  </span>
+                                  <span style={{
+                                    display: 'inline',
+                                    wordWrap: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    whiteSpace: 'pre-wrap',
+                                    fontFamily: 'inherit'
+                                  }}>
+                                    {renderMathContent(choice.text)}
+                                  </span>
+                                  {/* Render choice image if exists */}
+                                  {choice.image && (
+                                    <div style={{ marginTop: '8px', marginLeft: '24px' }}>
+                                      <img
+                                        src={choice.image}
+                                        alt={`Choice ${String.fromCharCode(65 + idx)}`}
+                                        style={{
+                                          maxWidth: '100%',
+                                          maxHeight: '150px',
+                                          objectFit: 'contain',
+                                          borderRadius: '4px',
+                                          border: '1px solid #f0f0f0'
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </Radio>
+                              </div>
+                            );
+                          })}
+                        </Space>
+                      </Radio.Group>
+                    )}
+
+                    {question.type === 'tf' && (
+                      <Radio.Group
+                        value={answers[questionId]}
+                        onChange={(e) => handleAnswerChange(questionId, e.target.value)}
+                        className="question-options"
+                      >
+                        <Space direction="vertical" size="middle">
+                          <div className={`choice-option ${answers[questionId] === 'true' ? 'choice-selected' : ''}`}>
+                            <Radio value="true" className="choice-radio-new">
+                              <span className="choice-label">A:</span>
+                              {t('takeExam.true')}
+                            </Radio>
+                          </div>
+                          <div className={`choice-option ${answers[questionId] === 'false' ? 'choice-selected' : ''}`}>
+                            <Radio value="false" className="choice-radio-new">
+                              <span className="choice-label">B:</span>
+                              {t('takeExam.false')}
+                            </Radio>
+                          </div>
+                        </Space>
+                      </Radio.Group>
+                    )}
+
+                    {(question.type === 'short' || question.type === 'essay') && (
+                      <Input.TextArea
+                        rows={question.type === 'essay' ? 8 : 4}
+                        value={answers[questionId] || ''}
+                        onChange={(e) => handleAnswerChange(questionId, e.target.value)}
+                        placeholder={t('takeExam.enterYourAnswer')}
+                        className="answer-textarea"
+                      />
+                    )}
+
+                    {(question.type === 'mcq' || question.type === 'tf') && !isAnswered && (
+                      <div className="question-placeholder">
+                        <Text type="secondary">{t('takeExam.selectCorrectAnswer')}</Text>
+                      </div>
+                    )}
+                  </div>
+                </Card>
               );
             })}
           </div>
+
+          {/* Question List Sidebar */}
+          <div className="question-list-sidebar">
+            <div className="question-list-title">{t('takeExam.questionList')}</div>
+            <div className="question-list-grid">
+              {exam.questions.map((q, index) => {
+                const questionId = q.questionId._id || q.questionId;
+                const isAnswered = answers[questionId] !== undefined && answers[questionId] !== '';
+                const isCurrent = index === currentVisibleQuestion;
+                const isFlagged = flaggedQuestions.has(index);
+
+                let buttonClass = 'question-list-btn';
+                if (isFlagged) {
+                  // Câu được gắn cờ - màu vàng
+                  buttonClass += ' question-flagged-yellow';
+                } else if (isCurrent) {
+                  // Câu đang làm - màu xanh da trời
+                  buttonClass += ' question-current-blue';
+                } else if (isAnswered) {
+                  // Câu đã làm - màu xanh lá
+                  buttonClass += ' question-answered-green';
+                } else {
+                  // Câu chưa làm - màu trắng
+                  buttonClass += ' question-unanswered-white';
+                }
+
+                return (
+                  <div key={index} className="question-list-item">
+                    <Button
+                      className={buttonClass}
+                      onClick={() => scrollToQuestion(index)}
+                      shape="round"
+                    >
+                      {(index + 1).toString().padStart(2, '0')}
+                    </Button>
+                    {isFlagged && (
+                      <FlagOutlined className="question-flag-icon" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
+
+        {/* Time Warning */}
+        {timeRemaining < 300 && timeRemaining > 0 && (
+          <Alert
+            message={t('takeExam.timeWarning')}
+            description={`${t('takeExam.onlyTimeRemaining')} ${formatTime(timeRemaining)} ${t('takeExam.timeRemaining')}!`}
+            type="warning"
+            icon={<WarningOutlined />}
+            showIcon
+            closable
+            className="time-warning-alert"
+          />
+        )}
+
+        {/* Confirm Submit Modal */}
+        <Modal
+          title={t('takeExam.confirmSubmit')}
+          open={showConfirmSubmit}
+          onOk={handleSubmit}
+          onCancel={() => setShowConfirmSubmit(false)}
+          confirmLoading={submitting}
+          okText={t('common.yes') + ', ' + t('takeExam.submit')}
+          cancelText={t('common.cancel')}
+        >
+          <p>{t('takeExam.confirmSubmitMessage')}</p>
+          <p>{t('takeExam.answeredQuestions')} {answeredCount} {t('takeExam.outOf')} {totalQuestions} {t('takeExam.questions')}.</p>
+          <p><strong>{t('takeExam.cannotUndo')}</strong></p>
+        </Modal>
+
       </div>
-
-      {/* Time Warning */}
-      {timeRemaining < 300 && timeRemaining > 0 && (
-        <Alert
-          message={t('takeExam.timeWarning')}
-          description={`${t('takeExam.onlyTimeRemaining')} ${formatTime(timeRemaining)} ${t('takeExam.timeRemaining')}!`}
-          type="warning"
-          icon={<WarningOutlined />}
-          showIcon
-          closable
-          className="time-warning-alert"
-        />
-      )}
-
-      {/* Confirm Submit Modal */}
-      <Modal
-        title={t('takeExam.confirmSubmit')}
-        open={showConfirmSubmit}
-        onOk={handleSubmit}
-        onCancel={() => setShowConfirmSubmit(false)}
-        confirmLoading={submitting}
-        okText={t('common.yes') + ', ' + t('takeExam.submit')}
-        cancelText={t('common.cancel')}
-      >
-        <p>{t('takeExam.confirmSubmitMessage')}</p>
-        <p>{t('takeExam.answeredQuestions')} {answeredCount} {t('takeExam.outOf')} {totalQuestions} {t('takeExam.questions')}.</p>
-        <p><strong>{t('takeExam.cannotUndo')}</strong></p>
-      </Modal>
-
-    </div>
     </MathJaxContext>
   );
 };

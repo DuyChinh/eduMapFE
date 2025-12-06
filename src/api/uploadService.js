@@ -11,7 +11,7 @@ const uploadService = {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Upload error:', error);
             throw error;

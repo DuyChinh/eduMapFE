@@ -111,12 +111,12 @@ const TakeExamNew = () => {
     try {
       const response = await examService.startSubmission(examId, password || null);
       const submission = response.data || response;
-      
+
       setSubmissionData(submission);
       setExamStarted(true);
       setExamStartTime(new Date());
       setTimeRemaining(examData.duration * 60); // Convert minutes to seconds
-      
+
       // Initialize answers object
       const initialAnswers = {};
       examData.questions?.forEach((q, index) => {
@@ -179,11 +179,11 @@ const TakeExamNew = () => {
 
   const handleSubmitClick = () => {
     const unanswered = Object.values(answers).filter(a => a === null).length;
-    
+
     Modal.confirm({
       title: t('takeExam.confirmSubmit'),
-      content: unanswered > 0 
-        ? `${t('takeExam.unansweredQuestions')}: ${unanswered}` 
+      content: unanswered > 0
+        ? `${t('takeExam.unansweredQuestions')}: ${unanswered}`
         : t('takeExam.submitConfirmation'),
       okText: t('common.yes'),
       cancelText: t('common.no'),
@@ -250,7 +250,23 @@ const TakeExamNew = () => {
         </div>
 
         <Title level={4}>{questionData.name || questionData.text}</Title>
-        
+
+        {questionData.image && (
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={questionData.image}
+              alt="Question"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '300px',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                border: '1px solid #f0f0f0'
+              }}
+            />
+          </div>
+        )}
+
         {questionData.description && (
           <Paragraph type="secondary">{questionData.description}</Paragraph>
         )}
@@ -349,7 +365,7 @@ const TakeExamNew = () => {
     const now = new Date();
     const startTime = examData.startTime ? new Date(examData.startTime) : null;
     const endTime = examData.endTime ? new Date(examData.endTime) : null;
-    
+
     // Check if exam is available
     if (startTime && now < startTime) {
       return (
@@ -526,7 +542,7 @@ const TakeExamNew = () => {
             <div>
               <Title level={4} style={{ margin: 0 }}>{examData.name}</Title>
             </div>
-            
+
             <Space size="large">
               <div>
                 <ClockCircleOutlined style={{ marginRight: 8, fontSize: 20, color: timeRemaining < 300 ? '#ff4d4f' : '#1890ff' }} />
@@ -534,11 +550,11 @@ const TakeExamNew = () => {
                   {formatTime(timeRemaining)}
                 </Text>
               </div>
-              
+
               <div>
-                <Progress 
-                  type="circle" 
-                  percent={Math.round(progressPercent)} 
+                <Progress
+                  type="circle"
+                  percent={Math.round(progressPercent)}
                   width={60}
                   format={() => `${answeredCount}/${examData.questions.length}`}
                 />
@@ -553,15 +569,15 @@ const TakeExamNew = () => {
         <div style={{ flex: 1, minWidth: 300 }}>
           <Card>
             {renderQuestion()}
-            
+
             <div style={{ marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
               <Button
                 onClick={handleMarkForReview}
                 icon={<FlagOutlined />}
                 type={markedForReview.has(currentQuestionIndex) ? 'primary' : 'default'}
               >
-                {markedForReview.has(currentQuestionIndex) 
-                  ? t('takeExam.unmarked') 
+                {markedForReview.has(currentQuestionIndex)
+                  ? t('takeExam.unmarked')
                   : t('takeExam.markForReview')
                 }
               </Button>
@@ -573,7 +589,7 @@ const TakeExamNew = () => {
                 >
                   {t('takeExam.previous')}
                 </Button>
-                
+
                 {currentQuestionIndex < examData.questions.length - 1 ? (
                   <Button type="primary" onClick={handleNextQuestion}>
                     {t('takeExam.next')}
@@ -595,7 +611,7 @@ const TakeExamNew = () => {
         </div>
 
         {/* Question Navigator */}
-        <Card 
+        <Card
           title={t('takeExam.questionNavigator')}
           style={{ width: 300 }}
         >
@@ -605,8 +621,8 @@ const TakeExamNew = () => {
                 key={index}
                 onClick={() => handleQuestionSelect(index)}
                 style={{
-                  background: index === currentQuestionIndex 
-                    ? '#1890ff' 
+                  background: index === currentQuestionIndex
+                    ? '#1890ff'
                     : getStatusColor(getQuestionStatus(index)),
                   color: index === currentQuestionIndex || answers[index] !== null ? 'white' : '#666',
                   border: 'none',
