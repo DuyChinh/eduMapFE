@@ -318,8 +318,8 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           </div>
         )}
 
-        {/* Legacy single Image support (if specific data structure requires it) */}
-        {questionData.image && !questionData.images && (
+        {/* Legacy single Image support (fallback if images array is empty) */}
+        {questionData.image && (!questionData.images || questionData.images.length === 0) && (
           <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
             <img
               src={questionData.image}
