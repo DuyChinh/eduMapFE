@@ -306,7 +306,6 @@ const TakeExam = () => {
               } catch (authError) {
                 // If getExamById requires auth and fails, we can't check password here
                 // Proceed to API call, which will return password error if needed
-                console.log('Cannot check password preemptively, will check via API');
                 examResponse = null;
               }
             }

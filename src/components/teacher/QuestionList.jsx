@@ -520,78 +520,114 @@ const QuestionList = () => {
 
   return (
     <Card>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Search
-            placeholder={t('questions.searchPlaceholder')}
-            allowClear
-            style={{ width: 300 }}
-            onSearch={handleSearch}
-            prefix={<SearchOutlined />}
-          />
-          
-          <Select
-            placeholder={t('questions.filterByType')}
-            style={{ width: 150 }}
-            allowClear
-            onChange={(value) => handleFilterChange('type', value)}
-          >
-            <Option value="mcq">{t('questions.types.mcq')}</Option>
-            <Option value="tf">{t('questions.types.tf')}</Option>
-            <Option value="short">{t('questions.types.short')}</Option>
-            <Option value="essay">{t('questions.types.essay')}</Option>
-          </Select>
-          
-          <Select
-            placeholder={t('questions.filterByLevel')}
-            style={{ width: 150 }}
-            allowClear
-            onChange={(value) => handleFilterChange('level', value)}
-          >
-            <Option value="1">1 - {t('questions.levelEasy')}</Option>
-            <Option value="2">2 - {t('questions.levelEasy')}</Option>
-            <Option value="3">3 - {t('questions.levelMedium')}</Option>
-            <Option value="4">4 - {t('questions.levelHard')}</Option>
-            <Option value="5">5 - {t('questions.levelHard')}</Option>
-          </Select>
-          
-          <Select
-            placeholder={t('questions.filterBySubject')}
-            style={{ width: 200 }}
-            allowClear
-            showSearch
-            filterOption={(input, option) =>
-              (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-            onChange={(value) => handleFilterChange('subject', value)}
-          >
-            {subjects.map(subject => {
-              const currentLang = localStorage.getItem('language') || 'vi';
-              let subjectName = subject.name;
-              
-              switch (currentLang) {
-                case 'en':
-                  subjectName = subject.name_en || subject.name;
-                  break;
-                case 'jp':
-                  subjectName = subject.name_jp || subject.name;
-                  break;
-                case 'vi':
-                default:
-                  subjectName = subject.name;
-                  break;
+      <div style={{ marginBottom: 16 }}>
+        {/* Filters Row */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 12, 
+          marginBottom: 16 
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: 8, 
+            flexWrap: 'wrap',
+            alignItems: 'flex-start'
+          }}>
+            <Search
+              placeholder={t('questions.searchPlaceholder')}
+              allowClear
+              style={{ 
+                width: '100%',
+                maxWidth: 300,
+                minWidth: 200
+              }}
+              onSearch={handleSearch}
+              prefix={<SearchOutlined />}
+            />
+            
+            <Select
+              placeholder={t('questions.filterByType')}
+              style={{ 
+                width: '100%',
+                maxWidth: 150,
+                minWidth: 120
+              }}
+              allowClear
+              onChange={(value) => handleFilterChange('type', value)}
+            >
+              <Option value="mcq">{t('questions.types.mcq')}</Option>
+              <Option value="tf">{t('questions.types.tf')}</Option>
+              <Option value="short">{t('questions.types.short')}</Option>
+              <Option value="essay">{t('questions.types.essay')}</Option>
+            </Select>
+            
+            <Select
+              placeholder={t('questions.filterByLevel')}
+              style={{ 
+                width: '100%',
+                maxWidth: 150,
+                minWidth: 120
+              }}
+              allowClear
+              onChange={(value) => handleFilterChange('level', value)}
+            >
+              <Option value="1">1 - {t('questions.levelEasy')}</Option>
+              <Option value="2">2 - {t('questions.levelEasy')}</Option>
+              <Option value="3">3 - {t('questions.levelMedium')}</Option>
+              <Option value="4">4 - {t('questions.levelHard')}</Option>
+              <Option value="5">5 - {t('questions.levelHard')}</Option>
+            </Select>
+            
+            <Select
+              placeholder={t('questions.filterBySubject')}
+              style={{ 
+                width: '100%',
+                maxWidth: 200,
+                minWidth: 150
+              }}
+              allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
               }
-              
-              return (
-                <Option key={subject._id || subject.id} value={subject._id || subject.id}>
-                  {subjectName}
-                </Option>
-              );
-            })}
-          </Select>
+              onChange={(value) => handleFilterChange('subject', value)}
+            >
+              {subjects.map(subject => {
+                const currentLang = localStorage.getItem('language') || 'vi';
+                let subjectName = subject.name;
+                
+                switch (currentLang) {
+                  case 'en':
+                    subjectName = subject.name_en || subject.name;
+                    break;
+                  case 'jp':
+                    subjectName = subject.name_jp || subject.name;
+                    break;
+                  case 'vi':
+                  default:
+                    subjectName = subject.name;
+                    break;
+                }
+                
+                return (
+                  <Option key={subject._id || subject.id} value={subject._id || subject.id}>
+                    {subjectName}
+                  </Option>
+                );
+              })}
+            </Select>
+          </div>
         </div>
         
-        <Space>
+        {/* Actions Row */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: 8 
+        }}>
           {selectedRowKeys.length > 0 && (
             <Popconfirm
               title={t('questions.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected question(s)?`}
@@ -610,35 +646,40 @@ const QuestionList = () => {
             </Popconfirm>
           )}
           
-          <Button 
-            icon={<FileExcelOutlined />}
-            onClick={() => handleDownloadTemplate('xlsx')}
-          >
-            {t('questions.downloadTemplate') || 'Download Template'}
-          </Button>
-          
-          <Button 
-            icon={<DownloadOutlined />}
-            onClick={() => handleExportQuestions('xlsx')}
-          >
-            {t('questions.export') || 'Export'}
-          </Button>
-          
-          <Button 
-            icon={<UploadOutlined />}
-            onClick={() => setImportModalVisible(true)}
-          >
-            {t('questions.import') || 'Import'}
-          </Button>
-          
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => navigate(ROUTES.TEACHER_QUESTIONS_CREATE)}
-          >
-            {t('questions.createNew')}
-          </Button>
-        </Space>
+          <Space wrap size="small">
+            <Button 
+              icon={<FileExcelOutlined />}
+              onClick={() => handleDownloadTemplate('xlsx')}
+              className="responsive-button"
+            >
+              <span className="button-text">{t('questions.downloadTemplate') || 'Download Template'}</span>
+            </Button>
+            
+            <Button 
+              icon={<DownloadOutlined />}
+              onClick={() => handleExportQuestions('xlsx')}
+              className="responsive-button"
+            >
+              <span className="button-text">{t('questions.export') || 'Export'}</span>
+            </Button>
+            
+            <Button 
+              icon={<UploadOutlined />}
+              onClick={() => setImportModalVisible(true)}
+              className="responsive-button"
+            >
+              <span className="button-text">{t('questions.import') || 'Import'}</span>
+            </Button>
+            
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => navigate(ROUTES.TEACHER_QUESTIONS_CREATE)}
+            >
+              {t('questions.createNew')}
+            </Button>
+          </Space>
+        </div>
       </div>
 
       <Table
@@ -656,8 +697,10 @@ const QuestionList = () => {
           showQuickJumper: true,
           showTotal: (total, range) => 
             `${range[0]}-${range[1]} of ${total} ${t('questions.items')}`,
+          responsive: true,
         }}
         onChange={handleTableChange}
+        scroll={{ x: 'max-content' }}
       />
 
       {/* Modals */}

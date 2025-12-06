@@ -47,13 +47,10 @@ const ClassDetail = () => {
   const fetchClassDetail = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Fetching class detail for ID:', classId);
       const response = await classService.getClassById(classId);
-      console.log('📦 Class detail response:', response);
       
       // Axios interceptor returns response.data, so response is already the data
       const classInfo = response.data || response;
-      console.log('📋 Class info:', classInfo);
       
       setClassData(classInfo);
       
@@ -63,7 +60,6 @@ const ClassDetail = () => {
         setStudents(classInfo.students);
       } else if (classInfo.studentIds && Array.isArray(classInfo.studentIds)) {
         // If only student IDs are available, fetch student details
-        console.log('🔍 Fetching student details for IDs:', classInfo.studentIds);
         
         // Create joinMap from studentJoins if available
         const joinMap = new Map();
@@ -85,7 +81,6 @@ const ClassDetail = () => {
           try {
             const id = typeof studentId === 'object' ? (studentId._id || studentId.id) : studentId;
             const studentResponse = await userService.getUserById(id);
-            console.log('👤 Student detail response:', studentResponse);
             const studentData = studentResponse.data || studentResponse;
             return {
               ...studentData,
@@ -104,11 +99,8 @@ const ClassDetail = () => {
         });
         
         const studentsData = await Promise.all(studentPromises);
-        console.log('👥 All students data:', studentsData);
         setStudents(studentsData);
       }
-      
-      console.log('✅ Class detail loaded successfully');
     } catch (error) {
       console.error('❌ Error fetching class detail:', error);
       message.error('Failed to load class details');

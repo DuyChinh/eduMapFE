@@ -9,8 +9,19 @@ const Exams = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2} style={{ margin: 0 }}>{t('teacherPages.exams.title')}</Title>
+      <div style={{ 
+        marginBottom: 24, 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 12,
+        flexWrap: 'wrap'
+      }}>
+        <img 
+          src="/exam.png" 
+          alt="Exam" 
+          style={{ width: 24, height: 24, objectFit: 'contain' }} 
+        />
+        <Title level={2} style={{ margin: 0, flex: 1 }}>{t('teacherPages.exams.title')}</Title>
       </div>
       
       <ExamList />

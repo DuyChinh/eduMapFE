@@ -1,30 +1,45 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IoChatbubblesOutline, IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline } from 'react-icons/io5';
+import { useLocation } from 'react-router-dom';
+import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
 import { FiEdit } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
+import MathJaxContent from '../common/MathJaxContent';
 import chatApi from '../../api/chatApi';
 import './ChatWidget.css';
 
 const ChatWidget = () => {
+    const location = useLocation();
+    
+    // Hide chatbot on exam pages (both student and public routes)
+    const isExamPage = 
+        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
+        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
+        location.pathname.includes('/exam-error'); // Exam error page
+    
+    // If on exam page, don't render chatbot
+    if (isExamPage) {
+        return null;
+    }
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "Hi! I am your AI study assistant. How can I help you today?",
+            text: "Hi! I am your AI assistant. How can I help you today?",
             sender: 'bot'
         }
     ]);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessions, setSessions] = useState([]);
+    const [sessionsLoading, setSessionsLoading] = useState(false);
     const [currentSessionId, setCurrentSessionId] = useState(null);
     const [activeMenuSessionId, setActiveMenuSessionId] = useState(null);
     const [isRenamingSessionId, setIsRenamingSessionId] = useState(null);
     const [renameTitle, setRenameTitle] = useState('');
-
+    const [copiedMessageId, setCopiedMessageId] = useState(null);
 
     const [selectedFiles, setSelectedFiles] = useState([]);
 
@@ -71,11 +86,14 @@ const ChatWidget = () => {
     }, []);
 
     const fetchSessions = async () => {
+        setSessionsLoading(true);
         try {
             const response = await chatApi.getSessions();
             setSessions(response.data);
         } catch (error) {
             console.error('Failed to fetch sessions:', error);
+        } finally {
+            setSessionsLoading(false);
         }
     };
 
@@ -83,7 +101,7 @@ const ChatWidget = () => {
         setCurrentSessionId(null);
         setMessages([{
             id: Date.now(),
-            text: "Hi! I am your AI study assistant. How can I help you today?",
+            text: "Hi! I am your AI assistant. How can I help you today?",
             sender: 'bot'
         }]);
         if (window.innerWidth < 768) {
@@ -256,6 +274,36 @@ const ChatWidget = () => {
         setSelectedImage(null);
     };
 
+    const handleCopyMessage = async (text, messageId) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopiedMessageId(messageId);
+            // Reset after 2 seconds
+            setTimeout(() => {
+                setCopiedMessageId(null);
+            }, 2000);
+        } catch (error) {
+            console.error('Failed to copy text:', error);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                setCopiedMessageId(messageId);
+                setTimeout(() => {
+                    setCopiedMessageId(null);
+                }, 2000);
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
     const renderAttachments = (msg) => {
         if (msg.attachments && msg.attachments.length > 0) {
             return msg.attachments.map((att, index) => {
@@ -279,7 +327,7 @@ const ChatWidget = () => {
         <div className="chat-widget-container">
             {!isOpen && (
                 <button className="chat-toggle-btn" onClick={toggleChat}>
-                    <IoChatbubblesOutline size={30} />
+                    <img src="/chatbot.gif" alt="Chatbot" style={{ width: 70, height: 70, objectFit: 'contain' }} />
                 </button>
             )}
 
@@ -302,6 +350,20 @@ const ChatWidget = () => {
                                 </div>
                             </div>
                             <div className="session-list">
+                                {sessionsLoading && sessions.length === 0 && (
+                                    <div className="session-loading">
+                                        <div className="session-loading-item" />
+                                        <div className="session-loading-item" />
+                                        <div className="session-loading-item" />
+                                    </div>
+                                )}
+
+                                {!sessionsLoading && sessions.length === 0 && (
+                                    <div className="session-empty-text">
+                                        No conversations yet
+                                    </div>
+                                )}
+
                                 {sessions.map(session => (
                                     <div
                                         key={session._id}
@@ -342,6 +404,12 @@ const ChatWidget = () => {
                                         )}
                                     </div>
                                 ))}
+
+                                {sessionsLoading && sessions.length > 0 && (
+                                    <div className="session-loading-inline">
+                                        Loading...
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -358,6 +426,7 @@ const ChatWidget = () => {
                                         <TbLayoutSidebarLeftExpand size={24} />
                                     </button>
                                 )}
+                                <img src="/chatbot.gif" alt="Robot" style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
                                 <h3>AI Assistant</h3>
                             </div>
                             <div className="header-actions">
@@ -380,11 +449,24 @@ const ChatWidget = () => {
                                     {msg.text && (
                                         <div className="message-text">
                                             {msg.sender === 'bot' ? (
-                                                <ReactMarkdown>{msg.text}</ReactMarkdown>
+                                                <MathJaxContent content={msg.text} enableMarkdown={true} />
                                             ) : (
                                                 msg.text
                                             )}
                                         </div>
+                                    )}
+                                    {msg.sender === 'bot' && msg.text && (
+                                        <button
+                                            className="copy-message-btn"
+                                            onClick={() => handleCopyMessage(msg.text, msg.id)}
+                                            title="Copy message"
+                                        >
+                                            {copiedMessageId === msg.id ? (
+                                                <IoCheckmark size={14} />
+                                            ) : (
+                                                <IoCopyOutline size={14} />
+                                            )}
+                                        </button>
                                     )}
                                 </div>
                             ))}

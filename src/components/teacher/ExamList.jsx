@@ -379,73 +379,107 @@ const ExamList = () => {
 
   return (
     <Card>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Search
-            placeholder={t('exams.searchPlaceholder')}
-            allowClear
-            style={{ width: 300 }}
-            onSearch={handleSearch}
-            prefix={<SearchOutlined />}
-          />
+      <div style={{ marginBottom: 16 }}>
+        {/* Filters Row */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 12, 
+          marginBottom: 16 
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: 8, 
+            flexWrap: 'wrap',
+            alignItems: 'flex-start'
+          }}>
+            <Search
+              placeholder={t('exams.searchPlaceholder')}
+              allowClear
+              style={{ 
+                width: '100%',
+                maxWidth: 300,
+                minWidth: 200
+              }}
+              onSearch={handleSearch}
+              prefix={<SearchOutlined />}
+            />
           
-          <Select
-            placeholder={t('exams.filterByStatus')}
-            style={{ width: 150 }}
-            allowClear
-            onChange={(value) => handleFilterChange('status', value)}
-          >
-            <Option value="draft">{t('exams.statusDraft')}</Option>
-            <Option value="published">{t('exams.statusPublished')}</Option>
-            <Option value="archived">{t('exams.statusArchived')}</Option>
-          </Select>
+            <Select
+              placeholder={t('exams.filterByStatus')}
+              style={{ 
+                width: '100%',
+                maxWidth: 150,
+                minWidth: 120
+              }}
+              allowClear
+              onChange={(value) => handleFilterChange('status', value)}
+            >
+              <Option value="draft">{t('exams.statusDraft')}</Option>
+              <Option value="published">{t('exams.statusPublished')}</Option>
+              <Option value="archived">{t('exams.statusArchived')}</Option>
+            </Select>
 
-          <Select
-            placeholder={t('exams.filterBySubject') || 'Filter by Subject'}
-            style={{ width: 200 }}
-            allowClear
-            showSearch
-            optionFilterProp="children"
-            filterOption={(input, option) =>
-              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-            onChange={(value) => handleFilterChange('subjectId', value)}
-          >
-            {subjects.map((subject) => (
-              <Option key={subject._id} value={subject._id} label={getSubjectName(subject)}>
-                {getSubjectName(subject)}
-              </Option>
-            ))}
-          </Select>
+            <Select
+              placeholder={t('exams.filterBySubject') || 'Filter by Subject'}
+              style={{ 
+                width: '100%',
+                maxWidth: 200,
+                minWidth: 150
+              }}
+              allowClear
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              onChange={(value) => handleFilterChange('subjectId', value)}
+            >
+              {subjects.map((subject) => (
+                <Option key={subject._id} value={subject._id} label={getSubjectName(subject)}>
+                  {getSubjectName(subject)}
+                </Option>
+              ))}
+            </Select>
+          </div>
         </div>
         
-        <Space>
-          {selectedRowKeys.length > 0 && (
-            <Popconfirm
-              title={t('exams.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected exam(s)?`}
-              onConfirm={handleBulkDelete}
-              okText={t('common.yes')}
-              cancelText={t('common.no')}
-              okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
-            >
-              <Button 
-                danger
-                icon={<DeleteOutlined />}
-                loading={bulkDeleteLoading}
+        {/* Actions Row */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: 8 
+        }}>
+          <Space wrap size="small">
+            {selectedRowKeys.length > 0 && (
+              <Popconfirm
+                title={t('exams.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected exam(s)?`}
+                onConfirm={handleBulkDelete}
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
+                okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
               >
-                {t('exams.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
-              </Button>
-            </Popconfirm>
-          )}
-          
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => navigate('/teacher/exams/create')}
-          >
-            {t('exams.createNew')}
-          </Button>
-        </Space>
+                <Button 
+                  danger
+                  icon={<DeleteOutlined />}
+                  loading={bulkDeleteLoading}
+                >
+                  {t('exams.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+                </Button>
+              </Popconfirm>
+            )}
+            
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/teacher/exams/create')}
+            >
+              {t('exams.createNew')}
+            </Button>
+          </Space>
+        </div>
       </div>
 
       <Table
@@ -463,6 +497,7 @@ const ExamList = () => {
           showQuickJumper: true,
           showTotal: (total, range) => 
             `${range[0]}-${range[1]} of ${total} ${t('exams.items')}`,
+          responsive: true,
         }}
         onChange={handleTableChange}
         scroll={{ x: 'max-content' }}

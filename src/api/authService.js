@@ -62,7 +62,6 @@ const authService = {
       
       // Redirect to backend Google OAuth
       const googleAuthUrl = `${axiosInstance.defaults.baseURL}/auth/google`;
-      console.log('Redirecting to Google OAuth:', googleAuthUrl);
       
       window.location.href = googleAuthUrl;
     } catch (error) {

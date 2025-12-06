@@ -26,9 +26,9 @@ axiosInstance.interceptors.request.use(
           const parsed = JSON.parse(persistData);
           token = parsed.state?.token;
         }
-      } catch (error) {
-        console.warn('Failed to parse persist storage:', error);
-      }
+    } catch (error) {
+        // Ignore invalid persisted storage in production
+    }
     }
 
     if (token) {
@@ -58,7 +58,6 @@ axiosInstance.interceptors.response.use(
         // localStorage.removeItem(STORAGE_KEYS.USER);
         // localStorage.removeItem('auth-storage'); // Clear persist storage
         useAuthStore.getState().logout();
-        console.warn('⚠️ 401 Unauthorized - Token cleared');
       }
 
       // Extract error message from different possible formats

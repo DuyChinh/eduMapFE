@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Button, Space, Modal, Select, App } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Button, Space, Modal, Select, App, Spin } from 'antd';
 import {
   HomeOutlined,
   TeamOutlined,
@@ -33,14 +33,14 @@ const StudentLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const { user, logout, fetchProfile, switchRole } = useAuthStore();
+  const { user, logout, fetchProfile, switchRole, loading } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
-  // Auto refresh profile when entering dashboard (only if no user data)
   useEffect(() => {
     const refreshProfile = async () => {
-      if (user && user._id) {
+      // Only skip when we already have profile (with avatar)
+      if (user && user._id && user.profile && user.profile.avatar) {
         return;
       }
 
@@ -76,14 +76,12 @@ const StudentLayout = () => {
       } else if (result.user.role === USER_ROLES.STUDENT) {
         navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
       }
-
     } catch (error) {
       const errorMessage =
-        typeof error === 'string' ? error : (error?.message || t('role.switchFailed'));
+        typeof error === 'string' ? error : error?.message || t('role.switchFailed');
       message.error(errorMessage);
     }
   };
-
 
   const showRoleModal = () => {
     setSelectedRole(user?.role || '');
@@ -133,22 +131,35 @@ const StudentLayout = () => {
     return pathname;
   };
 
+  const displayName = user?.name || user?.email || '';
+
+  const avatarSrc = user?.profile?.avatar || user?.avatar;
+
+  const roleLabel =
+    user?.role === USER_ROLES.TEACHER
+      ? t('role.teacher')
+      : user?.role === USER_ROLES.STUDENT
+      ? t('role.student')
+      : '';
+
+  const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
+
   const menuItems = [
     {
       key: ROUTES.STUDENT_DASHBOARD,
-      icon: <HomeOutlined />,
+      icon: <img src="/home.png" alt="Home" className="menu-icon-image" />,
       label: t('dashboard.home'),
       onClick: () => navigate(ROUTES.STUDENT_DASHBOARD),
     },
     {
       key: ROUTES.STUDENT_CLASSES,
-      icon: <TeamOutlined />,
+      icon: <img src="/class.png" alt="Classes" className="menu-icon-image" />,
       label: t('student.myClasses'),
       onClick: () => navigate(ROUTES.STUDENT_CLASSES),
     },
     {
       key: ROUTES.STUDENT_RESULTS,
-      icon: <TrophyOutlined />,
+      icon: <img src="/exam.png" alt="Results" className="menu-icon-image" />,
       label: t('student.examResults'),
       onClick: () => navigate(ROUTES.STUDENT_RESULTS),
     },
@@ -165,6 +176,7 @@ const StudentLayout = () => {
       key: 'profile',
       icon: <UserOutlined />,
       label: t('menu.account'),
+      onClick: () => navigate('/student/profile'),
     },
     {
       key: 'language',
@@ -275,7 +287,13 @@ const StudentLayout = () => {
         </Header>
 
         <Content className="dashboard-content">
-          <Outlet />
+          {isProfileLoading ? (
+            <div className="dashboard-loading">
+              <Spin size="large" />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </Content>
       </Layout>
 
@@ -289,7 +307,10 @@ const StudentLayout = () => {
         cancelText={t('role.cancel')}
       >
         <p style={{ marginBottom: 16 }}>
-          {t('role.currentRole')}: <strong>{user?.role === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student')}</strong>
+          {t('role.currentRole')}:{' '}
+          <strong>
+            {user?.role === USER_ROLES.TEACHER ? t('role.teacher') : t('role.student')}
+          </strong>
         </p>
         <Select
           style={{ width: '100%' }}
@@ -345,3 +366,5 @@ const StudentLayout = () => {
 };
 
 export default StudentLayout;
+
+

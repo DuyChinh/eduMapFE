@@ -19,8 +19,10 @@ import {
   Card,
   Col,
   Empty,
+  Input,
   Progress,
   Row,
+  Select,
   Space,
   Spin,
   Statistic,
@@ -89,6 +91,20 @@ const ExamDetailNew = () => {
   const [scoreDistributionLoading, setScoreDistributionLoading] =
     useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [showAllAttempts, setShowAllAttempts] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchName, setSearchName] = useState("");
+  // Pagination states
+  const [submissionsPagination, setSubmissionsPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+  });
+  const [leaderboardPagination, setLeaderboardPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+  });
 
   useEffect(() => {
     fetchExamDetail();
@@ -120,11 +136,18 @@ const ExamDetailNew = () => {
     }
   };
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = async (page = 1, limit = 20) => {
     setLeaderboardLoading(true);
     try {
-      const response = await examStatsService.getExamLeaderboard(examId);
+      const response = await examStatsService.getExamLeaderboard(examId, { page, limit });
       setLeaderboard(response.data || response || []);
+      if (response.pagination) {
+        setLeaderboardPagination({
+          current: response.pagination.page,
+          pageSize: response.pagination.limit,
+          total: response.pagination.total,
+        });
+      }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       message.error(t("exams.leaderboard.fetchFailed"));
@@ -133,11 +156,26 @@ const ExamDetailNew = () => {
     }
   };
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = async (page = 1, limit = 20, filters = {}) => {
     setSubmissionsLoading(true);
     try {
-      const response = await examStatsService.getStudentSubmissions(examId);
-      setSubmissions(response.data || response || []);
+      const params = {
+        all: showAllAttempts ? "true" : "false",
+        page,
+        limit,
+        ...(filters.status && filters.status !== "all" ? { status: filters.status } : {}),
+        ...(filters.search ? { search: filters.search } : {}),
+      };
+      const response = await examStatsService.getStudentSubmissions(examId, params);
+      const data = response.data || response || [];
+      setSubmissions(data);
+      if (response.pagination) {
+        setSubmissionsPagination({
+          current: response.pagination.page,
+          pageSize: response.pagination.limit,
+          total: response.pagination.total,
+        });
+      }
     } catch (err) {
       console.error("Error fetching submissions:", err);
       message.error(t("exams.submissions.fetchFailed"));
@@ -145,6 +183,7 @@ const ExamDetailNew = () => {
       setSubmissionsLoading(false);
     }
   };
+
 
   const fetchScoreDistribution = async () => {
     setScoreDistributionLoading(true);
@@ -168,10 +207,14 @@ const ExamDetailNew = () => {
       if (scoreDistribution.length === 0) {
         fetchScoreDistribution();
       }
-    } else if (key === "leaderboard" && leaderboard.length === 0) {
-      fetchLeaderboard();
-    } else if (key === "students" && submissions.length === 0) {
-      fetchSubmissions();
+    } else if (key === "leaderboard") {
+      fetchLeaderboard(leaderboardPagination.current, leaderboardPagination.pageSize);
+    } else if (key === "students") {
+      fetchSubmissions(
+        submissionsPagination.current,
+        submissionsPagination.pageSize,
+        { status: statusFilter, search: searchName }
+      );
     }
   };
 
@@ -233,6 +276,33 @@ const ExamDetailNew = () => {
       key: "rank",
       width: 80,
       render: (rank) => {
+        if (rank === 1) {
+          return (
+            <img 
+              src="/1st-medal.png" 
+              alt="1st Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
+        if (rank === 2) {
+          return (
+            <img 
+              src="/2nd-medal.png" 
+              alt="2nd Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
+        if (rank === 3) {
+          return (
+            <img 
+              src="/3rd-medal.png" 
+              alt="3rd Place" 
+              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            />
+          );
+        }
         const colors = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
         return (
           <Tag
@@ -323,6 +393,49 @@ const ExamDetailNew = () => {
       ),
     },
   ];
+
+  // Refetch submissions when filters change (with debounce for search)
+  useEffect(() => {
+    if (activeTab === "students") {
+      const timeoutId = setTimeout(() => {
+        setSubmissionsPagination((prev) => ({ ...prev, current: 1 }));
+        fetchSubmissions(1, submissionsPagination.pageSize, {
+          status: statusFilter,
+          search: searchName,
+        });
+      }, searchName ? 500 : 0); // Debounce search by 500ms
+
+      return () => clearTimeout(timeoutId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAllAttempts, statusFilter, searchName]);
+
+  // Handle pagination changes for submissions
+  const handleSubmissionsPaginationChange = (page, pageSize) => {
+    setSubmissionsPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize: pageSize,
+    }));
+    fetchSubmissions(page, pageSize, {
+      status: statusFilter,
+      search: searchName,
+    });
+  };
+
+  // Handle pagination changes for leaderboard
+  const handleLeaderboardPaginationChange = (page, pageSize) => {
+    setLeaderboardPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize: pageSize,
+    }));
+    fetchLeaderboard(page, pageSize);
+  };
+
+  const handleShowAllAttemptsToggle = () => {
+    setShowAllAttempts(!showAllAttempts);
+  };
 
   const submissionsColumns = [
     {
@@ -532,7 +645,8 @@ const ExamDetailNew = () => {
             key: "overview",
             label: (
               <span>
-                <InfoCircleOutlined /> {t("exams.tabs.overview")}
+                <img src="/overview.png" alt="Overview" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.overview")}
               </span>
             ),
             children: (
@@ -717,7 +831,7 @@ const ExamDetailNew = () => {
                       <Statistic
                         title={t("exams.stats.totalQuestions")}
                         value={examData.questions?.length || 0}
-                        prefix={<FileTextOutlined />}
+                        prefix={<img src="/question.png" alt="Questions" style={{ width: 20, height: 20 }} />}
                       />
                     </Card>
                     <Card>
@@ -736,7 +850,7 @@ const ExamDetailNew = () => {
                             : 0
                         }
                         suffix={`/ ${examData.totalMarks}`}
-                        prefix={<TrophyOutlined />}
+                        prefix={<img src="/leaderboard.png" alt="Trophy" style={{ width: 20, height: 20 }} />}
                       />
                     </Card>
                   </Space>
@@ -748,7 +862,8 @@ const ExamDetailNew = () => {
             key: "statistics",
             label: (
               <span>
-                <BarChartOutlined /> {t("exams.tabs.statistics")}
+                <img src="/statistic.png" alt="Statistics" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.statistics")}
               </span>
             ),
             children: (
@@ -872,7 +987,8 @@ const ExamDetailNew = () => {
             key: "leaderboard",
             label: (
               <span>
-                <TrophyOutlined /> {t("exams.tabs.leaderboard")}
+                <img src="/leaderboard.png" alt="Leaderboard" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.leaderboard")}
               </span>
             ),
             children: (
@@ -894,7 +1010,18 @@ const ExamDetailNew = () => {
                         ? `leaderboard-${studentId}-${rank}`
                         : `leaderboard-${Math.random()}`;
                     }}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{
+                      current: leaderboardPagination.current,
+                      pageSize: leaderboardPagination.pageSize,
+                      total: leaderboardPagination.total,
+                      showSizeChanger: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.leaderboard.items") || "items"}`,
+                      pageSizeOptions: ["10", "20", "50", "100"],
+                      defaultPageSize: 20,
+                      onChange: handleLeaderboardPaginationChange,
+                      onShowSizeChange: handleLeaderboardPaginationChange,
+                    }}
                     scroll={{ x: 800 }}
                     locale={{ emptyText: t("exams.leaderboard.noData") }}
                   />
@@ -906,11 +1033,43 @@ const ExamDetailNew = () => {
             key: "students",
             label: (
               <span>
-                <TeamOutlined /> {t("exams.tabs.students")}
+                <img src="/students.png" alt="Students" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+                {t("exams.tabs.students")}
               </span>
             ),
             children: (
               <Card>
+                <Space direction="vertical" size="middle" style={{ width: "100%", marginBottom: 16 }}>
+                  <Space wrap>
+                    <Button
+                      type={showAllAttempts ? "default" : "primary"}
+                      onClick={handleShowAllAttemptsToggle}
+                    >
+                      {showAllAttempts
+                        ? t("exams.submissions.showLatestOnly")
+                        : t("exams.submissions.showAllAttempts")}
+                    </Button>
+                    <Select
+                      value={statusFilter}
+                      onChange={setStatusFilter}
+                      style={{ width: 200 }}
+                      placeholder={t("exams.submissions.filterByStatus")}
+                    >
+                      <Select.Option value="all">{t("exams.submissions.allStatuses")}</Select.Option>
+                      <Select.Option value="graded">{t("exams.submissions.graded")}</Select.Option>
+                      <Select.Option value="in_progress">{t("exams.submissions.inProgress")}</Select.Option>
+                      <Select.Option value="late">{t("exams.submissions.late")}</Select.Option>
+                      <Select.Option value="submitted">{t("exams.submissions.submitted")}</Select.Option>
+                    </Select>
+                    <Input
+                      placeholder={t("exams.submissions.searchPlaceholder")}
+                      value={searchName}
+                      onChange={(e) => setSearchName(e.target.value)}
+                      allowClear
+                      style={{ width: 250 }}
+                    />
+                  </Space>
+                </Space>
                 {submissionsLoading ? (
                   <div style={{ textAlign: "center", padding: "50px" }}>
                     <Spin />
@@ -942,7 +1101,18 @@ const ExamDetailNew = () => {
                       }
                       return "";
                     }}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{
+                      current: submissionsPagination.current,
+                      pageSize: submissionsPagination.pageSize,
+                      total: submissionsPagination.total,
+                      showSizeChanger: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.submissions.items") || "items"}`,
+                      pageSizeOptions: ["10", "20", "50", "100"],
+                      defaultPageSize: 20,
+                      onChange: handleSubmissionsPaginationChange,
+                      onShowSizeChange: handleSubmissionsPaginationChange,
+                    }}
                     scroll={{ x: 1000 }}
                     locale={{ emptyText: t("exams.submissions.noData") }}
                   />

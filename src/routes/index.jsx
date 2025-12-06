@@ -46,6 +46,7 @@ import MindmapTrash from '../pages/mindmap/MindmapTrash';
 
 // Public Pages
 import PublicTakeExam from '../pages/public/PublicTakeExam';
+import Profile from '../pages/Profile';
 
 // Components
 import ProtectedRoute from '../components/common/ProtectedRoute';
@@ -97,6 +98,7 @@ const AppRoutes = () => {
         }
       >
         <Route path="dashboard" element={<TeacherDashboard />} />
+        <Route path="profile" element={<Profile />} />
         <Route path="questions" element={<Questions />} />
         <Route path="questions/create" element={<CreateQuestion />} />
         <Route path="questions/edit/:questionId" element={<EditQuestion />} />
@@ -127,6 +129,7 @@ const AppRoutes = () => {
         }
       >
         <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="profile" element={<Profile />} />
         <Route path="classes" element={<StudentClasses />} />
         <Route path="classes/:classId" element={<StudentClassDetail />} />
         <Route path="results" element={<ExamResults />} />

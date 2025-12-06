@@ -275,7 +275,7 @@ const ExamResults = () => {
       key: 'history',
       label: (
         <Space>
-          <HistoryOutlined />
+          <img src="/exam-results.png" alt="History" style={{ width: 16, height: 16 }} />
           {t('exams.examHistory')}
         </Space>
       ),
@@ -345,7 +345,7 @@ const ExamResults = () => {
       key: 'statistics',
       label: (
         <Space>
-          <BarChartOutlined />
+          <img src="/statistic.png" alt="Statistics" style={{ width: 16, height: 16 }} />
           {t('exams.tabs.statistics')}
         </Space>
       ),
@@ -357,7 +357,7 @@ const ExamResults = () => {
                 <Statistic
                   title={t('exams.stats.totalSubmissions')}
                   value={overallStats?.totalExams || 0}
-                  prefix={<CheckCircleOutlined />}
+                  prefix={<img src="/exam-results.png" alt="Submissions" style={{ width: 20, height: 20 }} />}
                   valueStyle={{ color: '#1890ff' }}
                 />
               </Card>
@@ -369,7 +369,7 @@ const ExamResults = () => {
                   value={overallStats?.averageScore || 0}
                   precision={1}
                   suffix="%"
-                  prefix={<BarChartOutlined />}
+                  prefix={<img src="/statistic.png" alt="Average" style={{ width: 20, height: 20 }} />}
                   valueStyle={{ color: getScoreColor(overallStats?.averageScore || 0) }}
                 />
               </Card>
@@ -391,7 +391,7 @@ const ExamResults = () => {
                   value={overallStats?.passRate || 0}
                   precision={1}
                   suffix="%"
-                  prefix={<TrophyOutlined />}
+                  prefix={<img src="/leaderboard.png" alt="Pass Rate" style={{ width: 20, height: 20 }} />}
                   valueStyle={{ color: '#52c41a' }}
                 />
               </Card>
