@@ -12,10 +12,10 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
     if (!subjectId || !Array.isArray(subjects)) return subjectId;
     const subject = subjects.find(s => (s._id || s.id) === subjectId);
     if (!subject) return subjectId;
-    
+
     // Get current language
     const currentLang = localStorage.getItem('language') || 'vi';
-    
+
     // Return appropriate name based on language
     switch (currentLang) {
       case 'en':
@@ -42,10 +42,10 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
 
   const renderMathContent = (content) => {
     if (!content) return '';
-    
+
     // Convert to string if not already
     const contentStr = typeof content === 'string' ? content : String(content);
-    
+
     // Split by lines and process each line separately
     const lines = contentStr.split('\n');
     return (
@@ -55,17 +55,17 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           if (!line.trim()) {
             return <br key={index} />;
           }
-          
+
           // Check if line contains LaTeX commands
           const hasLatex = line.includes('\\') || line.includes('^') || line.includes('_');
           const hasDollarSigns = line.includes('$') || line.includes('\\(');
-          
+
           if (hasLatex && !hasDollarSigns) {
             // Mixed content - need to parse and render properly
             // Split by LaTeX patterns and render each part
             const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -88,7 +88,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           } else if (hasDollarSigns) {
             // Already has dollar signs, render as is
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -99,7 +99,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           } else {
             // Plain text, render as is with preserved formatting
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -175,7 +175,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
       return (
         <div>
           <Text strong>{t('questions.correctAnswer')}: </Text>
-          <Paragraph style={{ 
+          <Paragraph style={{
             marginTop: '8px',
             wordWrap: 'break-word',
             overflowWrap: 'break-word',
@@ -198,28 +198,58 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           <Space direction="vertical" style={{ width: '100%' }}>
             {questionData.choices.map((choice, index) => {
               // Handle both object format {key, text} and string format
-              const choiceText = typeof choice === 'string' 
-                ? choice 
-                : (choice?.text || choice?.key || `${t('questions.choice')} ${index + 1}`);
-              const choiceKey = typeof choice === 'object' && choice?.key 
-                ? choice.key 
-                : String.fromCharCode(65 + index); // A, B, C, ...
-              
+              // Handle both object format {key, text} and string format
+              let choiceText = '';
+              let choiceKey = String.fromCharCode(65 + index); // Default key A, B, C...
+
+              if (typeof choice === 'string') {
+                choiceText = choice;
+              } else if (typeof choice === 'object' && choice !== null) {
+                choiceText = choice.text || '';
+                if (choice.key) {
+                  choiceKey = choice.key;
+                }
+              }
+
+              if (!choiceText && !(typeof choice === 'object' && choice?.image)) {
+                choiceText = `${t('questions.choice')} ${index + 1}`;
+              }
+
               return (
-                <Radio key={index} value={index} style={{ 
+                <Radio key={index} value={index} style={{
                   width: '100%',
                   wordWrap: 'break-word',
                   overflowWrap: 'break-word',
                   whiteSpace: 'pre-wrap',
                   display: 'flex',
-                  alignItems: 'flex-start'
+                  alignItems: 'center', // Center vertically as per user preference/revert
+                  marginBottom: '8px'
                 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '4px' }}>
-                    <Text strong style={{ whiteSpace: 'nowrap' }}>{choiceKey}.</Text>
-                    <span style={{ flex: 1 }}>{renderMathContent(choiceText)}</span>
+                  <span style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '4px' }}>
+                      <Text strong style={{ whiteSpace: 'nowrap' }}>{choiceKey}.</Text>
+                      <span style={{ flex: 1 }}>{renderMathContent(choiceText)}</span>
+                    </span>
+
+                    {choice.image && (
+                      <div style={{ marginTop: '8px', marginLeft: '20px' }}>
+                        <img
+                          src={choice.image}
+                          alt={`Choice ${choiceKey}`}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '200px',
+                            objectFit: 'contain',
+                            borderRadius: '4px',
+                            border: '1px solid #f0f0f0'
+                          }}
+                        />
+                      </div>
+                    )}
                   </span>
                 </Radio>
               );
+
             })}
           </Space>
         </Radio.Group>
@@ -257,7 +287,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
         {/* Question Text */}
         <div style={{ marginBottom: '16px' }}>
           <Text strong>{t('questions.question')}:</Text>
-          <Paragraph style={{ 
+          <Paragraph style={{
             marginTop: '8px',
             wordWrap: 'break-word',
             overflowWrap: 'break-word',
@@ -268,34 +298,71 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           </Paragraph>
         </div>
 
-      {/* Choices */}
-      {renderChoices()}
-
-      {/* Explanation */}
-      {questionData.explanation && (
-        <>
-          <Divider />
-          <div>
-            <Text strong>{t('questions.explanation')}:</Text>
-            <Paragraph style={{ 
-              marginTop: '8px',
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'inherit'
-            }}>
-              {renderMathContent(questionData.explanation)}
-            </Paragraph>
+        {/* Question Images */}
+        {questionData.images && questionData.images.length > 0 && (
+          <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+            {questionData.images.map((imgUrl, index) => (
+              <img
+                key={index}
+                src={imgUrl}
+                alt={`Question Illustration ${index + 1}`}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '400px',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  border: '1px solid #f0f0f0'
+                }}
+              />
+            ))}
           </div>
-        </>
-      )}
+        )}
 
-      {/* Empty State */}
-      {!questionData.text && !questionData.answer && !questionData.explanation && (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
-          <Text type="secondary">{t('questions.previewEmpty')}</Text>
-        </div>
-      )}
+        {/* Legacy single Image support (fallback if images array is empty) */}
+        {questionData.image && (!questionData.images || questionData.images.length === 0) && (
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={questionData.image}
+              alt="Question Illustration"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '400px',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                border: '1px solid #f0f0f0'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Choices */}
+        {renderChoices()}
+
+        {/* Explanation */}
+        {questionData.explanation && (
+          <>
+            <Divider />
+            <div>
+              <Text strong>{t('questions.explanation')}:</Text>
+              <Paragraph style={{
+                marginTop: '8px',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'inherit'
+              }}>
+                {renderMathContent(questionData.explanation)}
+              </Paragraph>
+            </div>
+          </>
+        )}
+
+        {/* Empty State */}
+        {!questionData.text && !questionData.answer && !questionData.explanation && (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+            <Text type="secondary">{t('questions.previewEmpty')}</Text>
+          </div>
+        )}
       </div>
     </MathJaxContext>
   );
