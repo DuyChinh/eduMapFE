@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark } from 'react-icons/io5';
+import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoStopCircleOutline, IoArrowUp, IoAddOutline, IoMic, IoMicOutline, IoLanguage } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
 import { FiEdit } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
@@ -40,6 +40,12 @@ const ChatWidget = () => {
     const [isRenamingSessionId, setIsRenamingSessionId] = useState(null);
     const [renameTitle, setRenameTitle] = useState('');
     const [copiedMessageId, setCopiedMessageId] = useState(null);
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editText, setEditText] = useState('');
+    const [abortController, setAbortController] = useState(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [voiceLang, setVoiceLang] = useState('vi-VN');
+    const [showLangMenu, setShowLangMenu] = useState(false);
 
     const [selectedFiles, setSelectedFiles] = useState([]);
 
@@ -47,10 +53,67 @@ const ChatWidget = () => {
     const menuRef = useRef(null);
     const renameInputRef = useRef(null);
     const fileInputRef = useRef(null);
+    const recognitionRef = useRef(null);
+    const langMenuRef = useRef(null);
+
+    const supportedLanguages = [
+        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
+        { code: 'en-US', name: 'English', flag: '🇺🇸' },
+        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
+        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
+        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
+    ];
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    // Initialize Speech Recognition
+    useEffect(() => {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognitionInstance = new SpeechRecognition();
+            recognitionInstance.continuous = false;
+            recognitionInstance.interimResults = true;
+            recognitionInstance.lang = voiceLang;
+
+            recognitionInstance.onresult = (event) => {
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    }
+                }
+
+                if (finalTranscript) {
+                    setInputText(prev => prev + finalTranscript);
+                }
+            };
+
+            recognitionInstance.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                setIsRecording(false);
+            };
+
+            recognitionInstance.onend = () => {
+                setIsRecording(false);
+            };
+
+            recognitionRef.current = recognitionInstance;
+        }
+
+        return () => {
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (error) {
+                    console.log('Recognition already stopped');
+                }
+            }
+        };
+    }, [voiceLang]);
 
     useEffect(() => {
         scrollToBottom();
@@ -236,8 +299,12 @@ const ChatWidget = () => {
         setSelectedFiles([]);
         setIsLoading(true);
 
+        // Create abort controller for this request
+        const controller = new AbortController();
+        setAbortController(controller);
+
         try {
-            const response = await chatApi.sendMessage(inputText, currentSessionId, filesToSend);
+            const response = await chatApi.sendMessage(inputText, currentSessionId, filesToSend, controller.signal);
 
             if (response.data.sessionId && response.data.sessionId !== currentSessionId) {
                 setCurrentSessionId(response.data.sessionId);
@@ -251,16 +318,51 @@ const ChatWidget = () => {
             };
             setMessages(prev => [...prev, botMessage]);
         } catch (error) {
-            console.error('Failed to send message:', error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                text: 'Sorry, I encountered an error. Please try again later.',
-                sender: 'bot',
-                isError: true
-            };
-            setMessages(prev => [...prev, errorMessage]);
+            if (error.name === 'CanceledError' || error.message === 'canceled') {
+                console.log('Request was cancelled by user');
+                // Don't show error message for user-cancelled requests
+            } else {
+                console.error('Failed to send message:', error);
+                const errorMessage = {
+                    id: Date.now() + 1,
+                    text: 'Sorry, I encountered an error. Please try again later.',
+                    sender: 'bot',
+                    isError: true
+                };
+                setMessages(prev => [...prev, errorMessage]);
+            }
         } finally {
             setIsLoading(false);
+            setAbortController(null);
+        }
+    };
+
+    const handleStopGeneration = () => {
+        if (abortController) {
+            abortController.abort();
+            setAbortController(null);
+            setIsLoading(false);
+        }
+    };
+
+    const handleVoiceInput = () => {
+        if (!recognitionRef.current) {
+            alert('Speech recognition is not supported in your browser.');
+            return;
+        }
+
+        if (isRecording) {
+            // Stop recording
+            recognitionRef.current.stop();
+            setIsRecording(false);
+        } else {
+            // Start recording
+            try {
+                recognitionRef.current.start();
+                setIsRecording(true);
+            } catch (error) {
+                console.error('Failed to start speech recognition:', error);
+            }
         }
     };
 
@@ -301,6 +403,77 @@ const ChatWidget = () => {
                 console.error('Fallback copy failed:', err);
             }
             document.body.removeChild(textArea);
+        }
+    };
+
+    const handleEditMessage = (messageId, text) => {
+        setEditingMessageId(messageId);
+        setEditText(text);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingMessageId(null);
+        setEditText('');
+    };
+
+    const handleSubmitEdit = async (messageId) => {
+        if (!editText.trim()) return;
+        
+        // 1. Immediately show user message and close edit mode
+        const tempUserMessage = {
+            id: Date.now(),
+            text: editText,
+            sender: 'user',
+            attachments: []
+        };
+        
+        setMessages(prev => [...prev, tempUserMessage]);
+        setEditingMessageId(null);
+        const messageToSend = editText;
+        setEditText('');
+        
+        // 2. Show loading indicator
+        setIsLoading(true);
+        
+        try {
+            const response = await chatApi.editMessage(messageId, messageToSend);
+            
+            // 3. Update the temp user message with real ID and add bot response
+            setMessages(prev => {
+                const updatedMessages = [...prev];
+                const lastUserIndex = updatedMessages.findIndex(m => m.id === tempUserMessage.id);
+                if (lastUserIndex !== -1) {
+                    updatedMessages[lastUserIndex] = {
+                        id: response.data.userMessage._id,
+                        text: response.data.userMessage.message,
+                        sender: 'user',
+                        attachments: response.data.userMessage.attachments || []
+                    };
+                }
+                
+                // Add bot response
+                updatedMessages.push({
+                    id: response.data.botMessage._id,
+                    text: response.data.botMessage.message,
+                    sender: 'bot'
+                });
+                
+                return updatedMessages;
+            });
+            
+            // Refresh sessions to update last message
+            if (isExpanded) fetchSessions();
+        } catch (error) {
+            console.error('Failed to edit message:', error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                text: 'Sorry, I encountered an error while editing. Please try again.',
+                sender: 'bot',
+                isError: true
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -440,22 +613,98 @@ const ChatWidget = () => {
                         </div>
 
                         <div className="chat-messages">
-                            {messages.map((msg) => (
+                            {messages.length === 1 && messages[0].sender === 'bot' && (
+                                <div className={`welcome-screen ${isExpanded ? 'expanded' : 'compact'}`}>
+                                    <img src="/chatbothello.gif" alt="AI Assistant" className="welcome-icon" />
+                                    <h1 className="welcome-title">Hello! How can I help you today?</h1>
+                                    <div className="suggestion-chips">
+                                        {isExpanded ? (
+                                            <>
+                                                <button 
+                                                    className="suggestion-chip"
+                                                    onClick={() => setInputText("Help me understand a concept")}
+                                                >
+                                                    <span className="chip-icon">💡</span>
+                                                    <span>Explain a concept</span>
+                                                </button>
+                                                <button 
+                                                    className="suggestion-chip"
+                                                    onClick={() => setInputText("Help me solve this problem:")}
+                                                >
+                                                    <span className="chip-icon">🎯</span>
+                                                    <span>Solve a problem</span>
+                                                </button>
+                                                <button 
+                                                    className="suggestion-chip"
+                                                    onClick={() => setInputText("Give me ideas for")}
+                                                >
+                                                    <span className="chip-icon">🚀</span>
+                                                    <span>Brainstorm ideas</span>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button 
+                                                className="suggestion-chip"
+                                                onClick={() => setInputText("Help me solve this problem:")}
+                                            >
+                                                <span className="chip-icon">🎯</span>
+                                                <span>Solve a problem</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {messages.length > 1 && messages.map((msg, index) => (
                                 <div
                                     key={msg.id}
-                                    className={`message ${msg.sender} ${msg.isError ? 'error' : ''}`}
+                                    className={`message ${msg.sender} ${msg.isError ? 'error' : ''} ${editingMessageId === msg.id ? 'editing' : ''}`}
                                 >
                                     {renderAttachments(msg)}
                                     {msg.text && (
-                                        <div className="message-text">
-                                            {msg.sender === 'bot' ? (
-                                                <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                        <>
+                                            {editingMessageId === msg.id ? (
+                                                <div className="edit-message-container">
+                                                    <textarea
+                                                        className="edit-message-input"
+                                                        value={editText}
+                                                        onChange={(e) => setEditText(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                handleSubmitEdit(msg.id);
+                                                            }
+                                                        }}
+                                                        autoFocus
+                                                        rows={3}
+                                                    />
+                                                    <div className="edit-message-actions">
+                                                        <button
+                                                            className="edit-cancel-btn"
+                                                            onClick={handleCancelEdit}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            className="edit-submit-btn"
+                                                            onClick={() => handleSubmitEdit(msg.id)}
+                                                            disabled={!editText.trim()}
+                                                        >
+                                                            Update
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             ) : (
-                                                msg.text
+                                                <div className="message-text">
+                                                    {msg.sender === 'bot' ? (
+                                                        <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                    ) : (
+                                                        msg.text
+                                                    )}
+                                                </div>
                                             )}
-                                        </div>
+                                        </>
                                     )}
-                                    {msg.sender === 'bot' && msg.text && (
+                                    {msg.sender === 'bot' && msg.text && !editingMessageId && (
                                         <button
                                             className="copy-message-btn"
                                             onClick={() => handleCopyMessage(msg.text, msg.id)}
@@ -467,6 +716,28 @@ const ChatWidget = () => {
                                                 <IoCopyOutline size={14} />
                                             )}
                                         </button>
+                                    )}
+                                    {msg.sender === 'user' && msg.text && !editingMessageId && (
+                                        <div className="user-message-actions">
+                                            <button
+                                                className="user-message-action-btn"
+                                                onClick={() => handleCopyMessage(msg.text, msg.id)}
+                                                title="Copy message"
+                                            >
+                                                {copiedMessageId === msg.id ? (
+                                                    <IoCheckmark size={14} />
+                                                ) : (
+                                                    <IoCopyOutline size={14} />
+                                                )}
+                                            </button>
+                                            <button
+                                                className="user-message-action-btn"
+                                                onClick={() => handleEditMessage(msg.id, msg.text)}
+                                                title="Edit message"
+                                            >
+                                                <IoPencil size={14} />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -481,10 +752,37 @@ const ChatWidget = () => {
                         </div>
 
                         <div className="chat-input-container">
-                            <form className="chat-input-area" onSubmit={handleSendMessage}>
+                            <form className="chat-input-area" onSubmit={isLoading ? (e) => { e.preventDefault(); handleStopGeneration(); } : handleSendMessage}>
                                 <button type="button" className="attach-btn" onClick={() => fileInputRef.current?.click()}>
                                     <IoAttach size={24} />
                                 </button>
+                                <div className="lang-selector-wrapper" ref={langMenuRef}>
+                                    <button 
+                                        type="button" 
+                                        className="lang-btn" 
+                                        onClick={() => setShowLangMenu(!showLangMenu)}
+                                        title="Change voice language"
+                                    >
+                                        {supportedLanguages.find(l => l.code === voiceLang)?.flag || '🌐'}
+                                    </button>
+                                    {showLangMenu && (
+                                        <div className="lang-menu">
+                                            {supportedLanguages.map(lang => (
+                                                <button
+                                                    key={lang.code}
+                                                    className={`lang-menu-item ${voiceLang === lang.code ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        setVoiceLang(lang.code);
+                                                        setShowLangMenu(false);
+                                                    }}
+                                                >
+                                                    <span className="lang-flag">{lang.flag}</span>
+                                                    <span className="lang-name">{lang.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="chat-input-wrapper">
                                     {selectedFiles.length > 0 && (
                                         <div className="file-preview-container">
@@ -520,9 +818,23 @@ const ChatWidget = () => {
                                     accept="image/*,application/pdf"
                                     multiple
                                 />
-                                <button type="submit" className="send-btn" disabled={isLoading || (!inputText.trim() && selectedFiles.length === 0)}>
-                                    <IoSend />
-                                </button>
+                                {isLoading || (inputText.trim() || selectedFiles.length > 0) && !isRecording ? (
+                                    <button 
+                                        type="submit" 
+                                        className="send-btn" 
+                                        disabled={!isLoading && (!inputText.trim() && selectedFiles.length === 0)}
+                                    >
+                                        {isLoading ? <IoStopCircleOutline /> : <IoArrowUp />}
+                                    </button>
+                                ) : (
+                                    <button 
+                                        type="button" 
+                                        className={`send-btn voice-btn ${isRecording ? 'recording' : ''}`}
+                                        onClick={handleVoiceInput}
+                                    >
+                                        <IoMic />
+                                    </button>
+                                )}
                             </form>
                         </div>
                     </div>
