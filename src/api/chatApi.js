@@ -39,6 +39,10 @@ const chatApi = {
     },
     editMessage: (messageId, message) => {
         return axiosClient.put(`/ai/message/${messageId}`, { message });
+    },
+    searchSessions: (query) => {
+        const url = '/ai/sessions/search';
+        return axiosClient.get(url, { params: { q: query } });
     }
 };
 
