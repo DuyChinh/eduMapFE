@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark } from 'react-icons/io5';
+import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoImage, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoStopCircleOutline, IoArrowUp, IoAddOutline, IoMic, IoMicOutline, IoLanguage } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
 import { FiEdit } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import MathJaxContent from '../common/MathJaxContent';
 import chatApi from '../../api/chatApi';
 import './ChatWidget.css';
@@ -21,6 +22,16 @@ const ChatWidget = () => {
     if (isExamPage) {
         return null;
     }
+
+    // Speech Recognition Hook
+    const {
+        transcript,
+        listening,
+        resetTranscript,
+        browserSupportsSpeechRecognition,
+        isMicrophoneAvailable
+    } = useSpeechRecognition();
+
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
@@ -40,17 +51,39 @@ const ChatWidget = () => {
     const [isRenamingSessionId, setIsRenamingSessionId] = useState(null);
     const [renameTitle, setRenameTitle] = useState('');
     const [copiedMessageId, setCopiedMessageId] = useState(null);
-
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editText, setEditText] = useState('');
+    const [abortController, setAbortController] = useState(null);
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const [voiceLang, setVoiceLang] = useState('vi-VN'); // Vietnamese as default
+    const [showLangMenu, setShowLangMenu] = useState(false);
+    const [loadingSessionId, setLoadingSessionId] = useState(null);
 
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
     const renameInputRef = useRef(null);
     const fileInputRef = useRef(null);
+    const imageInputRef = useRef(null);
+    const langMenuRef = useRef(null);
+
+    const supportedLanguages = [
+        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
+        { code: 'en-US', name: 'English', flag: '🇺🇸' },
+        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
+        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
+        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
+    ];
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    // Update input text when transcript changes
+    useEffect(() => {
+        if (transcript) {
+            setInputText(transcript);
+        }
+    }, [transcript]);
 
     useEffect(() => {
         scrollToBottom();
@@ -76,6 +109,9 @@ const ChatWidget = () => {
             }
             if (renameInputRef.current && !renameInputRef.current.contains(event.target)) {
                 // Optional: handle blur logic here if needed, but onBlur covers most cases
+            }
+            if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+                setShowLangMenu(false);
             }
         };
 
@@ -112,6 +148,7 @@ const ChatWidget = () => {
     const handleSessionClick = async (sessionId) => {
         if (isRenamingSessionId === sessionId) return;
         setCurrentSessionId(sessionId);
+        setLoadingSessionId(sessionId);
         try {
             const response = await chatApi.getSessionHistory(sessionId);
             const history = response.data.map(msg => ({
@@ -126,6 +163,8 @@ const ChatWidget = () => {
             }
         } catch (error) {
             console.error('Failed to load session history:', error);
+        } finally {
+            setLoadingSessionId(null);
         }
     };
 
@@ -195,6 +234,12 @@ const ChatWidget = () => {
         }
     };
 
+    const handleImageSelect = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSelectedFiles(prev => [...prev, ...Array.from(e.target.files)]);
+        }
+    };
+
     const handlePaste = (e) => {
         const items = e.clipboardData.items;
         const newFiles = [];
@@ -236,8 +281,12 @@ const ChatWidget = () => {
         setSelectedFiles([]);
         setIsLoading(true);
 
+        // Create abort controller for this request
+        const controller = new AbortController();
+        setAbortController(controller);
+
         try {
-            const response = await chatApi.sendMessage(inputText, currentSessionId, filesToSend);
+            const response = await chatApi.sendMessage(inputText, currentSessionId, filesToSend, controller.signal);
 
             if (response.data.sessionId && response.data.sessionId !== currentSessionId) {
                 setCurrentSessionId(response.data.sessionId);
@@ -251,16 +300,70 @@ const ChatWidget = () => {
             };
             setMessages(prev => [...prev, botMessage]);
         } catch (error) {
-            console.error('Failed to send message:', error);
-            const errorMessage = {
-                id: Date.now() + 1,
-                text: 'Sorry, I encountered an error. Please try again later.',
-                sender: 'bot',
-                isError: true
-            };
-            setMessages(prev => [...prev, errorMessage]);
+            if (error.name === 'CanceledError' || error.message === 'canceled') {
+                console.log('Request was cancelled by user');
+                // Don't show error message for user-cancelled requests
+            } else {
+                console.error('Failed to send message:', error);
+                const errorMessage = {
+                    id: Date.now() + 1,
+                    text: 'Sorry, I encountered an error. Please try again later.',
+                    sender: 'bot',
+                    isError: true
+                };
+                setMessages(prev => [...prev, errorMessage]);
+            }
         } finally {
             setIsLoading(false);
+            setAbortController(null);
+        }
+    };
+
+    const handleStopGeneration = () => {
+        if (abortController) {
+            abortController.abort();
+            setAbortController(null);
+            setIsLoading(false);
+        }
+    };
+
+    const handleVoiceInput = async () => {
+        if (!browserSupportsSpeechRecognition) {
+            alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+
+        if (listening) {
+            // Stop recording
+            try {
+                SpeechRecognition.stopListening();
+            } catch (error) {
+                console.error('Error stopping speech recognition:', error);
+            }
+        } else {
+            // Start recording with selected language - continuous mode
+            try {
+                // Request microphone permission first
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                resetTranscript();
+                await SpeechRecognition.startListening({ 
+                    continuous: true, // Không tự động tắt, người dùng tự ngắt
+                    language: voiceLang
+                });
+            } catch (error) {
+                console.error('Error starting speech recognition:', error);
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    alert('Microphone access denied. Please allow microphone access in your browser settings.');
+                } else if (error.name === 'NotFoundError') {
+                    alert('No microphone found. Please connect a microphone and try again.');
+                } else if (error.name === 'NotSupportedError') {
+                    alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+                } else {
+                    alert('Failed to start voice input. Please try again.');
+                }
+            }
         }
     };
 
@@ -301,6 +404,77 @@ const ChatWidget = () => {
                 console.error('Fallback copy failed:', err);
             }
             document.body.removeChild(textArea);
+        }
+    };
+
+    const handleEditMessage = (messageId, text) => {
+        setEditingMessageId(messageId);
+        setEditText(text);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingMessageId(null);
+        setEditText('');
+    };
+
+    const handleSubmitEdit = async (messageId) => {
+        if (!editText.trim()) return;
+        
+        // 1. Immediately show user message and close edit mode
+        const tempUserMessage = {
+            id: Date.now(),
+            text: editText,
+            sender: 'user',
+            attachments: []
+        };
+        
+        setMessages(prev => [...prev, tempUserMessage]);
+        setEditingMessageId(null);
+        const messageToSend = editText;
+        setEditText('');
+        
+        // 2. Show loading indicator
+        setIsLoading(true);
+        
+        try {
+            const response = await chatApi.editMessage(messageId, messageToSend);
+            
+            // 3. Update the temp user message with real ID and add bot response
+            setMessages(prev => {
+                const updatedMessages = [...prev];
+                const lastUserIndex = updatedMessages.findIndex(m => m.id === tempUserMessage.id);
+                if (lastUserIndex !== -1) {
+                    updatedMessages[lastUserIndex] = {
+                        id: response.data.userMessage._id,
+                        text: response.data.userMessage.message,
+                        sender: 'user',
+                        attachments: response.data.userMessage.attachments || []
+                    };
+                }
+                
+                // Add bot response
+                updatedMessages.push({
+                    id: response.data.botMessage._id,
+                    text: response.data.botMessage.message,
+                    sender: 'bot'
+                });
+                
+                return updatedMessages;
+            });
+            
+            // Refresh sessions to update last message
+            if (isExpanded) fetchSessions();
+        } catch (error) {
+            console.error('Failed to edit message:', error);
+            const errorMessage = {
+                id: Date.now() + 1,
+                text: 'Sorry, I encountered an error while editing. Please try again.',
+                sender: 'bot',
+                isError: true
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -351,10 +525,8 @@ const ChatWidget = () => {
                             </div>
                             <div className="session-list">
                                 {sessionsLoading && sessions.length === 0 && (
-                                    <div className="session-loading">
-                                        <div className="session-loading-item" />
-                                        <div className="session-loading-item" />
-                                        <div className="session-loading-item" />
+                                    <div className="session-loading-spinner">
+                                        <div className="spinner"></div>
                                     </div>
                                 )}
 
@@ -367,10 +539,15 @@ const ChatWidget = () => {
                                 {sessions.map(session => (
                                     <div
                                         key={session._id}
-                                        className={`session-item ${currentSessionId === session._id ? 'active' : ''}`}
+                                        className={`session-item ${currentSessionId === session._id ? 'active' : ''} ${loadingSessionId === session._id ? 'loading' : ''}`}
                                         onClick={() => handleSessionClick(session._id)}
                                     >
-                                        {isRenamingSessionId === session._id ? (
+                                        {loadingSessionId === session._id ? (
+                                            <div className="session-item-loading">
+                                                <span className="session-title">{session.title || 'New Chat'}</span>
+                                                <div className="spinner-small"></div>
+                                            </div>
+                                        ) : isRenamingSessionId === session._id ? (
                                             <input
                                                 ref={renameInputRef}
                                                 type="text"
@@ -407,7 +584,7 @@ const ChatWidget = () => {
 
                                 {sessionsLoading && sessions.length > 0 && (
                                     <div className="session-loading-inline">
-                                        Loading...
+                                        <div className="spinner-small"></div>
                                     </div>
                                 )}
                             </div>
@@ -415,7 +592,7 @@ const ChatWidget = () => {
                     )}
 
                     <div className="chat-main">
-                        <div className="chat-header">
+                        <div className={`chat-header ${isExpanded ? 'expanded-header' : ''}`}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 {isExpanded && !showSidebar && (
                                     <button
@@ -440,22 +617,98 @@ const ChatWidget = () => {
                         </div>
 
                         <div className="chat-messages">
-                            {messages.map((msg) => (
+                            {messages.length === 1 && messages[0].sender === 'bot' && (
+                                <div className={`welcome-screen ${isExpanded ? 'expanded' : 'compact'}`}>
+                                    <img src="/chatbothello.gif" alt="AI Assistant" className="welcome-icon" />
+                                    <h1 className="welcome-title">Hello! How can I help you today?</h1>
+                                    <div className="suggestion-chips">
+                                        {isExpanded ? (
+                                            <>
+                                                <button 
+                                                    className="suggestion-chip"
+                                                    onClick={() => setInputText("Help me understand a concept")}
+                                                >
+                                                    <span className="chip-icon">💡</span>
+                                                    <span>Explain a concept</span>
+                                                </button>
+                                                <button 
+                                                    className="suggestion-chip"
+                                                    onClick={() => setInputText("Help me solve this problem:")}
+                                                >
+                                                    <span className="chip-icon">🎯</span>
+                                                    <span>Solve a problem</span>
+                                                </button>
+                                                <button 
+                                                    className="suggestion-chip"
+                                                    onClick={() => setInputText("Give me ideas for")}
+                                                >
+                                                    <span className="chip-icon">🚀</span>
+                                                    <span>Brainstorm ideas</span>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button 
+                                                className="suggestion-chip"
+                                                onClick={() => setInputText("Help me solve this problem:")}
+                                            >
+                                                <span className="chip-icon">🎯</span>
+                                                <span>Solve a problem</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {messages.length > 1 && messages.map((msg, index) => (
                                 <div
                                     key={msg.id}
-                                    className={`message ${msg.sender} ${msg.isError ? 'error' : ''}`}
+                                    className={`message ${msg.sender} ${msg.isError ? 'error' : ''} ${editingMessageId === msg.id ? 'editing' : ''}`}
                                 >
                                     {renderAttachments(msg)}
                                     {msg.text && (
-                                        <div className="message-text">
-                                            {msg.sender === 'bot' ? (
-                                                <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                        <>
+                                            {editingMessageId === msg.id ? (
+                                                <div className="edit-message-container">
+                                                    <textarea
+                                                        className="edit-message-input"
+                                                        value={editText}
+                                                        onChange={(e) => setEditText(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                handleSubmitEdit(msg.id);
+                                                            }
+                                                        }}
+                                                        autoFocus
+                                                        rows={3}
+                                                    />
+                                                    <div className="edit-message-actions">
+                                                        <button
+                                                            className="edit-cancel-btn"
+                                                            onClick={handleCancelEdit}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            className="edit-submit-btn"
+                                                            onClick={() => handleSubmitEdit(msg.id)}
+                                                            disabled={!editText.trim()}
+                                                        >
+                                                            Update
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             ) : (
-                                                msg.text
+                                                <div className="message-text">
+                                                    {msg.sender === 'bot' ? (
+                                                        <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                    ) : (
+                                                        msg.text
+                                                    )}
+                                                </div>
                                             )}
-                                        </div>
+                                        </>
                                     )}
-                                    {msg.sender === 'bot' && msg.text && (
+                                    {msg.sender === 'bot' && msg.text && !editingMessageId && (
                                         <button
                                             className="copy-message-btn"
                                             onClick={() => handleCopyMessage(msg.text, msg.id)}
@@ -467,6 +720,28 @@ const ChatWidget = () => {
                                                 <IoCopyOutline size={14} />
                                             )}
                                         </button>
+                                    )}
+                                    {msg.sender === 'user' && msg.text && !editingMessageId && (
+                                        <div className="user-message-actions">
+                                            <button
+                                                className="user-message-action-btn"
+                                                onClick={() => handleCopyMessage(msg.text, msg.id)}
+                                                title="Copy message"
+                                            >
+                                                {copiedMessageId === msg.id ? (
+                                                    <IoCheckmark size={14} />
+                                                ) : (
+                                                    <IoCopyOutline size={14} />
+                                                )}
+                                            </button>
+                                            <button
+                                                className="user-message-action-btn"
+                                                onClick={() => handleEditMessage(msg.id, msg.text)}
+                                                title="Edit message"
+                                            >
+                                                <IoPencil size={14} />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -481,9 +756,12 @@ const ChatWidget = () => {
                         </div>
 
                         <div className="chat-input-container">
-                            <form className="chat-input-area" onSubmit={handleSendMessage}>
-                                <button type="button" className="attach-btn" onClick={() => fileInputRef.current?.click()}>
+                            <form className="chat-input-area" onSubmit={isLoading ? (e) => { e.preventDefault(); handleStopGeneration(); } : handleSendMessage}>
+                                <button type="button" className="attach-btn" onClick={() => fileInputRef.current?.click()} title="Attach files">
                                     <IoAttach size={24} />
+                                </button>
+                                <button type="button" className="attach-btn" onClick={() => imageInputRef.current?.click()} title="Upload images">
+                                    <IoImage size={24} />
                                 </button>
                                 <div className="chat-input-wrapper">
                                     {selectedFiles.length > 0 && (
@@ -520,9 +798,72 @@ const ChatWidget = () => {
                                     accept="image/*,application/pdf"
                                     multiple
                                 />
-                                <button type="submit" className="send-btn" disabled={isLoading || (!inputText.trim() && selectedFiles.length === 0)}>
-                                    <IoSend />
-                                </button>
+                                <input
+                                    type="file"
+                                    ref={imageInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleImageSelect}
+                                    accept="image/*"
+                                    multiple
+                                />
+                                {isLoading || (inputText.trim() || selectedFiles.length > 0) && !listening ? (
+                                    <button 
+                                        type="submit" 
+                                        className="send-btn" 
+                                        disabled={!isLoading && (!inputText.trim() && selectedFiles.length === 0)}
+                                    >
+                                        {isLoading ? <IoStopCircleOutline /> : <IoArrowUp />}
+                                    </button>
+                                ) : browserSupportsSpeechRecognition ? (
+                                    <>
+                                        {!inputText.trim() && !selectedFiles.length && (
+                                            <div className="lang-selector-wrapper" ref={langMenuRef}>
+                                                <button 
+                                                    type="button" 
+                                                    className="lang-btn" 
+                                                    onClick={() => setShowLangMenu(!showLangMenu)}
+                                                    title={`Voice language: ${supportedLanguages.find(l => l.code === voiceLang)?.name || 'Tiếng Việt'}`}
+                                                >
+                                                    {supportedLanguages.find(l => l.code === voiceLang)?.flag || '🇻🇳'}
+                                                </button>
+                                                {showLangMenu && (
+                                                    <div className="lang-menu">
+                                                        {supportedLanguages.map(lang => (
+                                                            <button
+                                                                key={lang.code}
+                                                                type="button"
+                                                                className={`lang-menu-item ${voiceLang === lang.code ? 'active' : ''}`}
+                                                                onClick={() => {
+                                                                    setVoiceLang(lang.code);
+                                                                    setShowLangMenu(false);
+                                                                }}
+                                                            >
+                                                                <span className="lang-flag">{lang.flag}</span>
+                                                                <span className="lang-name">{lang.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        <button 
+                                            type="button" 
+                                            className={`send-btn voice-btn ${listening ? 'recording' : ''}`}
+                                            onClick={handleVoiceInput}
+                                            title={`Voice input (${supportedLanguages.find(l => l.code === voiceLang)?.name || 'Tiếng Việt'})`}
+                                        >
+                                            <IoMic />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button 
+                                        type="submit" 
+                                        className="send-btn" 
+                                        disabled={!inputText.trim() && selectedFiles.length === 0}
+                                    >
+                                        <IoArrowUp />
+                                    </button>
+                                )}
                             </form>
                         </div>
                     </div>

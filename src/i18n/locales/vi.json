@@ -508,7 +508,18 @@
       "tf": "Đúng/Sai",
       "short": "Trả lời ngắn",
       "essay": "Tự luận"
-    }
+    },
+    "batchRename": "Đổi tên hàng loạt",
+    "batchRenameDesc": "Bạn đang chuẩn bị đổi tên {{count}} câu hỏi.",
+    "batchRenameFormat": "Định dạng: TênGốc-1, TênGốc-2, ...",
+    "enterBaseNamePlaceholder": "Nhập tên gốc (ví dụ: Toán)",
+    "renameSelected": "Đổi tên",
+    "renamePartialSuccess": "Đổi tên hoàn tất nhưng có lỗi",
+    "renameSummary": "{{success}} câu hỏi đổi tên thành công, {{failed}} thất bại.",
+    "enterBaseName": "Vui lòng nhập tên gốc",
+    "renameFailed": "Đổi tên thất bại",
+    "renameSelectedWithCount": "Đổi tên ({{count}})",
+    "deleteSelectedWithCount": "Xóa đã chọn ({{count}})"
   },
   "exams": {
     "title": "Quản lý đề thi",
@@ -956,4 +967,3 @@
     "studentAnswer": "Đáp án học sinh chọn"
   }
 }
-
