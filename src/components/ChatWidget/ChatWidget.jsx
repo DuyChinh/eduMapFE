@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoStopCircleOutline, IoArrowUp, IoAddOutline, IoMic, IoMicOutline, IoLanguage } from 'react-icons/io5';
+import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoImage, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoStopCircleOutline, IoArrowUp, IoAddOutline, IoMic, IoMicOutline, IoLanguage } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
 import { FiEdit } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import MathJaxContent from '../common/MathJaxContent';
 import chatApi from '../../api/chatApi';
 import './ChatWidget.css';
@@ -21,6 +22,16 @@ const ChatWidget = () => {
     if (isExamPage) {
         return null;
     }
+
+    // Speech Recognition Hook
+    const {
+        transcript,
+        listening,
+        resetTranscript,
+        browserSupportsSpeechRecognition,
+        isMicrophoneAvailable
+    } = useSpeechRecognition();
+
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
@@ -43,17 +54,16 @@ const ChatWidget = () => {
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editText, setEditText] = useState('');
     const [abortController, setAbortController] = useState(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const [voiceLang, setVoiceLang] = useState('vi-VN');
-    const [showLangMenu, setShowLangMenu] = useState(false);
-
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const [voiceLang, setVoiceLang] = useState('vi-VN'); // Vietnamese as default
+    const [showLangMenu, setShowLangMenu] = useState(false);
+    const [loadingSessionId, setLoadingSessionId] = useState(null);
 
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
     const renameInputRef = useRef(null);
     const fileInputRef = useRef(null);
-    const recognitionRef = useRef(null);
+    const imageInputRef = useRef(null);
     const langMenuRef = useRef(null);
 
     const supportedLanguages = [
@@ -68,52 +78,12 @@ const ChatWidget = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    // Initialize Speech Recognition
+    // Update input text when transcript changes
     useEffect(() => {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const recognitionInstance = new SpeechRecognition();
-            recognitionInstance.continuous = false;
-            recognitionInstance.interimResults = true;
-            recognitionInstance.lang = voiceLang;
-
-            recognitionInstance.onresult = (event) => {
-                let finalTranscript = '';
-
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript + ' ';
-                    }
-                }
-
-                if (finalTranscript) {
-                    setInputText(prev => prev + finalTranscript);
-                }
-            };
-
-            recognitionInstance.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                setIsRecording(false);
-            };
-
-            recognitionInstance.onend = () => {
-                setIsRecording(false);
-            };
-
-            recognitionRef.current = recognitionInstance;
+        if (transcript) {
+            setInputText(transcript);
         }
-
-        return () => {
-            if (recognitionRef.current) {
-                try {
-                    recognitionRef.current.stop();
-                } catch (error) {
-                    console.log('Recognition already stopped');
-                }
-            }
-        };
-    }, [voiceLang]);
+    }, [transcript]);
 
     useEffect(() => {
         scrollToBottom();
@@ -139,6 +109,9 @@ const ChatWidget = () => {
             }
             if (renameInputRef.current && !renameInputRef.current.contains(event.target)) {
                 // Optional: handle blur logic here if needed, but onBlur covers most cases
+            }
+            if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+                setShowLangMenu(false);
             }
         };
 
@@ -175,6 +148,7 @@ const ChatWidget = () => {
     const handleSessionClick = async (sessionId) => {
         if (isRenamingSessionId === sessionId) return;
         setCurrentSessionId(sessionId);
+        setLoadingSessionId(sessionId);
         try {
             const response = await chatApi.getSessionHistory(sessionId);
             const history = response.data.map(msg => ({
@@ -189,6 +163,8 @@ const ChatWidget = () => {
             }
         } catch (error) {
             console.error('Failed to load session history:', error);
+        } finally {
+            setLoadingSessionId(null);
         }
     };
 
@@ -253,6 +229,12 @@ const ChatWidget = () => {
     };
 
     const handleFileSelect = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSelectedFiles(prev => [...prev, ...Array.from(e.target.files)]);
+        }
+    };
+
+    const handleImageSelect = (e) => {
         if (e.target.files && e.target.files.length > 0) {
             setSelectedFiles(prev => [...prev, ...Array.from(e.target.files)]);
         }
@@ -345,23 +327,42 @@ const ChatWidget = () => {
         }
     };
 
-    const handleVoiceInput = () => {
-        if (!recognitionRef.current) {
-            alert('Speech recognition is not supported in your browser.');
+    const handleVoiceInput = async () => {
+        if (!browserSupportsSpeechRecognition) {
+            alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
             return;
         }
 
-        if (isRecording) {
+        if (listening) {
             // Stop recording
-            recognitionRef.current.stop();
-            setIsRecording(false);
-        } else {
-            // Start recording
             try {
-                recognitionRef.current.start();
-                setIsRecording(true);
+                SpeechRecognition.stopListening();
             } catch (error) {
-                console.error('Failed to start speech recognition:', error);
+                console.error('Error stopping speech recognition:', error);
+            }
+        } else {
+            // Start recording with selected language - continuous mode
+            try {
+                // Request microphone permission first
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                resetTranscript();
+                await SpeechRecognition.startListening({ 
+                    continuous: true, // Không tự động tắt, người dùng tự ngắt
+                    language: voiceLang
+                });
+            } catch (error) {
+                console.error('Error starting speech recognition:', error);
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    alert('Microphone access denied. Please allow microphone access in your browser settings.');
+                } else if (error.name === 'NotFoundError') {
+                    alert('No microphone found. Please connect a microphone and try again.');
+                } else if (error.name === 'NotSupportedError') {
+                    alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+                } else {
+                    alert('Failed to start voice input. Please try again.');
+                }
             }
         }
     };
@@ -524,10 +525,8 @@ const ChatWidget = () => {
                             </div>
                             <div className="session-list">
                                 {sessionsLoading && sessions.length === 0 && (
-                                    <div className="session-loading">
-                                        <div className="session-loading-item" />
-                                        <div className="session-loading-item" />
-                                        <div className="session-loading-item" />
+                                    <div className="session-loading-spinner">
+                                        <div className="spinner"></div>
                                     </div>
                                 )}
 
@@ -540,10 +539,15 @@ const ChatWidget = () => {
                                 {sessions.map(session => (
                                     <div
                                         key={session._id}
-                                        className={`session-item ${currentSessionId === session._id ? 'active' : ''}`}
+                                        className={`session-item ${currentSessionId === session._id ? 'active' : ''} ${loadingSessionId === session._id ? 'loading' : ''}`}
                                         onClick={() => handleSessionClick(session._id)}
                                     >
-                                        {isRenamingSessionId === session._id ? (
+                                        {loadingSessionId === session._id ? (
+                                            <div className="session-item-loading">
+                                                <span className="session-title">{session.title || 'New Chat'}</span>
+                                                <div className="spinner-small"></div>
+                                            </div>
+                                        ) : isRenamingSessionId === session._id ? (
                                             <input
                                                 ref={renameInputRef}
                                                 type="text"
@@ -580,7 +584,7 @@ const ChatWidget = () => {
 
                                 {sessionsLoading && sessions.length > 0 && (
                                     <div className="session-loading-inline">
-                                        Loading...
+                                        <div className="spinner-small"></div>
                                     </div>
                                 )}
                             </div>
@@ -588,7 +592,7 @@ const ChatWidget = () => {
                     )}
 
                     <div className="chat-main">
-                        <div className="chat-header">
+                        <div className={`chat-header ${isExpanded ? 'expanded-header' : ''}`}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 {isExpanded && !showSidebar && (
                                     <button
@@ -753,36 +757,12 @@ const ChatWidget = () => {
 
                         <div className="chat-input-container">
                             <form className="chat-input-area" onSubmit={isLoading ? (e) => { e.preventDefault(); handleStopGeneration(); } : handleSendMessage}>
-                                <button type="button" className="attach-btn" onClick={() => fileInputRef.current?.click()}>
+                                <button type="button" className="attach-btn" onClick={() => fileInputRef.current?.click()} title="Attach files">
                                     <IoAttach size={24} />
                                 </button>
-                                <div className="lang-selector-wrapper" ref={langMenuRef}>
-                                    <button 
-                                        type="button" 
-                                        className="lang-btn" 
-                                        onClick={() => setShowLangMenu(!showLangMenu)}
-                                        title="Change voice language"
-                                    >
-                                        {supportedLanguages.find(l => l.code === voiceLang)?.flag || '🌐'}
-                                    </button>
-                                    {showLangMenu && (
-                                        <div className="lang-menu">
-                                            {supportedLanguages.map(lang => (
-                                                <button
-                                                    key={lang.code}
-                                                    className={`lang-menu-item ${voiceLang === lang.code ? 'active' : ''}`}
-                                                    onClick={() => {
-                                                        setVoiceLang(lang.code);
-                                                        setShowLangMenu(false);
-                                                    }}
-                                                >
-                                                    <span className="lang-flag">{lang.flag}</span>
-                                                    <span className="lang-name">{lang.name}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <button type="button" className="attach-btn" onClick={() => imageInputRef.current?.click()} title="Upload images">
+                                    <IoImage size={24} />
+                                </button>
                                 <div className="chat-input-wrapper">
                                     {selectedFiles.length > 0 && (
                                         <div className="file-preview-container">
@@ -818,7 +798,15 @@ const ChatWidget = () => {
                                     accept="image/*,application/pdf"
                                     multiple
                                 />
-                                {isLoading || (inputText.trim() || selectedFiles.length > 0) && !isRecording ? (
+                                <input
+                                    type="file"
+                                    ref={imageInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleImageSelect}
+                                    accept="image/*"
+                                    multiple
+                                />
+                                {isLoading || (inputText.trim() || selectedFiles.length > 0) && !listening ? (
                                     <button 
                                         type="submit" 
                                         className="send-btn" 
@@ -826,13 +814,54 @@ const ChatWidget = () => {
                                     >
                                         {isLoading ? <IoStopCircleOutline /> : <IoArrowUp />}
                                     </button>
+                                ) : browserSupportsSpeechRecognition ? (
+                                    <>
+                                        {!inputText.trim() && !selectedFiles.length && (
+                                            <div className="lang-selector-wrapper" ref={langMenuRef}>
+                                                <button 
+                                                    type="button" 
+                                                    className="lang-btn" 
+                                                    onClick={() => setShowLangMenu(!showLangMenu)}
+                                                    title={`Voice language: ${supportedLanguages.find(l => l.code === voiceLang)?.name || 'Tiếng Việt'}`}
+                                                >
+                                                    {supportedLanguages.find(l => l.code === voiceLang)?.flag || '🇻🇳'}
+                                                </button>
+                                                {showLangMenu && (
+                                                    <div className="lang-menu">
+                                                        {supportedLanguages.map(lang => (
+                                                            <button
+                                                                key={lang.code}
+                                                                type="button"
+                                                                className={`lang-menu-item ${voiceLang === lang.code ? 'active' : ''}`}
+                                                                onClick={() => {
+                                                                    setVoiceLang(lang.code);
+                                                                    setShowLangMenu(false);
+                                                                }}
+                                                            >
+                                                                <span className="lang-flag">{lang.flag}</span>
+                                                                <span className="lang-name">{lang.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        <button 
+                                            type="button" 
+                                            className={`send-btn voice-btn ${listening ? 'recording' : ''}`}
+                                            onClick={handleVoiceInput}
+                                            title={`Voice input (${supportedLanguages.find(l => l.code === voiceLang)?.name || 'Tiếng Việt'})`}
+                                        >
+                                            <IoMic />
+                                        </button>
+                                    </>
                                 ) : (
                                     <button 
-                                        type="button" 
-                                        className={`send-btn voice-btn ${isRecording ? 'recording' : ''}`}
-                                        onClick={handleVoiceInput}
+                                        type="submit" 
+                                        className="send-btn" 
+                                        disabled={!inputText.trim() && selectedFiles.length === 0}
                                     >
-                                        <IoMic />
+                                        <IoArrowUp />
                                     </button>
                                 )}
                             </form>
