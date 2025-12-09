@@ -114,7 +114,22 @@
     "back": "戻る",
     "backToDashboard": "ダッシュボードに戻る",
     "student": "学生",
-    "add": "追加"
+    "add": "追加",
+    "of": "の",
+    "download": "ダウンロード",
+    "copyImage": "画像をコピー",
+    "downloadSuccess": "ダウンロード成功！",
+    "imageCopied": "画像をクリップボードにコピーしました！",
+    "copyFailed": "コピーに失敗しました。ダウンロードをお試しください。"
+  },
+  "qrScanner": {
+    "title": "QRコードをスキャン",
+    "scanQR": "QRスキャン",
+    "scanning": "スキャン中...カメラをQRコードに向けてください",
+    "startCamera": "カメラを起動中...",
+    "cameraError": "カメラにアクセスできません。カメラの権限を許可してください。",
+    "invalidQR": "無効なQRコードです。有効なクラスコードまたは試験リンクをスキャンしてください。",
+    "success": "スキャン成功！"
   },
   "login": {
     "welcome": "ようこそ",
@@ -379,7 +394,10 @@
     "assignments": "課題",
     "examsDescription": "クラスの試験を表示・管理",
     "assignmentsDescription": "課題を表示・提出",
-    "role": "役割"
+    "role": "役割",
+    "showQRCode": "QRコードを表示",
+    "classCodeQR": "クラスコードQR",
+    "qrDescription": "学生はこのQRコードをスキャンしてクラスに参加できます"
   },
   "questions": {
     "title": "問題管理",
@@ -660,6 +678,9 @@
     "copyLink": "リンクをコピー",
     "clickToCopy": "クリックしてリンクをコピー",
     "linkCopied": "リンクをコピーしました！",
+    "showQRCode": "QRコードを表示",
+    "shareLinkQR": "試験共有リンクQR",
+    "qrDescription": "学生はこのQRコードをスキャンして試験にアクセスできます",
     "tabs": {
       "overview": "概要",
       "statistics": "統計",
@@ -689,7 +710,8 @@
       "timeSpent": "所要時間",
       "submittedAt": "提出日時",
       "fetchFailed": "ランキングの読み込みに失敗しました",
-      "noData": "ランキングデータがありません"
+      "noData": "ランキングデータがありません",
+      "items": "項目"
     },
     "submissions": {
       "student": "学生",
@@ -704,7 +726,14 @@
       "late": "遅刻",
       "notStarted": "未開始",
       "fetchFailed": "提出の読み込みに失敗しました",
-      "noData": "提出がありません"
+      "noData": "提出がありません",
+      "showAllAttempts": "すべての試行を表示",
+      "showLatestOnly": "最新のみ表示",
+      "filterByStatus": "ステータスでフィルター",
+      "allStatuses": "すべてのステータス",
+      "searchByName": "名前で検索",
+      "searchPlaceholder": "学生名を入力...",
+      "items": "項目"
     },
     "viewDetail": "詳細を見る",
     "subjectsLoadFailed": "科目の読み込みに失敗しました",
@@ -937,5 +966,38 @@
   },
   "mindmap": {
     "unsavedChanges": "描画、レイアウト、またはノードプロパティなどの保存されていない変更があります。保存せずに終了してもよろしいですか？"
+  },
+  "chat": {
+    "search": "検索",
+    "searchPlaceholder": "検索...",
+    "searchResults": "件の結果",
+    "noResults": "結果が見つかりません",
+    "today": "今日",
+    "yesterday": "昨日",
+    "daysAgo": "日前",
+    "newChat": "新しいチャット",
+    "noConversations": "会話がまだありません",
+    "rename": "名前を変更",
+    "renameTitle": "この会話の名前を変更",
+    "delete": "削除",
+    "deleteTitle": "会話を削除しますか？",
+    "deleteDescription": "この操作により、EduMapアプリでのアクティビティからコマンド、回答、フィードバック、および作成したすべてのコンテンツが削除されます。",
+    "deleteLearnMore": "詳細を見る",
+    "deleteConfirm": "このチャットを削除してもよろしいですか？",
+    "hello": "こんにちは！AIアシスタントです。何かお手伝いできることはありますか？",
+    "welcomeTitle": "こんにちは！何かお手伝いできることはありますか？",
+    "explainConcept": "概念を説明",
+    "solveProblem": "問題を解決",
+    "brainstormIdeas": "アイデアをブレインストーム",
+    "askSomething": "何か聞いてください...（画像の貼り付け対応）",
+    "copy": "メッセージをコピー",
+    "edit": "メッセージを編集",
+    "cancel": "キャンセル",
+    "update": "更新",
+    "error": "申し訳ございません。エラーが発生しました。後でもう一度お試しください。",
+    "editError": "編集中にエラーが発生しました。もう一度お試しください。",
+    "pin": "ピン留め",
+    "unpin": "ピン留め解除",
+    "deleting": "削除中..."
   }
 }

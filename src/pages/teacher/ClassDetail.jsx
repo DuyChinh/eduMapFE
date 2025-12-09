@@ -20,7 +20,8 @@ import {
   UserAddOutlined,
   ReloadOutlined,
   DeleteOutlined,
-  EyeOutlined
+  EyeOutlined,
+  QrcodeOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import classService from '../../api/classService';
@@ -29,6 +30,7 @@ import useAuthStore from '../../store/authStore';
 import { ROUTES } from '../../constants/config';
 import EditClassModal from '../../components/teacher/EditClassModal';
 import AddStudentsModal from '../../components/teacher/AddStudentsModal';
+import QRCodeModal from '../../components/common/QRCodeModal';
 
 const { Title, Text } = Typography;
 
@@ -43,17 +45,15 @@ const ClassDetail = () => {
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addStudentsModalVisible, setAddStudentsModalVisible] = useState(false);
+  const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
 
   const fetchClassDetail = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Fetching class detail for ID:', classId);
       const response = await classService.getClassById(classId);
-      console.log('📦 Class detail response:', response);
       
       // Axios interceptor returns response.data, so response is already the data
       const classInfo = response.data || response;
-      console.log('📋 Class info:', classInfo);
       
       setClassData(classInfo);
       
@@ -63,7 +63,6 @@ const ClassDetail = () => {
         setStudents(classInfo.students);
       } else if (classInfo.studentIds && Array.isArray(classInfo.studentIds)) {
         // If only student IDs are available, fetch student details
-        console.log('🔍 Fetching student details for IDs:', classInfo.studentIds);
         
         // Create joinMap from studentJoins if available
         const joinMap = new Map();
@@ -85,7 +84,6 @@ const ClassDetail = () => {
           try {
             const id = typeof studentId === 'object' ? (studentId._id || studentId.id) : studentId;
             const studentResponse = await userService.getUserById(id);
-            console.log('👤 Student detail response:', studentResponse);
             const studentData = studentResponse.data || studentResponse;
             return {
               ...studentData,
@@ -104,11 +102,8 @@ const ClassDetail = () => {
         });
         
         const studentsData = await Promise.all(studentPromises);
-        console.log('👥 All students data:', studentsData);
         setStudents(studentsData);
       }
-      
-      console.log('✅ Class detail loaded successfully');
     } catch (error) {
       console.error('❌ Error fetching class detail:', error);
       message.error('Failed to load class details');
@@ -300,9 +295,19 @@ const ClassDetail = () => {
             <Text strong>{classData.name}</Text>
           </Descriptions.Item>
           <Descriptions.Item label={t('classes.code')}>
+            <Space>
             <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '16px' }}>
               {classData.code}
             </Tag>
+              <Tooltip title={t('classes.showQRCode') || 'Show QR Code'}>
+                <Button
+                  type="text"
+                  icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+                  onClick={() => setQrCodeModalVisible(true)}
+                  size="small"
+                />
+              </Tooltip>
+            </Space>
           </Descriptions.Item>
           <Descriptions.Item label={t('classes.academicYear')}>
             {classData.metadata?.academicYear || '-'}
@@ -374,6 +379,15 @@ const ClassDetail = () => {
         classData={classData}
         onCancel={() => setAddStudentsModalVisible(false)}
         onSuccess={handleAddStudentsSuccess}
+      />
+
+      <QRCodeModal
+        open={qrCodeModalVisible}
+        onCancel={() => setQrCodeModalVisible(false)}
+        value={classData?.code || ''}
+        title={t('classes.classCodeQR') || 'Class Code QR'}
+        description={t('classes.qrDescription') || 'Students can scan this QR code to join the class'}
+        filename={classData?.name ? `qr_class_${classData.name.replace(/[^a-zA-Z0-9]/g, '_')}` : `qr_class_${classData?.code || 'class'}`}
       />
     </div>
   );

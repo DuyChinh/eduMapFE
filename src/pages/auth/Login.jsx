@@ -26,7 +26,6 @@ const Login = () => {
       const result = await login(values);
       message.success(t('login.loginSuccess'));
 
-      console.log('Login result:', result); // Debug log
 
       // Check for redirect path
       const from = location.state?.from?.pathname;
@@ -42,7 +41,6 @@ const Login = () => {
         navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
       } else {
         // Fallback if role not found
-        console.warn('User role not found, redirecting to student dashboard');
         navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
       }
     } catch (error) {

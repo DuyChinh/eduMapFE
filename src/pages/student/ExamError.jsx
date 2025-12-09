@@ -86,7 +86,7 @@ const ExamError = () => {
               size="large"
               key="home"
               icon={<HomeOutlined />}
-              onClick={() => navigate('/student/dashboard')}
+              onClick={() => window.location.href = '/student/dashboard'}
               className="back-button"
             >
               {t('common.backToDashboard') || 'Back to Dashboard'}

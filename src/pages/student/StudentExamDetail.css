@@ -88,10 +88,146 @@
   padding-left: 0;
 }
 
+/* Responsive Styles */
 @media (max-width: 992px) {
   .student-info-card {
     position: relative;
     top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .submission-detail-container {
+    padding: 16px;
+  }
+
+  .submission-header {
+    margin-bottom: 16px;
+  }
+
+  .submission-header h2 {
+    font-size: 20px;
+  }
+
+  .student-profile {
+    padding: 12px 0;
+  }
+
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .question-header .ant-space {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .choices-container {
+    margin: 12px 0;
+  }
+
+  .choice-item {
+    padding: 10px !important;
+    margin-bottom: 6px;
+  }
+
+  .answer-feedback {
+    padding: 10px;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .activity-summary {
+    padding: 12px !important;
+  }
+
+  .activity-summary .ant-tag {
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  /* Button responsive fixes for tablet */
+  .student-info-card .ant-btn {
+    white-space: normal !important;
+    height: auto !important;
+    padding: 8px 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  .student-info-card .ant-btn span {
+    display: inline-block;
+    word-break: break-word;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .submission-detail-container {
+    padding: 12px;
+  }
+
+  .submission-header h2 {
+    font-size: 18px;
+  }
+
+  .student-profile .ant-avatar {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .detail-item {
+    margin-bottom: 12px;
+  }
+
+  .question-card {
+    margin-bottom: 16px !important;
+  }
+
+  .question-content .ant-typography {
+    font-size: 14px;
+  }
+
+  .choice-item {
+    padding: 8px !important;
+    font-size: 14px;
+  }
+
+  .answer-feedback {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .activity-container .ant-timeline-item {
+    padding-bottom: 16px;
+  }
+
+  .activity-container .ant-timeline-item-content {
+    font-size: 14px;
+  }
+
+  /* Button responsive fixes */
+  .student-info-card .ant-btn {
+    white-space: normal !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  .student-info-card .ant-btn span {
+    display: inline-block;
+    word-break: break-word;
+    text-align: center;
+    width: 100%;
+  }
+
+  .student-info-card .ant-btn .anticon {
+    vertical-align: middle;
+    margin-right: 4px;
   }
 }
 

@@ -19,7 +19,8 @@ import {
   EyeOutlined,
   UserAddOutlined,
   ReloadOutlined,
-  SearchOutlined
+  SearchOutlined,
+  QrcodeOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +30,7 @@ import { ROUTES } from '../../constants/config';
 import CreateClassModal from './CreateClassModal';
 import EditClassModal from './EditClassModal';
 import AddStudentsModal from './AddStudentsModal';
+import QRCodeModal from '../common/QRCodeModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -51,6 +53,8 @@ const ClassList = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addStudentsModalVisible, setAddStudentsModalVisible] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
+  const [selectedClassForQR, setSelectedClassForQR] = useState(null);
   
   // Bulk delete states
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -63,17 +67,14 @@ const ClassList = () => {
   const fetchClasses = async (params = {}) => {
     setLoading(true);
     try {
-      console.log('🔍 Fetching classes...', { filters, pagination });
       
       let response;
       
       // Use Search API if there's a search query (minimum 2 characters)
       if (filters.q && filters.q.length >= 2) {
-        console.log('🔍 Using Search API for query:', filters.q);
         response = await classService.searchClasses(filters.q, user?.email);
       } else {
         // Use List API for dashboard/pagination
-        console.log('🔍 Using List API with pagination');
         const listParams = {
           page: pagination.current || 1,
           limit: pagination.pageSize || 10,
@@ -81,16 +82,13 @@ const ClassList = () => {
           ...filters,
           ...params
         };
-        console.log('📤 List API params:', listParams);
         response = await classService.getClasses(listParams);
       }
       
-      console.log('📦 Classes response:', response);
       
       // Axios interceptor returns response.data, so response is already the data
       // API returns { ok: true, items: [...], total: 100, page: 1, limit: 20, pages: 5 }
       const classesData = response.items || [];
-      console.log('📋 Classes data:', classesData);
 
       setClasses(classesData);
       setPagination(prev => ({
@@ -100,7 +98,6 @@ const ClassList = () => {
         pageSize: response.limit || prev.pageSize,
       }));
       
-      console.log('✅ Classes loaded successfully');
     } catch (error) {
       console.error('❌ Error fetching classes:', error);
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.fetchFailed'));
@@ -113,7 +110,6 @@ const ClassList = () => {
   useEffect(() => {
     // Check authentication
     if (!isAuthenticated) {
-      console.log('❌ User not authenticated, redirecting to login');
       navigate(ROUTES.LOGIN);
       return;
     }
@@ -121,7 +117,6 @@ const ClassList = () => {
     // Debug token
     const token = localStorage.getItem('auth_token');
     const authStorage = localStorage.getItem('auth-storage');
-    console.log('🔑 Token check:', { token, authStorage, user: user?.email, role: user?.role });
     
     fetchClasses();
   }, [filters, isAuthenticated, navigate]);
@@ -214,6 +209,29 @@ const ClassList = () => {
           {code}
         </Tag>
       ),
+    },
+    {
+      title: 'QR',
+      key: 'qrCode',
+      width: 60,
+      align: 'center',
+      render: (_, record) => {
+        if (!record.code) {
+          return <span style={{ color: '#d9d9d9' }}>-</span>;
+        }
+        return (
+          <Tooltip title={t('classes.showQRCode') || 'Show QR Code'}>
+            <Button 
+              type="text" 
+              icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+              onClick={() => {
+                setSelectedClassForQR(record);
+                setQrCodeModalVisible(true);
+              }}
+            />
+          </Tooltip>
+        );
+      },
     },
     {
       title: t('classes.students'),
@@ -310,42 +328,54 @@ const ClassList = () => {
 
   return (
     <Card>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Search
-          placeholder={t('classes.searchPlaceholder')}
-          allowClear
-          style={{ width: 300 }}
-          onSearch={handleSearch}
-          prefix={<SearchOutlined />}
-        />
-        
-        <Space>
-          {selectedRowKeys.length > 0 && (
-            <Popconfirm
-              title={t('classes.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected class(es)?`}
-              onConfirm={handleBulkDelete}
-              okText={t('common.yes')}
-              cancelText={t('common.no')}
-              okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
-            >
-              <Button 
-                danger
-                icon={<DeleteOutlined />}
-                loading={bulkDeleteLoading}
-              >
-                {t('classes.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
-              </Button>
-            </Popconfirm>
-          )}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12
+        }}>
+          <Search
+            placeholder={t('classes.searchPlaceholder')}
+            allowClear
+            style={{ 
+              width: '100%',
+              maxWidth: 300,
+              minWidth: 200
+            }}
+            onSearch={handleSearch}
+            prefix={<SearchOutlined />}
+          />
           
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalVisible(true)}
-          >
-            {t('classes.createNew')}
-          </Button>
-        </Space>
+          <Space wrap size="small">
+            {selectedRowKeys.length > 0 && (
+              <Popconfirm
+                title={t('classes.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected class(es)?`}
+                onConfirm={handleBulkDelete}
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
+                okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+              >
+                <Button 
+                  danger
+                  icon={<DeleteOutlined />}
+                  loading={bulkDeleteLoading}
+                >
+                  {t('classes.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+                </Button>
+              </Popconfirm>
+            )}
+            
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => setCreateModalVisible(true)}
+            >
+              {t('classes.createNew')}
+            </Button>
+          </Space>
+        </div>
       </div>
 
       <Table
@@ -363,8 +393,10 @@ const ClassList = () => {
           showQuickJumper: true,
           showTotal: (total, range) => 
             `${range[0]}-${range[1]} of ${total} ${t('classes.items')}`,
+          responsive: true,
         }}
         onChange={handleTableChange}
+        scroll={{ x: 'max-content' }}
       />
 
       {/* Modals */}
@@ -403,6 +435,19 @@ const ClassList = () => {
           setSelectedClass(null);
           fetchClasses();
         }}
+      />
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={qrCodeModalVisible}
+        onCancel={() => {
+          setQrCodeModalVisible(false);
+          setSelectedClassForQR(null);
+        }}
+        value={selectedClassForQR?.code || ''}
+        title={selectedClassForQR?.name || t('classes.classCodeQR')}
+        description={t('classes.qrDescription') || 'Students can scan this QR code to join the class'}
+        filename={selectedClassForQR?.name ? `qr_class_${selectedClassForQR.name.replace(/[^a-zA-Z0-9]/g, '_')}` : `qr_class_${selectedClassForQR?.code || 'class'}`}
       />
     </Card>
   );

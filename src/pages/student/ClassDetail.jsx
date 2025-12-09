@@ -41,22 +41,17 @@ const ClassDetail = () => {
   const fetchClassDetail = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Student fetching class detail for ID:', classId);
       const response = await classService.getClassById(classId);
-      console.log('📦 Student class detail response:', response);
       
       // Axios interceptor returns response.data, so response is already the data
       const classInfo = response.data || response;
-      console.log('📋 Student class info:', classInfo);
       
       setClassData(classInfo);
       
       // Fetch teacher details
       if (classInfo.teacherId) {
         try {
-          console.log('🔍 Student fetching teacher details for ID:', classInfo.teacherId);
           const teacherResponse = await userService.getUserById(classInfo.teacherId);
-          console.log('👨‍🏫 Teacher detail response:', teacherResponse);
           setTeacher(teacherResponse.data || teacherResponse);
         } catch (error) {
           console.error('❌ Error fetching teacher:', classInfo.teacherId, error);
@@ -73,11 +68,9 @@ const ClassDetail = () => {
         setStudents(classInfo.students);
       } else if (classInfo.studentIds && Array.isArray(classInfo.studentIds)) {
         // If only student IDs are available, fetch student details
-        console.log('🔍 Student fetching student details for IDs:', classInfo.studentIds);
         const studentPromises = classInfo.studentIds.map(async (studentId) => {
           try {
             const studentResponse = await userService.getUserById(studentId);
-            console.log('👤 Student detail response:', studentResponse);
             return studentResponse.data || studentResponse;
           } catch (error) {
             console.error('❌ Error fetching student:', studentId, error);
@@ -86,11 +79,8 @@ const ClassDetail = () => {
         });
         
         const studentsData = await Promise.all(studentPromises);
-        console.log('👥 All students data:', studentsData);
         setStudents(studentsData);
       }
-      
-      console.log('✅ Student class detail loaded successfully');
     } catch (error) {
       console.error('❌ Student error fetching class detail:', error);
       message.error('Failed to load class details');

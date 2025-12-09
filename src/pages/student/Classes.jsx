@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Button, Typography, Table, Tag, Space, message, Input } from 'antd';
 import { PlusOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import classService from '../../api/classService';
 import { ROUTES } from '../../constants/config';
 import JoinClassModal from '../../components/student/JoinClassModal';
@@ -14,30 +14,28 @@ const Classes = () => {
   const [loading, setLoading] = useState(false);
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [initialClassCode, setInitialClassCode] = useState('');
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const fetchMyClasses = async (params = {}) => {
     setLoading(true);
     try {
-      console.log('🔍 Student fetching classes...', params);
       
       // For students, we use getMyClasses which returns their enrolled classes
       // This doesn't need pagination as students typically have fewer classes
       const response = await classService.getMyClasses();
-      console.log('📦 Student classes response:', response);
       
       // Axios interceptor returns response.data, so response is already the data
       // API returns { ok: true, items: [...], total: 100, page: 1, limit: 20, pages: 5 }
       let classesData = response.items || [];
-      console.log('📋 Student classes:', classesData);
       
       // Filter classes based on search query
       if (searchQuery && searchQuery.length >= 2) {
         classesData = classesData.filter(cls => 
           cls.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
-        console.log('🔍 Filtered classes by search:', classesData);
       }
       
       setClasses(classesData);
@@ -52,6 +50,18 @@ const Classes = () => {
   useEffect(() => {
     fetchMyClasses();
   }, [searchQuery]);
+
+  // Auto-open join modal if QR code is scanned
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    if (codeParam) {
+      setInitialClassCode(codeParam);
+      setJoinModalVisible(true);
+      // Remove the code param from URL after reading it
+      searchParams.delete('code');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleJoinSuccess = (classData) => {
     // Toast is already shown in JoinClassModal, no need to show again
@@ -114,13 +124,39 @@ const Classes = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={2} style={{ margin: 0 }}>{t('studentPages.classes.title')}</Title>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+      <div style={{ 
+        marginBottom: 24, 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: 16
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 12,
+          flexWrap: 'wrap'
+        }}>
+          <img 
+            src="/class.png" 
+            alt="Class" 
+            style={{ width: 24, height: 24, objectFit: 'contain' }} 
+          />
+          <Title level={2} style={{ margin: 0, flex: 1 }}>{t('studentPages.classes.title')}</Title>
+        </div>
+        <div style={{ 
+          display: 'flex', 
+          gap: 12, 
+          alignItems: 'center',
+          flexWrap: 'wrap'
+        }}>
           <Input.Search
             placeholder={t('studentPages.classes.searchPlaceholder')}
             allowClear
-            style={{ width: 300 }}
+            style={{ 
+              width: '100%',
+              maxWidth: 300,
+              minWidth: 200
+            }}
             onSearch={setSearchQuery}
             prefix={<SearchOutlined />}
           />
@@ -129,6 +165,7 @@ const Classes = () => {
             icon={<PlusOutlined />} 
             size="large" 
             onClick={() => setJoinModalVisible(true)}
+            style={{ whiteSpace: 'nowrap' }}
           >
             {t('studentPages.classes.joinClass')}
           </Button>
@@ -150,6 +187,7 @@ const Classes = () => {
             showQuickJumper: true,
             showTotal: (total, range) => 
               `${range[0]}-${range[1]} of ${total} ${t('studentPages.classes.items')}`,
+            responsive: true,
           }}
           scroll={{ x: 'max-content' }}
         />
@@ -157,8 +195,12 @@ const Classes = () => {
 
       <JoinClassModal
         visible={joinModalVisible}
-        onCancel={() => setJoinModalVisible(false)}
+        onCancel={() => {
+          setJoinModalVisible(false);
+          setInitialClassCode('');
+        }}
         onSuccess={handleJoinSuccess}
+        initialCode={initialClassCode}
       />
     </div>
   );

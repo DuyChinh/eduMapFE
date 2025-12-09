@@ -1,8 +1,10 @@
 import axiosClient from './axios';
 
 const chatApi = {
-    sendMessage: (message, sessionId, files) => {
+    sendMessage: (message, sessionId, files, signal) => {
         const url = '/ai/chat';
+        const config = signal ? { signal } : {};
+        
         if (files && files.length > 0) {
             const formData = new FormData();
             formData.append('message', message || '');
@@ -12,10 +14,11 @@ const chatApi = {
                 formData.append('files', file);
             });
             return axiosClient.post(url, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                ...config
             });
         }
-        return axiosClient.post(url, { message, sessionId });
+        return axiosClient.post(url, { message, sessionId }, config);
     },
     getSessionHistory: (sessionId) => {
         const url = `/ai/history/${sessionId}`;
@@ -33,6 +36,13 @@ const chatApi = {
     },
     renameSession: (sessionId, title) => {
         return axiosClient.patch(`/ai/sessions/${sessionId}`, { title });
+    },
+    editMessage: (messageId, message) => {
+        return axiosClient.put(`/ai/message/${messageId}`, { message });
+    },
+    searchSessions: (query) => {
+        const url = '/ai/sessions/search';
+        return axiosClient.get(url, { params: { q: query } });
     }
 };
 

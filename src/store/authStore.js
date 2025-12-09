@@ -100,12 +100,14 @@ const useAuthStore = create(
         set({ loading: true, error: null });
         try {
           const response = await userService.getProfile();
+          // API shape: { success: true, data: { ...user } }
+          const apiUser = response.data?.data || response.data;
           set({
-            user: response.data,
+            user: apiUser,
             isAuthenticated: true,
             loading: false,
           });
-          return response.data;
+          return apiUser;
         } catch (error) {
           const errorMessage = typeof error === 'string' ? error : (error?.message || 'Failed to fetch profile');
           set({ loading: false, error: errorMessage });
