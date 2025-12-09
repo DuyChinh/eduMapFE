@@ -51,7 +51,6 @@ const EditQuestion = () => {
     choices: ['', '', '', ''],
     answer: '',
     explanation: '',
-    explanation: '',
     isPublic: true,
     images: [] // Changed from single image string to images array
   });
@@ -219,7 +218,6 @@ const EditQuestion = () => {
       subject: formValues.subject || questionData.subject,
       choices: formValues.choices || questionData.choices,
       answer: formValues.answer !== undefined ? formValues.answer : questionData.answer,
-      explanation: formValues.explanation || questionData.explanation,
       explanation: formValues.explanation || questionData.explanation,
       isPublic: formValues.isPublic !== undefined ? formValues.isPublic : questionData.isPublic,
       images: questionData.images

@@ -262,28 +262,28 @@ const ExamResultDetail = () => {
       render: (rank) => {
         if (rank === 1) {
           return (
-            <img 
-              src="/1st-medal.png" 
-              alt="1st Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/1st-medal.png"
+              alt="1st Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 2) {
           return (
-            <img 
-              src="/2nd-medal.png" 
-              alt="2nd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/2nd-medal.png"
+              alt="2nd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 3) {
           return (
-            <img 
-              src="/3rd-medal.png" 
-              alt="3rd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/3rd-medal.png"
+              alt="3rd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
@@ -517,28 +517,28 @@ const ExamResultDetail = () => {
                                             wordWrap: 'break-word',
                                             overflowWrap: 'break-word',
                                             whiteSpace: 'pre-wrap',
-                                            fontFamily: 'inherit',
-                                            flex: 1
+                                            fontFamily: 'inherit'
                                           }}>
                                             {renderMathContent(choice.text)}
                                           </span>
+                                          {/* Render choice image if exists */}
+                                          {choice.image && (
+                                            <div style={{ marginLeft: '12px' }}>
+                                              <img
+                                                src={choice.image}
+                                                alt={`Choice ${choice.key}`}
+                                                style={{
+                                                  maxWidth: '100%',
+                                                  maxHeight: '150px',
+                                                  objectFit: 'contain',
+                                                  borderRadius: '4px',
+                                                  border: '1px solid #f0f0f0'
+                                                }}
+                                              />
+                                            </div>
+                                          )}
                                         </div>
-                                        {/* Render choice image if exists */}
-                                        {choice.image && (
-                                          <div style={{ marginTop: '8px', marginLeft: '32px' }}>
-                                            <img
-                                              src={choice.image}
-                                              alt={`Choice ${choice.key}`}
-                                              style={{
-                                                maxWidth: '100%',
-                                                maxHeight: '150px',
-                                                objectFit: 'contain',
-                                                borderRadius: '4px',
-                                                border: '1px solid #f0f0f0'
-                                              }}
-                                            />
-                                          </div>
-                                        )}
+
                                         {isCorrectChoice && (
                                           <div className="choice-icon correct-icon">
                                             <CheckCircleOutlined />

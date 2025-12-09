@@ -49,7 +49,7 @@ const StudentExamDetail = () => {
   const { t } = useTranslation();
   const { message: messageApi } = App.useApp();
   const { user } = useAuthStore();
-  
+
   // Check if current user is teacher or admin
   const isTeacherOrAdmin = user && (user.role === 'teacher' || user.role === 'admin');
 
@@ -101,24 +101,24 @@ const StudentExamDetail = () => {
     setActivityLoading(true);
     try {
       const data = submissionDataParam || submissionData;
-      
+
       // Get studentId from params or submissionData
       const targetStudentId = studentId || data?.student?._id;
       const targetSubmissionId = submissionId || data?._id;
-      
+
       if (!targetStudentId) {
         setActivityLog([]);
         return;
       }
-      
+
       if (!targetSubmissionId) {
         setActivityLog([]);
         return;
       }
-      
+
       const response = await examStatsService.getSubmissionActivityLog(examId, targetStudentId, targetSubmissionId);
       const logData = response.data || response;
-      
+
       // Handle both array and object with data property
       if (Array.isArray(logData)) {
         setActivityLog(logData);
@@ -177,13 +177,13 @@ const StudentExamDetail = () => {
 
   const getActivitySummary = () => {
     if (!activityLog || activityLog.length === 0) return {};
-    
+
     const summary = {};
     activityLog.forEach((activity) => {
       const key = activity.type || activity.event || 'unknown';
       summary[key] = (summary[key] || 0) + 1;
     });
-    
+
     return summary;
   };
 
@@ -245,7 +245,7 @@ const StudentExamDetail = () => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours} ${t('common.hours')} ${minutes} ${t('common.minutes')} ${secs} ${t('common.seconds')}`;
     } else if (minutes > 0) {
@@ -289,8 +289,8 @@ const StudentExamDetail = () => {
           type="info"
           showIcon
         />
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           onClick={() => navigate(-1)}
           style={{ marginTop: 16 }}
         >
@@ -318,7 +318,7 @@ const StudentExamDetail = () => {
 
   const renderMathContent = (content) => {
     if (!content) return '';
-    
+
     // Split by lines and process each line separately
     const lines = content.split('\n');
     return (
@@ -328,17 +328,17 @@ const StudentExamDetail = () => {
           if (!line.trim()) {
             return <br key={index} />;
           }
-          
+
           // Check if line contains LaTeX commands
           const hasLatex = line.includes('\\') || line.includes('^') || line.includes('_');
           const hasDollarSigns = line.includes('$') || line.includes('\\(');
-          
+
           if (hasLatex && !hasDollarSigns) {
             // Mixed content - need to parse and render properly
             // Split by LaTeX patterns and render each part
             const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -361,7 +361,7 @@ const StudentExamDetail = () => {
           } else if (hasDollarSigns) {
             // Already has dollar signs, render as is
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -372,7 +372,7 @@ const StudentExamDetail = () => {
           } else {
             // Plain text, render as is with preserved formatting
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -390,14 +390,14 @@ const StudentExamDetail = () => {
     <MathJaxContext config={mathJaxConfig}>
       <div className="submission-detail-container">
         {/* Header */}
-        <div className="submission-header" style={{ 
-          display: 'flex', 
+        <div className="submission-header" style={{
+          display: 'flex',
           flexDirection: 'column',
           gap: 12,
           marginBottom: 24
         }}>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(-1)}
             style={{ alignSelf: 'flex-start' }}
           >
@@ -413,9 +413,9 @@ const StudentExamDetail = () => {
           <Col xs={24} sm={24} md={24} lg={8} xl={8}>
             <Card className="student-info-card">
               <div className="student-profile">
-                <Avatar 
-                  size={64} 
-                  src={student.avatar} 
+                <Avatar
+                  size={64}
+                  src={student.avatar}
                   icon={<UserOutlined />}
                 />
                 <Title level={4} style={{ marginTop: 16, marginBottom: 4 }}>
@@ -428,7 +428,7 @@ const StudentExamDetail = () => {
 
               <div className="detail-section">
                 <Title level={5}>{t('submissionDetail.detailedInfo')}</Title>
-                
+
                 <div className="detail-item">
                   <Text strong>{t('submissionDetail.score')}: </Text>
                   <Text style={{ fontSize: 18, color: '#1890ff' }}>
@@ -477,7 +477,7 @@ const StudentExamDetail = () => {
                 <div className="detail-item">
                   <Text strong>{t('submissionDetail.submittedAt')}: </Text>
                   <Text>
-                    {submissionData.submittedAt 
+                    {submissionData.submittedAt
                       ? new Date(submissionData.submittedAt).toLocaleString('vi-VN')
                       : '-'
                     }
@@ -511,7 +511,7 @@ const StudentExamDetail = () => {
                       {t('submissionDetail.viewActivityLog')}
                     </span>
                   </Button>
-                  
+
                   {isTeacherOrAdmin && (
                     <Popconfirm
                       title={t('submissionDetail.resetAttemptConfirm') || `Are you sure you want to reset this student's attempt? This will delete all submissions and allow the student to retake the exam from attempt 1.`}
@@ -536,7 +536,7 @@ const StudentExamDetail = () => {
 
                 <Divider />
 
-                <Button 
+                <Button
                   block
                   style={{ whiteSpace: 'normal', height: 'auto', padding: '8px 16px' }}
                 >
@@ -612,8 +612,8 @@ const StudentExamDetail = () => {
                                 <Divider />
 
                                 <div className="question-content">
-                                  <Paragraph style={{ 
-                                    fontSize: 16, 
+                                  <Paragraph style={{
+                                    fontSize: 16,
                                     marginBottom: 16,
                                     wordWrap: 'break-word',
                                     overflowWrap: 'break-word',
@@ -623,17 +623,49 @@ const StudentExamDetail = () => {
                                     {renderMathContent(question.text || question.name)}
                                   </Paragraph>
 
+                                  {question.images && question.images.length > 0 ? (
+                                    <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                                      {question.images.map((imgUrl, idx) => (
+                                        <img
+                                          key={idx}
+                                          src={imgUrl}
+                                          alt={`Question ${idx + 1}`}
+                                          style={{
+                                            maxWidth: '100%',
+                                            maxHeight: '300px',
+                                            objectFit: 'contain',
+                                            borderRadius: '8px',
+                                            border: '1px solid #f0f0f0'
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  ) : question.image ? (
+                                    <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                                      <img
+                                        src={question.image}
+                                        alt="Question"
+                                        style={{
+                                          maxWidth: '100%',
+                                          maxHeight: '300px',
+                                          objectFit: 'contain',
+                                          borderRadius: '8px',
+                                          border: '1px solid #f0f0f0'
+                                        }}
+                                      />
+                                    </div>
+                                  ) : null}
+
                                   <div className="choices-container">
                                     {choices.map((choice) => {
                                       const isSelected = selectedAnswer === choice.key;
                                       const isCorrectChoice = correctAnswer === choice.key;
-                                      
+
                                       return (
                                         <div
                                           key={choice.key}
-                                          className={`choice-item ${
-                                            isSelected && !isCorrect ? 'choice-wrong' : ''
-                                          } ${isCorrectChoice ? 'choice-correct' : ''}`}
+                                          className={`choice-item ${isSelected && !isCorrect ? 'choice-wrong' : ''
+                                            } ${isCorrectChoice ? 'choice-correct' : ''}`}
                                         >
                                           <Space>
                                             <Text strong>{choice.key}.</Text>
@@ -645,6 +677,21 @@ const StudentExamDetail = () => {
                                             }}>
                                               {renderMathContent(choice.text)}
                                             </div>
+                                            {choice.image && (
+                                              <div style={{ marginLeft: 8 }}>
+                                                <img
+                                                  src={choice.image}
+                                                  alt={`Choice ${choice.key}`}
+                                                  style={{
+                                                    maxWidth: '200px',
+                                                    maxHeight: '150px',
+                                                    objectFit: 'contain',
+                                                    borderRadius: '4px',
+                                                    border: '1px solid #f0f0f0'
+                                                  }}
+                                                />
+                                              </div>
+                                            )}
                                             {isSelected && !isCorrect && (
                                               <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
                                             )}
@@ -667,8 +714,8 @@ const StudentExamDetail = () => {
                                       <Text>
                                         {t('submissionDetail.studentAnswer')}: {selectedAnswer ?? 'None'}
                                         {selectedAnswer && !isCorrect && (
-                                          <CloseCircleOutlined 
-                                            style={{ color: '#ff4d4f', marginLeft: 8 }} 
+                                          <CloseCircleOutlined
+                                            style={{ color: '#ff4d4f', marginLeft: 8 }}
                                           />
                                         )}
                                       </Text>
@@ -725,18 +772,18 @@ const StudentExamDetail = () => {
                                     <Text strong>{getActivityDisplayText(activity)}</Text>
                                     <br />
                                     <Text type="secondary" style={{ fontSize: 12 }}>
-                                      {activity.timestamp 
+                                      {activity.timestamp
                                         ? new Date(activity.timestamp).toLocaleString('vi-VN')
                                         : activity.createdAt
-                                        ? new Date(activity.createdAt).toLocaleString('vi-VN')
-                                        : '-'
+                                          ? new Date(activity.createdAt).toLocaleString('vi-VN')
+                                          : '-'
                                       }
                                     </Text>
                                     {activity.meta?.visible !== undefined && (
                                       <div style={{ marginTop: 4 }}>
                                         <Text type="secondary" style={{ fontSize: 12 }}>
-                                          {activity.meta.visible 
-                                            ? t('submissionDetail.tabVisible') 
+                                          {activity.meta.visible
+                                            ? t('submissionDetail.tabVisible')
                                             : t('submissionDetail.tabHidden')
                                           }
                                         </Text>
@@ -744,10 +791,10 @@ const StudentExamDetail = () => {
                                     )}
                                     {activity.severity && (
                                       <div style={{ marginTop: 4 }}>
-                                        <Tag 
+                                        <Tag
                                           color={
                                             activity.severity === 'high' ? 'red' :
-                                            activity.severity === 'medium' ? 'orange' : 'default'
+                                              activity.severity === 'medium' ? 'orange' : 'default'
                                           }
                                           size="small"
                                         >

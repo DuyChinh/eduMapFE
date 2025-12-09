@@ -45,7 +45,6 @@ const CreateQuestion = () => {
   const [questionData, setQuestionData] = useState({
     name: '',
     text: '',
-    text: '',
     images: [],
     type: 'mcq',
     level: '1',
