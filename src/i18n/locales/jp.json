@@ -122,6 +122,15 @@
     "imageCopied": "画像をクリップボードにコピーしました！",
     "copyFailed": "コピーに失敗しました。ダウンロードをお試しください。"
   },
+  "qrScanner": {
+    "title": "QRコードをスキャン",
+    "scanQR": "QRスキャン",
+    "scanning": "スキャン中...カメラをQRコードに向けてください",
+    "startCamera": "カメラを起動中...",
+    "cameraError": "カメラにアクセスできません。カメラの権限を許可してください。",
+    "invalidQR": "無効なQRコードです。有効なクラスコードまたは試験リンクをスキャンしてください。",
+    "success": "スキャン成功！"
+  },
   "login": {
     "welcome": "ようこそ",
     "subtitle": "ログインしてEduMapを探索",

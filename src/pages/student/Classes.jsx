@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Button, Typography, Table, Tag, Space, message, Input } from 'antd';
 import { PlusOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import classService from '../../api/classService';
 import { ROUTES } from '../../constants/config';
 import JoinClassModal from '../../components/student/JoinClassModal';
@@ -14,8 +14,10 @@ const Classes = () => {
   const [loading, setLoading] = useState(false);
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [initialClassCode, setInitialClassCode] = useState('');
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const fetchMyClasses = async (params = {}) => {
     setLoading(true);
@@ -48,6 +50,18 @@ const Classes = () => {
   useEffect(() => {
     fetchMyClasses();
   }, [searchQuery]);
+
+  // Auto-open join modal if QR code is scanned
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    if (codeParam) {
+      setInitialClassCode(codeParam);
+      setJoinModalVisible(true);
+      // Remove the code param from URL after reading it
+      searchParams.delete('code');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleJoinSuccess = (classData) => {
     // Toast is already shown in JoinClassModal, no need to show again
@@ -181,8 +195,12 @@ const Classes = () => {
 
       <JoinClassModal
         visible={joinModalVisible}
-        onCancel={() => setJoinModalVisible(false)}
+        onCancel={() => {
+          setJoinModalVisible(false);
+          setInitialClassCode('');
+        }}
         onSuccess={handleJoinSuccess}
+        initialCode={initialClassCode}
       />
     </div>
   );

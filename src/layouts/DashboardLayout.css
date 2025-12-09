@@ -125,18 +125,33 @@
   align-items: center;
 }
 
+.qr-scan-btn {
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.qr-scan-btn:hover {
+  background: #f0f0f0;
+}
+
 .theme-toggle-btn {
   font-size: 20px;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 8px;
+}
+
+.theme-toggle-btn:hover {
+  background: #f0f0f0;
 }
 
 .notification-btn {
   font-size: 20px;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 8px;
 }
 
 .notification-btn:hover {
@@ -227,6 +242,10 @@ body.dark-mode .dashboard-header {
 }
 
 body.dark-mode .trigger-btn:hover {
+  background: #262626;
+}
+
+body.dark-mode .qr-scan-btn:hover {
   background: #262626;
 }
 

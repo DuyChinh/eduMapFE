@@ -296,9 +296,9 @@ const ClassDetail = () => {
           </Descriptions.Item>
           <Descriptions.Item label={t('classes.code')}>
             <Space>
-              <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '16px' }}>
-                {classData.code}
-              </Tag>
+            <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '16px' }}>
+              {classData.code}
+            </Tag>
               <Tooltip title={t('classes.showQRCode') || 'Show QR Code'}>
                 <Button
                   type="text"

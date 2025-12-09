@@ -122,6 +122,15 @@
     "imageCopied": "Đã sao chép hình ảnh vào clipboard!",
     "copyFailed": "Không thể sao chép. Vui lòng thử tải xuống."
   },
+  "qrScanner": {
+    "title": "Quét mã QR",
+    "scanQR": "Quét QR",
+    "scanning": "Đang quét... Hướng camera vào mã QR",
+    "startCamera": "Đang khởi động camera...",
+    "cameraError": "Không thể truy cập camera. Vui lòng cho phép quyền camera.",
+    "invalidQR": "Mã QR không hợp lệ. Vui lòng quét mã lớp học hoặc link bài thi hợp lệ.",
+    "success": "Quét thành công!"
+  },
   "login": {
     "welcome": "Chào mừng đến với",
     "subtitle": "Đăng nhập để tiếp tục và khám phá với EduMap",

@@ -122,6 +122,15 @@
     "imageCopied": "Image copied to clipboard!",
     "copyFailed": "Failed to copy. Please try downloading instead."
   },
+  "qrScanner": {
+    "title": "Scan QR Code",
+    "scanQR": "Scan QR",
+    "scanning": "Scanning... Point camera at QR code",
+    "startCamera": "Starting camera...",
+    "cameraError": "Cannot access camera. Please allow camera permission.",
+    "invalidQR": "Invalid QR code. Please scan a valid class code or exam link.",
+    "success": "Scan successful!"
+  },
   "login": {
     "welcome": "Welcome to",
     "subtitle": "Login to continue and explore with EduMap",

@@ -19,7 +19,8 @@ import {
   EyeOutlined,
   UserAddOutlined,
   ReloadOutlined,
-  SearchOutlined
+  SearchOutlined,
+  QrcodeOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +30,7 @@ import { ROUTES } from '../../constants/config';
 import CreateClassModal from './CreateClassModal';
 import EditClassModal from './EditClassModal';
 import AddStudentsModal from './AddStudentsModal';
+import QRCodeModal from '../common/QRCodeModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -51,6 +53,8 @@ const ClassList = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addStudentsModalVisible, setAddStudentsModalVisible] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
+  const [selectedClassForQR, setSelectedClassForQR] = useState(null);
   
   // Bulk delete states
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -205,6 +209,29 @@ const ClassList = () => {
           {code}
         </Tag>
       ),
+    },
+    {
+      title: 'QR',
+      key: 'qrCode',
+      width: 60,
+      align: 'center',
+      render: (_, record) => {
+        if (!record.code) {
+          return <span style={{ color: '#d9d9d9' }}>-</span>;
+        }
+        return (
+          <Tooltip title={t('classes.showQRCode') || 'Show QR Code'}>
+            <Button 
+              type="text" 
+              icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+              onClick={() => {
+                setSelectedClassForQR(record);
+                setQrCodeModalVisible(true);
+              }}
+            />
+          </Tooltip>
+        );
+      },
     },
     {
       title: t('classes.students'),
@@ -408,6 +435,19 @@ const ClassList = () => {
           setSelectedClass(null);
           fetchClasses();
         }}
+      />
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={qrCodeModalVisible}
+        onCancel={() => {
+          setQrCodeModalVisible(false);
+          setSelectedClassForQR(null);
+        }}
+        value={selectedClassForQR?.code || ''}
+        title={selectedClassForQR?.name || t('classes.classCodeQR')}
+        description={t('classes.qrDescription') || 'Students can scan this QR code to join the class'}
+        filename={selectedClassForQR?.name ? `qr_class_${selectedClassForQR.name.replace(/[^a-zA-Z0-9]/g, '_')}` : `qr_class_${selectedClassForQR?.code || 'class'}`}
       />
     </Card>
   );

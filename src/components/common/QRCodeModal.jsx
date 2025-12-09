@@ -92,12 +92,6 @@ const QRCodeModal = ({ open, onCancel, value, title, description, filename }) =>
           />
         </div>
 
-        <div style={{ marginTop: 16, marginBottom: 8 }}>
-          <Text strong style={{ fontSize: 18, fontFamily: 'monospace' }}>
-            {value}
-          </Text>
-        </div>
-
         <Space style={{ marginTop: 20 }} size="middle">
           <Button 
             type="primary" 

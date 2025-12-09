@@ -686,7 +686,11 @@ const ExamDetailNew = () => {
                         {
                           key: "totalMarks",
                           label: t("exams.totalMarks"),
-                          value: examData.totalMarks,
+                          value: examData.totalMarks != null 
+                            ? (Number.isInteger(examData.totalMarks) 
+                              ? examData.totalMarks 
+                              : examData.totalMarks.toFixed(1))
+                            : "-",
                         },
                         {
                           key: "maxAttempts",
@@ -733,27 +737,27 @@ const ExamDetailNew = () => {
                             if (record.isShareLink) {
                               return record.value ? (
                                 <Space>
-                                  <Tooltip
-                                    title={
-                                      t("exams.clickToCopy") ||
-                                      "Click to copy link"
-                                    }
+                                <Tooltip
+                                  title={
+                                    t("exams.clickToCopy") ||
+                                    "Click to copy link"
+                                  }
+                                >
+                                  <Tag
+                                    color="blue"
+                                    icon={<LinkOutlined />}
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => {
+                                      const shareLink = `${window.location.origin}/exam/${record.value}`;
+                                      navigator.clipboard.writeText(shareLink);
+                                      message.success(
+                                        t("exams.linkCopied") || "Link copied!"
+                                      );
+                                    }}
                                   >
-                                    <Tag
-                                      color="blue"
-                                      icon={<LinkOutlined />}
-                                      style={{ cursor: "pointer" }}
-                                      onClick={() => {
-                                        const shareLink = `${window.location.origin}/exam/${record.value}`;
-                                        navigator.clipboard.writeText(shareLink);
-                                        message.success(
-                                          t("exams.linkCopied") || "Link copied!"
-                                        );
-                                      }}
-                                    >
-                                      {record.value}
-                                    </Tag>
-                                  </Tooltip>
+                                    {record.value}
+                                  </Tag>
+                                </Tooltip>
                                   <Tooltip title={t('exams.showQRCode') || 'Show QR Code'}>
                                     <Button
                                       type="text"
@@ -826,6 +830,11 @@ const ExamDetailNew = () => {
                               dataIndex: "marks",
                               key: "marks",
                               width: 80,
+                              render: (marks) => {
+                                if (marks == null) return "-";
+                                // If it's an integer, show as is. Otherwise, round to 1 decimal place
+                                return Number.isInteger(marks) ? marks : marks.toFixed(1);
+                              },
                             },
                           ]}
                         />
