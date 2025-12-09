@@ -946,6 +946,8 @@
     "question": "Question",
     "correctAnswer": "Correct Answer",
     "studentAnswer": "Student's Answer"
+  },
+  "mindmap": {
+    "unsavedChanges": "You have unsaved changes like drawing, layout, or node properties. Do you really want to leave without saving?"
   }
 }
-

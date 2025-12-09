@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState, useCallback } from 'react'; // Added useCallback
+import { useParams, useNavigate, useBlocker } from 'react-router-dom'; // Added useBlocker
+import { useTranslation } from 'react-i18next';
 import MindElixir from 'mind-elixir';
 import './mind-elixir.css';
 import mindmapService from '../../api/mindmapService';
@@ -8,6 +9,7 @@ import './MindmapEditor.css';
 import useAuthStore from '../../store/authStore';
 
 const MindmapEditor = () => {
+    const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuthStore();
@@ -15,6 +17,38 @@ const MindmapEditor = () => {
     const [selectedNode, setSelectedNode] = useState(null);
     const [isInspectorOpen, setIsInspectorOpen] = useState(false);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+    const [isDirty, setIsDirty] = useState(false); // Track unsaved changes
+
+    // Handle browser tab close / refresh
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = ''; // Required for Chrome
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDirty]);
+
+    // Handle React Router navigation (Back button, Sidebar, etc.)
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            isDirty && currentLocation.pathname !== nextLocation.pathname
+    );
+
+    useEffect(() => {
+        if (blocker.state === "blocked") {
+            const confirmLeave = window.confirm(t('mindmap.unsavedChanges'));
+            if (confirmLeave) {
+                blocker.proceed();
+            } else {
+                blocker.reset();
+            }
+        }
+    }, [blocker]);
 
     // Theme state
     const [theme, setTheme] = useState({
@@ -45,6 +79,7 @@ const MindmapEditor = () => {
 
     const handleUpdateTheme = (key, value) => {
         setTheme(prev => ({ ...prev, [key]: value }));
+        setIsDirty(true);
     };
 
     const mindRef = useRef(null);
@@ -79,7 +114,6 @@ const MindmapEditor = () => {
         try {
             const mind = new MindElixir(options);
 
-            // Custom select logic
             mind.bus.addListener('selectNode', (node) => {
                 setSelectedNode(node.nodeObj || node);
                 activeNodeRef.current = node.nodeObj || node;
@@ -92,8 +126,8 @@ const MindmapEditor = () => {
                 setIsInspectorOpen(false);
             });
 
-            // Listen for operations to ensure inspector updates on node creation/edit
             mind.bus.addListener('operation', (operation) => {
+                setIsDirty(true);
                 if (['addChild', 'insertSibling', 'finishEdit', 'beginEdit'].includes(operation.name)) {
                     setTimeout(() => {
                         if (mind.currentNode) {
@@ -107,7 +141,6 @@ const MindmapEditor = () => {
 
             mind.init(data);
 
-            // Handle double click to open inspector
             if (containerRef.current) {
                 containerRef.current.ondblclick = () => {
                     setTimeout(() => {
@@ -120,7 +153,6 @@ const MindmapEditor = () => {
                 };
             }
 
-            // Apply initial theme
             if (theme) {
                 mind.changeTheme({
                     name: 'Custom',
@@ -153,7 +185,6 @@ const MindmapEditor = () => {
 
         // Helper to update a single node
         const updateSingleNode = (id, k, v) => {
-            // 1. Try in-place update
             if (mindRef.current.nodeData) {
                 const node = getTargetNode(mindRef.current.nodeData, id);
                 if (node) {
@@ -161,7 +192,7 @@ const MindmapEditor = () => {
                     return true;
                 }
             }
-            // 2. Fallback to getData()
+            //Fallback to getData()
             const currentData = mindRef.current.getData();
             const node = getTargetNode(currentData.nodeData || currentData, id);
             if (node) {
@@ -177,7 +208,7 @@ const MindmapEditor = () => {
         if (updateSingleNode(targetId, key, value)) {
             try {
                 mindRef.current.refresh();
-                // If we updated the currently inspected node, update local state
+                setIsDirty(true);
                 if (targetId === selectedNode?.id) {
                     setSelectedNode(prev => ({ ...prev, [key]: value }));
                 }
@@ -209,6 +240,7 @@ const MindmapEditor = () => {
     };
 
     const updateNodeStyle = (prop, value, nodeId = null) => {
+        setIsDirty(true); // Mark as dirty
         if (!mindRef.current) return;
 
         const currentData = mindRef.current.getData();
@@ -229,7 +261,6 @@ const MindmapEditor = () => {
             node.style[prop] = value;
         }
 
-        // If we manually updated style object (fallback), we need refresh
         if (!mindRef.current.updateNodeStyle) {
             mindRef.current.refresh(currentData);
         }
@@ -237,7 +268,6 @@ const MindmapEditor = () => {
         if (mindRef.current.layout) mindRef.current.layout();
         if (mindRef.current.linkDiv) mindRef.current.linkDiv();
 
-        // Update local state if the selected node was one of them
         if (selectedNode && node.id === selectedNode.id) {
             setSelectedNode(prev => ({
                 ...prev,
@@ -261,6 +291,7 @@ const MindmapEditor = () => {
     const handleTopicChange = (e) => {
         const newTopic = e.target.value;
         setSelectedNode(prev => ({ ...prev, topic: newTopic }));
+        // Note: isDirty handled in onBlur -> updateNodeData, but UI state is local until then
     };
 
     const handleTopicBlur = (e) => {
@@ -270,9 +301,9 @@ const MindmapEditor = () => {
         let finalValue = value;
         if (!value.trim()) {
             if (hasImage) {
-                finalValue = ''; // Allow empty if image exists
+                finalValue = '';
             } else {
-                finalValue = '\u200B'; // Use zero-width space if no image
+                finalValue = '\u200B';
             }
         }
         updateNodeData('topic', finalValue, selectedNode?.id);
@@ -287,7 +318,6 @@ const MindmapEditor = () => {
         };
     }, [id]);
 
-    // Apply theme changes
     useEffect(() => {
         if (mindRef.current && theme) {
             mindRef.current.changeTheme({
@@ -296,15 +326,12 @@ const MindmapEditor = () => {
                 cssVar: theme
             });
 
-            // Manually apply CSS variables to container to ensure they exist
-            // (MindElixir might filter unknown variables in changeTheme)
             if (containerRef.current) {
                 Object.keys(theme).forEach(key => {
                     containerRef.current.style.setProperty(key, theme[key]);
                 });
             }
 
-            // Force layout update to apply new gap settings
             setTimeout(() => {
                 if (mindRef.current.layout) mindRef.current.layout();
                 if (mindRef.current.linkDiv) mindRef.current.linkDiv();
@@ -315,11 +342,9 @@ const MindmapEditor = () => {
     // Helper to extract text from topic (simple version)
     const extractTextFromTopic = (topicHtml) => {
         if (!topicHtml) return '';
-        // If it looks like our generated HTML, extract the text part
         if (typeof topicHtml === 'string' && (topicHtml.includes('<img') || topicHtml.includes('<div>'))) {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = topicHtml;
-            // Get text content but ignore the image text if any (though img tags don't have text content usually)
             return tempDiv.textContent || tempDiv.innerText || '';
         }
         return topicHtml;
@@ -338,11 +363,9 @@ const MindmapEditor = () => {
         try {
             const response = await uploadService.uploadImage(file);
 
-            // Check for url directly in response or in response.data
             const url = response.url || (response.data && response.data.url);
 
             if (url) {
-                // Calculate image dimensions
                 const getImageDimensions = (src) => {
                     return new Promise((resolve) => {
                         const img = new Image();
@@ -363,7 +386,7 @@ const MindmapEditor = () => {
                             resolve({ width: Math.round(width), height: Math.round(height) });
                         };
                         img.onerror = () => {
-                            resolve({ width: 100, height: 100 }); // Fallback
+                            resolve({ width: 100, height: 100 });
                         };
                         img.src = src;
                     });
@@ -380,11 +403,8 @@ const MindmapEditor = () => {
                 // Get current text content (clean up any previous HTML)
                 const currentText = extractTextFromTopic(selectedNode.topic);
 
-                // We do NOT add HTML to the topic anymore. 
-                // MindElixir handles the image property separately.
                 const newTopic = currentText;
 
-                // Atomic update to avoid multiple refreshes
                 if (mindRef.current) {
                     const targetId = selectedNode.id;
                     let node = null;
@@ -394,7 +414,6 @@ const MindmapEditor = () => {
                         node = getTargetNode(mindRef.current.nodeData, targetId);
                     }
 
-                    // Fallback if not found
                     if (!node) {
                         const currentData = mindRef.current.getData();
                         node = getTargetNode(currentData.nodeData || currentData, targetId);
@@ -443,6 +462,7 @@ const MindmapEditor = () => {
                 data,
                 updated_at: new Date()
             });
+            setIsDirty(false); // Reset dirty state on save
             alert('Mindmap saved successfully!');
         } catch (error) {
             alert('Failed to save mindmap: ' + error.message);
@@ -471,7 +491,6 @@ const MindmapEditor = () => {
                 const mapCanvas = containerRef.current.querySelector('.map-canvas');
                 if (!mapCanvas) return;
 
-                // Wait a bit to ensure any rendering/reflow is complete
                 await new Promise(resolve => setTimeout(resolve, 500));
 
                 const html2canvas = (await import('html2canvas')).default;
@@ -636,7 +655,10 @@ const MindmapEditor = () => {
                                 type="text"
                                 className="mindmap-title-input"
                                 value={title}
-                                onChange={(e) => setTitle(e.target.value)}
+                                onChange={(e) => {
+                                    setTitle(e.target.value);
+                                    setIsDirty(true);
+                                }}
                                 onBlur={() => setIsEditingTitle(false)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') setIsEditingTitle(false);
@@ -660,6 +682,9 @@ const MindmapEditor = () => {
                     </div>
                 </div>
                 <div className="editor-actions">
+                    <button className="action-btn" onClick={() => setIsTutorialOpen(true)} title="Tutorial">
+                        ❓ Tutorial
+                    </button>
                     <button className="action-btn" onClick={handleUndo} title="Undo (Ctrl+Z)">
                         ↩️ Undo
                     </button>
@@ -709,6 +734,52 @@ const MindmapEditor = () => {
                     ref={containerRef}
                     className="mindmap-canvas"
                 ></div>
+
+                {/* Tutorial Modal */}
+                {isTutorialOpen && (
+                    <div className="modal-backdrop" onClick={() => setIsTutorialOpen(false)}>
+                        <div className="tutorial-modal" onClick={(e) => e.stopPropagation()}>
+                            <h3>
+                                Mindmap Shortcuts
+                                <button onClick={() => setIsTutorialOpen(false)}>&times;</button>
+                            </h3>
+                            <div className="tutorial-content">
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Create child node</span>
+                                    <span className="shortcut-key">Tab</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Create sibling node</span>
+                                    <span className="shortcut-key">Enter</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Delete node</span>
+                                    <span className="shortcut-key">Del / Backspace</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Center map</span>
+                                    <span className="shortcut-key">F1 / Ctrl + Enter</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Edit node</span>
+                                    <span className="shortcut-key">Dbl Click / F2</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Zoom In/Out</span>
+                                    <span className="shortcut-key">Ctrl + Scroll</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Move Node</span>
+                                    <span className="shortcut-key">Drag</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">Open Context Menu</span>
+                                    <span className="shortcut-key">Right Click</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Theme Editor Panel */}
                 {isThemeOpen && (
@@ -882,11 +953,11 @@ const MindmapEditor = () => {
                                         onChange={(e) => updateNodeStyle('fontSize', e.target.value + 'px', selectedNode.id)}
                                     />
                                     <button
+                                        className={`style-btn ${selectedNode.style?.fontWeight === 'bold' ? 'active' : ''}`}
                                         onClick={() => updateNodeStyle('fontWeight', selectedNode.style?.fontWeight === 'bold' ? 'normal' : 'bold', selectedNode.id)}
-                                        style={{ fontWeight: 'bold', background: selectedNode.style?.fontWeight === 'bold' ? '#ddd' : 'white' }}
                                         title="Bold"
                                     >
-                                        B
+                                        <span style={{ fontWeight: 'bold' }}>B</span>
                                     </button>
                                 </div>
                             </div>

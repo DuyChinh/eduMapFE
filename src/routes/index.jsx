@@ -1,10 +1,11 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, createBrowserRouter, createRoutesFromElements } from 'react-router-dom';
 import { ROUTES, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 
 // Layouts
 import StudentLayout from '../layouts/StudentLayout';
 import TeacherLayout from '../layouts/TeacherLayout';
+import GlobalLayout from '../layouts/GlobalLayout';
 
 // Auth Pages
 import ForgotPassword from '../pages/auth/ForgotPassword';
@@ -72,9 +73,9 @@ const RootRedirect = () => {
 /**
  * App Routes Configuration
  */
-const AppRoutes = () => {
-  return (
-    <Routes>
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<GlobalLayout />}>
       {/* Root redirect */}
       <Route path="/" element={<RootRedirect />} />
 
@@ -169,9 +170,9 @@ const AppRoutes = () => {
 
       {/* 404 - Not Found */}
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-};
+    </Route>
+  )
+);
 
-export default AppRoutes;
+export default router;
 
