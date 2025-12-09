@@ -32,6 +32,7 @@
     "mathquill": "^0.10.1-a",
     "mathquill4quill": "^2.4.0",
     "prop-types": "^15.8.1",
+    "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^16.0.0",

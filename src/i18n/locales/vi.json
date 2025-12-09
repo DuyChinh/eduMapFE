@@ -115,7 +115,12 @@
     "backToDashboard": "Về trang chủ",
     "student": "Học sinh",
     "add": "Thêm",
-    "of": "của"
+    "of": "của",
+    "download": "Tải xuống",
+    "copyImage": "Sao chép hình ảnh",
+    "downloadSuccess": "Tải xuống thành công!",
+    "imageCopied": "Đã sao chép hình ảnh vào clipboard!",
+    "copyFailed": "Không thể sao chép. Vui lòng thử tải xuống."
   },
   "login": {
     "welcome": "Chào mừng đến với",
@@ -379,7 +384,10 @@
     "assignments": "Bài tập",
     "examsDescription": "Xem và quản lý các bài thi trong lớp",
     "assignmentsDescription": "Xem và nộp bài tập được giao",
-    "role": "Vai trò"
+    "role": "Vai trò",
+    "showQRCode": "Hiển thị mã QR",
+    "classCodeQR": "Mã QR lớp học",
+    "qrDescription": "Học sinh có thể quét mã QR này để tham gia lớp học"
   },
   "questions": {
     "title": "Quản lý câu hỏi",
@@ -666,6 +674,9 @@
     "copyLink": "Sao chép link",
     "clickToCopy": "Nhấn để sao chép link",
     "linkCopied": "Đã sao chép link!",
+    "showQRCode": "Hiển thị mã QR",
+    "shareLinkQR": "Mã QR link chia sẻ",
+    "qrDescription": "Học sinh có thể quét mã QR này để vào làm bài thi",
     "tabs": {
       "overview": "Tổng quan",
       "statistics": "Thống kê",

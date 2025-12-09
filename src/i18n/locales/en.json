@@ -115,7 +115,12 @@
     "backToDashboard": "Back to Dashboard",
     "student": "Student",
     "add": "Add",
-    "of": "of"
+    "of": "of",
+    "download": "Download",
+    "copyImage": "Copy Image",
+    "downloadSuccess": "Download successful!",
+    "imageCopied": "Image copied to clipboard!",
+    "copyFailed": "Failed to copy. Please try downloading instead."
   },
   "login": {
     "welcome": "Welcome to",
@@ -380,7 +385,10 @@
     "assignments": "Assignments",
     "examsDescription": "View and manage exams in the class",
     "assignmentsDescription": "View and submit assigned tasks",
-    "role": "Role"
+    "role": "Role",
+    "showQRCode": "Show QR Code",
+    "classCodeQR": "Class Code QR",
+    "qrDescription": "Students can scan this QR code to join the class"
   },
   "questions": {
     "title": "Question Management",
@@ -667,6 +675,9 @@
     "copyLink": "Copy Link",
     "clickToCopy": "Click to copy link",
     "linkCopied": "Link copied!",
+    "showQRCode": "Show QR Code",
+    "shareLinkQR": "Exam Share Link QR",
+    "qrDescription": "Students can scan this QR code to access the exam",
     "tabs": {
       "overview": "Overview",
       "statistics": "Statistics",
