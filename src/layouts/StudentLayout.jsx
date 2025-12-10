@@ -15,12 +15,14 @@ import {
   MoonOutlined,
   SunOutlined,
   ShareAltOutlined,
+  ScanOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { ROUTES, USER_ROLES } from '../constants/config';
+import QRScanner from '../components/common/QRScanner';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -30,6 +32,7 @@ const StudentLayout = () => {
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
+  const [qrScannerVisible, setQrScannerVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
@@ -51,7 +54,8 @@ const StudentLayout = () => {
       }
     };
     refreshProfile();
-  }, [fetchProfile, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const handleLogout = () => {
     logout();
@@ -258,6 +262,14 @@ const StudentLayout = () => {
           <Space size="large" className="header-actions">
             <Button
               type="text"
+              icon={<ScanOutlined />}
+              onClick={() => setQrScannerVisible(true)}
+              title={t('qrScanner.scanQR') || 'Scan QR Code'}
+              className="qr-scan-btn"
+            />
+
+            <Button
+              type="text"
               icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
@@ -361,6 +373,13 @@ const StudentLayout = () => {
           </Button>
         </Space>
       </Modal>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        open={qrScannerVisible}
+        onClose={() => setQrScannerVisible(false)}
+        userRole="student"
+      />
     </Layout>
   );
 };

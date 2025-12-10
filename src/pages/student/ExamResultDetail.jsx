@@ -5,9 +5,8 @@ import { MathJax, MathJaxContext } from 'better-react-mathjax';
 import {
   Card,
   Typography,
-  Space,
   Button,
-  Tag,
+  Space,
   Divider,
   Row,
   Col,
@@ -24,10 +23,9 @@ import {
   CloseCircleOutlined,
   TrophyOutlined,
   EditOutlined,
-  CheckOutlined,
-  CloseOutlined,
 } from '@ant-design/icons';
 import { getSubmissionById } from '../../api/submissionService';
+import examStatsService from '../../api/examStatsService';
 import './ExamResultDetail.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -89,10 +87,9 @@ const ExamResultDetail = () => {
 
   const loadLeaderboard = async (examId) => {
     try {
-      const submissionService = (await import('../../api/submissionService')).default;
-      const response = await submissionService.getExamLeaderboard(examId);
-      const leaderboardData = response.data || response;
-      setLeaderboard(leaderboardData);
+      const response = await examStatsService.getExamLeaderboard(examId);
+      const leaderboardData = response.data || response || [];
+      setLeaderboard(Array.isArray(leaderboardData) ? leaderboardData : []);
     } catch (error) {
       console.error('Error loading leaderboard:', error);
       setShowLeaderboard(false);
@@ -292,14 +289,14 @@ const ExamResultDetail = () => {
     },
     {
       title: t('takeExam.studentName') || 'Student',
-      dataIndex: 'name',
-      key: 'name'
+      key: 'student',
+      render: (_, record) => record.student?.name || '-'
     },
     {
       title: t('takeExam.score') || 'Score',
       dataIndex: 'score',
       key: 'score',
-      render: (score, record) => `${score}/${record.maxScore}`
+      render: (score, record) => `${score || 0}/${record.totalMarks || 0}`
     },
     {
       title: t('takeExam.percentage') || 'Percentage',
@@ -327,7 +324,7 @@ const ExamResultDetail = () => {
             </Title>
           </div>
           <div className="header-right">
-            <Button.Group>
+            <Space.Compact>
               <Button
                 type={filterType === 'all' ? 'primary' : 'default'}
                 onClick={() => setFilterType('all')}
@@ -346,7 +343,7 @@ const ExamResultDetail = () => {
               >
                 {t('studentResults.filterIncorrect') || 'Sai'}
               </Button>
-            </Button.Group>
+            </Space.Compact>
           </div>
         </div>
 
