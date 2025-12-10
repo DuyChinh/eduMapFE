@@ -14,6 +14,7 @@ import {
   GlobalOutlined,
   MoonOutlined,
   SunOutlined,
+  ShareAltOutlined,
   ScanOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -48,8 +49,8 @@ const StudentLayout = () => {
 
       try {
         await fetchProfile();
-      } catch {
-        // silent
+      } catch (error) {
+
       }
     };
     refreshProfile();
@@ -116,6 +117,7 @@ const StudentLayout = () => {
   const getSelectedKey = () => {
     const pathname = location.pathname;
 
+    // Check if current path starts with any of the main routes
     if (pathname.startsWith('/student/classes')) {
       return ROUTES.STUDENT_CLASSES;
     }
@@ -125,7 +127,11 @@ const StudentLayout = () => {
     if (pathname.startsWith('/student/dashboard')) {
       return ROUTES.STUDENT_DASHBOARD;
     }
+    if (pathname.startsWith('/student/mindmaps')) {
+      return 'mindmaps';
+    }
 
+    // Default fallback
     return pathname;
   };
 
@@ -160,6 +166,12 @@ const StudentLayout = () => {
       icon: <img src="/exam.png" alt="Results" className="menu-icon-image" />,
       label: t('student.examResults'),
       onClick: () => navigate(ROUTES.STUDENT_RESULTS),
+    },
+    {
+      key: 'mindmaps',
+      icon: <ShareAltOutlined />,
+      label: 'Mindmaps',
+      onClick: () => navigate('/student/mindmaps'),
     },
   ];
 
@@ -221,6 +233,21 @@ const StudentLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
+
+        <div className="sider-footer">
+          {!collapsed && (
+            <div className="user-info-compact">
+              <Avatar
+                src={user?.avatar}
+                icon={!user?.avatar && <UserOutlined />}
+              />
+              <div className="user-details">
+                <div className="user-name">{user?.name}</div>
+                <div className="user-role">{t('student.role')}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </Sider>
 
       <Layout>
@@ -249,15 +276,23 @@ const StudentLayout = () => {
               className="theme-toggle-btn"
             />
 
-            <Button type="text" icon={<BellOutlined />} className="notification-btn" />
+            <Button
+              type="text"
+              icon={<BellOutlined />}
+              className="notification-btn"
+            />
 
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              arrow
+            >
               <div className="user-dropdown">
-                <Avatar src={avatarSrc} icon={!avatarSrc && <UserOutlined />} />
-                <div className="user-dropdown-info">
-                  <span className="user-name-header">{displayName}</span>
-                  <span className="user-role-header">{roleLabel}</span>
-                </div>
+                <Avatar
+                  src={user?.avatar}
+                  icon={!user?.avatar && <UserOutlined />}
+                />
+                <span className="user-name-header">{user?.name}</span>
               </div>
             </Dropdown>
           </Space>

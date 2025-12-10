@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { 
-  Table, 
-  Button, 
-  Space, 
-  Tag, 
-  Popconfirm, 
-  message, 
-  Card, 
-  Input, 
+import {
+  Table,
+  Button,
+  Space,
+  Tag,
+  Popconfirm,
+  message,
+  Card,
+  Input,
   Select,
   Pagination,
   Tooltip,
@@ -15,10 +15,10 @@ import {
   Upload,
   Alert
 } from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
   SearchOutlined,
   UploadOutlined,
@@ -50,17 +50,24 @@ const QuestionList = () => {
     subject: '',
     sort: '-createdAt'
   });
-  
+
   // Modal states
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importResults, setImportResults] = useState(null);
-  
+
   // Bulk delete states
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+
+  // Bulk rename states
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [renameBaseName, setRenameBaseName] = useState('');
+  const [renameLoading, setRenameLoading] = useState(false);
+  // Track selection order
+  const [orderedSelectedIds, setOrderedSelectedIds] = useState([]);
 
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -75,15 +82,15 @@ const QuestionList = () => {
         ...filters,
         ...params
       };
-      
+
       // Convert subject filter to subjectId for API
       if (apiParams.subject) {
         apiParams.subjectId = apiParams.subject;
         delete apiParams.subject;
       }
-      
+
       const response = await questionService.getQuestions(apiParams);
-      
+
       setQuestions(response.items || []);
       setPagination(prev => ({
         ...prev,
@@ -108,7 +115,7 @@ const QuestionList = () => {
       try {
         const currentLang = localStorage.getItem('language') || 'vi';
         const response = await questionService.getSubjects({ lang: currentLang });
-        
+
         // Handle different response structures
         let subjectsData = [];
         if (Array.isArray(response)) {
@@ -118,7 +125,7 @@ const QuestionList = () => {
         } else if (response.items && Array.isArray(response.items)) {
           subjectsData = response.items;
         }
-        
+
         setSubjects(subjectsData);
       } catch (error) {
         console.error('❌ Error fetching subjects:', error);
@@ -134,7 +141,7 @@ const QuestionList = () => {
   useEffect(() => {
     const handleLanguageChange = () => {
       const currentLang = localStorage.getItem('language') || 'vi';
-      
+
       // Refetch subjects with new language
       const refetchSubjects = async () => {
         try {
@@ -147,20 +154,20 @@ const QuestionList = () => {
           } else if (response.items && Array.isArray(response.items)) {
             subjectsData = response.items;
           }
-          
+
           setSubjects(subjectsData);
         } catch (error) {
           console.error('❌ Error refetching subjects:', error);
           message.error('Failed to reload subjects');
         }
       };
-      
+
       refetchSubjects();
     };
 
     // Listen for storage changes (language changes)
     window.addEventListener('storage', handleLanguageChange);
-    
+
     // Also listen for custom language change events
     window.addEventListener('languageChanged', handleLanguageChange);
 
@@ -204,9 +211,9 @@ const QuestionList = () => {
       setBulkDeleteLoading(true);
       const deletePromises = selectedRowKeys.map(id => questionService.deleteQuestion(id));
       await Promise.all(deletePromises);
-      
+
       message.success(
-        t('questions.bulkDeleteSuccess') || 
+        t('questions.bulkDeleteSuccess') ||
         `Successfully deleted ${selectedRowKeys.length} question(s)`
       );
       setSelectedRowKeys([]);
@@ -220,10 +227,96 @@ const QuestionList = () => {
     }
   };
 
+  const handleBatchRename = async () => {
+    if (!renameBaseName.trim()) {
+      message.warning(t('questions.enterBaseName') || 'Please enter a base name');
+      return;
+    }
+
+    setRenameLoading(true);
+    try {
+      // Use orderedSelectedIds if available and matches length (meaning valid sequence), else fallback
+      const idsToRename = (orderedSelectedIds.length > 0 && orderedSelectedIds.length === selectedRowKeys.length)
+        ? orderedSelectedIds
+        : selectedRowKeys;
+
+      const response = await questionService.batchRename(idsToRename, renameBaseName);
+
+      // Check response structure from backend (res.json({ ok: true, results: ... }))
+      // Axios interceptor usually returns data directly or response object
+      // Assuming response is the data object from backend
+      const { results } = response;
+
+      if (response.ok) {
+        if (results && results.failed === 0) {
+          message.success(t('questions.renameSummary', { success: results.success, failed: 0 }));
+          setRenameModalVisible(false);
+          setRenameBaseName('');
+          setSelectedRowKeys([]);
+          setOrderedSelectedIds([]);
+          fetchQuestions();
+        } else if (results) {
+          // Partial
+          Modal.warning({
+            title: t('questions.renamePartialSuccess'),
+            content: (
+              <div>
+                <p>{t('questions.renameSummary', { success: results.success, failed: results.failed })}</p>
+                <ul>
+                  {results.errors.map((err, idx) => (
+                    <li key={idx} style={{ color: 'red' }}>
+                      {err.name || err.id}: {err.error}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          });
+          setRenameModalVisible(false);
+          setRenameBaseName('');
+          setSelectedRowKeys([]);
+          setOrderedSelectedIds([]);
+          fetchQuestions();
+        }
+      } else {
+        message.error(response.message || 'Failed to rename');
+      }
+
+    } catch (error) {
+      console.error('Batch rename error:', error);
+      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.renameFailed'));
+      message.error(errorMessage);
+    } finally {
+      setRenameLoading(false);
+    }
+  };
+
   const rowSelection = {
     selectedRowKeys,
     onChange: (newSelectedRowKeys) => {
       setSelectedRowKeys(newSelectedRowKeys);
+      if (newSelectedRowKeys.length === 0) {
+        setOrderedSelectedIds([]);
+      }
+    },
+    onSelect: (record, selected) => {
+      const id = record.id || record._id;
+      if (selected) {
+        setOrderedSelectedIds(prev => [...prev, id]);
+      } else {
+        setOrderedSelectedIds(prev => prev.filter(mid => mid !== id));
+      }
+    },
+    onSelectAll: (selected, selectedRows, changeRows) => {
+      const changeIds = changeRows.map(r => r.id || r._id);
+      if (selected) {
+        setOrderedSelectedIds(prev => {
+          const uniqueIds = new Set([...prev, ...changeIds]);
+          return Array.from(uniqueIds);
+        });
+      } else {
+        setOrderedSelectedIds(prev => prev.filter(id => !changeIds.includes(id)));
+      }
     },
     getCheckboxProps: (record) => ({
       name: record.name,
@@ -258,11 +351,11 @@ const QuestionList = () => {
   const handleDownloadTemplate = async (format = 'xlsx') => {
     try {
       const response = await questionService.downloadTemplate(format);
-      
+
       // Create blob and download
       const blob = new Blob([response], {
-        type: format === 'csv' 
-          ? 'text/csv;charset=utf-8;' 
+        type: format === 'csv'
+          ? 'text/csv;charset=utf-8;'
           : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
       const url = window.URL.createObjectURL(blob);
@@ -273,7 +366,7 @@ const QuestionList = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       message.success(t('questions.templateDownloaded') || 'Template downloaded successfully');
     } catch (error) {
       console.error('Download template error:', error);
@@ -291,11 +384,11 @@ const QuestionList = () => {
       if (filters.level) exportParams.level = filters.level;
 
       const response = await questionService.exportQuestions({ ...exportParams, format });
-      
+
       // Create blob and download
       const blob = new Blob([response], {
-        type: format === 'csv' 
-          ? 'text/csv;charset=utf-8;' 
+        type: format === 'csv'
+          ? 'text/csv;charset=utf-8;'
           : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
       const url = window.URL.createObjectURL(blob);
@@ -306,7 +399,7 @@ const QuestionList = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       message.success(t('questions.exportSuccess') || 'Questions exported successfully');
     } catch (error) {
       console.error('Export questions error:', error);
@@ -326,17 +419,17 @@ const QuestionList = () => {
     try {
       const response = await questionService.importQuestions(importFile);
       const results = response.results || response.data?.results;
-      
+
       setImportResults(results);
-      
+
       if (results && results.success > 0) {
         message.success(
-          t('questions.importSuccess') || 
+          t('questions.importSuccess') ||
           `Successfully imported ${results.success} question(s)`
         );
         fetchQuestions(); // Refresh the list
       }
-      
+
       if (results && results.failed > 0) {
         message.warning(
           `${results.success} succeeded, ${results.failed} failed out of ${results.total} total`
@@ -359,22 +452,22 @@ const QuestionList = () => {
 
   const beforeUpload = (file) => {
     const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                    file.type === 'application/vnd.ms-excel' ||
-                    file.name.endsWith('.xlsx') ||
-                    file.name.endsWith('.xls');
+      file.type === 'application/vnd.ms-excel' ||
+      file.name.endsWith('.xlsx') ||
+      file.name.endsWith('.xls');
     const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv');
-    
+
     if (!isExcel && !isCSV) {
       message.error(t('questions.invalidFileType') || 'You can only upload CSV or Excel files!');
       return false;
     }
-    
+
     const isLt10M = file.size / 1024 / 1024 < 10;
     if (!isLt10M) {
       message.error(t('questions.fileTooLarge') || 'File must be smaller than 10MB!');
       return false;
     }
-    
+
     setImportFile(file);
     return false; // Prevent auto upload
   };
@@ -411,11 +504,11 @@ const QuestionList = () => {
         if (typeof subjectId === 'object' && subjectId !== null) {
           actualSubjectId = subjectId._id || subjectId.id;
         }
-        
+
         // Get subject name from subjects array
         const subjectObj = subjects.find(s => (s._id || s.id) === actualSubjectId);
         const currentLang = localStorage.getItem('language') || 'vi';
-        
+
         let subjectName = actualSubjectId || 'N/A';
         if (subjectObj) {
           switch (currentLang) {
@@ -431,7 +524,7 @@ const QuestionList = () => {
               break;
           }
         }
-        
+
         return (
           <Tag color="blue">
             {subjectName}
@@ -460,6 +553,19 @@ const QuestionList = () => {
       ),
     },
     {
+      title: t('questions.updatedAt'),
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      render: (date) => {
+        if (!date) return '-';
+        const dateObj = new Date(date);
+        const day = dateObj.getDate().toString().padStart(2, '0');
+        const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+        const year = dateObj.getFullYear();
+        return `${day}/${month}/${year}`;
+      },
+    },
+    {
       title: t('questions.createdAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
@@ -478,8 +584,8 @@ const QuestionList = () => {
       render: (_, record) => (
         <Space size="small">
           <Tooltip title={t('questions.viewDetails')}>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<EyeOutlined />}
               onClick={() => {
                 const questionId = record.id || record._id;
@@ -487,10 +593,10 @@ const QuestionList = () => {
               }}
             />
           </Tooltip>
-          
+
           <Tooltip title={t('questions.edit')}>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<EditOutlined />}
               onClick={() => {
                 const questionId = record.id || record._id;
@@ -498,7 +604,7 @@ const QuestionList = () => {
               }}
             />
           </Tooltip>
-          
+
           <Popconfirm
             title={t('questions.confirmDelete')}
             onConfirm={() => handleDelete(record.id || record._id)}
@@ -506,9 +612,9 @@ const QuestionList = () => {
             cancelText={t('common.no')}
           >
             <Tooltip title={t('questions.delete')}>
-              <Button 
-                type="text" 
-                danger 
+              <Button
+                type="text"
+                danger
                 icon={<DeleteOutlined />}
               />
             </Tooltip>
@@ -522,22 +628,22 @@ const QuestionList = () => {
     <Card>
       <div style={{ marginBottom: 16 }}>
         {/* Filters Row */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: 12, 
-          marginBottom: 16 
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          marginBottom: 16
         }}>
-          <div style={{ 
-            display: 'flex', 
-            gap: 8, 
+          <div style={{
+            display: 'flex',
+            gap: 8,
             flexWrap: 'wrap',
             alignItems: 'flex-start'
           }}>
             <Search
               placeholder={t('questions.searchPlaceholder')}
               allowClear
-              style={{ 
+              style={{
                 width: '100%',
                 maxWidth: 300,
                 minWidth: 200
@@ -545,10 +651,10 @@ const QuestionList = () => {
               onSearch={handleSearch}
               prefix={<SearchOutlined />}
             />
-            
+
             <Select
               placeholder={t('questions.filterByType')}
-              style={{ 
+              style={{
                 width: '100%',
                 maxWidth: 150,
                 minWidth: 120
@@ -561,10 +667,10 @@ const QuestionList = () => {
               <Option value="short">{t('questions.types.short')}</Option>
               <Option value="essay">{t('questions.types.essay')}</Option>
             </Select>
-            
+
             <Select
               placeholder={t('questions.filterByLevel')}
-              style={{ 
+              style={{
                 width: '100%',
                 maxWidth: 150,
                 minWidth: 120
@@ -578,10 +684,10 @@ const QuestionList = () => {
               <Option value="4">4 - {t('questions.levelHard')}</Option>
               <Option value="5">5 - {t('questions.levelHard')}</Option>
             </Select>
-            
+
             <Select
               placeholder={t('questions.filterBySubject')}
-              style={{ 
+              style={{
                 width: '100%',
                 maxWidth: 200,
                 minWidth: 150
@@ -596,7 +702,7 @@ const QuestionList = () => {
               {subjects.map(subject => {
                 const currentLang = localStorage.getItem('language') || 'vi';
                 let subjectName = subject.name;
-                
+
                 switch (currentLang) {
                   case 'en':
                     subjectName = subject.name_en || subject.name;
@@ -609,7 +715,7 @@ const QuestionList = () => {
                     subjectName = subject.name;
                     break;
                 }
-                
+
                 return (
                   <Option key={subject._id || subject.id} value={subject._id || subject.id}>
                     {subjectName}
@@ -619,60 +725,73 @@ const QuestionList = () => {
             </Select>
           </div>
         </div>
-        
+
         {/* Actions Row */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          flexWrap: 'wrap', 
-          gap: 8 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8
         }}>
-          {selectedRowKeys.length > 0 && (
+          <Space>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => setRenameModalVisible(true)}
+              disabled={selectedRowKeys.length === 0}
+            >
+              {selectedRowKeys.length > 0
+                ? (t('questions.renameSelectedWithCount', { count: selectedRowKeys.length }) || `Rename (${selectedRowKeys.length})`)
+                : (t('questions.renameSelected') || 'Rename')}
+            </Button>
             <Popconfirm
               title={t('questions.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected question(s)?`}
               onConfirm={handleBulkDelete}
               okText={t('common.yes')}
               cancelText={t('common.no')}
               okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+              disabled={selectedRowKeys.length === 0}
             >
-              <Button 
+              <Button
                 danger
                 icon={<DeleteOutlined />}
                 loading={bulkDeleteLoading}
+                disabled={selectedRowKeys.length === 0}
               >
-                {t('questions.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+                {selectedRowKeys.length > 0
+                  ? (t('questions.deleteSelectedWithCount', { count: selectedRowKeys.length }) || `Delete Selected (${selectedRowKeys.length})`)
+                  : (t('questions.deleteSelected') || 'Delete Selected')}
               </Button>
             </Popconfirm>
-          )}
-          
+          </Space>
+
           <Space wrap size="small">
-            <Button 
+            <Button
               icon={<FileExcelOutlined />}
               onClick={() => handleDownloadTemplate('xlsx')}
               className="responsive-button"
             >
               <span className="button-text">{t('questions.downloadTemplate') || 'Download Template'}</span>
             </Button>
-            
-            <Button 
+
+            <Button
               icon={<DownloadOutlined />}
               onClick={() => handleExportQuestions('xlsx')}
               className="responsive-button"
             >
               <span className="button-text">{t('questions.export') || 'Export'}</span>
             </Button>
-            
-            <Button 
+
+            <Button
               icon={<UploadOutlined />}
               onClick={() => setImportModalVisible(true)}
               className="responsive-button"
             >
               <span className="button-text">{t('questions.import') || 'Import'}</span>
             </Button>
-            
-            <Button 
-              type="primary" 
+
+            <Button
+              type="primary"
               icon={<PlusOutlined />}
               onClick={() => navigate(ROUTES.TEACHER_QUESTIONS_CREATE)}
             >
@@ -695,7 +814,7 @@ const QuestionList = () => {
           ...pagination,
           showSizeChanger: true,
           showQuickJumper: true,
-          showTotal: (total, range) => 
+          showTotal: (total, range) =>
             `${range[0]}-${range[1]} of ${total} ${t('questions.items')}`,
           responsive: true,
         }}
@@ -712,6 +831,37 @@ const QuestionList = () => {
           fetchQuestions();
         }}
       />
+
+      {/* Rename Modal */}
+      <Modal
+        title={t('questions.batchRename') || 'Batch Rename Questions'}
+        open={renameModalVisible}
+        onOk={handleBatchRename}
+        onCancel={() => {
+          setRenameModalVisible(false);
+          setRenameBaseName('');
+        }}
+        confirmLoading={renameLoading}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <p>{t('questions.batchRenameDesc', { count: selectedRowKeys.length })}</p>
+          <p>{t('questions.batchRenameFormat')}</p>
+        </div>
+        <Input
+          placeholder={t('questions.enterBaseNamePlaceholder') || 'Enter base name (e.g. Math)'}
+          value={renameBaseName}
+          onChange={(e) => setRenameBaseName(e.target.value)}
+        />
+        {renameBaseName && (
+          <div style={{ marginTop: 8, color: '#888' }}>
+            Preview: {selectedRowKeys.length === 1 ? (
+              <strong>{renameBaseName}</strong>
+            ) : (
+              <><strong>{renameBaseName}-1</strong>, <strong>{renameBaseName}-2</strong>...</>
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* Import Modal */}
       <Modal
@@ -739,8 +889,8 @@ const QuestionList = () => {
           />
 
           <div>
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               icon={<FileExcelOutlined />}
               onClick={() => handleDownloadTemplate('xlsx')}
               style={{ padding: 0 }}
@@ -748,8 +898,8 @@ const QuestionList = () => {
               {t('questions.downloadExcelTemplate') || 'Download Excel Template'}
             </Button>
             {' | '}
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               icon={<FileExcelOutlined />}
               onClick={() => handleDownloadTemplate('csv')}
               style={{ padding: 0 }}

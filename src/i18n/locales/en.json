@@ -526,7 +526,18 @@
       "tf": "True/False",
       "short": "Short Answer",
       "essay": "Essay"
-    }
+    },
+    "batchRename": "Batch Rename Questions",
+    "batchRenameDesc": "You are about to rename {{count}} questions.",
+    "batchRenameFormat": "Format: BaseName-1, BaseName-2, ...",
+    "enterBaseNamePlaceholder": "Enter base name (e.g. Math)",
+    "renameSelected": "Rename",
+    "renamePartialSuccess": "Rename Completed with Errors",
+    "renameSummary": "{{success}} questions renamed successfully, {{failed}} failed.",
+    "enterBaseName": "Please enter a base name",
+    "renameFailed": "Failed to rename questions",
+    "renameSelectedWithCount": "Rename ({{count}})",
+    "deleteSelectedWithCount": "Delete Selected ({{count}})"
   },
   "exams": {
     "title": "Exam Management",
@@ -1046,4 +1057,3 @@
     "deleting": "Deleting..."
   }
 }
-
