@@ -14,6 +14,15 @@ const ChatWidget = () => {
     const location = useLocation();
     const { t } = useTranslation();
     
+    // Speech Recognition Hook - MUST be called before any early returns
+    const {
+        transcript,
+        listening,
+        resetTranscript,
+        browserSupportsSpeechRecognition,
+        isMicrophoneAvailable
+    } = useSpeechRecognition();
+    
     // Hide chatbot on exam pages (both student and public routes)
     const isExamPage = 
         (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
@@ -24,15 +33,6 @@ const ChatWidget = () => {
     if (isExamPage) {
         return null;
     }
-
-    // Speech Recognition Hook
-    const {
-        transcript,
-        listening,
-        resetTranscript,
-        browserSupportsSpeechRecognition,
-        isMicrophoneAvailable
-    } = useSpeechRecognition();
 
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
