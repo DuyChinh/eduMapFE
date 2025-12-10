@@ -714,7 +714,7 @@ const CreateExam = () => {
                   onClick={() => setUploadPdfModalVisible(true)}
                   type="dashed"
                 >
-                  {t('exams.uploadPDF') || 'Upload PDF'}
+                  {t('exams.createExamByPDF') || 'Create Exam by PDF'}
                 </Button>
               </div>
               <style>{`
