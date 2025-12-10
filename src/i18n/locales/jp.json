@@ -969,6 +969,9 @@
     "correctAnswer": "正解",
     "studentAnswer": "学生の回答"
   },
+  "mindmap": {
+    "unsavedChanges": "描画、レイアウト、またはノードプロパティなどの保存されていない変更があります。保存せずに終了してもよろしいですか？"
+  },
   "chat": {
     "search": "検索",
     "searchPlaceholder": "検索...",
@@ -1003,4 +1006,3 @@
     "deleting": "削除中..."
   }
 }
-

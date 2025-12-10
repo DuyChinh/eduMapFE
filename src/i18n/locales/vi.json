@@ -1022,6 +1022,9 @@
     "correctAnswer": "Đáp án đúng",
     "studentAnswer": "Đáp án học sinh chọn"
   },
+  "mindmap": {
+    "unsavedChanges": "Bạn có những thay đổi chưa được lưu như bản vẽ, bố cục hoặc thuộc tính nút. Bạn có thực sự muốn rời đi mà không lưu không?"
+  },
   "chat": {
     "search": "Tìm kiếm",
     "searchPlaceholder": "Tìm kiếm...",

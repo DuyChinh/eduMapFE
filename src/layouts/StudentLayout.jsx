@@ -50,7 +50,7 @@ const StudentLayout = () => {
       try {
         await fetchProfile();
       } catch (error) {
-
+        // silent
       }
     };
     refreshProfile();
@@ -118,14 +118,8 @@ const StudentLayout = () => {
     const pathname = location.pathname;
 
     // Check if current path starts with any of the main routes
-    if (pathname.startsWith('/student/classes')) {
-      return ROUTES.STUDENT_CLASSES;
-    }
-    if (pathname.startsWith('/student/results')) {
-      return ROUTES.STUDENT_RESULTS;
-    }
-    if (pathname.startsWith('/student/dashboard')) {
-      return ROUTES.STUDENT_DASHBOARD;
+    if (pathname.startsWith('/student/mindmaps')) {
+      return 'mindmaps';
     }
     if (pathname.startsWith('/student/mindmaps')) {
       return 'mindmaps';
@@ -143,8 +137,8 @@ const StudentLayout = () => {
     user?.role === USER_ROLES.TEACHER
       ? t('role.teacher')
       : user?.role === USER_ROLES.STUDENT
-      ? t('role.student')
-      : '';
+        ? t('role.student')
+        : '';
 
   const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
 
@@ -233,7 +227,6 @@ const StudentLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
         <div className="sider-footer">
           {!collapsed && (
             <div className="user-info-compact">

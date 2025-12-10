@@ -233,6 +233,35 @@
     background: white;
 }
 
+.style-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1.1rem;
+    color: #333;
+    padding: 0;
+}
+
+.style-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+    transform: translateY(-1px);
+}
+
+.style-btn.active {
+    background: #e3f2fd;
+    border-color: #2196F3;
+    color: #2196F3;
+    box-shadow: 0 0 0 1px #2196F3 inset;
+}
+
 /* Dark mode support */
 body.dark-mode .mindmap-editor-container {
     border-color: #333;
@@ -291,6 +320,25 @@ body.dark-mode .inspector-group input[type="number"] {
 body.dark-mode .style-controls input[type="color"] {
     background: #2d2d2d;
     border-color: #444;
+}
+
+body.dark-mode .style-btn {
+    background: #2d2d2d;
+    border-color: #444;
+    color: #eee;
+}
+
+body.dark-mode .style-btn:hover {
+    background: #3d3d3d;
+    border-color: #555;
+    color: #fff;
+}
+
+body.dark-mode .style-btn.active {
+    background: #15395b;
+    border-color: #2196F3;
+    color: #64b5f6;
+    box-shadow: 0 0 0 1px #2196F3 inset;
 }
 
 .toolbar-left {
@@ -682,4 +730,145 @@ me-tpc.selected {
 .map-canvas .selected {
     stroke: #2196F3;
     stroke-width: 3px;
+}
+
+/* Tutorial Modal Styles */
+.tutorial-modal {
+    width: 400px;
+    max-width: 90%;
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid #eee;
+    animation: zoomIn 0.2s ease-out;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.tutorial-modal h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tutorial-modal h3 button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #999;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.tutorial-modal h3 button:hover {
+    color: #666;
+}
+
+.tutorial-content {
+    display: grid;
+    gap: 0.8rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.2rem;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.shortcut-item:last-child {
+    border-bottom: none;
+}
+
+.shortcut-key {
+    background: #f1f3f5;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: 600;
+    color: #333;
+    border: 1px solid #e0e0e0;
+    font-size: 0.85rem;
+}
+
+.shortcut-desc {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Dark mode adjustments for Tutorial Modal */
+body.dark-mode .tutorial-modal {
+    background: #1f1f1f;
+    border-color: #333;
+}
+
+body.dark-mode .tutorial-modal h3 {
+    color: #eee;
+    border-bottom-color: #333;
+}
+
+body.dark-mode .tutorial-modal h3 button:hover {
+    color: #ccc;
+}
+
+body.dark-mode .shortcut-item {
+    border-bottom-color: #333;
+}
+
+body.dark-mode .shortcut-key {
+    background: #2d2d2d;
+    color: #eee;
+    border-color: #444;
+}
+
+body.dark-mode .shortcut-desc {
+    color: #aaa;
 }
