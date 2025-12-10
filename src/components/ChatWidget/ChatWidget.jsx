@@ -23,17 +23,7 @@ const ChatWidget = () => {
         isMicrophoneAvailable
     } = useSpeechRecognition();
     
-    // Hide chatbot on exam pages (both student and public routes)
-    const isExamPage = 
-        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
-        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
-        location.pathname.includes('/exam-error'); // Exam error page
-    
-    // If on exam page, don't render chatbot
-    if (isExamPage) {
-        return null;
-    }
-
+    // All hooks must be called before any early returns to maintain hook order
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
@@ -71,6 +61,7 @@ const ChatWidget = () => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [hoveredSessionTitle, setHoveredSessionTitle] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
@@ -78,63 +69,9 @@ const ChatWidget = () => {
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
     const langMenuRef = useRef(null);
-
-    const supportedLanguages = [
-        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
-        { code: 'en-US', name: 'English', flag: '🇺🇸' },
-        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
-        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
-        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
-    ];
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    // Update input text when transcript changes
-    useEffect(() => {
-        if (transcript) {
-            setInputText(transcript);
-        }
-    }, [transcript]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    useEffect(() => {
-        if (isOpen && isExpanded) {
-            fetchSessions();
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
-
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen, isExpanded]);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
-                setActiveMenuSessionId(null);
-            }
-            if (renameInputRef.current && !renameInputRef.current.contains(event.target)) {
-                // Optional: handle blur logic here if needed, but onBlur covers most cases
-            }
-            if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
-                setShowLangMenu(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-    const fetchSessions = async () => {
+    
+    // Define fetchSessions before useEffect that uses it
+    const fetchSessions = useCallback(async () => {
         setSessionsLoading(true);
         try {
             const response = await chatApi.getSessions();
@@ -144,7 +81,7 @@ const ChatWidget = () => {
         } finally {
             setSessionsLoading(false);
         }
-    };
+    }, []);
 
     const performSearch = useCallback(async (query) => {
         if (!query || query.trim() === '') {
@@ -166,6 +103,50 @@ const ChatWidget = () => {
         }
     }, []);
 
+    // All useEffect hooks must be called before early return
+    // Update input text when transcript changes
+    useEffect(() => {
+        if (transcript) {
+            setInputText(transcript);
+        }
+    }, [transcript]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    useEffect(() => {
+        if (isOpen && isExpanded) {
+            fetchSessions();
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen, isExpanded, fetchSessions]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setActiveMenuSessionId(null);
+            }
+            if (renameInputRef.current && !renameInputRef.current.contains(event.target)) {
+                // Optional: handle blur logic here if needed, but onBlur covers most cases
+            }
+            if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+                setShowLangMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     // Debounce search
     useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -174,6 +155,29 @@ const ChatWidget = () => {
 
         return () => clearTimeout(timeoutId);
     }, [searchQuery, performSearch]);
+    
+    // Hide chatbot on exam pages (both student and public routes)
+    const isExamPage = 
+        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
+        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
+        location.pathname.includes('/exam-error'); // Exam error page
+    
+    // If on exam page, don't render chatbot (after all hooks are called)
+    if (isExamPage) {
+        return null;
+    }
+
+    const supportedLanguages = [
+        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
+        { code: 'en-US', name: 'English', flag: '🇺🇸' },
+        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
+        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
+        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
+    ];
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
     const handleSearchResultClick = async (sessionId) => {
         setShowSearchResults(false);
@@ -229,9 +233,19 @@ const ChatWidget = () => {
                 id: msg._id,
                 text: msg.message,
                 sender: msg.sender,
-                attachments: msg.attachments || []
+                attachments: msg.attachments || [],
+                isPending: msg.status === 'pending',
+                isError: msg.isError || msg.status === 'error'
             }));
             setMessages(history);
+            
+            const pendingMessages = history.filter(msg => msg.isPending && msg.sender === 'bot');
+            if (pendingMessages.length > 0) {
+                pendingMessages.forEach(msg => {
+                    pollMessageStatus(msg.id, msg.id);
+                });
+            }
+            
             if (window.innerWidth < 768) {
                 setShowSidebar(false);
             }
@@ -355,6 +369,57 @@ const ChatWidget = () => {
         setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const pollMessageStatus = useCallback(async (messageId, botMessageTempId) => {
+        console.log('🔍 [ChatWidget] Starting poll for messageId:', messageId);
+        const maxAttempts = 60;
+        let attempts = 0;
+
+        const pollInterval = setInterval(async () => {
+            attempts++;
+            console.log(`🔍 [ChatWidget] Poll attempt ${attempts}/${maxAttempts}`);
+
+            try {
+                const statusResponse = await chatApi.checkMessageStatus(messageId);
+                const { status, message: updatedMessage } = statusResponse.data;
+                console.log(`🔍 [ChatWidget] Status:`, status);
+
+                if (status === 'completed') {
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: updatedMessage, isPending: false }
+                            : msg
+                    ));
+                    clearInterval(pollInterval);
+                    setIsLoading(false);
+                } else if (status === 'error') {
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: updatedMessage || t('chat.error'), isError: true, isPending: false }
+                            : msg
+                    ));
+                    clearInterval(pollInterval);
+                    setIsLoading(false);
+                }
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: t('chat.timeout'), isError: true, isPending: false }
+                            : msg
+                    ));
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.error('Failed to check message status:', error);
+                clearInterval(pollInterval);
+                setIsLoading(false);
+            }
+        }, 2000);
+
+        return () => clearInterval(pollInterval);
+    }, [t]);
+
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if ((!inputText.trim() && selectedFiles.length === 0) || isLoading) return;
@@ -377,28 +442,44 @@ const ChatWidget = () => {
         setSelectedFiles([]);
         setIsLoading(true);
 
-        // Create abort controller for this request
         const controller = new AbortController();
         setAbortController(controller);
 
         try {
             const response = await chatApi.sendMessage(inputText, currentSessionId, filesToSend, controller.signal);
+            
+            const responseData = response.data.data || response.data;
+            
+            console.log('🔍 [ChatWidget] Backend response:', {
+                status: responseData.status,
+                messageId: responseData.messageId,
+                hasResponse: !!responseData.response
+            });
 
-            if (response.data.sessionId && response.data.sessionId !== currentSessionId) {
-                setCurrentSessionId(response.data.sessionId);
+            if (responseData.sessionId && responseData.sessionId !== currentSessionId) {
+                setCurrentSessionId(responseData.sessionId);
                 if (isExpanded) fetchSessions();
             }
 
+            const botMessageTempId = Date.now() + 1;
             const botMessage = {
-                id: Date.now() + 1,
-                text: response.data.response,
-                sender: 'bot'
+                id: botMessageTempId,
+                text: responseData.response,
+                sender: 'bot',
+                isPending: responseData.status === 'pending'
             };
             setMessages(prev => [...prev, botMessage]);
+
+            if (responseData.status === 'pending' && responseData.messageId) {
+                console.log('🔍 [ChatWidget] Starting polling for pending message');
+                pollMessageStatus(responseData.messageId, botMessageTempId);
+            } else {
+                console.log('🔍 [ChatWidget] Message completed immediately');
+                setIsLoading(false);
+            }
         } catch (error) {
             if (error.name === 'CanceledError' || error.message === 'canceled') {
                 console.log('Request was cancelled by user');
-                // Don't show error message for user-cancelled requests
             } else {
                 console.error('Failed to send message:', error);
                 const errorMessage = {
@@ -409,8 +490,8 @@ const ChatWidget = () => {
                 };
                 setMessages(prev => [...prev, errorMessage]);
             }
-        } finally {
             setIsLoading(false);
+        } finally {
             setAbortController(null);
         }
     };
@@ -462,8 +543,6 @@ const ChatWidget = () => {
             }
         }
     };
-
-    const [selectedImage, setSelectedImage] = useState(null);
 
     const handleImageClick = (src) => {
         setSelectedImage(src);
@@ -913,7 +992,15 @@ const ChatWidget = () => {
                                             ) : (
                                                 <div className="message-text">
                                                     {msg.sender === 'bot' ? (
-                                                        <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                        <>
+                                                            <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                            {msg.isPending && (
+                                                                <div className="pending-indicator" style={{ marginTop: '8px', fontSize: '0.85em', color: '#888', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    <div className="spinner-small"></div>
+                                                                    <span>{t('chat.processing') || 'Đang xử lý...'}</span>
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     ) : (
                                                         msg.text
                                                     )}

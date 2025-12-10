@@ -630,6 +630,13 @@
     "viewExamNever": "表示しない",
     "viewExamAfterCompletion": "完了後",
     "viewExamAfterAllFinish": "全員完了後",
+    "startTime": "開始時刻",
+    "startTimeRequired": "開始時刻を選択してください！",
+    "selectStartTime": "開始時刻を選択",
+    "endTime": "終了時刻",
+    "endTimeRequired": "終了時刻を選択してください！",
+    "selectEndTime": "終了時刻を選択",
+    "endTimeMustBeAfterStartTime": "終了時刻は開始時刻より後である必要があります！",
     "hideGroupTitles": "グループタイトルを非表示",
     "showGroupTitles": "グループタイトルを表示",
     "sectionsStartFromQ1": "セクションはQ1から開始",
@@ -747,7 +754,11 @@
     "currency": "VND",
     "autoDistributeMarks": "自動配点",
     "marksDistributed": "配点が完了しました！",
-    "noQuestionsSelected": "問題が選択されていません！"
+    "noQuestionsSelected": "問題が選択されていません！",
+    "uploadPDF": "PDFをアップロード",
+    "createExamByPDF": "PDFから試験を作成",
+    "uploadPdfExam": "PDF試験をアップロード",
+    "downloadTemplate": "テンプレートをダウンロード"
   },
   "studentResults": {
     "currentScore": "スコア",
@@ -805,6 +816,7 @@
     "flagQuestion": "フラグを立てる",
     "unflagQuestion": "フラグを外す",
     "selectCorrectAnswer": "正しい答えを1つ選択してください",
+    "marksPerQuestion": "問題ごとの点数",
     "enterYourAnswer": "回答を入力してください",
     "questionNumber": "問題",
     "true": "正しい",
@@ -995,7 +1007,9 @@
     "editError": "編集中にエラーが発生しました。もう一度お試しください。",
     "pin": "ピン留め",
     "unpin": "ピン留め解除",
-    "deleting": "削除中..."
+    "deleting": "削除中...",
+    "processing": "処理中...",
+    "timeout": "タイムアウトしました。ページを再読み込みしてください。"
   }
 }
 
