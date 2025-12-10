@@ -19,7 +19,8 @@ import {
   SearchOutlined,
   LinkOutlined,
   QrcodeOutlined,
-  FileAddOutlined
+  FileAddOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -506,10 +507,24 @@ const ExamList = () => {
             )}
             
             <Button 
+              icon={<DownloadOutlined />}
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/exam_template.pdf';
+                link.download = 'exam_template.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+            >
+              {t('exams.downloadTemplate') || 'Download Template'}
+            </Button>
+            
+            <Button 
               icon={<FileAddOutlined />}
               onClick={() => setUploadPdfModalVisible(true)}
             >
-              {t('exams.uploadPDF') || 'Upload PDF'}
+              {t('exams.createExamByPDF') || 'Create Exam by PDF'}
             </Button>
             
             <Button 

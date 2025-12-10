@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Modal, 
   Upload, 
   Button, 
   Steps, 
-  message, 
+  App,
   Form, 
   Input, 
   InputNumber,
@@ -12,7 +12,10 @@ import {
   Space,
   Progress,
   Alert,
-  Pagination
+  Card,
+  Radio,
+  Divider,
+  Tag
 } from 'antd';
 import {
   InboxOutlined,
@@ -22,7 +25,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import pdfExamService from '../../api/pdfExamService';
-import PdfOverlayViewer from './PdfOverlayViewer';
+import examService from '../../api/examService';
 
 const { Dragger } = Upload;
 const { Step } = Steps;
@@ -30,6 +33,7 @@ const { Option } = Select;
 
 const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   
   const [currentStep, setCurrentStep] = useState(0);
@@ -38,8 +42,8 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
   const [creating, setCreating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [parsedData, setParsedData] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [questionUpdates, setQuestionUpdates] = useState({});
+  const [allQuestions, setAllQuestions] = useState([]);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
 
   const handleFileChange = (info) => {
     const { file } = info;
@@ -87,6 +91,29 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
       
       if (result.ok && result.data) {
         setParsedData(result.data);
+        
+        // Collect all questions from all pages
+        const questions = [];
+        result.data.pages?.forEach(page => {
+          page.questions?.forEach(q => {
+            questions.push({
+              ...q,
+              pageNumber: page.pageNumber
+            });
+          });
+        });
+        
+        setAllQuestions(questions);
+        
+        // Initialize selected answers (default to first answer for each question)
+        const initialAnswers = {};
+        questions.forEach(q => {
+          if (q.answers && q.answers.length > 0) {
+            initialAnswers[q.questionNumber] = q.answers[0].key || q.answers[0].letter || 'A';
+          }
+        });
+        setSelectedAnswers(initialAnswers);
+        
         setCurrentStep(1);
         message.success(t('exams.pdfParsedSuccess', { count: result.data.totalQuestions }));
       } else {
@@ -118,74 +145,84 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
     }
   };
 
-  const handleQuestionUpdate = (questionNumber, updates) => {
-    setQuestionUpdates(prev => ({
+  const handleAnswerChange = (questionNumber, answerKey) => {
+    setSelectedAnswers(prev => ({
       ...prev,
-      [questionNumber]: {
-        ...(prev[questionNumber] || {}),
-        ...updates
-      }
+      [questionNumber]: answerKey
     }));
   };
 
   const handleCreateExam = async (values) => {
-    if (!parsedData || !parsedData.pages) {
+    if (!allQuestions || allQuestions.length === 0) {
       message.error(t('exams.noDataToCreate'));
       return;
     }
 
     setCreating(true);
     try {
-      // Collect all questions from all pages
-      const allQuestions = [];
-      parsedData.pages.forEach(page => {
-        page.questions.forEach(q => {
-          const updates = questionUpdates[q.questionNumber] || {};
-          
-          allQuestions.push({
-            questionNumber: q.questionNumber,
-            questionText: updates.questionText || q.questionText,
-            answers: q.answers.map(ans => ({
-              key: ans.key,
-              text: updates.answers?.[ans.key] || ans.text
-            })),
-            correctAnswer: updates.correctAnswer || q.answers[0]?.key,
-            level: 1,
-            tags: []
-          });
-        });
+      // Prepare questions with selected correct answers
+      const questionsToSubmit = allQuestions.map(q => {
+        const answerKey = selectedAnswers[q.questionNumber] || q.answers[0]?.key || q.answers[0]?.letter || 'A';
+        
+        return {
+          questionNumber: q.questionNumber,
+          questionText: q.questionText,
+          answers: q.answers.map(ans => ({
+            key: ans.key || ans.letter,
+            text: ans.text
+          })),
+          correctAnswer: answerKey,
+          level: q.level || 1,
+          tags: q.tags || []
+        };
       });
 
-      // Create exam
+      // Create exam with all required fields
       const examData = {
         examName: values.examName,
         examDescription: values.examDescription || '',
         subjectId: values.subjectId,
-        gradeId: values.gradeId,
         duration: values.duration,
         totalMarks: values.totalMarks,
-        questions: allQuestions
+        questions: questionsToSubmit,
+        examPurpose: values.examPurpose || 'exam',
+        isAllowUser: values.isAllowUser || 'everyone',
+        maxAttempts: values.maxAttempts || 1,
+        viewMark: values.viewMark !== undefined ? values.viewMark : 1,
+        viewExamAndAnswer: values.viewExamAndAnswer !== undefined ? values.viewExamAndAnswer : 1
       };
 
       const result = await pdfExamService.createExamFromPdf(examData);
       
-      if (result.ok) {
+      console.log('Create exam result:', result);
+      
+      // Handle different response formats
+      // Format 1: { ok: true, data: { exam: ... } }
+      // Format 2: { exam: ... } (direct data)
+      if (result && (result.ok === true || result.exam || result._id)) {
+        const examData = result.data?.exam || result.exam || result;
         message.success(t('exams.examCreatedSuccess'));
         setCurrentStep(2);
         
         // Call onSuccess callback after a short delay
         setTimeout(() => {
           if (onSuccess) {
-            onSuccess(result.data.exam);
+            onSuccess(examData);
           }
           handleModalClose();
         }, 2000);
       } else {
-        throw new Error(result.message || 'Creation failed');
+        const errorMsg = result?.message || result?.error?.message || result?.error || 'Creation failed';
+        console.error('Create exam failed:', result);
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('Error creating exam:', error);
-      message.error(error.message || t('exams.createFailed'));
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || error.message 
+        || t('exams.createFailed');
+      message.error(errorMessage);
     } finally {
       setCreating(false);
     }
@@ -195,20 +232,19 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
     setCurrentStep(0);
     setUploadedFile(null);
     setParsedData(null);
-    setQuestionUpdates({});
-    setCurrentPage(1);
+    setAllQuestions([]);
+    setSelectedAnswers({});
     form.resetFields();
     if (onClose) {
       onClose();
     }
   };
 
-  const getCurrentPageData = () => {
-    if (!parsedData || !parsedData.pages || parsedData.pages.length === 0) {
-      return null;
-    }
-    return parsedData.pages[currentPage - 1];
-  };
+  // Watch totalMarks from form to calculate marks per question
+  const totalMarks = Form.useWatch('totalMarks', form);
+  const marksPerQuestion = totalMarks && allQuestions.length > 0
+    ? parseFloat((totalMarks / allQuestions.length).toFixed(2))
+    : 0;
 
   return (
     <Modal
@@ -217,7 +253,7 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
       onCancel={handleModalClose}
       width={1000}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <Steps current={currentStep} style={{ marginBottom: 24 }}>
         <Step title={t('exams.uploadFile')} icon={<FileOutlined />} />
@@ -290,7 +326,12 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
             onFinish={handleCreateExam}
             initialValues={{
               duration: 60,
-              totalMarks: parsedData.totalQuestions || 100
+              totalMarks: parsedData.totalQuestions || 100,
+              examPurpose: 'exam',
+              isAllowUser: 'everyone',
+              maxAttempts: 1,
+              viewMark: 1,
+              viewExamAndAnswer: 1
             }}
           >
             <Form.Item
@@ -314,23 +355,17 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
                 label={t('exams.subject')}
                 rules={[{ required: true, message: t('exams.pleaseSelectSubject') }]}
               >
-                <Select style={{ width: 200 }} placeholder={t('exams.selectSubject')}>
+                <Select 
+                  style={{ width: 200 }} 
+                  placeholder={t('exams.selectSubject')}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                >
                   {subjects?.map(subject => (
                     <Option key={subject._id || subject.id} value={subject._id || subject.id}>
                       {subject.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="gradeId"
-                label={t('exams.grade')}
-              >
-                <Select style={{ width: 150 }} placeholder={t('exams.selectGrade')} allowClear>
-                  {grades?.map(grade => (
-                    <Option key={grade._id || grade.id} value={grade._id || grade.id}>
-                      {grade.name}
                     </Option>
                   ))}
                 </Select>
@@ -352,26 +387,142 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
                 <InputNumber min={1} style={{ width: 120 }} />
               </Form.Item>
             </Space>
+
+            <Space style={{ width: '100%', marginTop: 16 }} size="large">
+              <Form.Item
+                name="examPurpose"
+                label={t('exams.examPurpose')}
+                rules={[{ required: true, message: t('exams.examPurposeRequired') }]}
+              >
+                <Select style={{ width: 150 }}>
+                  <Option value="exam">{t('exams.purposeExam')}</Option>
+                  <Option value="practice">{t('exams.purposePractice')}</Option>
+                  <Option value="quiz">{t('exams.purposeQuiz')}</Option>
+                  <Option value="assignment">{t('exams.purposeAssignment')}</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="isAllowUser"
+                label={t('exams.isAllowUser')}
+                rules={[{ required: true, message: t('exams.isAllowUserRequired') }]}
+              >
+                <Select style={{ width: 150 }}>
+                  <Option value="everyone">{t('exams.allowEveryone')}</Option>
+                  <Option value="class">{t('exams.allowClass')}</Option>
+                  <Option value="student">{t('exams.allowStudent')}</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="maxAttempts"
+                label={t('exams.maxAttempts')}
+                rules={[
+                  { required: true, message: t('exams.maxAttemptsRequired') },
+                  { type: 'number', min: 1, message: t('exams.maxAttemptsMin') }
+                ]}
+              >
+                <InputNumber min={1} style={{ width: 120 }} />
+              </Form.Item>
+            </Space>
+
+            <Space style={{ width: '100%', marginTop: 16 }} size="large">
+              <Form.Item
+                name="viewMark"
+                label={t('exams.viewMark')}
+                rules={[{ required: true, message: t('exams.viewMarkRequired') }]}
+              >
+                <Select style={{ width: 200 }}>
+                  <Option value={0}>{t('exams.viewMarkNever')}</Option>
+                  <Option value={1}>{t('exams.viewMarkAfterCompletion')}</Option>
+                  <Option value={2}>{t('exams.viewMarkAfterAllFinish')}</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="viewExamAndAnswer"
+                label={t('exams.viewExamAndAnswer')}
+                rules={[{ required: true, message: t('exams.viewExamAndAnswerRequired') }]}
+              >
+                <Select style={{ width: 200 }}>
+                  <Option value={0}>{t('exams.viewExamNever')}</Option>
+                  <Option value={1}>{t('exams.viewExamAfterCompletion')}</Option>
+                  <Option value={2}>{t('exams.viewExamAfterAllFinish')}</Option>
+                </Select>
+              </Form.Item>
+            </Space>
           </Form>
 
-          {/* Page Navigation */}
-          {parsedData.totalPages > 1 && (
-            <div style={{ marginBottom: 16, textAlign: 'center' }}>
-              <Pagination
-                current={currentPage}
-                total={parsedData.totalPages}
-                pageSize={1}
-                onChange={setCurrentPage}
-                showSizeChanger={false}
-              />
-            </div>
-          )}
-
-          {/* PDF Overlay Viewer */}
-          <PdfOverlayViewer 
-            pageData={getCurrentPageData()}
-            onQuestionUpdate={handleQuestionUpdate}
-          />
+          {/* Questions Preview */}
+          <Card 
+            title={
+              <Space>
+                <span>{t('exams.questions')} ({allQuestions.length})</span>
+                {marksPerQuestion > 0 && (
+                  <Tag color="blue">
+                    {t('exams.marksPerQuestion')} {marksPerQuestion}
+                  </Tag>
+                )}
+              </Space>
+            }
+            style={{ marginTop: 16, maxHeight: '60vh', overflowY: 'auto' }}
+          >
+            {allQuestions.length === 0 ? (
+              <Alert message={t('exams.noDataToCreate')} type="warning" />
+            ) : (
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                {allQuestions.map((question, index) => (
+                  <Card
+                    key={question.questionNumber || index}
+                    size="small"
+                    style={{
+                      border: '1px solid #d9d9d9',
+                      backgroundColor: '#fafafa'
+                    }}
+                  >
+                    <div style={{ marginBottom: 12 }}>
+                      <strong>
+                        {t('exams.question')} {question.questionNumber}:
+                      </strong>
+                      <div style={{ marginTop: 8, marginBottom: 12 }}>
+                        {question.questionText}
+                      </div>
+                    </div>
+                    
+                    <Divider style={{ margin: '12px 0' }} />
+                    
+                    <div>
+                      <div style={{ marginBottom: 8, fontWeight: 'bold' }}>
+                        {t('exams.selectCorrectAnswer')}:
+                      </div>
+                      <Radio.Group
+                        value={selectedAnswers[question.questionNumber]}
+                        onChange={(e) => handleAnswerChange(question.questionNumber, e.target.value)}
+                      >
+                        <Space direction="vertical">
+                          {question.answers?.map((answer) => {
+                            const answerKey = answer.key || answer.letter;
+                            const isSelected = selectedAnswers[question.questionNumber] === answerKey;
+                            
+                            return (
+                              <Radio key={answerKey} value={answerKey}>
+                                <Space>
+                                  <Tag color={isSelected ? 'blue' : 'default'}>
+                                    {answerKey}
+                                  </Tag>
+                                  <span>{answer.text}</span>
+                                </Space>
+                              </Radio>
+                            );
+                          })}
+                        </Space>
+                      </Radio.Group>
+                    </div>
+                  </Card>
+                ))}
+              </Space>
+            )}
+          </Card>
 
           <div style={{ marginTop: 24, textAlign: 'right' }}>
             <Space>
