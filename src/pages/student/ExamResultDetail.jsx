@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MathJax, MathJaxContext } from 'better-react-mathjax';
 import {
   Card,
   Typography,
-  Space,
   Button,
-  Tag,
   Divider,
   Row,
   Col,
@@ -24,10 +22,9 @@ import {
   CloseCircleOutlined,
   TrophyOutlined,
   EditOutlined,
-  CheckOutlined,
-  CloseOutlined,
 } from '@ant-design/icons';
 import { getSubmissionById } from '../../api/submissionService';
+import examStatsService from '../../api/examStatsService';
 import './ExamResultDetail.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -36,7 +33,7 @@ const ExamResultDetail = () => {
   const { submissionId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  
+
   const [loading, setLoading] = useState(true);
   const [submission, setSubmission] = useState(null);
   const [exam, setExam] = useState(null);
@@ -44,20 +41,176 @@ const ExamResultDetail = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [filterType, setFilterType] = useState('all'); // 'all', 'correct', 'incorrect'
   const [activeTab, setActiveTab] = useState('mcq');
+  const isMountedRef = useRef(true);
+
+  const loadLeaderboard = useCallback(async (examId) => {
+    try {
+      const response = await examStatsService.getExamLeaderboard(examId);
+      const leaderboardData = response.data || response || [];
+      if (isMountedRef.current) {
+        setLeaderboard(Array.isArray(leaderboardData) ? leaderboardData : []);
+      }
+    } catch (error) {
+      console.error('Error loading leaderboard:', error);
+      if (isMountedRef.current) {
+        setShowLeaderboard(false);
+      }
+    }
+  }, []);
+
+  // Memoize configs and computed values BEFORE early returns (React Hooks rule)
+  const mathJaxConfig = useMemo(() => ({
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true,
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    },
+  }), []);
+
+  const leaderboardColumns = useMemo(() => [
+    {
+      title: t('takeExam.rank') || 'Rank',
+      dataIndex: 'rank',
+      key: 'rank',
+      width: 80,
+      render: (rank) => {
+        if (rank === 1) {
+          return (
+            <img
+              src="/1st-medal.png"
+              alt="1st Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
+            />
+          );
+        }
+        if (rank === 2) {
+          return (
+            <img
+              src="/2nd-medal.png"
+              alt="2nd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
+            />
+          );
+        }
+        if (rank === 3) {
+          return (
+            <img
+              src="/3rd-medal.png"
+              alt="3rd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
+            />
+          );
+        }
+        return <Text strong>#{rank}</Text>;
+      }
+    },
+    {
+      title: t('takeExam.studentName') || 'Student',
+      dataIndex: 'name',
+      key: 'name'
+    },
+    {
+      title: t('takeExam.score') || 'Score',
+      dataIndex: 'score',
+      key: 'score',
+      render: (score, record) => `${score}/${record.maxScore}`
+    },
+    {
+      title: t('takeExam.percentage') || 'Percentage',
+      dataIndex: 'percentage',
+      key: 'percentage',
+      render: (percentage) => `${percentage}%`
+    }
+  ], [t]);
+
+  // Memoize computed values based on submission and exam (safe to use null values)
+  const examData = exam;
+  const questions = useMemo(() => examData?.questions || [], [examData]);
+  const answers = useMemo(() => submission?.answers || [], [submission]);
+  const canViewAnswers = useMemo(() =>
+    examData?.viewExamAndAnswer !== undefined && examData?.viewExamAndAnswer !== 0,
+    [examData]
+  );
+
+  // Create answer map for easy lookup
+  const answerMap = useMemo(() => {
+    const map = {};
+    if (answers && Array.isArray(answers)) {
+      answers.forEach(answer => {
+        const questionId = answer.questionId || (answer.question?._id?._id || answer.question?._id || answer.question?.id);
+        if (questionId) {
+          map[questionId] = answer;
+        }
+      });
+    }
+    return map;
+  }, [answers]);
+
+  // Get MCQ questions with answers
+  const mcqQuestions = useMemo(() => {
+    if (!questions || !Array.isArray(questions)) return [];
+    return questions
+      .map((q, index) => {
+        const question = (q.questionId && typeof q.questionId === 'object' && q.questionId.text !== undefined)
+          ? q.questionId
+          : null;
+
+        if (!question || question.type !== 'mcq') return null;
+
+        const questionId = question._id?.toString() || question.id?.toString();
+        const answer = answerMap[questionId];
+        const isCorrect = answer?.isCorrect;
+        const userAnswer = answer?.value || answer?.selectedAnswer;
+        const correctAnswer = question.answer || question.correctAnswer;
+
+        return {
+          question,
+          questionId,
+          answer,
+          isCorrect,
+          userAnswer,
+          correctAnswer,
+          index,
+          marks: q.marks || 1,
+          earnedMarks: answer?.points || answer?.earnedMarks || 0,
+        };
+      })
+      .filter(q => q !== null);
+  }, [questions, answerMap]);
+
+  // Filter questions based on filterType
+  const filteredQuestions = useMemo(() => {
+    return mcqQuestions.filter(q => {
+      if (filterType === 'all') return true;
+      if (filterType === 'correct') return q.isCorrect;
+      if (filterType === 'incorrect') return !q.isCorrect;
+      return true;
+    });
+  }, [mcqQuestions, filterType]);
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     const loadSubmission = async () => {
       try {
-        setLoading(true);
+        if (isMountedRef.current) {
+          setLoading(true);
+        }
         const response = await getSubmissionById(submissionId);
         const submissionData = response.data || response;
-        
+
+        if (!isMountedRef.current) return;
+
         setSubmission(submissionData);
-        
+
         // Get exam from submission
         let examData = null;
         let examId = null;
-        
+
         if (submissionData.examId) {
           if (typeof submissionData.examId === 'object') {
             examData = submissionData.examId;
@@ -67,9 +220,11 @@ const ExamResultDetail = () => {
             const examResponse = await (await import('../../api/examService')).default.getExamById(examId);
             examData = examResponse.data || examResponse;
           }
-          
+
+          if (!isMountedRef.current) return;
+
           setExam(examData);
-          
+
           // Check if leaderboard should be shown (hideLeaderboard === false means show it)
           if (examData && examData.hideLeaderboard === false) {
             setShowLeaderboard(true);
@@ -80,24 +235,18 @@ const ExamResultDetail = () => {
       } catch (error) {
         console.error('Error loading submission:', error);
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     loadSubmission();
-  }, [submissionId]);
 
-  const loadLeaderboard = async (examId) => {
-    try {
-      const submissionService = (await import('../../api/submissionService')).default;
-      const response = await submissionService.getExamLeaderboard(examId);
-      const leaderboardData = response.data || response;
-      setLeaderboard(leaderboardData);
-    } catch (error) {
-      console.error('Error loading leaderboard:', error);
-      setShowLeaderboard(false);
-    }
-  };
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [submissionId, loadLeaderboard]);
 
   if (loading) {
     return (
@@ -125,76 +274,9 @@ const ExamResultDetail = () => {
     );
   }
 
-  const examData = exam;
-  const questions = examData?.questions || [];
-  const answers = submission.answers || [];
-  const canViewAnswers = examData?.viewExamAndAnswer !== undefined && examData?.viewExamAndAnswer !== 0;
-
-  // Create answer map for easy lookup
-  const answerMap = {};
-  answers.forEach(answer => {
-    const questionId = answer.questionId || (answer.question?._id?._id || answer.question?._id || answer.question?.id);
-    if (questionId) {
-      answerMap[questionId] = answer;
-    }
-  });
-
-  // Get MCQ questions with answers
-  const getMCQQuestions = () => {
-    return questions
-      .map((q, index) => {
-        const question = (q.questionId && typeof q.questionId === 'object' && q.questionId.text !== undefined)
-          ? q.questionId 
-          : null;
-        
-        if (!question || question.type !== 'mcq') return null;
-        
-        const questionId = question._id?.toString() || question.id?.toString();
-        const answer = answerMap[questionId];
-        const isCorrect = answer?.isCorrect;
-        const userAnswer = answer?.value || answer?.selectedAnswer;
-        const correctAnswer = question.answer || question.correctAnswer;
-
-        return {
-          question,
-          questionId,
-          answer,
-          isCorrect,
-          userAnswer,
-          correctAnswer,
-          index,
-          marks: q.marks || 1,
-          earnedMarks: answer?.points || answer?.earnedMarks || 0,
-        };
-      })
-      .filter(q => q !== null);
-  };
-
-  const mcqQuestions = getMCQQuestions();
-
-  // Filter questions based on filterType
-  const filteredQuestions = mcqQuestions.filter(q => {
-    if (filterType === 'all') return true;
-    if (filterType === 'correct') return q.isCorrect;
-    if (filterType === 'incorrect') return !q.isCorrect;
-    return true;
-  });
-
-  const mathJaxConfig = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']],
-      processEscapes: true,
-      processEnvironments: true,
-    },
-    options: {
-      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-    },
-  };
-
   const renderMathContent = (content) => {
     if (!content) return '';
-    
+
     const lines = content.split('\n');
     return (
       <>
@@ -202,14 +284,14 @@ const ExamResultDetail = () => {
           if (!line.trim()) {
             return <br key={index} />;
           }
-          
+
           const hasLatex = line.includes('\\') || line.includes('^') || line.includes('_');
           const hasDollarSigns = line.includes('$') || line.includes('\\(');
-          
+
           if (hasLatex && !hasDollarSigns) {
             const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -229,7 +311,7 @@ const ExamResultDetail = () => {
             );
           } else if (hasDollarSigns) {
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -239,7 +321,7 @@ const ExamResultDetail = () => {
             );
           } else {
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -253,70 +335,14 @@ const ExamResultDetail = () => {
     );
   };
 
-  const leaderboardColumns = [
-    {
-      title: t('takeExam.rank') || 'Rank',
-      dataIndex: 'rank',
-      key: 'rank',
-      width: 80,
-      render: (rank) => {
-        if (rank === 1) {
-          return (
-            <img 
-              src="/1st-medal.png" 
-              alt="1st Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
-            />
-          );
-        }
-        if (rank === 2) {
-          return (
-            <img 
-              src="/2nd-medal.png" 
-              alt="2nd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
-            />
-          );
-        }
-        if (rank === 3) {
-          return (
-            <img 
-              src="/3rd-medal.png" 
-              alt="3rd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
-            />
-          );
-        }
-        return <Text strong>#{rank}</Text>;
-      }
-    },
-    {
-      title: t('takeExam.studentName') || 'Student',
-      dataIndex: 'name',
-      key: 'name'
-    },
-    {
-      title: t('takeExam.score') || 'Score',
-      dataIndex: 'score',
-      key: 'score',
-      render: (score, record) => `${score}/${record.maxScore}`
-    },
-    {
-      title: t('takeExam.percentage') || 'Percentage',
-      dataIndex: 'percentage',
-      key: 'percentage',
-      render: (percentage) => `${percentage}%`
-    }
-  ];
-
   return (
     <MathJaxContext config={mathJaxConfig}>
       <div className="exam-result-detail-container">
         {/* Header */}
         <div className="result-header">
           <div className="header-left">
-            <Button 
-              icon={<ArrowLeftOutlined />} 
+            <Button
+              icon={<ArrowLeftOutlined />}
               onClick={() => navigate('/student/results')}
               style={{ marginBottom: 16 }}
             >
@@ -366,9 +392,9 @@ const ExamResultDetail = () => {
                 title={t('takeExam.percentage') || 'Percentage'}
                 value={submission.percentage || 0}
                 suffix="%"
-                valueStyle={{ 
-                  color: submission.percentage >= 80 ? '#52c41a' : 
-                         submission.percentage >= 50 ? '#faad14' : '#ff4d4f' 
+                valueStyle={{
+                  color: submission.percentage >= 80 ? '#52c41a' :
+                    submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
                 }}
               />
             </Col>
@@ -392,7 +418,7 @@ const ExamResultDetail = () => {
 
         {/* Leaderboard */}
         {showLeaderboard && leaderboard.length > 0 && (
-          <Card 
+          <Card
             title={<><TrophyOutlined /> {t('takeExam.leaderboard') || 'Leaderboard'}</>}
             style={{ marginBottom: '24px' }}
           >
@@ -452,8 +478,8 @@ const ExamResultDetail = () => {
 
                               <div className="question-content">
                                 <div className="question-text-wrapper">
-                                  <Paragraph style={{ 
-                                    fontSize: 16, 
+                                  <Paragraph style={{
+                                    fontSize: 16,
                                     marginBottom: 16,
                                     wordWrap: 'break-word',
                                     overflowWrap: 'break-word',
@@ -468,7 +494,7 @@ const ExamResultDetail = () => {
                                   {choices.map((choice) => {
                                     const isSelected = userAnswer === choice.key;
                                     const isCorrectChoice = correctAnswer === choice.key;
-                                    
+
                                     let choiceClassName = 'choice-item';
                                     if (isCorrectChoice) {
                                       choiceClassName += ' choice-correct';
