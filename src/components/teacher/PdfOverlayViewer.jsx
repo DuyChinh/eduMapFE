@@ -1,13 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, Button, Space, Input, Tooltip, Tag, Checkbox, message, Empty } from 'antd';
+import { useState, useRef, useEffect } from 'react';
+import { Card, Button, Space, Input, Tooltip, Tag, message, Empty, Typography } from 'antd';
 import { 
   ZoomInOutlined, 
   ZoomOutOutlined, 
-  DeleteOutlined, 
   EditOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import PropTypes from 'prop-types';
+
+const { Paragraph } = Typography;
 
 const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
   const { t } = useTranslation();
@@ -18,10 +20,11 @@ const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
   const [selectedAnswers, setSelectedAnswers] = useState({});
 
   useEffect(() => {
-    // Initialize selected answers (default to first answer)
     const initialSelected = {};
     pageData.questions.forEach(q => {
-      initialSelected[q.questionNumber] = q.answers[0]?.key || 'A';
+      if (q.answers && q.answers.length > 0) {
+        initialSelected[q.questionNumber] = q.correctAnswer || q.answers[0]?.key || 'A';
+      }
     });
     setSelectedAnswers(initialSelected);
   }, [pageData.questions]);
@@ -110,10 +113,13 @@ const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
 
   const { imageUrl, pageWidth, pageHeight, questions } = pageData;
 
+  const multipleChoiceCount = questions.filter(q => q.type === 'multiple-choice').length;
+  const essayCount = questions.filter(q => q.type === 'essay').length;
+
   return (
     <div style={{ width: '100%' }}>
-      {/* Zoom Controls */}
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Statistics & Zoom Controls */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <Space>
           <Button icon={<ZoomInOutlined />} onClick={handleZoomIn}>
             {t('common.zoomIn')}
@@ -123,9 +129,21 @@ const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
           </Button>
           <span>{Math.round(zoom * 100)}%</span>
         </Space>
-        <Tag color="blue">
-          {questions.length} {t('exams.questions')} {t('common.found')}
-        </Tag>
+        <Space>
+          <Tag color="blue">
+            {questions.length} {t('exams.questions')}
+          </Tag>
+          {multipleChoiceCount > 0 && (
+            <Tag color="green">
+              {multipleChoiceCount} {t('exams.multipleChoice')}
+            </Tag>
+          )}
+          {essayCount > 0 && (
+            <Tag color="orange">
+              {essayCount} {t('exams.essay')}
+            </Tag>
+          )}
+        </Space>
       </div>
 
       {/* PDF Image with Overlays */}
@@ -189,24 +207,32 @@ const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
                 </div>
               </Tooltip>
 
-              {/* Answer Boxes */}
-              {question.answers.map((answer) => {
+              {question.answers && question.answers.length > 0 && question.answers.map((answer) => {
                 const isSelected = selectedAnswers[question.questionNumber] === answer.key;
+                const isCorrectByAI = answer.isCorrect === true;
                 
                 return (
-                  <Tooltip key={answer.key} title={answer.text}>
+                  <Tooltip 
+                    key={answer.key} 
+                    title={
+                      <>
+                        <div>{answer.text}</div>
+                        {isCorrectByAI && <div style={{ color: '#52c41a', marginTop: 4 }}>✓ {t('exams.aiDetectedCorrect')}</div>}
+                      </>
+                    }
+                  >
                     <div
                       style={{
                         position: 'absolute',
                         ...calculatePosition(answer, pageWidth, pageHeight),
-                        border: `2px solid ${isSelected ? '#1890ff' : '#faad14'}`,
+                        border: `2px solid ${isSelected ? '#1890ff' : (isCorrectByAI ? '#52c41a' : '#faad14')}`,
                         backgroundColor: isSelected 
                           ? 'rgba(24, 144, 255, 0.2)' 
-                          : 'rgba(250, 173, 20, 0.1)',
+                          : (isCorrectByAI ? 'rgba(82, 196, 26, 0.15)' : 'rgba(250, 173, 20, 0.1)'),
                         cursor: 'pointer',
                         padding: '2px 6px',
                         fontSize: '12px',
-                        color: isSelected ? '#1890ff' : '#faad14',
+                        color: isSelected ? '#1890ff' : (isCorrectByAI ? '#52c41a' : '#faad14'),
                         fontWeight: 'bold',
                         display: 'flex',
                         alignItems: 'center',
@@ -291,12 +317,51 @@ const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
               <div style={{ marginTop: 4, fontSize: '12px', color: '#52c41a' }}>
                 ✓ {t('exams.correctAnswer')}: {selectedAnswers[q.questionNumber]}
               </div>
+              {q.explanation && (
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e8e8e8' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: 4, color: '#1890ff' }}>
+                    {t('questions.explanation')}:
+                  </div>
+                  <Paragraph 
+                    style={{ 
+                      fontSize: '12px', 
+                      margin: 0,
+                      color: '#595959',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                    ellipsis={{ rows: 2, expandable: true, symbol: t('common.more') }}
+                  >
+                    {q.explanation}
+                  </Paragraph>
+                </div>
+              )}
             </div>
           ))}
         </Space>
       </Card>
     </div>
   );
+};
+
+PdfOverlayViewer.propTypes = {
+  pageData: PropTypes.shape({
+    imageUrl: PropTypes.string,
+    pageNumber: PropTypes.number,
+    pageWidth: PropTypes.number,
+    pageHeight: PropTypes.number,
+    questions: PropTypes.arrayOf(PropTypes.shape({
+      questionNumber: PropTypes.number,
+      questionText: PropTypes.string,
+      type: PropTypes.string,
+      answers: PropTypes.array,
+      explanation: PropTypes.string,
+      correctAnswer: PropTypes.string,
+      x: PropTypes.number,
+      y: PropTypes.number,
+      width: PropTypes.number
+    }))
+  }),
+  onQuestionUpdate: PropTypes.func
 };
 
 export default PdfOverlayViewer;
