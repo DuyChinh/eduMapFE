@@ -18,7 +18,9 @@ import {
   EyeOutlined,
   SearchOutlined,
   LinkOutlined,
-  QrcodeOutlined
+  QrcodeOutlined,
+  FileAddOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -26,6 +28,7 @@ import examService from '../../api/examService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import QRCodeModal from '../common/QRCodeModal';
+import UploadPdfModal from './UploadPdfModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -54,6 +57,9 @@ const ExamList = () => {
   // QR Code modal state
   const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
+  
+  // Upload PDF modal state
+  const [uploadPdfModalVisible, setUploadPdfModalVisible] = useState(false);
 
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -501,6 +507,27 @@ const ExamList = () => {
             )}
             
             <Button 
+              icon={<DownloadOutlined />}
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/exam_template.pdf';
+                link.download = 'exam_template.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+            >
+              {t('exams.downloadTemplate') || 'Download Template'}
+            </Button>
+            
+            <Button 
+              icon={<FileAddOutlined />}
+              onClick={() => setUploadPdfModalVisible(true)}
+            >
+              {t('exams.createExamByPDF') || 'Create Exam by PDF'}
+            </Button>
+            
+            <Button 
               type="primary" 
               icon={<PlusOutlined />}
               onClick={() => navigate('/teacher/exams/create')}
@@ -543,6 +570,22 @@ const ExamList = () => {
         title={selectedExam?.name || t('exams.shareLinkQR')}
         description={t('exams.qrDescription') || 'Students can scan this QR code to access the exam'}
         filename={selectedExam?.name ? `qr_exam_${selectedExam.name.replace(/[^a-zA-Z0-9]/g, '_')}` : 'qr_exam'}
+      />
+
+      {/* Upload PDF Modal */}
+      <UploadPdfModal
+        open={uploadPdfModalVisible}
+        onClose={() => setUploadPdfModalVisible(false)}
+        onSuccess={(exam) => {
+          message.success(t('exams.examCreatedFromPDF') || 'Exam created from PDF successfully');
+          setUploadPdfModalVisible(false);
+          // Refresh exams list
+          fetchExams();
+          // Navigate to exam detail page
+          navigate(`/teacher/exams/${exam._id || exam.id}`);
+        }}
+        subjects={subjects}
+        grades={[]} // Can be fetched if needed
       />
     </Card>
   );
