@@ -610,7 +610,7 @@ const EditQuestion = () => {
                           )}
                         </div>
 
-                        <Space align="start" style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', width: '100%', gap: '16px', alignItems: 'flex-start' }}>
                           <div style={{ flex: 1 }}>
                             <MathJaxEditor
                               value={choice.text}
@@ -622,15 +622,15 @@ const EditQuestion = () => {
                             />
                           </div>
 
-                          {/* Choice Image Upload */}
-                          <div style={{ width: '80px', flexShrink: 0 }}>
+                          <div style={{ flexShrink: 0, marginTop: '2px' }}>
                             <Upload
                               name="choiceImage"
                               listType="picture-card"
                               showUploadList={false}
                               customRequest={(options) => handleChoiceImageUpload(index, options)}
                               beforeUpload={beforeUpload}
-                              style={{ width: '80px', height: '80px' }}
+                              style={{ width: '40px', height: '40px', margin: 0 }}
+                              className="compact-uploader"
                             >
                               {choice.image ? (
                                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -642,13 +642,15 @@ const EditQuestion = () => {
                                   <div
                                     style={{
                                       position: 'absolute',
-                                      top: -5,
-                                      right: -5,
+                                      top: -4,
+                                      right: -4,
                                       background: '#fff',
                                       borderRadius: '50%',
                                       cursor: 'pointer',
                                       zIndex: 1,
-                                      padding: '2px'
+                                      padding: '2px',
+                                      lineHeight: 0,
+                                      boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                                     }}
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -659,13 +661,13 @@ const EditQuestion = () => {
                                   </div>
                                 </div>
                               ) : (
-                                <div>
-                                  {uploading && false ? <LoadingOutlined /> : <PlusOutlined />}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                  {uploading && false ? <LoadingOutlined /> : <PlusOutlined style={{ fontSize: '16px', color: '#999' }} />}
                                 </div>
                               )}
                             </Upload>
                           </div>
-                        </Space>
+                        </div>
                       </Space>
                     </div>
                   ))}
