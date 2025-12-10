@@ -121,6 +121,9 @@ const StudentLayout = () => {
     if (pathname.startsWith('/student/mindmaps')) {
       return 'mindmaps';
     }
+    if (pathname.startsWith('/student/mindmaps')) {
+      return 'mindmaps';
+    }
 
     // Default fallback
     return pathname;
@@ -266,15 +269,23 @@ const StudentLayout = () => {
               className="theme-toggle-btn"
             />
 
-            <Button type="text" icon={<BellOutlined />} className="notification-btn" />
+            <Button
+              type="text"
+              icon={<BellOutlined />}
+              className="notification-btn"
+            />
 
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              arrow
+            >
               <div className="user-dropdown">
-                <Avatar src={avatarSrc} icon={!avatarSrc && <UserOutlined />} />
-                <div className="user-dropdown-info">
-                  <span className="user-name-header">{displayName}</span>
-                  <span className="user-role-header">{roleLabel}</span>
-                </div>
+                <Avatar
+                  src={user?.avatar}
+                  icon={!user?.avatar && <UserOutlined />}
+                />
+                <span className="user-name-header">{user?.name}</span>
               </div>
             </Dropdown>
           </Space>

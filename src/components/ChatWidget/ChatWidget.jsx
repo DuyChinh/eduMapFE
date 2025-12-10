@@ -14,18 +14,7 @@ const ChatWidget = () => {
     const location = useLocation();
     const { t } = useTranslation();
     
-    // Hide chatbot on exam pages (both student and public routes)
-    const isExamPage = 
-        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
-        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
-        location.pathname.includes('/exam-error'); // Exam error page
-    
-    // If on exam page, don't render chatbot
-    if (isExamPage) {
-        return null;
-    }
-
-    // Speech Recognition Hook
+    // Speech Recognition Hook - MUST be called before any early returns
     const {
         transcript,
         listening,
@@ -33,7 +22,8 @@ const ChatWidget = () => {
         browserSupportsSpeechRecognition,
         isMicrophoneAvailable
     } = useSpeechRecognition();
-
+    
+    // All hooks must be called before any early returns to maintain hook order
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
@@ -71,6 +61,7 @@ const ChatWidget = () => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [hoveredSessionTitle, setHoveredSessionTitle] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
@@ -78,63 +69,9 @@ const ChatWidget = () => {
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
     const langMenuRef = useRef(null);
-
-    const supportedLanguages = [
-        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
-        { code: 'en-US', name: 'English', flag: '🇺🇸' },
-        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
-        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
-        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
-    ];
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    // Update input text when transcript changes
-    useEffect(() => {
-        if (transcript) {
-            setInputText(transcript);
-        }
-    }, [transcript]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    useEffect(() => {
-        if (isOpen && isExpanded) {
-            fetchSessions();
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
-
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen, isExpanded]);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
-                setActiveMenuSessionId(null);
-            }
-            if (renameInputRef.current && !renameInputRef.current.contains(event.target)) {
-                // Optional: handle blur logic here if needed, but onBlur covers most cases
-            }
-            if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
-                setShowLangMenu(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-    const fetchSessions = async () => {
+    
+    // Define fetchSessions before useEffect that uses it
+    const fetchSessions = useCallback(async () => {
         setSessionsLoading(true);
         try {
             const response = await chatApi.getSessions();
@@ -144,7 +81,7 @@ const ChatWidget = () => {
         } finally {
             setSessionsLoading(false);
         }
-    };
+    }, []);
 
     const performSearch = useCallback(async (query) => {
         if (!query || query.trim() === '') {
@@ -166,6 +103,50 @@ const ChatWidget = () => {
         }
     }, []);
 
+    // All useEffect hooks must be called before early return
+    // Update input text when transcript changes
+    useEffect(() => {
+        if (transcript) {
+            setInputText(transcript);
+        }
+    }, [transcript]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    useEffect(() => {
+        if (isOpen && isExpanded) {
+            fetchSessions();
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen, isExpanded, fetchSessions]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setActiveMenuSessionId(null);
+            }
+            if (renameInputRef.current && !renameInputRef.current.contains(event.target)) {
+                // Optional: handle blur logic here if needed, but onBlur covers most cases
+            }
+            if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+                setShowLangMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     // Debounce search
     useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -174,6 +155,29 @@ const ChatWidget = () => {
 
         return () => clearTimeout(timeoutId);
     }, [searchQuery, performSearch]);
+    
+    // Hide chatbot on exam pages (both student and public routes)
+    const isExamPage = 
+        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
+        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
+        location.pathname.includes('/exam-error'); // Exam error page
+    
+    // If on exam page, don't render chatbot (after all hooks are called)
+    if (isExamPage) {
+        return null;
+    }
+
+    const supportedLanguages = [
+        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
+        { code: 'en-US', name: 'English', flag: '🇺🇸' },
+        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
+        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
+        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
+    ];
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
     const handleSearchResultClick = async (sessionId) => {
         setShowSearchResults(false);
@@ -462,8 +466,6 @@ const ChatWidget = () => {
             }
         }
     };
-
-    const [selectedImage, setSelectedImage] = useState(null);
 
     const handleImageClick = (src) => {
         setSelectedImage(src);
