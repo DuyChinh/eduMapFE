@@ -13,6 +13,7 @@ import {
   SwapOutlined,
   TeamOutlined,
   UserOutlined,
+  ShareAltOutlined,
   ScanOutlined,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
@@ -49,7 +50,7 @@ const TeacherLayout = () => {
 
       try {
         await fetchProfile();
-      } catch {
+      } catch (error) {
         // silent
       }
     };
@@ -117,19 +118,15 @@ const TeacherLayout = () => {
   const getSelectedKey = () => {
     const pathname = location.pathname;
 
-    if (pathname.startsWith('/teacher/questions')) {
-      return ROUTES.TEACHER_QUESTIONS;
+    // Check if current path starts with any of the main routes
+    if (pathname.startsWith('/teacher/mindmaps')) {
+      return 'mindmaps';
     }
-    if (pathname.startsWith('/teacher/exams')) {
-      return ROUTES.TEACHER_EXAMS;
-    }
-    if (pathname.startsWith('/teacher/classes')) {
-      return ROUTES.TEACHER_CLASSES;
-    }
-    if (pathname.startsWith('/teacher/dashboard')) {
-      return ROUTES.TEACHER_DASHBOARD;
+    if (pathname.startsWith('/teacher/mindmaps')) {
+      return 'mindmaps';
     }
 
+    // Default fallback
     return pathname;
   };
 
@@ -141,8 +138,8 @@ const TeacherLayout = () => {
     user?.role === USER_ROLES.TEACHER
       ? t('role.teacher')
       : user?.role === USER_ROLES.STUDENT
-      ? t('role.student')
-      : '';
+        ? t('role.student')
+        : '';
 
   const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
 
@@ -170,6 +167,12 @@ const TeacherLayout = () => {
       icon: <img src="/class.png" alt="Classes" className="menu-icon-image" />,
       label: t('teacher.classManagement'),
       onClick: () => navigate(ROUTES.TEACHER_CLASSES),
+    },
+    {
+      key: 'mindmaps',
+      icon: <ShareAltOutlined />,
+      label: 'Mindmaps',
+      onClick: () => navigate('/teacher/mindmaps'),
     },
   ];
 
@@ -231,6 +234,20 @@ const TeacherLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
+        <div className="sider-footer">
+          {!collapsed && (
+            <div className="user-info-compact">
+              <Avatar
+                src={user?.avatar}
+                icon={!user?.avatar && <UserOutlined />}
+              />
+              <div className="user-details">
+                <div className="user-name">{user?.name}</div>
+                <div className="user-role">{t('teacher.role')}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </Sider>
 
       <Layout>
@@ -259,15 +276,23 @@ const TeacherLayout = () => {
               className="theme-toggle-btn"
             />
 
-            <Button type="text" icon={<BellOutlined />} className="notification-btn" />
+            <Button
+              type="text"
+              icon={<BellOutlined />}
+              className="notification-btn"
+            />
 
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              arrow
+            >
               <div className="user-dropdown">
-                <Avatar src={avatarSrc} icon={!avatarSrc && <UserOutlined />} />
-                <div className="user-dropdown-info">
-                  <span className="user-name-header">{displayName}</span>
-                  <span className="user-role-header">{roleLabel}</span>
-                </div>
+                <Avatar
+                  src={user?.avatar}
+                  icon={!user?.avatar && <UserOutlined />}
+                />
+                <span className="user-name-header">{user?.name}</span>
               </div>
             </Dropdown>
           </Space>
