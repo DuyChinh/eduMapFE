@@ -528,7 +528,18 @@
       "tf": "Đúng/Sai",
       "short": "Trả lời ngắn",
       "essay": "Tự luận"
-    }
+    },
+    "batchRename": "Đổi tên hàng loạt",
+    "batchRenameDesc": "Bạn đang chuẩn bị đổi tên {{count}} câu hỏi.",
+    "batchRenameFormat": "Định dạng: TênGốc-1, TênGốc-2, ...",
+    "enterBaseNamePlaceholder": "Nhập tên gốc (ví dụ: Toán)",
+    "renameSelected": "Đổi tên",
+    "renamePartialSuccess": "Đổi tên hoàn tất nhưng có lỗi",
+    "renameSummary": "{{success}} câu hỏi đổi tên thành công, {{failed}} thất bại.",
+    "enterBaseName": "Vui lòng nhập tên gốc",
+    "renameFailed": "Đổi tên thất bại",
+    "renameSelectedWithCount": "Đổi tên ({{count}})",
+    "deleteSelectedWithCount": "Xóa đã chọn ({{count}})"
   },
   "exams": {
     "title": "Quản lý đề thi",
@@ -1026,6 +1037,9 @@
     "correctAnswer": "Đáp án đúng",
     "studentAnswer": "Đáp án học sinh chọn"
   },
+  "mindmap": {
+    "unsavedChanges": "Bạn có những thay đổi chưa được lưu như bản vẽ, bố cục hoặc thuộc tính nút. Bạn có thực sự muốn rời đi mà không lưu không?"
+  },
   "chat": {
     "search": "Tìm kiếm",
     "searchPlaceholder": "Tìm kiếm...",
@@ -1062,4 +1076,3 @@
     "timeout": "Quá thời gian chờ. Vui lòng tải lại trang."
   }
 }
-

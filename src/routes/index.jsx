@@ -1,10 +1,11 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, createBrowserRouter, createRoutesFromElements } from 'react-router-dom';
 import { ROUTES, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 
 // Layouts
 import StudentLayout from '../layouts/StudentLayout';
 import TeacherLayout from '../layouts/TeacherLayout';
+import GlobalLayout from '../layouts/GlobalLayout';
 
 // Auth Pages
 import ForgotPassword from '../pages/auth/ForgotPassword';
@@ -39,6 +40,11 @@ import ExamResults from '../pages/student/ExamResults';
 import StudentDashboard from '../pages/student/StudentDashboard';
 import TakeExam from '../pages/student/TakeExam';
 
+// Mindmap Pages
+import MindmapList from '../pages/mindmap/MindmapList';
+import MindmapEditor from '../pages/mindmap/MindmapEditor';
+import MindmapTrash from '../pages/mindmap/MindmapTrash';
+
 // Public Pages
 import PublicTakeExam from '../pages/public/PublicTakeExam';
 import Profile from '../pages/Profile';
@@ -55,22 +61,22 @@ const RootRedirect = () => {
   if (!isAuthenticated) {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
-  
+
   if (user?.role === USER_ROLES.TEACHER) {
     return <Navigate to={ROUTES.TEACHER_DASHBOARD} replace />;
   } else if (user?.role === USER_ROLES.STUDENT) {
     return <Navigate to={ROUTES.STUDENT_DASHBOARD} replace />;
   }
-  
+
   return <Navigate to={ROUTES.LOGIN} replace />;
 };
 
 /**
  * App Routes Configuration
  */
-const AppRoutes = () => {
-  return (
-    <Routes>
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<GlobalLayout />}>
       {/* Root redirect */}
       <Route path="/" element={<RootRedirect />} />
 
@@ -109,6 +115,9 @@ const AppRoutes = () => {
         <Route path="classes/:classId" element={<TeacherClassDetail />} />
         <Route path="exams/:examId/monitor" element={<Monitor />} />
         <Route path="classes/:classId/reports" element={<Reports />} />
+        <Route path="mindmaps" element={<MindmapList />} />
+        <Route path="mindmaps/trash" element={<MindmapTrash />} />
+        <Route path="mindmaps/:id" element={<MindmapEditor />} />
       </Route>
 
       {/* Student Routes */}
@@ -127,6 +136,10 @@ const AppRoutes = () => {
         <Route path="results" element={<ExamResults />} />
         <Route path="results/:submissionId" element={<ExamResultDetail />} />
         {/* <Route path="exam-results" element={<ExamResults />} /> */}
+        <Route path="mindmaps" element={<MindmapList />} />
+        <Route path="mindmaps" element={<MindmapList />} />
+        <Route path="mindmaps/trash" element={<MindmapTrash />} />
+        <Route path="mindmaps/:id" element={<MindmapEditor />} />
       </Route>
 
       {/* Exam-related routes without StudentLayout */}
@@ -160,9 +173,9 @@ const AppRoutes = () => {
 
       {/* 404 - Not Found */}
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-};
+    </Route>
+  )
+);
 
-export default AppRoutes;
+export default router;
 

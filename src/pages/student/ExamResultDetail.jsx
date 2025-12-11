@@ -34,7 +34,7 @@ const ExamResultDetail = () => {
   const { submissionId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  
+
   const [loading, setLoading] = useState(true);
   const [submission, setSubmission] = useState(null);
   const [exam, setExam] = useState(null);
@@ -49,13 +49,13 @@ const ExamResultDetail = () => {
         setLoading(true);
         const response = await getSubmissionById(submissionId);
         const submissionData = response.data || response;
-        
+
         setSubmission(submissionData);
-        
+
         // Get exam from submission
         let examData = null;
         let examId = null;
-        
+
         if (submissionData.examId) {
           if (typeof submissionData.examId === 'object') {
             examData = submissionData.examId;
@@ -65,9 +65,9 @@ const ExamResultDetail = () => {
             const examResponse = await (await import('../../api/examService')).default.getExamById(examId);
             examData = examResponse.data || examResponse;
           }
-          
+
           setExam(examData);
-          
+
           // Check if leaderboard should be shown (hideLeaderboard === false means show it)
           if (examData && examData.hideLeaderboard === false) {
             setShowLeaderboard(true);
@@ -141,11 +141,11 @@ const ExamResultDetail = () => {
     return questions
       .map((q, index) => {
         const question = (q.questionId && typeof q.questionId === 'object' && q.questionId.text !== undefined)
-          ? q.questionId 
+          ? q.questionId
           : null;
-        
+
         if (!question || question.type !== 'mcq') return null;
-        
+
         const questionId = question._id?.toString() || question.id?.toString();
         const answer = answerMap[questionId];
         const isCorrect = answer?.isCorrect;
@@ -191,7 +191,7 @@ const ExamResultDetail = () => {
 
   const renderMathContent = (content) => {
     if (!content) return '';
-    
+
     const lines = content.split('\n');
     return (
       <>
@@ -199,14 +199,14 @@ const ExamResultDetail = () => {
           if (!line.trim()) {
             return <br key={index} />;
           }
-          
+
           const hasLatex = line.includes('\\') || line.includes('^') || line.includes('_');
           const hasDollarSigns = line.includes('$') || line.includes('\\(');
-          
+
           if (hasLatex && !hasDollarSigns) {
             const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -226,7 +226,7 @@ const ExamResultDetail = () => {
             );
           } else if (hasDollarSigns) {
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -236,7 +236,7 @@ const ExamResultDetail = () => {
             );
           } else {
             return (
-              <div key={index} style={{ 
+              <div key={index} style={{
                 fontFamily: 'inherit',
                 whiteSpace: 'pre-wrap',
                 wordWrap: 'break-word'
@@ -259,28 +259,28 @@ const ExamResultDetail = () => {
       render: (rank) => {
         if (rank === 1) {
           return (
-            <img 
-              src="/1st-medal.png" 
-              alt="1st Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/1st-medal.png"
+              alt="1st Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 2) {
           return (
-            <img 
-              src="/2nd-medal.png" 
-              alt="2nd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/2nd-medal.png"
+              alt="2nd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 3) {
           return (
-            <img 
-              src="/3rd-medal.png" 
-              alt="3rd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/3rd-medal.png"
+              alt="3rd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
@@ -312,8 +312,8 @@ const ExamResultDetail = () => {
         {/* Header */}
         <div className="result-header">
           <div className="header-left">
-            <Button 
-              icon={<ArrowLeftOutlined />} 
+            <Button
+              icon={<ArrowLeftOutlined />}
               onClick={() => navigate('/student/results')}
               style={{ marginBottom: 16 }}
             >
@@ -363,9 +363,9 @@ const ExamResultDetail = () => {
                 title={t('takeExam.percentage') || 'Percentage'}
                 value={submission.percentage || 0}
                 suffix="%"
-                valueStyle={{ 
-                  color: submission.percentage >= 80 ? '#52c41a' : 
-                         submission.percentage >= 50 ? '#faad14' : '#ff4d4f' 
+                valueStyle={{
+                  color: submission.percentage >= 80 ? '#52c41a' :
+                    submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
                 }}
               />
             </Col>
@@ -389,7 +389,7 @@ const ExamResultDetail = () => {
 
         {/* Leaderboard */}
         {showLeaderboard && leaderboard.length > 0 && (
-          <Card 
+          <Card
             title={<><TrophyOutlined /> {t('takeExam.leaderboard') || 'Leaderboard'}</>}
             style={{ marginBottom: '24px' }}
           >
@@ -449,8 +449,8 @@ const ExamResultDetail = () => {
 
                               <div className="question-content">
                                 <div className="question-text-wrapper">
-                                  <Paragraph style={{ 
-                                    fontSize: 16, 
+                                  <Paragraph style={{
+                                    fontSize: 16,
                                     marginBottom: 16,
                                     wordWrap: 'break-word',
                                     overflowWrap: 'break-word',
@@ -459,13 +459,46 @@ const ExamResultDetail = () => {
                                   }}>
                                     {renderMathContent(question.text || question.name)}
                                   </Paragraph>
+
+                                  {question.images && question.images.length > 0 ? (
+                                    <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                                      {question.images.map((imgUrl, idx) => (
+                                        <img
+                                          key={idx}
+                                          src={imgUrl}
+                                          alt={`Question ${idx + 1}`}
+                                          style={{
+                                            maxWidth: '100%',
+                                            maxHeight: '300px',
+                                            objectFit: 'contain',
+                                            borderRadius: '8px',
+                                            border: '1px solid #f0f0f0'
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  ) : question.image ? (
+                                    <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                                      <img
+                                        src={question.image}
+                                        alt="Question"
+                                        style={{
+                                          maxWidth: '100%',
+                                          maxHeight: '300px',
+                                          objectFit: 'contain',
+                                          borderRadius: '8px',
+                                          border: '1px solid #f0f0f0'
+                                        }}
+                                      />
+                                    </div>
+                                  ) : null}
                                 </div>
 
                                 <div className="choices-list">
                                   {choices.map((choice) => {
                                     const isSelected = userAnswer === choice.key;
                                     const isCorrectChoice = correctAnswer === choice.key;
-                                    
+
                                     let choiceClassName = 'choice-item';
                                     if (isCorrectChoice) {
                                       choiceClassName += ' choice-correct';
@@ -481,12 +514,28 @@ const ExamResultDetail = () => {
                                             wordWrap: 'break-word',
                                             overflowWrap: 'break-word',
                                             whiteSpace: 'pre-wrap',
-                                            fontFamily: 'inherit',
-                                            flex: 1
+                                            fontFamily: 'inherit'
                                           }}>
                                             {renderMathContent(choice.text)}
                                           </span>
+                                          {/* Render choice image if exists */}
+                                          {choice.image && (
+                                            <div style={{ marginLeft: '12px' }}>
+                                              <img
+                                                src={choice.image}
+                                                alt={`Choice ${choice.key}`}
+                                                style={{
+                                                  maxWidth: '100%',
+                                                  maxHeight: '150px',
+                                                  objectFit: 'contain',
+                                                  borderRadius: '4px',
+                                                  border: '1px solid #f0f0f0'
+                                                }}
+                                              />
+                                            </div>
+                                          )}
                                         </div>
+
                                         {isCorrectChoice && (
                                           <div className="choice-icon correct-icon">
                                             <CheckCircleOutlined />

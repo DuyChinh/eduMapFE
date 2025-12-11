@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  Button, 
-  Space, 
-  message, 
+import {
+  Card,
+  Button,
+  Space,
+  message,
   Spin,
   Row,
   Col,
@@ -14,8 +14,8 @@ import {
   Radio,
   Breadcrumb
 } from 'antd';
-import { 
-  ArrowLeftOutlined, 
+import {
+  ArrowLeftOutlined,
   EditOutlined,
   EyeOutlined
 } from '@ant-design/icons';
@@ -30,7 +30,7 @@ const QuestionDetail = () => {
   const { questionId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  
+
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [questionData, setQuestionData] = useState({});
@@ -41,37 +41,42 @@ const QuestionDetail = () => {
     const fetchQuestionData = async () => {
       try {
         setInitialLoading(true);
-        
+
         let response = await questionService.getQuestionById(questionId);
         response = response?.data;
         let processedChoices = ['', '', '', ''];
         let answerIndex = 0;
-        
+
         if (response.choices && Array.isArray(response.choices)) {
           // If choices is array of strings
           if (typeof response.choices[0] === 'string') {
             processedChoices = [...response.choices];
-          } 
-          // If choices is array of objects with text property
+          }
+          // If choices is array of objects with text property (and potentially image)
           else if (response.choices[0] && typeof response.choices[0] === 'object') {
-            processedChoices = response.choices.map(choice => choice.text || '');
-            
+            // Keep the full object structure for rendering
+            processedChoices = response.choices.map(choice => ({
+              text: choice.text || '',
+              image: choice.image || '',
+              key: choice.key
+            }));
+
             // Find answer index by matching answer key with choice key
             if (response.type === 'mcq' && response.answer) {
               const answerKey = response.answer.toString().toUpperCase();
-              const foundIndex = response.choices.findIndex(choice => 
+              const foundIndex = response.choices.findIndex(choice =>
                 choice.key && choice.key.toUpperCase() === answerKey
               );
               answerIndex = foundIndex >= 0 ? foundIndex : 0;
             }
           }
         }
-        
+
         // Ensure we have at least 4 choices
         while (processedChoices.length < 4) {
           processedChoices.push('');
         }
-        
+
         const data = {
           name: response.name || '',
           text: response.text || '',
@@ -81,6 +86,8 @@ const QuestionDetail = () => {
           choices: processedChoices,
           answer: response.type === 'mcq' ? answerIndex : response.answer || '',
           explanation: response.explanation || '',
+          images: (response.images && response.images.length > 0) ? response.images : (response.image ? [response.image] : []),
+          image: response.image || '',
           isPublic: response.isPublic !== undefined ? response.isPublic : true,
           // Additional fields for display
           ownerId: response.ownerId,
@@ -88,9 +95,9 @@ const QuestionDetail = () => {
           updatedAt: response.updatedAt,
           usageCount: response.usageCount || 0
         };
-        
+
         setQuestionData(data);
-        
+
       } catch (error) {
         console.error('❌ Error fetching question:', error);
         message.error('Failed to load question data');
@@ -108,9 +115,9 @@ const QuestionDetail = () => {
     const fetchSubjects = async () => {
       try {
         const currentLang = localStorage.getItem('language') || 'vi';
-        
+
         const response = await questionService.getSubjects({ lang: currentLang });
-        
+
         // Handle different response structures
         let subjectsData = [];
         if (Array.isArray(response)) {
@@ -120,7 +127,7 @@ const QuestionDetail = () => {
         } else if (response.items && Array.isArray(response.items)) {
           subjectsData = response.items;
         }
-        
+
         setSubjects(subjectsData);
       } catch (error) {
         console.error('❌ Error fetching subjects:', error);
@@ -136,7 +143,7 @@ const QuestionDetail = () => {
   useEffect(() => {
     const handleLanguageChange = () => {
       const currentLang = localStorage.getItem('language') || 'vi';
-      
+
       // Refetch subjects with new language
       const refetchSubjects = async () => {
         try {
@@ -149,20 +156,20 @@ const QuestionDetail = () => {
           } else if (response.items && Array.isArray(response.items)) {
             subjectsData = response.items;
           }
-          
+
           setSubjects(subjectsData);
         } catch (error) {
           console.error('❌ Error refetching subjects:', error);
           message.error('Failed to reload subjects');
         }
       };
-      
+
       refetchSubjects();
     };
 
     // Listen for storage changes (language change)
     window.addEventListener('storage', handleLanguageChange);
-    
+
     // Also listen for custom language change events
     window.addEventListener('languageChanged', handleLanguageChange);
 
@@ -233,11 +240,11 @@ const QuestionDetail = () => {
 
   if (initialLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '400px' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '400px'
       }}>
         <Spin size="large" />
       </div>
@@ -304,7 +311,7 @@ const QuestionDetail = () => {
             {/* Question Text */}
             <div style={{ marginBottom: '16px' }}>
               <Text strong>{t('questions.question')}:</Text>
-              <Paragraph style={{ 
+              <Paragraph style={{
                 marginTop: '8px',
                 wordWrap: 'break-word',
                 overflowWrap: 'break-word',
@@ -315,20 +322,93 @@ const QuestionDetail = () => {
               </Paragraph>
             </div>
 
+            {/* Question Images */}
+            {questionData.images && questionData.images.length > 0 ? (
+              <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                {questionData.images.map((imgUrl, index) => (
+                  <img
+                    key={index}
+                    src={imgUrl}
+                    alt={`Question ${index + 1}`}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '300px',
+                      objectFit: 'contain',
+                      borderRadius: '8px',
+                      border: '1px solid #f0f0f0'
+                    }}
+                  />
+                ))}
+              </div>
+            ) : questionData.image ? (
+              <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                <img
+                  src={questionData.image}
+                  alt="Question"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    border: '1px solid #f0f0f0'
+                  }}
+                />
+              </div>
+            ) : null}
+
             {/* Choices for MCQ */}
             {questionData.type === 'mcq' && questionData.choices && questionData.choices.length > 0 && (
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>{t('questions.choices')}:</Text>
                 <div style={{ marginTop: '8px' }}>
-                  <Radio.Group value={questionData.answer} disabled>
+                  <Radio.Group value={questionData.answer} disabled style={{ width: '100%' }}>
                     <Space direction="vertical" style={{ width: '100%' }}>
-                      {questionData.choices.map((choice, index) => (
-                        <Radio key={index} value={index}>
-                          <Text>
-                            <Text strong>{String.fromCharCode(65 + index)}.</Text> {choice}
-                          </Text>
-                        </Radio>
-                      ))}
+                      {questionData.choices.map((choice, index) => {
+                        let choiceText = '';
+                        let choiceImage = '';
+
+                        if (typeof choice === 'string') {
+                          choiceText = choice;
+                        } else if (typeof choice === 'object' && choice !== null) {
+                          choiceText = choice.text || '';
+                          choiceImage = choice.image || '';
+                        }
+
+                        if (!choiceText && !choiceImage) {
+                          choiceText = `${t('questions.choice')} ${index + 1}`;
+                        }
+
+                        return (
+                          <Radio key={index} value={index} style={{
+                            width: '100%',
+                            whiteSpace: 'normal',
+                            alignItems: 'flex-start',
+                            marginBottom: '8px'
+                          }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                              <div style={{ display: 'flex' }}>
+                                <Text strong style={{ marginRight: '4px' }}>{String.fromCharCode(65 + index)}.</Text>
+                                <span style={{ wordBreak: 'break-word' }}>{choiceText}</span>
+                              </div>
+                              {choiceImage && (
+                                <div style={{ marginTop: '8px', marginLeft: '20px' }}>
+                                  <img
+                                    src={choiceImage}
+                                    alt={`Choice ${index + 1}`}
+                                    style={{
+                                      maxWidth: '100%',
+                                      maxHeight: '200px',
+                                      objectFit: 'contain',
+                                      borderRadius: '4px',
+                                      border: '1px solid #f0f0f0'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </Radio>
+                        );
+                      })}
                     </Space>
                   </Radio.Group>
                 </div>
@@ -342,8 +422,17 @@ const QuestionDetail = () => {
                 <Text strong>{t('questions.answer')}:</Text>
                 <div style={{ marginTop: '8px' }}>
                   <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                    {questionData.type === 'mcq' 
-                      ? `${String.fromCharCode(65 + questionData.answer)} - ${questionData.choices[questionData.answer] || ''}`
+                    {questionData.type === 'mcq'
+                      ? (
+                        <span>
+                          {`${String.fromCharCode(65 + questionData.answer)} - `}
+                          {
+                            typeof questionData.choices[questionData.answer] === 'object'
+                              ? questionData.choices[questionData.answer].text
+                              : questionData.choices[questionData.answer]
+                          }
+                        </span>
+                      )
                       : questionData.answer
                     }
                   </Tag>
@@ -356,7 +445,7 @@ const QuestionDetail = () => {
               <div style={{ marginBottom: '16px' }}>
                 <Divider />
                 <Text strong>{t('questions.explanation')}:</Text>
-                <Paragraph style={{ 
+                <Paragraph style={{
                   marginTop: '8px',
                   wordWrap: 'break-word',
                   overflowWrap: 'break-word',
@@ -402,7 +491,7 @@ const QuestionDetail = () => {
 
         {/* Right Column - Preview */}
         <Col xs={24} lg={10}>
-          <Card 
+          <Card
             title={
               <Space>
                 <EyeOutlined />
