@@ -13,7 +13,6 @@ import {
   SwapOutlined,
   TeamOutlined,
   UserOutlined,
-  ShareAltOutlined,
   ScanOutlined,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
@@ -170,7 +169,7 @@ const TeacherLayout = () => {
     },
     {
       key: 'mindmaps',
-      icon: <ShareAltOutlined />,
+      icon: <img src="/mind_map.png" alt="Mindmaps" className="menu-icon-image" />,
       label: 'Mindmaps',
       onClick: () => navigate('/teacher/mindmaps'),
     },
@@ -238,8 +237,8 @@ const TeacherLayout = () => {
           {!collapsed && (
             <div className="user-info-compact">
               <Avatar
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
+                src={avatarSrc}
+                icon={!avatarSrc && <UserOutlined />}
               />
               <div className="user-details">
                 <div className="user-name">{user?.name}</div>
@@ -289,10 +288,13 @@ const TeacherLayout = () => {
             >
               <div className="user-dropdown">
                 <Avatar
-                  src={user?.avatar}
-                  icon={!user?.avatar && <UserOutlined />}
+                  src={avatarSrc}
+                  icon={!avatarSrc && <UserOutlined />}
                 />
-                <span className="user-name-header">{user?.name}</span>
+                <div className="user-info-header">
+                  <span className="user-name-header">{user?.name}</span>
+                  <span className="user-role-header">{roleLabel}</span>
+                </div>
               </div>
             </Dropdown>
           </Space>
