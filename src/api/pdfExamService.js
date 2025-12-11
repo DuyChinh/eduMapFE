@@ -7,7 +7,7 @@ import axiosInstance from './axios';
  */
 export const uploadPdfForParsing = async (file) => {
   const formData = new FormData();
-  formData.append('pdf', file); // Must match backend route: upload.single('pdf')
+  formData.append('pdf', file);
   
   console.log('📤 Sending PDF to backend:', file.name, file.size);
   
@@ -15,7 +15,8 @@ export const uploadPdfForParsing = async (file) => {
     const response = await axiosInstance.post('/exams/upload-pdf', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      timeout: 180000
     });
     
     console.log('📥 Raw axios response:', response);
@@ -25,9 +26,6 @@ export const uploadPdfForParsing = async (file) => {
       dataKeys: response.data ? Object.keys(response.data) : []
     });
     
-    // Axios interceptor already unwraps to response.data
-    // Backend returns { ok, message, data }
-    // After interceptor: response = { ok, message, data }
     return response;
   } catch (error) {
     console.error('❌ Service error:', error);

@@ -787,6 +787,8 @@
     "pleaseUploadFile": "Please upload a file first",
     "parsePdf": "Parse PDF",
     "parsing": "Parsing...",
+    "parsingInProgress": "Processing PDF...",
+    "parsingHint": "AI is extracting questions from PDF. This process may take 1-2 minutes for large files. Please wait...",
     "pdfParsedSuccess": "Successfully detected {{count}} questions",
     "parsingFailed": "Failed to parse PDF",
     "reviewInstructions": "Review & Edit Questions",
@@ -1067,6 +1069,8 @@
     "editError": "Sorry, I encountered an error while editing. Please try again.",
     "pin": "Pin",
     "unpin": "Unpin",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "processing": "Processing...",
+    "timeout": "Request timeout. Please reload the page."
   }
 }

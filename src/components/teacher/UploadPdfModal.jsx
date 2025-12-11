@@ -283,7 +283,7 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
             </p>
           </Dragger>
 
-          {uploadedFile && (
+          {uploadedFile && !parsing && (
             <Alert
               message={t('exams.fileReady')}
               description={`${uploadedFile.name} (${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)`}
@@ -293,16 +293,26 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
             />
           )}
 
+          {parsing && (
+            <Alert
+              message={t('exams.parsingInProgress') || 'Đang xử lý PDF...'}
+              description={t('exams.parsingHint') || 'AI đang trích xuất câu hỏi từ PDF. Quá trình này có thể mất 1-2 phút đối với file lớn. Vui lòng đợi...'}
+              type="info"
+              showIcon
+              style={{ marginTop: 16 }}
+            />
+          )}
+
           <div style={{ marginTop: 24, textAlign: 'right' }}>
             <Space>
-              <Button onClick={handleModalClose}>
+              <Button onClick={handleModalClose} disabled={parsing}>
                 {t('common.cancel')}
               </Button>
               <Button 
                 type="primary" 
                 onClick={handleParsePdf}
                 loading={parsing}
-                disabled={!uploadedFile}
+                disabled={!uploadedFile || parsing}
               >
                 {parsing ? t('exams.parsing') : t('exams.parsePdf')}
               </Button>

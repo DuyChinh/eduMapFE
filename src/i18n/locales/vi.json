@@ -786,6 +786,8 @@
     "pleaseUploadFile": "Vui lòng upload file trước",
     "parsePdf": "Phân tích PDF",
     "parsing": "Đang phân tích...",
+    "parsingInProgress": "Đang xử lý PDF...",
+    "parsingHint": "AI đang trích xuất câu hỏi từ PDF. Quá trình này có thể mất 1-2 phút đối với file lớn. Vui lòng đợi...",
     "pdfParsedSuccess": "Phát hiện thành công {{count}} câu hỏi",
     "parsingFailed": "Phân tích PDF thất bại",
     "reviewInstructions": "Xem lại & Chỉnh sửa câu hỏi",
@@ -1066,6 +1068,8 @@
     "editError": "Xin lỗi, đã xảy ra lỗi khi chỉnh sửa. Vui lòng thử lại.",
     "pin": "Ghim",
     "unpin": "Bỏ ghim",
-    "deleting": "Đang xóa..."
+    "deleting": "Đang xóa...",
+    "processing": "Đang xử lý...",
+    "timeout": "Quá thời gian chờ. Vui lòng tải lại trang."
   }
 }
