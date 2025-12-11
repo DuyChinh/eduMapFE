@@ -1,19 +1,19 @@
-import { BrowserRouter as Router } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp, theme as antdTheme } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import viVN from 'antd/locale/vi_VN';
 import enUS from 'antd/locale/en_US';
 import jaJP from 'antd/locale/ja_JP';
-import AppRoutes from './routes';
+import router from './routes';
 import useThemeStore from './store/themeStore';
 import useAuthStore from './store/authStore';
-import ChatWidget from './components/ChatWidget/ChatWidget';
+// Remove manual ChatWidget import as it is now in GlobalLayout
 
 function App() {
   const { i18n } = useTranslation();
   const { theme } = useThemeStore();
-  const { isAuthenticated } = useAuthStore();
+  // const { isAuthenticated } = useAuthStore(); // Not needed in App anymore for ChatWidget checking
 
   // Apply theme to document body
   useEffect(() => {
@@ -55,10 +55,7 @@ function App() {
       theme={antdThemeConfig}
     >
       <AntdApp>
-        <Router>
-          <AppRoutes />
-          {isAuthenticated && <ChatWidget />}
-        </Router>
+        <RouterProvider router={router} />
       </AntdApp>
     </ConfigProvider>
   );

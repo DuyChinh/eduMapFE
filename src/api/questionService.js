@@ -95,7 +95,7 @@ const questionService = {
   importQuestions: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await axiosInstance.post('/questions/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -103,6 +103,16 @@ const questionService = {
     });
     return response;
   },
+
+  /**
+   * Batch rename questions
+   * @param {Array} questionIds - List of question IDs
+   * @param {string} baseName - Base name for remaining
+   * @returns {Promise} Response with results
+   */
+  batchRename: async (questionIds, baseName) => {
+    return await axiosInstance.post('/questions/batch-rename', { questionIds, baseName });
+  }
 };
 
 export default questionService;

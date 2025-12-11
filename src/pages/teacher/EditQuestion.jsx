@@ -1,31 +1,35 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Card, 
-  Form, 
-  Input, 
-  Select, 
-  Button, 
-  Row, 
-  Col, 
-  Typography, 
-  Space, 
+import {
+  Card,
+  Form,
+  Input,
+  Select,
+  Button,
+  Row,
+  Col,
+  Typography,
+  Space,
   message,
   Divider,
   Radio,
   InputNumber,
-  Spin
+  Spin,
+  Upload
 } from 'antd';
-import { 
-  ArrowLeftOutlined, 
-  SaveOutlined, 
+import {
+  ArrowLeftOutlined,
+  SaveOutlined,
   EyeOutlined,
   PlusOutlined,
   DeleteOutlined,
-  FunctionOutlined
+  FunctionOutlined,
+  LoadingOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import questionService from '../../api/questionService';
+import uploadService from '../../api/uploadService';
 import { ROUTES } from '../../constants/config';
 import QuestionPreview from '../../components/teacher/QuestionPreview';
 import MathJaxEditor from '../../components/teacher/MathJaxEditor';
@@ -47,8 +51,10 @@ const EditQuestion = () => {
     choices: ['', '', '', ''],
     answer: '',
     explanation: '',
-    isPublic: true
+    isPublic: true,
+    images: [] // Changed from single image string to images array
   });
+  const [uploading, setUploading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -69,35 +75,40 @@ const EditQuestion = () => {
         response = response?.data;
         let processedChoices = ['', '', '', ''];
         let answerIndex = 0;
-        
+
         if (response.choices && Array.isArray(response.choices)) {
           // If choices is array of strings
           if (typeof response.choices[0] === 'string') {
             processedChoices = [...response.choices];
-          } 
+          }
           // If choices is array of objects with text property
           else if (response.choices[0] && typeof response.choices[0] === 'object') {
-            processedChoices = response.choices.map(choice => choice.text || '');
-            
+            // Keep full object structure
+            processedChoices = response.choices.map(choice => ({
+              text: choice.text || '',
+              image: choice.image || ''
+            }));
+
             // Find answer index by matching answer key with choice key
             if (response.type === 'mcq' && response.answer) {
               const answerKey = response.answer.toString().toUpperCase();
-              const foundIndex = response.choices.findIndex(choice => 
+              const foundIndex = response.choices.findIndex(choice =>
                 choice.key && choice.key.toUpperCase() === answerKey
               );
               answerIndex = foundIndex >= 0 ? foundIndex : 0;
             }
           }
         }
-        
+
         // Ensure we have at least 4 choices
         while (processedChoices.length < 4) {
           processedChoices.push('');
         }
-        
+
         const data = {
           name: response.name || '',
           text: response.text || '',
+          images: (response.images && response.images.length > 0) ? response.images : (response.image ? [response.image] : []),
           type: response.type || 'mcq',
           level: response.level?.toString() || '1',
           subject: response.subjectId?._id || response.subject || '',
@@ -106,13 +117,13 @@ const EditQuestion = () => {
           explanation: response.explanation || '',
           isPublic: response.isPublic !== undefined ? response.isPublic : true
         };
-        
+
         setQuestionData(data);
-        
+
         // Reset form first, then set values
         form.resetFields();
         form.setFieldsValue(data);
-        
+
       } catch (error) {
         console.error('❌ Error fetching question:', error);
         message.error('Failed to load question data');
@@ -130,9 +141,9 @@ const EditQuestion = () => {
     const fetchSubjects = async () => {
       try {
         const currentLang = localStorage.getItem('language') || 'vi';
-        
+
         const response = await questionService.getSubjects({ lang: currentLang });
-        
+
         // Handle different response structures
         let subjectsData = [];
         if (Array.isArray(response)) {
@@ -142,7 +153,7 @@ const EditQuestion = () => {
         } else if (response.items && Array.isArray(response.items)) {
           subjectsData = response.items;
         }
-        
+
         setSubjects(subjectsData);
       } catch (error) {
         console.error('❌ Error fetching subjects:', error);
@@ -158,9 +169,9 @@ const EditQuestion = () => {
   const refetchSubjects = async () => {
     try {
       const currentLang = localStorage.getItem('language') || 'vi';
-      
+
       const response = await questionService.getSubjects({ lang: currentLang });
-      
+
       let subjectsData = [];
       if (Array.isArray(response)) {
         subjectsData = response;
@@ -169,7 +180,7 @@ const EditQuestion = () => {
       } else if (response.items && Array.isArray(response.items)) {
         subjectsData = response.items;
       }
-      
+
       setSubjects(subjectsData);
     } catch (error) {
       console.error('❌ Error refetching subjects:', error);
@@ -184,7 +195,7 @@ const EditQuestion = () => {
 
     // Listen for storage changes (language changes)
     window.addEventListener('storage', handleLanguageChange);
-    
+
     // Also listen for custom language change events
     window.addEventListener('languageChanged', handleLanguageChange);
 
@@ -208,7 +219,8 @@ const EditQuestion = () => {
       choices: formValues.choices || questionData.choices,
       answer: formValues.answer !== undefined ? formValues.answer : questionData.answer,
       explanation: formValues.explanation || questionData.explanation,
-      isPublic: formValues.isPublic !== undefined ? formValues.isPublic : questionData.isPublic
+      isPublic: formValues.isPublic !== undefined ? formValues.isPublic : questionData.isPublic,
+      images: questionData.images
     };
   };
 
@@ -222,15 +234,46 @@ const EditQuestion = () => {
   };
 
   // Handle choice changes
-  const handleChoiceChange = (index, value) => {
+  const handleChoiceTextChange = (index, value) => {
     const newChoices = [...questionData.choices];
-    newChoices[index] = value;
+    newChoices[index] = { ...newChoices[index], text: value };
     setQuestionData(prev => ({
       ...prev,
       choices: newChoices
     }));
-    form.setFieldsValue({ choices: newChoices });
-    // Trigger preview re-render
+    setPreviewKey(prev => prev + 1);
+  };
+
+  const handleChoiceImageUpload = async (index, { file, onSuccess, onError }) => {
+    try {
+      const response = await uploadService.uploadImage(file);
+      if (response && response.data && response.data.url) {
+        const imageUrl = response.data.url;
+        const newChoices = [...questionData.choices];
+        newChoices[index] = { ...newChoices[index], image: imageUrl };
+        setQuestionData(prev => ({
+          ...prev,
+          choices: newChoices
+        }));
+        onSuccess(null, file);
+        message.success('Choice image uploaded');
+        setPreviewKey(prev => prev + 1);
+      } else {
+        onError(new Error('Upload failed'));
+      }
+    } catch (error) {
+      onError(error);
+      message.error('Upload failed');
+    }
+  };
+
+  const removeChoiceImage = (index) => {
+    const newChoices = [...questionData.choices];
+    newChoices[index] = { ...newChoices[index], image: '' };
+    setQuestionData(prev => ({
+      ...prev,
+      choices: newChoices
+    }));
     setPreviewKey(prev => prev + 1);
   };
 
@@ -252,8 +295,54 @@ const EditQuestion = () => {
         ...prev,
         choices: newChoices
       }));
-      form.setFieldsValue({ choices: newChoices });
     }
+  };
+
+  // Handle question images upload
+  const handleQuestionImagesUpload = async ({ file, onSuccess, onError }) => {
+    try {
+      setUploading(true);
+      const response = await uploadService.uploadImage(file);
+      if (response && response.data && response.data.url) {
+        const imageUrl = response.data.url;
+        setQuestionData(prev => ({
+          ...prev,
+          images: [...(prev.images || []), imageUrl]
+        }));
+        onSuccess(null, file);
+        message.success('Image uploaded successfully');
+        setPreviewKey(prev => prev + 1);
+      } else {
+        onError(new Error('Upload failed'));
+        message.error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      onError(error);
+      message.error('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeQuestionImage = (indexToRemove) => {
+    setQuestionData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove)
+    }));
+    setPreviewKey(prev => prev + 1);
+  };
+
+  const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isJpgOrPng) {
+      message.error('You can only upload JPG/PNG file!');
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Image must be smaller than 2MB!');
+    }
+    return isJpgOrPng && isLt2M;
   };
 
   // Handle form submission
@@ -262,7 +351,7 @@ const EditQuestion = () => {
       const values = await form.validateFields();
 
       setLoading(true);
-      
+
       // Prepare question data for API
       const questionPayload = {
         ...values,
@@ -272,21 +361,28 @@ const EditQuestion = () => {
       // Process choices for MCQ
       if (values.type === 'mcq') {
         const answerKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-        questionPayload.choices = (values.choices || questionData.choices).map((text, index) => ({
+        questionPayload.choices = questionData.choices.map((choice, index) => ({
           key: answerKeys[index],
-          text: text
+          text: choice.text,
+          image: choice.image
         }));
-        
+
         // Convert answer index to key for MCQ
         if (typeof values.answer === 'number') {
           questionPayload.answer = answerKeys[values.answer] || 'A';
         }
       } else {
-        questionPayload.choices = values.choices || questionData.choices;
+        // For other types, currently storing text only or same structure if needed
+        questionPayload.choices = questionData.choices.map(c => c.text);
       }
 
+      // Add images
+      questionPayload.images = questionData.images;
+      // Remove legacy single image
+      delete questionPayload.image;
+
       await questionService.updateQuestion(questionId, questionPayload);
-      
+
       message.success(t('questions.updateSuccess'));
       navigate(ROUTES.TEACHER_QUESTIONS);
     } catch (error) {
@@ -304,11 +400,11 @@ const EditQuestion = () => {
 
   if (initialLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
       }}>
         <Spin size="large" />
       </div>
@@ -320,8 +416,8 @@ const EditQuestion = () => {
       {/* Header */}
       <Card style={{ marginBottom: '24px' }}>
         <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(ROUTES.TEACHER_QUESTIONS)}
           >
             {t('common.back')}
@@ -379,6 +475,57 @@ const EditQuestion = () => {
                 />
               </Form.Item>
 
+
+
+              {/* Question Images */}
+              <Form.Item label={t('questions.images') || "Images"}>
+                <div style={{ marginBottom: 16 }}>
+                  <Upload
+                    name="image"
+                    listType="picture-card"
+                    className="avatar-uploader"
+                    showUploadList={false}
+                    customRequest={handleQuestionImagesUpload}
+                    beforeUpload={beforeUpload}
+                  >
+                    <div>
+                      {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                      <div style={{ marginTop: 8 }}>Upload</div>
+                    </div>
+                  </Upload>
+                </div>
+
+                {/* Image Gallery */}
+                {questionData.images && questionData.images.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {questionData.images.map((imgUrl, index) => (
+                      <div key={index} style={{ position: 'relative', width: '100px', height: '100px', border: '1px solid #d9d9d9', padding: '4px', borderRadius: '4px' }}>
+                        <img
+                          src={imgUrl}
+                          alt={`Question ${index + 1}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: -5,
+                            right: -5,
+                            background: '#fff',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            zIndex: 1,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          }}
+                          onClick={() => removeQuestionImage(index)}
+                        >
+                          <DeleteOutlined style={{ color: 'red', fontSize: '16px' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Form.Item>
+
               {/* Question Type */}
               <Form.Item
                 label={t('questions.type')}
@@ -399,7 +546,7 @@ const EditQuestion = () => {
                 name="subject"
                 rules={[{ required: true, message: t('questions.subjectRequired') }]}
               >
-                <Select 
+                <Select
                   placeholder={t('questions.selectSubject')}
                   loading={subjects.length === 0}
                   showSearch
@@ -449,31 +596,83 @@ const EditQuestion = () => {
               {questionData.type === 'mcq' && (
                 <Form.Item label={t('questions.choices')}>
                   {questionData.choices.map((choice, index) => (
-                    <div key={index} style={{ marginBottom: '8px' }}>
-                      <Space.Compact style={{ width: '100%' }}>
-                        <div style={{ flex: 1 }}>
-                          <MathJaxEditor
-                            value={choice}
-                            onChange={(value) => handleChoiceChange(index, value)}
-                            placeholder={`${t('questions.choice')} ${index + 1}`}
-                            rows={2}
-                            showPreview={false}
-                            showToolbar={false}
-                          />
+                    <div key={index} style={{ marginBottom: '16px', border: '1px solid #f0f0f0', padding: '12px', borderRadius: '8px' }}>
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text strong>{t('questions.choice')} {index + 1}</Text>
+                          {questionData.choices.length > 2 && (
+                            <Button
+                              icon={<DeleteOutlined />}
+                              onClick={() => removeChoice(index)}
+                              danger
+                              size="small"
+                            />
+                          )}
                         </div>
-                        {questionData.choices.length > 2 && (
-                          <Button 
-                            icon={<DeleteOutlined />} 
-                            onClick={() => removeChoice(index)}
-                            danger
-                            style={{ marginLeft: '8px' }}
-                          />
-                        )}
-                      </Space.Compact>
+
+                        <div style={{ display: 'flex', width: '100%', gap: '16px', alignItems: 'flex-start' }}>
+                          <div style={{ flex: 1 }}>
+                            <MathJaxEditor
+                              value={choice.text}
+                              onChange={(value) => handleChoiceTextChange(index, value)}
+                              placeholder={`${t('questions.choice')} ${index + 1}`}
+                              rows={2}
+                              showPreview={false}
+                              showToolbar={false}
+                            />
+                          </div>
+
+                          <div style={{ flexShrink: 0, marginTop: '2px' }}>
+                            <Upload
+                              name="choiceImage"
+                              listType="picture-card"
+                              showUploadList={false}
+                              customRequest={(options) => handleChoiceImageUpload(index, options)}
+                              beforeUpload={beforeUpload}
+                              style={{ width: '40px', height: '40px', margin: 0 }}
+                              className="compact-uploader"
+                            >
+                              {choice.image ? (
+                                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                  <img
+                                    src={choice.image}
+                                    alt="choice"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      top: -4,
+                                      right: -4,
+                                      background: '#fff',
+                                      borderRadius: '50%',
+                                      cursor: 'pointer',
+                                      zIndex: 1,
+                                      padding: '2px',
+                                      lineHeight: 0,
+                                      boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeChoiceImage(index);
+                                    }}
+                                  >
+                                    <DeleteOutlined style={{ color: 'red', fontSize: '10px' }} />
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                  {uploading && false ? <LoadingOutlined /> : <PlusOutlined style={{ fontSize: '16px', color: '#999' }} />}
+                                </div>
+                              )}
+                            </Upload>
+                          </div>
+                        </div>
+                      </Space>
                     </div>
                   ))}
-                  <Button 
-                    icon={<PlusOutlined />} 
+                  <Button
+                    icon={<PlusOutlined />}
                     onClick={addChoice}
                     type="dashed"
                     style={{ width: '100%' }}
@@ -533,8 +732,8 @@ const EditQuestion = () => {
               {/* Action Buttons */}
               <Form.Item>
                 <Space>
-                  <Button 
-                    type="primary" 
+                  <Button
+                    type="primary"
                     icon={<SaveOutlined />}
                     onClick={handleSubmit}
                     loading={loading}
@@ -542,7 +741,7 @@ const EditQuestion = () => {
                   >
                     {t('questions.update')}
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => navigate(ROUTES.TEACHER_QUESTIONS)}
                     size="large"
                   >
@@ -556,7 +755,7 @@ const EditQuestion = () => {
 
         {/* Right Column - Preview */}
         <Col xs={24} lg={10}>
-          <Card 
+          <Card
             title={
               <Space>
                 <EyeOutlined />
@@ -569,7 +768,7 @@ const EditQuestion = () => {
           </Card>
         </Col>
       </Row>
-    </div>
+    </div >
   );
 };
 
