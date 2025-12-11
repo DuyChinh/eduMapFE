@@ -15,7 +15,8 @@ import {
   Card,
   Radio,
   Divider,
-  Tag
+  Tag,
+  DatePicker
 } from 'antd';
 import {
   InboxOutlined,
@@ -105,11 +106,10 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
         
         setAllQuestions(questions);
         
-        // Initialize selected answers (default to first answer for each question)
         const initialAnswers = {};
         questions.forEach(q => {
           if (q.answers && q.answers.length > 0) {
-            initialAnswers[q.questionNumber] = q.answers[0].key || q.answers[0].letter || 'A';
+            initialAnswers[q.questionNumber] = q.correctAnswer || q.answers[0].key || 'A';
           }
         });
         setSelectedAnswers(initialAnswers);
@@ -189,7 +189,9 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
         isAllowUser: values.isAllowUser || 'everyone',
         maxAttempts: values.maxAttempts || 1,
         viewMark: values.viewMark !== undefined ? values.viewMark : 1,
-        viewExamAndAnswer: values.viewExamAndAnswer !== undefined ? values.viewExamAndAnswer : 1
+        viewExamAndAnswer: values.viewExamAndAnswer !== undefined ? values.viewExamAndAnswer : 1,
+        startTime: values.startTime ? values.startTime.toISOString() : undefined,
+        endTime: values.endTime ? values.endTime.toISOString() : undefined
       };
 
       const result = await pdfExamService.createExamFromPdf(examData);
@@ -331,13 +333,15 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
               isAllowUser: 'everyone',
               maxAttempts: 1,
               viewMark: 1,
-              viewExamAndAnswer: 1
+              viewExamAndAnswer: 1,
+              startTime: null,
+              endTime: null
             }}
           >
             <Form.Item
               name="examName"
-              label={t('exams.examName')}
-              rules={[{ required: true, message: t('exams.pleaseEnterExamName') }]}
+              label={t('exams.name')}
+              rules={[{ required: true, message: t('exams.nameRequired') }]}
             >
               <Input placeholder={parsedData.filename?.replace('.pdf', '')} />
             </Form.Item>
@@ -451,18 +455,53 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
                 </Select>
               </Form.Item>
             </Space>
+
+            <Space style={{ width: '100%', marginTop: 16 }} size="large">
+              <Form.Item
+                name="startTime"
+                label={t('exams.startTime')}
+                rules={[{ required: true, message: t('exams.startTimeRequired') }]}
+              >
+                <DatePicker 
+                  showTime 
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: 200 }}
+                  placeholder={t('exams.selectStartTime')}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="endTime"
+                label={t('exams.endTime')}
+                rules={[
+                  { required: true, message: t('exams.endTimeRequired') },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || !getFieldValue('startTime')) {
+                        return Promise.resolve();
+                      }
+                      if (value.isBefore(getFieldValue('startTime'))) {
+                        return Promise.reject(new Error(t('exams.endTimeMustBeAfterStartTime')));
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker 
+                  showTime 
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: 200 }}
+                  placeholder={t('exams.selectEndTime')}
+                />
+              </Form.Item>
+            </Space>
           </Form>
 
-          {/* Questions Preview */}
           <Card 
             title={
               <Space>
                 <span>{t('exams.questions')} ({allQuestions.length})</span>
-                {marksPerQuestion > 0 && (
-                  <Tag color="blue">
-                    {t('exams.marksPerQuestion')} {marksPerQuestion}
-                  </Tag>
-                )}
               </Space>
             }
             style={{ marginTop: 16, maxHeight: '60vh', overflowY: 'auto' }}
@@ -481,43 +520,63 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
                     }}
                   >
                     <div style={{ marginBottom: 12 }}>
-                      <strong>
-                        {t('exams.question')} {question.questionNumber}:
-                      </strong>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <Space>
+                          <strong>
+                            {t('exams.question')} {question.questionNumber}:
+                          </strong>
+                          <Tag color={question.type === 'multiple-choice' ? 'blue' : 'orange'}>
+                            {question.type === 'multiple-choice' ? t('exams.multipleChoice') : t('exams.essay')}
+                          </Tag>
+                        </Space>
+                        {marksPerQuestion > 0 && (
+                          <Tag color="purple">
+                            {marksPerQuestion} {t('exams.marks')}
+                          </Tag>
+                        )}
+                      </div>
                       <div style={{ marginTop: 8, marginBottom: 12 }}>
                         {question.questionText}
                       </div>
                     </div>
                     
-                    <Divider style={{ margin: '12px 0' }} />
-                    
-                    <div>
-                      <div style={{ marginBottom: 8, fontWeight: 'bold' }}>
-                        {t('exams.selectCorrectAnswer')}:
-                      </div>
-                      <Radio.Group
-                        value={selectedAnswers[question.questionNumber]}
-                        onChange={(e) => handleAnswerChange(question.questionNumber, e.target.value)}
-                      >
-                        <Space direction="vertical">
-                          {question.answers?.map((answer) => {
-                            const answerKey = answer.key || answer.letter;
-                            const isSelected = selectedAnswers[question.questionNumber] === answerKey;
-                            
-                            return (
-                              <Radio key={answerKey} value={answerKey}>
-                                <Space>
-                                  <Tag color={isSelected ? 'blue' : 'default'}>
-                                    {answerKey}
-                                  </Tag>
-                                  <span>{answer.text}</span>
-                                </Space>
-                              </Radio>
-                            );
-                          })}
-                        </Space>
-                      </Radio.Group>
-                    </div>
+                    {question.answers && question.answers.length > 0 && (
+                      <>
+                        <Divider style={{ margin: '12px 0' }} />
+                        
+                        <div>
+                          <Radio.Group
+                            value={selectedAnswers[question.questionNumber]}
+                            onChange={(e) => handleAnswerChange(question.questionNumber, e.target.value)}
+                            style={{ width: '100%' }}
+                          >
+                            <Space direction="vertical" style={{ width: '100%' }}>
+                              {question.answers.map((answer) => {
+                                const answerKey = answer.key || answer.letter;
+                                const isSelected = selectedAnswers[question.questionNumber] === answerKey;
+                                const isAICorrect = answer.isCorrect === true;
+                                
+                                return (
+                                  <Radio key={answerKey} value={answerKey}>
+                                    <Space>
+                                      <Tag color={isSelected ? 'blue' : (isAICorrect ? 'green' : 'default')}>
+                                        {answerKey}
+                                      </Tag>
+                                      <span>{answer.text}</span>
+                                      {isAICorrect && !isSelected && (
+                                        <Tag color="green" style={{ fontSize: 11 }}>
+                                          AI ✓
+                                        </Tag>
+                                      )}
+                                    </Space>
+                                  </Radio>
+                                );
+                              })}
+                            </Space>
+                          </Radio.Group>
+                        </div>
+                      </>
+                    )}
                   </Card>
                 ))}
               </Space>
