@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Modal, 
   Upload, 
@@ -21,24 +21,22 @@ import {
 import {
   InboxOutlined,
   FileOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import PropTypes from 'prop-types';
 import pdfExamService from '../../api/pdfExamService';
-import examService from '../../api/examService';
 
 const { Dragger } = Upload;
 const { Step } = Steps;
 const { Option } = Select;
 
-const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
+const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const [form] = Form.useForm();
   
   const [currentStep, setCurrentStep] = useState(0);
-  const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [creating, setCreating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -49,14 +47,11 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
   const handleFileChange = (info) => {
     const { file } = info;
     
-    // Since beforeUpload returns false, we handle the file immediately
     if (file.originFileObj) {
       setUploadedFile(file.originFileObj);
-      setUploading(false);
       message.success(t('exams.fileUploaded'));
     } else if (file instanceof File) {
       setUploadedFile(file);
-      setUploading(false);
       message.success(t('exams.fileUploaded'));
     }
   };
@@ -172,6 +167,7 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
             text: ans.text
           })),
           correctAnswer: answerKey,
+          explanation: q.explanation || '',
           level: q.level || 1,
           tags: q.tags || []
         };
@@ -587,6 +583,36 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
                         </div>
                       </>
                     )}
+
+                    {question.explanation && (
+                      <>
+                        <Divider style={{ margin: '12px 0' }} />
+                        <div style={{ 
+                          backgroundColor: '#e6f7ff', 
+                          padding: '12px', 
+                          borderRadius: '4px',
+                          borderLeft: '3px solid #1890ff'
+                        }}>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            marginBottom: 8, 
+                            color: '#1890ff',
+                            fontSize: '13px'
+                          }}>
+                            {t('questions.explanation')}:
+                          </div>
+                          <div style={{ 
+                            fontSize: '13px',
+                            color: '#595959',
+                            whiteSpace: 'pre-wrap',
+                            wordWrap: 'break-word',
+                            lineHeight: '1.6'
+                          }}>
+                            {question.explanation}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </Card>
                 ))}
               </Space>
@@ -621,6 +647,17 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
       )}
     </Modal>
   );
+};
+
+UploadPdfModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+  onSuccess: PropTypes.func,
+  subjects: PropTypes.arrayOf(PropTypes.shape({
+    _id: PropTypes.string,
+    id: PropTypes.string,
+    name: PropTypes.string
+  }))
 };
 
 export default UploadPdfModal;

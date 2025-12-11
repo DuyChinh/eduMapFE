@@ -120,7 +120,10 @@
     "copyImage": "Copy Image",
     "downloadSuccess": "Download successful!",
     "imageCopied": "Image copied to clipboard!",
-    "copyFailed": "Failed to copy. Please try downloading instead."
+    "copyFailed": "Failed to copy. Please try downloading instead.",
+    "more": "More",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out"
   },
   "qrScanner": {
     "title": "Scan QR Code",

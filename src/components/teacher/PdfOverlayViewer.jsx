@@ -1,13 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, Button, Space, Input, Tooltip, Tag, Checkbox, message, Empty } from 'antd';
+import { useState, useRef, useEffect } from 'react';
+import { Card, Button, Space, Input, Tooltip, Tag, message, Empty, Typography } from 'antd';
 import { 
   ZoomInOutlined, 
   ZoomOutOutlined, 
-  DeleteOutlined, 
   EditOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import PropTypes from 'prop-types';
+
+const { Paragraph } = Typography;
 
 const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
   const { t } = useTranslation();
@@ -315,12 +317,51 @@ const PdfOverlayViewer = ({ pageData, onQuestionUpdate }) => {
               <div style={{ marginTop: 4, fontSize: '12px', color: '#52c41a' }}>
                 ✓ {t('exams.correctAnswer')}: {selectedAnswers[q.questionNumber]}
               </div>
+              {q.explanation && (
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e8e8e8' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: 4, color: '#1890ff' }}>
+                    {t('questions.explanation')}:
+                  </div>
+                  <Paragraph 
+                    style={{ 
+                      fontSize: '12px', 
+                      margin: 0,
+                      color: '#595959',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                    ellipsis={{ rows: 2, expandable: true, symbol: t('common.more') }}
+                  >
+                    {q.explanation}
+                  </Paragraph>
+                </div>
+              )}
             </div>
           ))}
         </Space>
       </Card>
     </div>
   );
+};
+
+PdfOverlayViewer.propTypes = {
+  pageData: PropTypes.shape({
+    imageUrl: PropTypes.string,
+    pageNumber: PropTypes.number,
+    pageWidth: PropTypes.number,
+    pageHeight: PropTypes.number,
+    questions: PropTypes.arrayOf(PropTypes.shape({
+      questionNumber: PropTypes.number,
+      questionText: PropTypes.string,
+      type: PropTypes.string,
+      answers: PropTypes.array,
+      explanation: PropTypes.string,
+      correctAnswer: PropTypes.string,
+      x: PropTypes.number,
+      y: PropTypes.number,
+      width: PropTypes.number
+    }))
+  }),
+  onQuestionUpdate: PropTypes.func
 };
 
 export default PdfOverlayViewer;
