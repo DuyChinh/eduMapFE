@@ -25,6 +25,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
 import pdfExamService from '../../api/pdfExamService';
 
 const { Dragger } = Upload;
@@ -43,6 +44,59 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
   const [parsedData, setParsedData] = useState(null);
   const [allQuestions, setAllQuestions] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState({});
+
+  const mathJaxConfig = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true,
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    },
+  };
+
+  const renderMathContent = (content) => {
+    if (!content) return '';
+    
+    const contentStr = typeof content === 'string' ? content : String(content);
+    const lines = contentStr.split('\n');
+    
+    return (
+      <>
+        {lines.map((line, index) => {
+          if (!line.trim()) {
+            return <br key={index} />;
+          }
+          
+          const hasDollarSigns = line.includes('$');
+          
+          if (hasDollarSigns) {
+            return (
+              <span key={index} style={{ 
+                display: 'inline',
+                fontFamily: 'inherit'
+              }}>
+                <MathJax inline dynamic>{line}</MathJax>
+                {index < lines.length - 1 && <br />}
+              </span>
+            );
+          } else {
+            return (
+              <span key={index} style={{ 
+                display: 'inline',
+                fontFamily: 'inherit'
+              }}>
+                {line}
+                {index < lines.length - 1 && <br />}
+              </span>
+            );
+          }
+        })}
+      </>
+    );
+  };
 
   const handleFileChange = (info) => {
     const { file } = info;
@@ -253,11 +307,12 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
       footer={null}
       destroyOnHidden
     >
-      <Steps current={currentStep} style={{ marginBottom: 24 }}>
-        <Step title={t('exams.uploadFile')} icon={<FileOutlined />} />
-        <Step title={t('exams.reviewQuestions')} icon={<CheckCircleOutlined />} />
-        <Step title={t('exams.complete')} icon={<CheckCircleOutlined />} />
-      </Steps>
+      <MathJaxContext config={mathJaxConfig}>
+        <Steps current={currentStep} style={{ marginBottom: 24 }}>
+          <Step title={t('exams.uploadFile')} icon={<FileOutlined />} />
+          <Step title={t('exams.reviewQuestions')} icon={<CheckCircleOutlined />} />
+          <Step title={t('exams.complete')} icon={<CheckCircleOutlined />} />
+        </Steps>
 
       {/* Step 1: Upload PDF */}
       {currentStep === 0 && (
@@ -542,7 +597,7 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
                         )}
                       </div>
                       <div style={{ marginTop: 8, marginBottom: 12 }}>
-                        {question.questionText}
+                        {renderMathContent(question.questionText)}
                       </div>
                     </div>
                     
@@ -554,31 +609,52 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
                           <Radio.Group
                             value={selectedAnswers[question.questionNumber]}
                             onChange={(e) => handleAnswerChange(question.questionNumber, e.target.value)}
-                            style={{ width: '100%' }}
+                            style={{ width: '100%', display: 'flex', flexDirection: 'column' }}
                           >
-                            <Space direction="vertical" style={{ width: '100%' }}>
-                              {question.answers.map((answer) => {
+                            {question.answers.map((answer) => {
                                 const answerKey = answer.key || answer.letter;
                                 const isSelected = selectedAnswers[question.questionNumber] === answerKey;
                                 const isAICorrect = answer.isCorrect === true;
                                 
                                 return (
-                                  <Radio key={answerKey} value={answerKey}>
-                                    <Space>
-                                      <Tag color={isSelected ? 'blue' : (isAICorrect ? 'green' : 'default')}>
+                                  <Radio 
+                                    key={answerKey} 
+                                    value={answerKey}
+                                    style={{ 
+                                      width: '100%',
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                      marginBottom: 8
+                                    }}
+                                  >
+                                    <div style={{ 
+                                      display: 'flex', 
+                                      alignItems: 'flex-start',
+                                      width: '100%',
+                                      gap: '8px'
+                                    }}>
+                                      <Tag 
+                                        color={isSelected ? 'blue' : (isAICorrect ? 'green' : 'default')}
+                                        style={{ marginTop: 2 }}
+                                      >
                                         {answerKey}
                                       </Tag>
-                                      <span>{answer.text}</span>
+                                      <div style={{ 
+                                        flex: 1,
+                                        wordWrap: 'break-word',
+                                        overflowWrap: 'break-word'
+                                      }}>
+                                        {renderMathContent(answer.text)}
+                                      </div>
                                       {isAICorrect && !isSelected && (
-                                        <Tag color="green" style={{ fontSize: 11 }}>
+                                        <Tag color="green" style={{ fontSize: 11, marginTop: 2 }}>
                                           AI ✓
                                         </Tag>
                                       )}
-                                    </Space>
+                                    </div>
                                   </Radio>
                                 );
                               })}
-                            </Space>
                           </Radio.Group>
                         </div>
                       </>
@@ -604,11 +680,9 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
                           <div style={{ 
                             fontSize: '13px',
                             color: '#595959',
-                            whiteSpace: 'pre-wrap',
-                            wordWrap: 'break-word',
                             lineHeight: '1.6'
                           }}>
-                            {question.explanation}
+                            {renderMathContent(question.explanation)}
                           </div>
                         </div>
                       </>
@@ -645,6 +719,7 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
           <Progress percent={100} status="success" style={{ marginTop: 24 }} />
         </div>
       )}
+      </MathJaxContext>
     </Modal>
   );
 };
