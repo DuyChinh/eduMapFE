@@ -44,9 +44,11 @@ import TakeExam from '../pages/student/TakeExam';
 import MindmapList from '../pages/mindmap/MindmapList';
 import MindmapEditor from '../pages/mindmap/MindmapEditor';
 import MindmapTrash from '../pages/mindmap/MindmapTrash';
+import MindmapShared from '../pages/mindmap/MindmapShared';
 
 // Public Pages
 import PublicTakeExam from '../pages/public/PublicTakeExam';
+import PublicMindmapView from '../pages/public/PublicMindmapView';
 import Profile from '../pages/Profile';
 
 // Components
@@ -116,9 +118,19 @@ const router = createBrowserRouter(
         <Route path="exams/:examId/monitor" element={<Monitor />} />
         <Route path="classes/:classId/reports" element={<Reports />} />
         <Route path="mindmaps" element={<MindmapList />} />
+        <Route path="mindmaps/shared" element={<MindmapShared />} />
         <Route path="mindmaps/trash" element={<MindmapTrash />} />
-        <Route path="mindmaps/:id" element={<MindmapEditor />} />
       </Route>
+
+      {/* Teacher Mindmap Editor - Full Screen (outside layout) */}
+      <Route
+        path="/teacher/mindmaps/:id"
+        element={
+          <ProtectedRoute allowedRoles={[USER_ROLES.TEACHER]}>
+            <MindmapEditor />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Student Routes */}
       <Route
@@ -137,10 +149,19 @@ const router = createBrowserRouter(
         <Route path="results/:submissionId" element={<ExamResultDetail />} />
         {/* <Route path="exam-results" element={<ExamResults />} /> */}
         <Route path="mindmaps" element={<MindmapList />} />
-        <Route path="mindmaps" element={<MindmapList />} />
+        <Route path="mindmaps/shared" element={<MindmapShared />} />
         <Route path="mindmaps/trash" element={<MindmapTrash />} />
-        <Route path="mindmaps/:id" element={<MindmapEditor />} />
       </Route>
+
+      {/* Student Mindmap Editor - Full Screen (outside layout) */}
+      <Route
+        path="/student/mindmaps/:id"
+        element={
+          <ProtectedRoute allowedRoles={[USER_ROLES.STUDENT]}>
+            <MindmapEditor />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Exam-related routes without StudentLayout */}
       <Route
@@ -170,6 +191,7 @@ const router = createBrowserRouter(
 
       {/* Public Routes */}
       <Route path="/exam/:shareCode" element={<PublicTakeExam />} />
+      <Route path="/mindmap/public/:shareLink" element={<PublicMindmapView />} />
 
       {/* 404 - Not Found */}
       <Route path="*" element={<Navigate to="/" replace />} />

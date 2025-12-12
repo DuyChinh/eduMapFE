@@ -672,8 +672,14 @@ const ChatWidget = () => {
         return null;
     };
 
+    // Check if we're on mindmap editor page to move chat to left side
+    const isMindmapEditor = location.pathname.includes('/mindmaps/') && 
+        !location.pathname.endsWith('/mindmaps') && 
+        !location.pathname.includes('/shared') && 
+        !location.pathname.includes('/trash');
+
     return (
-        <div className="chat-widget-container">
+        <div className={`chat-widget-container ${isMindmapEditor ? 'chat-position-left' : ''}`}>
             {!isOpen && (
                 <button className="chat-toggle-btn" onClick={toggleChat}>
                     <img src="/chatbot.gif" alt="Chatbot" style={{ width: 70, height: 70, objectFit: 'contain' }} />
