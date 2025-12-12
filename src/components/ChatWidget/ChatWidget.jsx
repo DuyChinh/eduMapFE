@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoImage, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoStopCircleOutline, IoArrowUp, IoAddOutline, IoMic, IoMicOutline, IoLanguage } from 'react-icons/io5';
+import { useTranslation } from 'react-i18next';
+import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoImage, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoStopCircleOutline, IoArrowUp, IoAddOutline, IoMic, IoMicOutline, IoLanguage, IoSearch } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
 import { FiEdit } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
@@ -11,19 +12,9 @@ import './ChatWidget.css';
 
 const ChatWidget = () => {
     const location = useLocation();
+    const { t } = useTranslation();
     
-    // Hide chatbot on exam pages (both student and public routes)
-    const isExamPage = 
-        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
-        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
-        location.pathname.includes('/exam-error'); // Exam error page
-    
-    // If on exam page, don't render chatbot
-    if (isExamPage) {
-        return null;
-    }
-
-    // Speech Recognition Hook
+    // Speech Recognition Hook - MUST be called before any early returns
     const {
         transcript,
         listening,
@@ -31,14 +22,15 @@ const ChatWidget = () => {
         browserSupportsSpeechRecognition,
         isMicrophoneAvailable
     } = useSpeechRecognition();
-
+    
+    // All hooks must be called before any early returns to maintain hook order
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "Hi! I am your AI assistant. How can I help you today?",
+            text: t('chat.hello'),
             sender: 'bot'
         }
     ]);
@@ -48,7 +40,6 @@ const ChatWidget = () => {
     const [sessionsLoading, setSessionsLoading] = useState(false);
     const [currentSessionId, setCurrentSessionId] = useState(null);
     const [activeMenuSessionId, setActiveMenuSessionId] = useState(null);
-    const [isRenamingSessionId, setIsRenamingSessionId] = useState(null);
     const [renameTitle, setRenameTitle] = useState('');
     const [copiedMessageId, setCopiedMessageId] = useState(null);
     const [editingMessageId, setEditingMessageId] = useState(null);
@@ -58,6 +49,19 @@ const ChatWidget = () => {
     const [voiceLang, setVoiceLang] = useState('vi-VN'); // Vietnamese as default
     const [showLangMenu, setShowLangMenu] = useState(false);
     const [loadingSessionId, setLoadingSessionId] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [sessionToDelete, setSessionToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [renameModalOpen, setRenameModalOpen] = useState(false);
+    const [sessionToRename, setSessionToRename] = useState(null);
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [hoveredSessionTitle, setHoveredSessionTitle] = useState(null);
+    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const messagesEndRef = useRef(null);
     const menuRef = useRef(null);
@@ -65,19 +69,41 @@ const ChatWidget = () => {
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
     const langMenuRef = useRef(null);
+    
+    // Define fetchSessions before useEffect that uses it
+    const fetchSessions = useCallback(async () => {
+        setSessionsLoading(true);
+        try {
+            const response = await chatApi.getSessions();
+            setSessions(response.data);
+        } catch (error) {
+            console.error('Failed to fetch sessions:', error);
+        } finally {
+            setSessionsLoading(false);
+        }
+    }, []);
 
-    const supportedLanguages = [
-        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
-        { code: 'en-US', name: 'English', flag: '🇺🇸' },
-        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
-        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
-        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
-    ];
+    const performSearch = useCallback(async (query) => {
+        if (!query || query.trim() === '') {
+            setSearchResults([]);
+            setShowSearchResults(false);
+            return;
+        }
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+        setIsSearching(true);
+        setShowSearchResults(true);
+        try {
+            const response = await chatApi.searchSessions(query);
+            setSearchResults(response.data || []);
+        } catch (error) {
+            console.error('Failed to search sessions:', error);
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    }, []);
 
+    // All useEffect hooks must be called before early return
     // Update input text when transcript changes
     useEffect(() => {
         if (transcript) {
@@ -86,7 +112,7 @@ const ChatWidget = () => {
     }, [transcript]);
 
     useEffect(() => {
-        scrollToBottom();
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
     useEffect(() => {
@@ -100,7 +126,7 @@ const ChatWidget = () => {
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen, isExpanded]);
+    }, [isOpen, isExpanded, fetchSessions]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -121,15 +147,68 @@ const ChatWidget = () => {
         };
     }, []);
 
-    const fetchSessions = async () => {
-        setSessionsLoading(true);
-        try {
-            const response = await chatApi.getSessions();
-            setSessions(response.data);
-        } catch (error) {
-            console.error('Failed to fetch sessions:', error);
-        } finally {
-            setSessionsLoading(false);
+    // Debounce search
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            performSearch(searchQuery);
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery, performSearch]);
+    
+    // Hide chatbot on exam pages (both student and public routes)
+    const isExamPage = 
+        (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
+        location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
+        location.pathname.includes('/exam-error'); // Exam error page
+    
+    // If on exam page, don't render chatbot (after all hooks are called)
+    if (isExamPage) {
+        return null;
+    }
+
+    const supportedLanguages = [
+        { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
+        { code: 'en-US', name: 'English', flag: '🇺🇸' },
+        { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
+        { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
+        { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
+    ];
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const handleSearchResultClick = async (sessionId) => {
+        setShowSearchResults(false);
+        setSearchQuery('');
+        await handleSessionClick(sessionId);
+    };
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+            return t('chat.today');
+        } else if (diffDays === 2) {
+            return t('chat.yesterday');
+        } else if (diffDays <= 7) {
+            return `${diffDays - 1} ${t('chat.daysAgo')}`;
+        } else {
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            // For Vietnamese, keep "thg" format, for others use different format
+            const lang = localStorage.getItem('language') || 'en';
+            if (lang === 'vi') {
+                return `${day} thg ${month}`;
+            } else if (lang === 'jp') {
+                return `${month}月${day}日`;
+            } else {
+                return `${month}/${day}`;
+            }
         }
     };
 
@@ -137,7 +216,7 @@ const ChatWidget = () => {
         setCurrentSessionId(null);
         setMessages([{
             id: Date.now(),
-            text: "Hi! I am your AI assistant. How can I help you today?",
+            text: t('chat.hello'),
             sender: 'bot'
         }]);
         if (window.innerWidth < 768) {
@@ -146,7 +225,6 @@ const ChatWidget = () => {
     };
 
     const handleSessionClick = async (sessionId) => {
-        if (isRenamingSessionId === sessionId) return;
         setCurrentSessionId(sessionId);
         setLoadingSessionId(sessionId);
         try {
@@ -155,9 +233,19 @@ const ChatWidget = () => {
                 id: msg._id,
                 text: msg.message,
                 sender: msg.sender,
-                attachments: msg.attachments || []
+                attachments: msg.attachments || [],
+                isPending: msg.status === 'pending',
+                isError: msg.isError || msg.status === 'error'
             }));
             setMessages(history);
+            
+            const pendingMessages = history.filter(msg => msg.isPending && msg.sender === 'bot');
+            if (pendingMessages.length > 0) {
+                pendingMessages.forEach(msg => {
+                    pollMessageStatus(msg.id, msg.id);
+                });
+            }
+            
             if (window.innerWidth < 768) {
                 setShowSidebar(false);
             }
@@ -175,44 +263,66 @@ const ChatWidget = () => {
 
     const handleRenameClick = (e, session) => {
         e.stopPropagation();
-        setIsRenamingSessionId(session._id);
-        setRenameTitle(session.title || 'New Chat');
+        setSessionToRename(session._id);
+        setRenameTitle(session.title || t('chat.newChat'));
+        setRenameModalOpen(true);
         setActiveMenuSessionId(null);
     };
 
-    const handleRenameSubmit = async (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            try {
-                await chatApi.renameSession(isRenamingSessionId, renameTitle);
-                setSessions(prev => prev.map(s =>
-                    s._id === isRenamingSessionId ? { ...s, title: renameTitle } : s
-                ));
-                setIsRenamingSessionId(null);
-            } catch (error) {
-                console.error('Failed to rename session:', error);
-            }
+    const handleRenameConfirm = async () => {
+        if (!sessionToRename || !renameTitle.trim()) return;
+        
+        setIsRenaming(true);
+        try {
+            await chatApi.renameSession(sessionToRename, renameTitle.trim());
+            setSessions(prev => prev.map(s =>
+                s._id === sessionToRename ? { ...s, title: renameTitle.trim() } : s
+            ));
+            setRenameModalOpen(false);
+            setSessionToRename(null);
+            setRenameTitle('');
+        } catch (error) {
+            console.error('Failed to rename session:', error);
+        } finally {
+            setIsRenaming(false);
         }
     };
 
-    const handleRenameBlur = () => {
-        setIsRenamingSessionId(null);
+    const handleRenameCancel = () => {
+        setRenameModalOpen(false);
+        setSessionToRename(null);
+        setRenameTitle('');
     };
 
-    const handleDeleteSession = async (e, sessionId) => {
+    const handleDeleteClick = (e, sessionId) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this chat?')) {
-            try {
-                await chatApi.deleteSession(sessionId);
-                setSessions(prev => prev.filter(s => s._id !== sessionId));
-                if (currentSessionId === sessionId) {
-                    handleNewChat();
-                }
-                setActiveMenuSessionId(null);
-            } catch (error) {
-                console.error('Failed to delete session:', error);
+        setSessionToDelete(sessionId);
+        setDeleteModalOpen(true);
+        setActiveMenuSessionId(null);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!sessionToDelete) return;
+        
+        setIsDeleting(true);
+        try {
+            await chatApi.deleteSession(sessionToDelete);
+            setSessions(prev => prev.filter(s => s._id !== sessionToDelete));
+            if (currentSessionId === sessionToDelete) {
+                handleNewChat();
             }
+            setDeleteModalOpen(false);
+            setSessionToDelete(null);
+        } catch (error) {
+            console.error('Failed to delete session:', error);
+        } finally {
+            setIsDeleting(false);
         }
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteModalOpen(false);
+        setSessionToDelete(null);
     };
 
     const toggleChat = () => {
@@ -259,6 +369,57 @@ const ChatWidget = () => {
         setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const pollMessageStatus = useCallback(async (messageId, botMessageTempId) => {
+        console.log('🔍 [ChatWidget] Starting poll for messageId:', messageId);
+        const maxAttempts = 60;
+        let attempts = 0;
+
+        const pollInterval = setInterval(async () => {
+            attempts++;
+            console.log(`🔍 [ChatWidget] Poll attempt ${attempts}/${maxAttempts}`);
+
+            try {
+                const statusResponse = await chatApi.checkMessageStatus(messageId);
+                const { status, message: updatedMessage } = statusResponse.data;
+                console.log(`🔍 [ChatWidget] Status:`, status);
+
+                if (status === 'completed') {
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: updatedMessage, isPending: false }
+                            : msg
+                    ));
+                    clearInterval(pollInterval);
+                    setIsLoading(false);
+                } else if (status === 'error') {
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: updatedMessage || t('chat.error'), isError: true, isPending: false }
+                            : msg
+                    ));
+                    clearInterval(pollInterval);
+                    setIsLoading(false);
+                }
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: t('chat.timeout'), isError: true, isPending: false }
+                            : msg
+                    ));
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.error('Failed to check message status:', error);
+                clearInterval(pollInterval);
+                setIsLoading(false);
+            }
+        }, 2000);
+
+        return () => clearInterval(pollInterval);
+    }, [t]);
+
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if ((!inputText.trim() && selectedFiles.length === 0) || isLoading) return;
@@ -281,40 +442,56 @@ const ChatWidget = () => {
         setSelectedFiles([]);
         setIsLoading(true);
 
-        // Create abort controller for this request
         const controller = new AbortController();
         setAbortController(controller);
 
         try {
             const response = await chatApi.sendMessage(inputText, currentSessionId, filesToSend, controller.signal);
+            
+            const responseData = response.data.data || response.data;
+            
+            console.log('🔍 [ChatWidget] Backend response:', {
+                status: responseData.status,
+                messageId: responseData.messageId,
+                hasResponse: !!responseData.response
+            });
 
-            if (response.data.sessionId && response.data.sessionId !== currentSessionId) {
-                setCurrentSessionId(response.data.sessionId);
+            if (responseData.sessionId && responseData.sessionId !== currentSessionId) {
+                setCurrentSessionId(responseData.sessionId);
                 if (isExpanded) fetchSessions();
             }
 
+            const botMessageTempId = Date.now() + 1;
             const botMessage = {
-                id: Date.now() + 1,
-                text: response.data.response,
-                sender: 'bot'
+                id: botMessageTempId,
+                text: responseData.response,
+                sender: 'bot',
+                isPending: responseData.status === 'pending'
             };
             setMessages(prev => [...prev, botMessage]);
+
+            if (responseData.status === 'pending' && responseData.messageId) {
+                console.log('🔍 [ChatWidget] Starting polling for pending message');
+                pollMessageStatus(responseData.messageId, botMessageTempId);
+            } else {
+                console.log('🔍 [ChatWidget] Message completed immediately');
+                setIsLoading(false);
+            }
         } catch (error) {
             if (error.name === 'CanceledError' || error.message === 'canceled') {
                 console.log('Request was cancelled by user');
-                // Don't show error message for user-cancelled requests
             } else {
                 console.error('Failed to send message:', error);
                 const errorMessage = {
                     id: Date.now() + 1,
-                    text: 'Sorry, I encountered an error. Please try again later.',
+                    text: t('chat.error'),
                     sender: 'bot',
                     isError: true
                 };
                 setMessages(prev => [...prev, errorMessage]);
             }
-        } finally {
             setIsLoading(false);
+        } finally {
             setAbortController(null);
         }
     };
@@ -366,8 +543,6 @@ const ChatWidget = () => {
             }
         }
     };
-
-    const [selectedImage, setSelectedImage] = useState(null);
 
     const handleImageClick = (src) => {
         setSelectedImage(src);
@@ -468,7 +643,7 @@ const ChatWidget = () => {
             console.error('Failed to edit message:', error);
             const errorMessage = {
                 id: Date.now() + 1,
-                text: 'Sorry, I encountered an error while editing. Please try again.',
+                text: t('chat.editError'),
                 sender: 'bot',
                 isError: true
             };
@@ -523,7 +698,99 @@ const ChatWidget = () => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="session-list">
+                            {showSearchResults ? (
+                                <div className="search-results-container">
+                                    <div className="search-header">
+                                        <h3 className="search-title">{t('chat.search')}</h3>
+                                        <div className="search-bar-container">
+                                            <IoSearch className="search-icon" />
+                                            <input
+                                                type="text"
+                                                className="search-input"
+                                                placeholder={t('chat.searchPlaceholder')}
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                autoFocus
+                                            />
+                                            {searchQuery && (
+                                                <button
+                                                    className="search-clear-btn"
+                                                    onClick={() => {
+                                                        setSearchQuery('');
+                                                        setSearchResults([]);
+                                                        setShowSearchResults(false);
+                                                    }}
+                                                >
+                                                    <IoClose size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        {searchQuery && (
+                                            <div className="search-results-count">
+                                                {isSearching ? (
+                                                    <div className="spinner-small"></div>
+                                                ) : (
+                                                    `${searchResults.length} ${t('chat.searchResults')} "${searchQuery}"`
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="search-results-list">
+                                        {isSearching && searchResults.length === 0 ? (
+                                            <div className="search-loading">
+                                                <div className="spinner-small"></div>
+                                            </div>
+                                        ) : searchResults.length === 0 && searchQuery ? (
+                                            <div className="search-empty">
+                                                {t('chat.noResults')}
+                                            </div>
+                                        ) : (
+                                            searchResults.map(result => (
+                                                <div
+                                                    key={result._id}
+                                                    className="search-result-item"
+                                                    onClick={() => handleSearchResultClick(result._id)}
+                                                >
+                                                    <div className="search-result-title">{result.title || t('chat.newChat')}</div>
+                                                    <div className="search-result-preview">{result.preview || result.lastMessage || ''}</div>
+                                                    <div className="search-result-date">{formatDate(result.updatedAt)}</div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="search-bar-wrapper">
+                                        <div className="search-bar-container">
+                                            <IoSearch className="search-icon" />
+                                            <input
+                                                type="text"
+                                                className="search-input"
+                                                placeholder={t('chat.searchPlaceholder')}
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                onFocus={() => {
+                                                    if (searchQuery) {
+                                                        setShowSearchResults(true);
+                                                    }
+                                                }}
+                                            />
+                                            {searchQuery && (
+                                                <button
+                                                    className="search-clear-btn"
+                                                    onClick={() => {
+                                                        setSearchQuery('');
+                                                        setSearchResults([]);
+                                                        setShowSearchResults(false);
+                                                    }}
+                                                >
+                                                    <IoClose size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="session-list">
                                 {sessionsLoading && sessions.length === 0 && (
                                     <div className="session-loading-spinner">
                                         <div className="spinner"></div>
@@ -532,7 +799,7 @@ const ChatWidget = () => {
 
                                 {!sessionsLoading && sessions.length === 0 && (
                                     <div className="session-empty-text">
-                                        No conversations yet
+                                        {t('chat.noConversations')}
                                     </div>
                                 )}
 
@@ -544,23 +811,46 @@ const ChatWidget = () => {
                                     >
                                         {loadingSessionId === session._id ? (
                                             <div className="session-item-loading">
-                                                <span className="session-title">{session.title || 'New Chat'}</span>
+                                                <span className="session-title">{session.title || t('chat.newChat')}</span>
                                                 <div className="spinner-small"></div>
                                             </div>
-                                        ) : isRenamingSessionId === session._id ? (
-                                            <input
-                                                ref={renameInputRef}
-                                                type="text"
-                                                className="rename-input"
-                                                value={renameTitle}
-                                                onChange={(e) => setRenameTitle(e.target.value)}
-                                                onKeyDown={handleRenameSubmit}
-                                                onBlur={handleRenameBlur}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
                                         ) : (
                                             <>
-                                                <span className="session-title">{session.title || 'New Chat'}</span>
+                                                <span 
+                                                    className="session-title"
+                                                    onMouseEnter={(e) => {
+                                                        const title = session.title || t('chat.newChat');
+                                                        const span = e.currentTarget;
+                                                        // Check if text is actually truncated by comparing scrollWidth and clientWidth
+                                                        const isOverflowing = span.scrollWidth > span.clientWidth;
+                                                        
+                                                        // Show tooltip if title is truncated
+                                                        if (title && isOverflowing) {
+                                                            const rect = span.getBoundingClientRect();
+                                                            setHoveredSessionTitle(title);
+                                                            setTooltipPosition({
+                                                                x: rect.right + 8,
+                                                                y: rect.top + rect.height / 2
+                                                            });
+                                                        }
+                                                    }}
+                                                    onMouseMove={(e) => {
+                                                        // Update position on mouse move to keep tooltip aligned
+                                                        if (hoveredSessionTitle) {
+                                                            const span = e.currentTarget;
+                                                            const rect = span.getBoundingClientRect();
+                                                            setTooltipPosition({
+                                                                x: rect.right + 8,
+                                                                y: rect.top + rect.height / 2
+                                                            });
+                                                        }
+                                                    }}
+                                                    onMouseLeave={() => {
+                                                        setHoveredSessionTitle(null);
+                                                    }}
+                                                >
+                                                    {session.title || t('chat.newChat')}
+                                                </span>
                                                 <button
                                                     className={`session-menu-btn ${activeMenuSessionId === session._id ? 'active' : ''}`}
                                                     onClick={(e) => handleMenuClick(e, session._id)}
@@ -570,10 +860,10 @@ const ChatWidget = () => {
                                                 {activeMenuSessionId === session._id && (
                                                     <div className="session-menu-dropdown" ref={menuRef}>
                                                         <div className="menu-item" onClick={(e) => handleRenameClick(e, session)}>
-                                                            <IoPencil size={14} /> Rename
+                                                            <IoPencil size={14} /> {t('chat.rename')}
                                                         </div>
-                                                        <div className="menu-item delete" onClick={(e) => handleDeleteSession(e, session._id)}>
-                                                            <IoTrashOutline size={14} /> Delete
+                                                        <div className="menu-item delete" onClick={(e) => handleDeleteClick(e, session._id)}>
+                                                            <IoTrashOutline size={14} /> {t('chat.delete')}
                                                         </div>
                                                     </div>
                                                 )}
@@ -587,7 +877,9 @@ const ChatWidget = () => {
                                         <div className="spinner-small"></div>
                                     </div>
                                 )}
-                            </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -620,7 +912,7 @@ const ChatWidget = () => {
                             {messages.length === 1 && messages[0].sender === 'bot' && (
                                 <div className={`welcome-screen ${isExpanded ? 'expanded' : 'compact'}`}>
                                     <img src="/chatbothello.gif" alt="AI Assistant" className="welcome-icon" />
-                                    <h1 className="welcome-title">Hello! How can I help you today?</h1>
+                                    <h1 className="welcome-title">{t('chat.welcomeTitle')}</h1>
                                     <div className="suggestion-chips">
                                         {isExpanded ? (
                                             <>
@@ -629,21 +921,21 @@ const ChatWidget = () => {
                                                     onClick={() => setInputText("Help me understand a concept")}
                                                 >
                                                     <span className="chip-icon">💡</span>
-                                                    <span>Explain a concept</span>
+                                                    <span>{t('chat.explainConcept')}</span>
                                                 </button>
                                                 <button 
                                                     className="suggestion-chip"
                                                     onClick={() => setInputText("Help me solve this problem:")}
                                                 >
                                                     <span className="chip-icon">🎯</span>
-                                                    <span>Solve a problem</span>
+                                                    <span>{t('chat.solveProblem')}</span>
                                                 </button>
                                                 <button 
                                                     className="suggestion-chip"
                                                     onClick={() => setInputText("Give me ideas for")}
                                                 >
                                                     <span className="chip-icon">🚀</span>
-                                                    <span>Brainstorm ideas</span>
+                                                    <span>{t('chat.brainstormIdeas')}</span>
                                                 </button>
                                             </>
                                         ) : (
@@ -652,7 +944,7 @@ const ChatWidget = () => {
                                                 onClick={() => setInputText("Help me solve this problem:")}
                                             >
                                                 <span className="chip-icon">🎯</span>
-                                                <span>Solve a problem</span>
+                                                <span>{t('chat.solveProblem')}</span>
                                             </button>
                                         )}
                                     </div>
@@ -686,21 +978,29 @@ const ChatWidget = () => {
                                                             className="edit-cancel-btn"
                                                             onClick={handleCancelEdit}
                                                         >
-                                                            Cancel
+                                                            {t('chat.cancel')}
                                                         </button>
                                                         <button
                                                             className="edit-submit-btn"
                                                             onClick={() => handleSubmitEdit(msg.id)}
                                                             disabled={!editText.trim()}
                                                         >
-                                                            Update
+                                                            {t('chat.update')}
                                                         </button>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <div className="message-text">
                                                     {msg.sender === 'bot' ? (
-                                                        <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                        <>
+                                                            <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                            {msg.isPending && (
+                                                                <div className="pending-indicator" style={{ marginTop: '8px', fontSize: '0.85em', color: '#888', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    <div className="spinner-small"></div>
+                                                                    <span>{t('chat.processing') || 'Đang xử lý...'}</span>
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     ) : (
                                                         msg.text
                                                     )}
@@ -712,7 +1012,7 @@ const ChatWidget = () => {
                                         <button
                                             className="copy-message-btn"
                                             onClick={() => handleCopyMessage(msg.text, msg.id)}
-                                            title="Copy message"
+                                            title={t('chat.copy')}
                                         >
                                             {copiedMessageId === msg.id ? (
                                                 <IoCheckmark size={14} />
@@ -726,7 +1026,7 @@ const ChatWidget = () => {
                                             <button
                                                 className="user-message-action-btn"
                                                 onClick={() => handleCopyMessage(msg.text, msg.id)}
-                                                title="Copy message"
+                                                title={t('chat.copy')}
                                             >
                                                 {copiedMessageId === msg.id ? (
                                                     <IoCheckmark size={14} />
@@ -737,7 +1037,7 @@ const ChatWidget = () => {
                                             <button
                                                 className="user-message-action-btn"
                                                 onClick={() => handleEditMessage(msg.id, msg.text)}
-                                                title="Edit message"
+                                                title={t('chat.edit')}
                                             >
                                                 <IoPencil size={14} />
                                             </button>
@@ -783,7 +1083,7 @@ const ChatWidget = () => {
                                     <input
                                         type="text"
                                         className="chat-input"
-                                        placeholder="Ask something... (Paste image supported)"
+                                        placeholder={t('chat.askSomething')}
                                         value={inputText}
                                         onChange={(e) => setInputText(e.target.value)}
                                         onPaste={handlePaste}
@@ -878,6 +1178,84 @@ const ChatWidget = () => {
                             <IoClose size={24} />
                         </button>
                     </div>
+                </div>
+            )}
+
+            {deleteModalOpen && (
+                <div className="delete-modal-overlay" onClick={handleDeleteCancel}>
+                    <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="delete-modal-title">{t('chat.deleteTitle')}</h3>
+                        <p className="delete-modal-description">{t('chat.deleteDescription')}</p>
+                        <a href="#" className="delete-modal-learn-more" onClick={(e) => e.preventDefault()}>
+                            {t('chat.deleteLearnMore')}
+                        </a>
+                        <div className="delete-modal-actions">
+                            <button
+                                className="delete-modal-cancel-btn"
+                                onClick={handleDeleteCancel}
+                                disabled={isDeleting}
+                            >
+                                {t('chat.cancel')}
+                            </button>
+                            <button
+                                className="delete-modal-confirm-btn"
+                                onClick={handleDeleteConfirm}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? t('chat.deleting') : t('chat.delete')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {renameModalOpen && (
+                <div className="rename-modal-overlay" onClick={handleRenameCancel}>
+                    <div className="rename-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="rename-modal-title">{t('chat.renameTitle')}</h3>
+                        <input
+                            ref={renameInputRef}
+                            type="text"
+                            className="rename-modal-input"
+                            value={renameTitle}
+                            onChange={(e) => setRenameTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleRenameConfirm();
+                                }
+                            }}
+                            autoFocus
+                        />
+                        <div className="rename-modal-actions">
+                            <button
+                                className="rename-modal-cancel-btn"
+                                onClick={handleRenameCancel}
+                                disabled={isRenaming}
+                            >
+                                {t('chat.cancel')}
+                            </button>
+                            <button
+                                className="rename-modal-confirm-btn"
+                                onClick={handleRenameConfirm}
+                                disabled={isRenaming || !renameTitle.trim()}
+                            >
+                                {t('chat.rename')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {hoveredSessionTitle && (
+                <div 
+                    className="session-title-tooltip"
+                    style={{
+                        left: `${tooltipPosition.x}px`,
+                        top: `${tooltipPosition.y}px`
+                    }}
+                >
+                    {hoveredSessionTitle}
                 </div>
             )}
         </div>

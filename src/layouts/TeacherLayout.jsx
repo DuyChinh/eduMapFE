@@ -13,7 +13,7 @@ import {
   SwapOutlined,
   TeamOutlined,
   UserOutlined,
-  ShareAltOutlined,
+  ScanOutlined,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
@@ -22,6 +22,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
+import QRScanner from '../components/common/QRScanner';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -31,6 +32,7 @@ const TeacherLayout = () => {
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
+  const [qrScannerVisible, setQrScannerVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
@@ -48,11 +50,12 @@ const TeacherLayout = () => {
       try {
         await fetchProfile();
       } catch (error) {
-
+        // silent
       }
     };
     refreshProfile();
-  }, [fetchProfile, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const handleLogout = () => {
     logout();
@@ -115,17 +118,8 @@ const TeacherLayout = () => {
     const pathname = location.pathname;
 
     // Check if current path starts with any of the main routes
-    if (pathname.startsWith('/teacher/questions')) {
-      return ROUTES.TEACHER_QUESTIONS;
-    }
-    if (pathname.startsWith('/teacher/exams')) {
-      return ROUTES.TEACHER_EXAMS;
-    }
-    if (pathname.startsWith('/teacher/classes')) {
-      return ROUTES.TEACHER_CLASSES;
-    }
-    if (pathname.startsWith('/teacher/dashboard')) {
-      return ROUTES.TEACHER_DASHBOARD;
+    if (pathname.startsWith('/teacher/mindmaps')) {
+      return 'mindmaps';
     }
     if (pathname.startsWith('/teacher/mindmaps')) {
       return 'mindmaps';
@@ -143,8 +137,8 @@ const TeacherLayout = () => {
     user?.role === USER_ROLES.TEACHER
       ? t('role.teacher')
       : user?.role === USER_ROLES.STUDENT
-      ? t('role.student')
-      : '';
+        ? t('role.student')
+        : '';
 
   const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
 
@@ -175,7 +169,7 @@ const TeacherLayout = () => {
     },
     {
       key: 'mindmaps',
-      icon: <ShareAltOutlined />,
+      icon: <img src="/mind_map.png" alt="Mindmaps" className="menu-icon-image" />,
       label: 'Mindmaps',
       onClick: () => navigate('/teacher/mindmaps'),
     },
@@ -239,13 +233,12 @@ const TeacherLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
         <div className="sider-footer">
           {!collapsed && (
             <div className="user-info-compact">
               <Avatar
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
+                src={avatarSrc}
+                icon={!avatarSrc && <UserOutlined />}
               />
               <div className="user-details">
                 <div className="user-name">{user?.name}</div>
@@ -268,6 +261,14 @@ const TeacherLayout = () => {
           <Space size="large" className="header-actions">
             <Button
               type="text"
+              icon={<ScanOutlined />}
+              onClick={() => setQrScannerVisible(true)}
+              title={t('qrScanner.scanQR') || 'Scan QR Code'}
+              className="qr-scan-btn"
+            />
+
+            <Button
+              type="text"
               icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
@@ -287,10 +288,13 @@ const TeacherLayout = () => {
             >
               <div className="user-dropdown">
                 <Avatar
-                  src={user?.avatar}
-                  icon={!user?.avatar && <UserOutlined />}
+                  src={avatarSrc}
+                  icon={!avatarSrc && <UserOutlined />}
                 />
-                <span className="user-name-header">{user?.name}</span>
+                <div className="user-info-header">
+                  <span className="user-name-header">{user?.name}</span>
+                  <span className="user-role-header">{roleLabel}</span>
+                </div>
               </div>
             </Dropdown>
           </Space>
@@ -371,6 +375,13 @@ const TeacherLayout = () => {
           </Button>
         </Space>
       </Modal>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        open={qrScannerVisible}
+        onClose={() => setQrScannerVisible(false)}
+        userRole="teacher"
+      />
     </Layout>
   );
 };

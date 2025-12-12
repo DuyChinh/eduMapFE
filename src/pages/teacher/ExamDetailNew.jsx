@@ -9,6 +9,7 @@ import {
   FileTextOutlined,
   InfoCircleOutlined,
   LinkOutlined,
+  QrcodeOutlined,
   TeamOutlined,
   TrophyOutlined,
 } from "@ant-design/icons";
@@ -39,6 +40,7 @@ import examService from "../../api/examService";
 import examStatsService from "../../api/examStatsService.js";
 import { ROUTES } from "../../constants/config";
 import PreviewExamModal from "../../components/teacher/PreviewExamModal";
+import QRCodeModal from "../../components/common/QRCodeModal";
 
 const { Title, Text } = Typography;
 
@@ -91,6 +93,7 @@ const ExamDetailNew = () => {
   const [scoreDistributionLoading, setScoreDistributionLoading] =
     useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
   const [showAllAttempts, setShowAllAttempts] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchName, setSearchName] = useState("");
@@ -683,7 +686,11 @@ const ExamDetailNew = () => {
                         {
                           key: "totalMarks",
                           label: t("exams.totalMarks"),
-                          value: examData.totalMarks,
+                          value: examData.totalMarks != null 
+                            ? (Number.isInteger(examData.totalMarks) 
+                              ? examData.totalMarks 
+                              : examData.totalMarks.toFixed(1))
+                            : "-",
                         },
                         {
                           key: "maxAttempts",
@@ -729,6 +736,7 @@ const ExamDetailNew = () => {
                           render: (_, record) => {
                             if (record.isShareLink) {
                               return record.value ? (
+                                <Space>
                                 <Tooltip
                                   title={
                                     t("exams.clickToCopy") ||
@@ -750,6 +758,15 @@ const ExamDetailNew = () => {
                                     {record.value}
                                   </Tag>
                                 </Tooltip>
+                                  <Tooltip title={t('exams.showQRCode') || 'Show QR Code'}>
+                                    <Button
+                                      type="text"
+                                      icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+                                      onClick={() => setQrCodeModalVisible(true)}
+                                      size="small"
+                                    />
+                                  </Tooltip>
+                                </Space>
                               ) : (
                                 <Tag color="default">-</Tag>
                               );
@@ -813,6 +830,11 @@ const ExamDetailNew = () => {
                               dataIndex: "marks",
                               key: "marks",
                               width: 80,
+                              render: (marks) => {
+                                if (marks == null) return "-";
+                                // If it's an integer, show as is. Otherwise, round to 1 decimal place
+                                return Number.isInteger(marks) ? marks : marks.toFixed(1);
+                              },
                             },
                           ]}
                         />
@@ -1130,6 +1152,16 @@ const ExamDetailNew = () => {
         examData={examData}
         questions={examData?.questions || []}
         subjects={[]}
+      />
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={qrCodeModalVisible}
+        onCancel={() => setQrCodeModalVisible(false)}
+        value={examData?.shareCode ? `${window.location.origin}/exam/${examData.shareCode}` : ''}
+        title={t('exams.shareLinkQR') || 'Exam Share Link QR'}
+        description={t('exams.qrDescription') || 'Students can scan this QR code to access the exam'}
+        filename={examData?.name ? `qr_exam_${examData.name.replace(/[^a-zA-Z0-9]/g, '_')}` : 'qr_exam'}
       />
     </div>
   );

@@ -124,6 +124,160 @@
   padding: 0 8px;
 }
 
+/* Search Bar Styles */
+.search-bar-wrapper {
+  padding: 12px;
+  /* border-bottom: 1px solid #e5e7eb; */
+  min-width: 260px;
+}
+
+.search-bar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 24px;
+  padding: 8px 12px;
+  transition: background 0.2s;
+}
+
+.search-bar-container:focus-within {
+  background: #e5e7eb;
+}
+
+.search-icon {
+  color: #6b7280;
+  margin-right: 8px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #111827;
+  padding: 0;
+  margin-right: -8px;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+.search-clear-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.search-clear-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #374151;
+}
+
+/* Search Results Container */
+.search-results-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 260px;
+  overflow: hidden;
+}
+
+.search-header {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.search-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.search-results-count {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-results-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.search-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.search-empty {
+  padding: 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.search-result-item {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+}
+
+.search-result-item:hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.search-result-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-result-preview {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.search-result-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
 /* Loading state for session list */
 .session-loading-spinner {
   display: flex;
@@ -205,6 +359,7 @@ body.dark-mode .spinner-small {
   align-items: center;
   position: relative;
   color: #374151;
+  gap: 8px;
 }
 
 .session-item:hover {
@@ -220,9 +375,10 @@ body.dark-mode .spinner-small {
 .session-title {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
   flex: 1;
   min-width: 0;
-  margin-right: 8px;
+  position: relative;
 }
 
 .session-menu-btn {
@@ -1692,4 +1848,386 @@ body.dark-mode .message.error {
 
 body.dark-mode .attachment-image {
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Dark mode for search */
+body.dark-mode .search-bar-wrapper {
+  border-bottom-color: #434343;
+}
+
+body.dark-mode .search-bar-container {
+  background: #2a2a2a;
+}
+
+body.dark-mode .search-bar-container:focus-within {
+  background: #333333;
+}
+
+body.dark-mode .search-icon {
+  color: #9ca3af;
+}
+
+body.dark-mode .search-input {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .search-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .search-clear-btn {
+  color: #9ca3af;
+}
+
+body.dark-mode .search-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .search-results-container {
+  background: #1f1f1f;
+}
+
+body.dark-mode .search-header {
+  border-bottom-color: #434343;
+}
+
+body.dark-mode .search-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .search-results-count {
+  color: #9ca3af;
+}
+
+body.dark-mode .search-empty {
+  color: #9ca3af;
+}
+
+body.dark-mode .search-result-item {
+  border-color: transparent;
+}
+
+body.dark-mode .search-result-item:hover {
+  background: #262626;
+  border-color: #434343;
+}
+
+body.dark-mode .search-result-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .search-result-preview {
+  color: #9ca3af;
+}
+
+body.dark-mode .search-result-date {
+  color: #6b7280;
+}
+
+/* Delete Modal Styles */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.delete-modal-content {
+  background: #262626;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 448px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.delete-modal-title {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+.delete-modal-description {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.delete-modal-learn-more {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: #60a5fa;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.delete-modal-learn-more:hover {
+  color: #93c5fd;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.delete-modal-cancel-btn,
+.delete-modal-confirm-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  min-width: 80px;
+}
+
+.delete-modal-cancel-btn {
+  background: transparent;
+  color: #60a5fa;
+}
+
+.delete-modal-cancel-btn:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.1);
+  color: #93c5fd;
+}
+
+.delete-modal-confirm-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.delete-modal-confirm-btn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.delete-modal-cancel-btn:disabled,
+.delete-modal-confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Light mode override for delete modal */
+body:not(.dark-mode) .delete-modal-content {
+  background: white;
+}
+
+body:not(.dark-mode) .delete-modal-title {
+  color: #111827;
+}
+
+body:not(.dark-mode) .delete-modal-description {
+  color: #6b7280;
+}
+
+body:not(.dark-mode) .delete-modal-learn-more {
+  color: #2563eb;
+}
+
+body:not(.dark-mode) .delete-modal-learn-more:hover {
+  color: #1d4ed8;
+}
+
+body:not(.dark-mode) .delete-modal-cancel-btn {
+  color: #2563eb;
+}
+
+body:not(.dark-mode) .delete-modal-cancel-btn:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+body:not(.dark-mode) .delete-modal-confirm-btn {
+  background: #ef4444;
+  color: white;
+}
+
+body:not(.dark-mode) .delete-modal-confirm-btn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+/* Rename Modal Styles */
+.rename-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.rename-modal-content {
+  background: #262626;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 448px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.2s ease-out;
+}
+
+.rename-modal-title {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+.rename-modal-input {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  background: #1f1f1f;
+  border: 1px solid #60a5fa;
+  border-radius: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.rename-modal-input:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.rename-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.rename-modal-cancel-btn,
+.rename-modal-confirm-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  min-width: 80px;
+}
+
+.rename-modal-cancel-btn {
+  background: transparent;
+  color: #60a5fa;
+}
+
+.rename-modal-cancel-btn:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.1);
+  color: #93c5fd;
+}
+
+.rename-modal-confirm-btn {
+  background: #1f1f1f;
+  color: white;
+}
+
+.rename-modal-confirm-btn:hover:not(:disabled) {
+  background: #2a2a2a;
+}
+
+.rename-modal-cancel-btn:disabled,
+.rename-modal-confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Light mode override for rename modal */
+body:not(.dark-mode) .rename-modal-content {
+  background: white;
+}
+
+body:not(.dark-mode) .rename-modal-title {
+  color: #111827;
+}
+
+body:not(.dark-mode) .rename-modal-input {
+  background: white;
+  border-color: #2563eb;
+  color: #111827;
+}
+
+body:not(.dark-mode) .rename-modal-input:focus {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+body:not(.dark-mode) .rename-modal-cancel-btn {
+  color: #2563eb;
+}
+
+body:not(.dark-mode) .rename-modal-cancel-btn:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+body:not(.dark-mode) .rename-modal-confirm-btn {
+  background: #111827;
+  color: white;
+}
+
+body:not(.dark-mode) .rename-modal-confirm-btn:hover:not(:disabled) {
+  background: #1f2937;
+}
+
+/* Session Title Tooltip */
+.session-title-tooltip {
+  position: fixed;
+  background: #3b82f6;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 10000;
+  pointer-events: none;
+  transform: translateY(-50%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  max-width: 400px;
+  overflow: visible;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+body.dark-mode .session-title-tooltip {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
