@@ -1,21 +1,21 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  Typography, 
-  Tag, 
-  Space, 
-  Button, 
-  Spin, 
-  message, 
+import {
+  Card,
+  Typography,
+  Tag,
+  Space,
+  Button,
+  Spin,
+  message,
   Descriptions,
   Table,
   Avatar,
-  List
+  List,
+  Tabs
 } from 'antd';
-import { 
-  ArrowLeftOutlined, 
-  EyeOutlined,
+import {
+  ArrowLeftOutlined,
   CalendarOutlined,
   UserOutlined
 } from '@ant-design/icons';
@@ -24,6 +24,7 @@ import classService from '../../api/classService';
 import userService from '../../api/userService';
 import useAuthStore from '../../store/authStore';
 import { ROUTES } from '../../constants/config';
+import ClassFeed from '../../components/teacher/ClassFeed';
 
 const { Title, Text } = Typography;
 
@@ -32,7 +33,7 @@ const ClassDetail = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  
+
   const [classData, setClassData] = useState(null);
   const [students, setStudents] = useState([]);
   const [teacher, setTeacher] = useState(null);
@@ -42,12 +43,12 @@ const ClassDetail = () => {
     setLoading(true);
     try {
       const response = await classService.getClassById(classId);
-      
+
       // Axios interceptor returns response.data, so response is already the data
       const classInfo = response.data || response;
-      
+
       setClassData(classInfo);
-      
+
       // Fetch teacher details
       if (classInfo.teacherId) {
         try {
@@ -61,7 +62,7 @@ const ClassDetail = () => {
         // If teacher data is already available
         setTeacher(classInfo.teacher);
       }
-      
+
       // Extract students from class data and fetch their details
       if (classInfo.students && Array.isArray(classInfo.students)) {
         // If students data is already available
@@ -77,7 +78,7 @@ const ClassDetail = () => {
             return { _id: studentId, name: t('classes.unknownStudent'), email: 'unknown@example.com' };
           }
         });
-        
+
         const studentsData = await Promise.all(studentPromises);
         setStudents(studentsData);
       }
@@ -102,8 +103,8 @@ const ClassDetail = () => {
       key: 'student',
       render: (_, record) => (
         <Space>
-          <Avatar 
-            size="small" 
+          <Avatar
+            size="small"
             src={record.avatar}
             style={{ backgroundColor: record.avatar ? 'transparent' : '#1890ff' }}
           >
@@ -151,21 +152,8 @@ const ClassDetail = () => {
     );
   }
 
-  return (
-    <div>
-      {/* Header */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
-            onClick={() => navigate(ROUTES.STUDENT_CLASSES)}
-          >
-            {t('common.back')}
-          </Button>
-          <Title level={2} style={{ margin: 0 }}>{classData.name}</Title>
-        </Space>
-      </div>
-
+  const overviewContent = (
+    <>
       {/* Class Information */}
       <Card title={t('classes.classInfo')} style={{ marginBottom: 24 }}>
         <Descriptions column={2}>
@@ -196,8 +184,8 @@ const ClassDetail = () => {
           </Descriptions.Item>
           <Descriptions.Item label={t('classes.teacher')}>
             <Space>
-              <Avatar 
-                size="small" 
+              <Avatar
+                size="small"
                 src={teacher?.avatar}
                 style={{ backgroundColor: teacher?.avatar ? 'transparent' : '#52c41a' }}
               >
@@ -246,12 +234,44 @@ const ClassDetail = () => {
             pageSize: 10,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => 
+            showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} ${t('classes.students')}`,
           }}
           scroll={{ x: 'max-content' }}
         />
       </Card>
+    </>
+  );
+
+  const items = [
+    {
+      key: 'overview',
+      label: 'Tổng quan',
+      children: overviewContent
+    },
+    {
+      key: 'newsfeed',
+      label: 'Bảng tin',
+      children: <ClassFeed classId={classId} />
+    }
+  ];
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Space>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTES.STUDENT_CLASSES)}
+          >
+            {t('common.back')}
+          </Button>
+          <Title level={2} style={{ margin: 0 }}>{classData.name}</Title>
+        </Space>
+      </div>
+
+      <Tabs defaultActiveKey="overview" items={items} destroyInactiveTabPane={true} />
     </div>
   );
 };

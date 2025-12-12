@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  Typography, 
-  Tag, 
-  Space, 
-  Button, 
-  Spin, 
-  message, 
+import {
+  Card,
+  Typography,
+  Tag,
+  Space,
+  Button,
+  Spin,
+  message,
   Descriptions,
   Table,
   Avatar,
   Tooltip,
-  Popconfirm
+  Popconfirm,
+
+  Tabs
 } from 'antd';
-import { 
-  ArrowLeftOutlined, 
-  EditOutlined, 
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
   UserAddOutlined,
   ReloadOutlined,
   DeleteOutlined,
@@ -29,6 +31,7 @@ import useAuthStore from '../../store/authStore';
 import { ROUTES } from '../../constants/config';
 import EditClassModal from '../../components/teacher/EditClassModal';
 import AddStudentsModal from '../../components/teacher/AddStudentsModal';
+import ClassFeed from '../../components/teacher/ClassFeed';
 
 const { Title, Text } = Typography;
 
@@ -37,7 +40,7 @@ const ClassDetail = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  
+
   const [classData, setClassData] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,27 +51,27 @@ const ClassDetail = () => {
     setLoading(true);
     try {
       const response = await classService.getClassById(classId);
-      
+
       // Axios interceptor returns response.data, so response is already the data
       const classInfo = response.data || response;
-      
+
       setClassData(classInfo);
-      
+
       // Extract students from class data and fetch their details
       if (classInfo.students && Array.isArray(classInfo.students) && classInfo.students.length > 0) {
         // If students data is already available (with joinedAt from API)
         setStudents(classInfo.students);
       } else if (classInfo.studentIds && Array.isArray(classInfo.studentIds)) {
         // If only student IDs are available, fetch student details
-        
+
         // Create joinMap from studentJoins if available
         const joinMap = new Map();
         if (classInfo.studentJoins && Array.isArray(classInfo.studentJoins)) {
           classInfo.studentJoins.forEach(join => {
             const studentId = String(
-              join.studentId?._id || 
-              join.studentId?.id || 
-              join.studentId || 
+              join.studentId?._id ||
+              join.studentId?.id ||
+              join.studentId ||
               (typeof join.studentId === 'object' ? join.studentId.toString() : join.studentId)
             );
             if (studentId && studentId !== 'undefined') {
@@ -76,7 +79,7 @@ const ClassDetail = () => {
             }
           });
         }
-        
+
         const studentPromises = classInfo.studentIds.map(async (studentId) => {
           try {
             const id = typeof studentId === 'object' ? (studentId._id || studentId.id) : studentId;
@@ -89,15 +92,15 @@ const ClassDetail = () => {
           } catch (error) {
             console.error('❌ Error fetching student:', studentId, error);
             const id = typeof studentId === 'object' ? (studentId._id || studentId.id) : studentId;
-            return { 
-              _id: id, 
-              name: t('classes.unknownStudent'), 
+            return {
+              _id: id,
+              name: t('classes.unknownStudent'),
               email: 'unknown@example.com',
               joinedAt: joinMap.get(String(id)) || null
             };
           }
         });
-        
+
         const studentsData = await Promise.all(studentPromises);
         setStudents(studentsData);
       }
@@ -151,7 +154,7 @@ const ClassDetail = () => {
       const response = await classService.removeStudents(classId, {
         studentIds: [studentId]
       });
-      
+
       if (response.report?.removed?.length > 0) {
         message.success(t('classes.removeStudentSuccess') || 'Student removed successfully');
         fetchClassDetail(); // Refresh data
@@ -170,8 +173,8 @@ const ClassDetail = () => {
       key: 'student',
       render: (_, record) => (
         <Space>
-          <Avatar 
-            size="small" 
+          <Avatar
+            size="small"
             src={record.avatar}
             style={{ backgroundColor: record.avatar ? 'transparent' : '#1890ff' }}
           >
@@ -247,35 +250,35 @@ const ClassDetail = () => {
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(ROUTES.TEACHER_CLASSES)}
           >
             {t('common.back')}
           </Button>
           <Title level={2} style={{ margin: 0 }}>{classData.name}</Title>
         </Space>
-        
+
         <Space>
-          <Button 
+          <Button
             icon={<EditOutlined />}
             onClick={() => setEditModalVisible(true)}
           >
             {t('classes.edit')}
           </Button>
-          <Button 
+          <Button
             icon={<UserAddOutlined />}
             onClick={() => setAddStudentsModalVisible(true)}
           >
             {t('classes.addStudents')}
           </Button>
-          <Button 
+          <Button
             icon={<ReloadOutlined />}
             onClick={handleRegenerateCode}
           >
             {t('classes.regenerateCode')}
           </Button>
-          <Button 
+          <Button
             danger
             icon={<DeleteOutlined />}
             onClick={handleDelete}
@@ -285,73 +288,91 @@ const ClassDetail = () => {
         </Space>
       </div>
 
-      {/* Class Information */}
-      <Card title={t('classes.classInfo')} style={{ marginBottom: 24 }}>
-        <Descriptions column={2}>
-          <Descriptions.Item label={t('classes.name')}>
-            <Text strong>{classData.name}</Text>
-          </Descriptions.Item>
-          <Descriptions.Item label={t('classes.code')}>
-            <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '16px' }}>
-              {classData.code}
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label={t('classes.academicYear')}>
-            {classData.metadata?.academicYear || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label={t('classes.createdAt')}>
-            {(() => {
-              const d = new Date(classData.createdAt);
-              const day = d.getDate().toString().padStart(2, '0');
-              const month = (d.getMonth() + 1).toString().padStart(2, '0');
-              const year = d.getFullYear();
-              return `${day}/${month}/${year}`;
-            })()}
-          </Descriptions.Item>
-          <Descriptions.Item label={t('classes.students')}>
-            <Tag color="green">
-              {students.length} {t('classes.students')}
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label={t('classes.teacher')}>
-            <Space>
-              <Avatar 
-                size="small" 
-                src={user?.avatar}
-                style={{ backgroundColor: user?.avatar ? 'transparent' : '#52c41a' }}
-              >
-                {user?.name?.charAt(0)?.toUpperCase() || 'T'}
-              </Avatar>
-              <div>
-                <div style={{ fontWeight: 500 }}>{user?.name || 'Teacher'}</div>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {user?.email || 'teacher@example.com'}
-                </Text>
-              </div>
-            </Space>
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
+      <Tabs
+        defaultActiveKey="overview"
+        items={[
+          {
+            key: 'overview',
+            label: 'Tổng quan',
+            children: (
+              <>
+                {/* Class Information */}
+                <Card title={t('classes.classInfo')} style={{ marginBottom: 24 }}>
+                  <Descriptions column={2}>
+                    <Descriptions.Item label={t('classes.name')}>
+                      <Text strong>{classData.name}</Text>
+                    </Descriptions.Item>
+                    <Descriptions.Item label={t('classes.code')}>
+                      <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '16px' }}>
+                        {classData.code}
+                      </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label={t('classes.academicYear')}>
+                      {classData.metadata?.academicYear || '-'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label={t('classes.createdAt')}>
+                      {(() => {
+                        const d = new Date(classData.createdAt);
+                        const day = d.getDate().toString().padStart(2, '0');
+                        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                        const year = d.getFullYear();
+                        return `${day}/${month}/${year}`;
+                      })()}
+                    </Descriptions.Item>
+                    <Descriptions.Item label={t('classes.students')}>
+                      <Tag color="green">
+                        {students.length} {t('classes.students')}
+                      </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label={t('classes.teacher')}>
+                      <Space>
+                        <Avatar
+                          size="small"
+                          src={user?.avatar}
+                          style={{ backgroundColor: user?.avatar ? 'transparent' : '#52c41a' }}
+                        >
+                          {user?.name?.charAt(0)?.toUpperCase() || 'T'}
+                        </Avatar>
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{user?.name || 'Teacher'}</div>
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            {user?.email || 'teacher@example.com'}
+                          </Text>
+                        </div>
+                      </Space>
+                    </Descriptions.Item>
+                  </Descriptions>
+                </Card>
 
-      {/* Students List */}
-      <Card title={`${t('classes.students')} (${students.length})`}>
-        <Table
-          columns={studentColumns}
-          dataSource={students}
-          rowKey="_id"
-          locale={{
-            emptyText: t('classes.noStudents')
-          }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} of ${total} ${t('classes.students')}`,
-          }}
-          scroll={{ x: 'max-content' }}
-        />
-      </Card>
+                {/* Students List */}
+                <Card title={`${t('classes.students')} (${students.length})`}>
+                  <Table
+                    columns={studentColumns}
+                    dataSource={students}
+                    rowKey="_id"
+                    locale={{
+                      emptyText: t('classes.noStudents')
+                    }}
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} of ${total} ${t('classes.students')}`,
+                    }}
+                    scroll={{ x: 'max-content' }}
+                  />
+                </Card>
+              </>
+            )
+          },
+          {
+            key: 'newsfeed',
+            label: 'Bảng tin',
+            children: <ClassFeed classId={classId} />
+          }
+        ]}
+      />
 
       {/* Modals */}
       <EditClassModal
