@@ -2,6 +2,7 @@ import { RouterProvider } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp, theme as antdTheme } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import viVN from 'antd/locale/vi_VN';
 import enUS from 'antd/locale/en_US';
 import jaJP from 'antd/locale/ja_JP';
@@ -55,6 +56,31 @@ function App() {
       theme={antdThemeConfig}
     >
       <AntdApp>
+        <Toaster 
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: theme === 'dark' ? '#374151' : '#fff',
+              color: theme === 'dark' ? '#f3f4f6' : '#374151',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            },
+            success: {
+              iconTheme: {
+                primary: '#22c55e',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
         <RouterProvider router={router} />
       </AntdApp>
     </ConfigProvider>

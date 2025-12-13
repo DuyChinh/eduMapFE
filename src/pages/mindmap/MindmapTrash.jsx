@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mindmapService from '../../api/mindmapService';
-import './MindmapList.css'; // Reuse the same CSS
+import './MindmapList.css';
 import useAuthStore from '../../store/authStore';
+import { useTranslation } from 'react-i18next';
 
 const MindmapTrash = () => {
     const [mindmaps, setMindmaps] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { user } = useAuthStore();
+    const { t } = useTranslation();
+
+    // Delete confirmation modal
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deletingMindmapId, setDeletingMindmapId] = useState(null);
 
     useEffect(() => {
         fetchTrash();
@@ -38,109 +44,118 @@ const MindmapTrash = () => {
         }
     };
 
-    const handlePermanentDelete = async (e, id) => {
+    const openDeleteModal = (e, id) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to PERMANENTLY delete this mindmap? This action cannot be undone.')) {
+        setDeletingMindmapId(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setDeletingMindmapId(null);
+    };
+
+    const confirmDelete = async () => {
+        if (deletingMindmapId) {
             try {
-                await mindmapService.permanentDelete(id);
-                setMindmaps(mindmaps.filter(m => m._id !== id));
+                await mindmapService.permanentDelete(deletingMindmapId);
+                setMindmaps(mindmaps.filter(m => m._id !== deletingMindmapId));
             } catch (error) {
                 console.error('Failed to delete mindmap permanently:', error);
             }
         }
+        closeDeleteModal();
     };
 
-    const handleBack = () => {
-        const rolePath = user.role === 'teacher' ? 'teacher' : 'student';
-        navigate(`/${rolePath}/mindmaps`);
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     };
 
     if (loading) {
-        return <div className="loading-spinner">Loading trash...</div>;
+        return (
+            <div className="mindmap-trash-container">
+                <div className="loading-spinner">Loading trash...</div>
+            </div>
+        );
     }
 
     return (
-        <div className="mindmap-list-container">
+        <div className="mindmap-trash-container">
             <div className="mindmap-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button
-                        className="back-btn"
-                        onClick={handleBack}
-                        style={{
-                            fontSize: '1rem',
-                            padding: '0.5rem 1rem',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
-                            background: 'white',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                        }}
-                    >
-                        <span>&larr;</span> Back
-                    </button>
-                    <h1 style={{ margin: 0 }}>Trash</h1>
-                </div>
+                <h1>
+                    <img src="/trash.png" alt="" className="header-icon" />
+                    Trash
+                </h1>
             </div>
 
             <div className="mindmap-grid">
                 {mindmaps.length === 0 ? (
                     <div className="empty-state">
+                        <img src="/trash.png" alt="" className="empty-icon" />
                         <h3>Trash is empty</h3>
-                        <p>Deleted mindmaps will appear here.</p>
+                        <p>Deleted mindmaps will appear here for 30 days before permanent deletion</p>
                     </div>
                 ) : (
                     mindmaps.map((mindmap) => (
                         <div
                             key={mindmap._id}
                             className="mindmap-card"
-                            style={{ cursor: 'default', opacity: 0.9, height: 'auto', minHeight: '200px' }}
+                            style={{ cursor: 'default' }}
                         >
                             <div>
-                                <h3>{mindmap.title}</h3>
-                                <p>{mindmap.desc}</p>
+                                <h3>{mindmap.title || 'Untitled'}</h3>
+                                <p>{mindmap.desc || 'No description'}</p>
                             </div>
-                            <div className="mindmap-card-footer" style={{ display: 'block', marginTop: '1.5rem' }}>
-                                <div style={{ marginBottom: '0.8rem', fontSize: '0.85rem', color: '#888' }}>
-                                    Deleted: {new Date(mindmap.deleted_at).toLocaleDateString()}
+                            <div className="mindmap-card-footer" style={{ flexDirection: 'column', gap: '0.75rem' }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    width: '100%',
+                                    alignItems: 'center'
+                                }}>
+                                    <span className="date-badge">
+                                        📅 Deleted: {formatDate(mindmap.deleted_at)}
+                                    </span>
                                 </div>
-                                <div className="card-actions" style={{ justifyContent: 'flex-end', gap: '0.8rem' }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    gap: '0.5rem', 
+                                    width: '100%',
+                                    justifyContent: 'flex-end'
+                                }}>
                                     <button
+                                        className="icon-btn restore"
                                         onClick={(e) => handleRestore(e, mindmap._id)}
                                         title="Restore"
-                                        style={{
-                                            color: '#2e7d32',
-                                            background: '#e8f5e9',
-                                            border: 'none',
-                                            padding: '6px 12px',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            fontWeight: '500',
+                                        style={{ 
+                                            width: 'auto', 
+                                            padding: '0.5rem 1rem',
                                             display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px'
+                                            gap: '0.35rem',
+                                            fontSize: '0.85rem',
+                                            fontWeight: '600'
                                         }}
                                     >
                                         ♻️ Restore
                                     </button>
                                     <button
-                                        onClick={(e) => handlePermanentDelete(e, mindmap._id)}
-                                        title="Delete Permanently"
-                                        style={{
-                                            color: '#c62828',
-                                            background: '#ffebee',
-                                            border: 'none',
-                                            padding: '6px 12px',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            fontWeight: '500',
+                                        className="icon-btn delete"
+                                        onClick={(e) => openDeleteModal(e, mindmap._id)}
+                                        title={t('mindmap.deleteForever')}
+                                        style={{ 
+                                            width: 'auto', 
+                                            padding: '0.5rem 1rem',
                                             display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px'
+                                            gap: '0.35rem',
+                                            fontSize: '0.85rem',
+                                            fontWeight: '600'
                                         }}
                                     >
-                                        ❌ Delete
+                                        ❌ {t('mindmap.deleteForever')}
                                     </button>
                                 </div>
                             </div>
@@ -148,6 +163,28 @@ const MindmapTrash = () => {
                     ))
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="modal-overlay" onClick={closeDeleteModal}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{t('mindmap.deleteForeverConfirmTitle')}</h2>
+                        </div>
+                        <div className="modal-body">
+                            <p>{t('mindmap.deleteForeverConfirmMessage')}</p>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="modal-btn cancel" onClick={closeDeleteModal}>
+                                {t('mindmap.cancel')}
+                            </button>
+                            <button className="modal-btn danger" onClick={confirmDelete}>
+                                {t('mindmap.deleteForever')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

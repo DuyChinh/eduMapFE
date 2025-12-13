@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'; // Added useCallback
-import { useParams, useNavigate, useBlocker } from 'react-router-dom'; // Added useBlocker
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import MindElixir from 'mind-elixir';
+import toast from 'react-hot-toast';
 import './mind-elixir.css';
 import mindmapService from '../../api/mindmapService';
 import uploadService from '../../api/uploadService';
@@ -19,36 +20,46 @@ const MindmapEditor = () => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
 
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+    const [showTips, setShowTips] = useState(true);
     const [isDirty, setIsDirty] = useState(false); // Track unsaved changes
+    const [isViaShareLink, setIsViaShareLink] = useState(false); // Access via share link
+    
+    // Share modal states
+    const [isShareOpen, setIsShareOpen] = useState(false);
+    const [shareInfo, setShareInfo] = useState({ shared_with: [], is_public: false, share_link: null, public_permission: 'view' });
+    const [shareEmail, setShareEmail] = useState('');
+    const [sharePermission, setSharePermission] = useState('view');
+    const [shareLoading, setShareLoading] = useState(false);
+    const [isOwner, setIsOwner] = useState(true);
+    const [myPermission, setMyPermission] = useState('edit'); // 'view' or 'edit'
+    const [isReadOnly, setIsReadOnly] = useState(false);
 
-    // Handle browser tab close / refresh
+    // Auto-save every 30 seconds (works for both new and existing mindmaps)
     useEffect(() => {
-        const handleBeforeUnload = (e) => {
-            if (isDirty) {
-                e.preventDefault();
-                e.returnValue = ''; // Required for Chrome
-            }
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [isDirty]);
+        // Don't auto-save if read-only, no mindmap instance, or no id
+        if (isReadOnly || !mindRef.current || !id) return;
 
-    // Handle React Router navigation (Back button, Sidebar, etc.)
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            isDirty && currentLocation.pathname !== nextLocation.pathname
-    );
-
-    useEffect(() => {
-        if (blocker.state === "blocked") {
-            const confirmLeave = window.confirm(t('mindmap.unsavedChanges'));
-            if (confirmLeave) {
-                blocker.proceed();
-            } else {
-                blocker.reset();
+        const autoSaveInterval = setInterval(async () => {
+            // Auto-save if there are changes (works for both new and existing mindmaps)
+            // This includes newly created mindmaps that have been modified
+            if (isDirty && mindRef.current && id) {
+                try {
+                    const data = mindRef.current.getData();
+                    await mindmapService.update(id, {
+                        title,
+                        data,
+                        updated_at: new Date()
+                    });
+                    setIsDirty(false);
+                    // Silent save - no toast notification
+                } catch (error) {
+                    console.error('Auto-save failed:', error);
+                }
             }
-        }
-    }, [blocker]);
+        }, 10000); // 10 seconds
+
+        return () => clearInterval(autoSaveInterval);
+    }, [id, title, isDirty, isReadOnly]);
 
     // Theme state
     const [theme, setTheme] = useState({
@@ -88,7 +99,7 @@ const MindmapEditor = () => {
     const fileInputRef = useRef(null);
     const observerRef = useRef(null);
 
-    const initMindmap = (data) => {
+    const initMindmap = (data, readOnly = false) => {
         if (!containerRef.current) return;
 
         if (mindRef.current) {
@@ -98,12 +109,12 @@ const MindmapEditor = () => {
 
         const options = {
             el: containerRef.current,
-            direction: MindElixir.LEFT,
-            draggable: true,
-            contextMenu: true,
-            toolBar: true,
-            nodeMenu: true,
-            keypress: true,
+            direction: data?.direction !== undefined ? data.direction : MindElixir.SIDE, // Default to SIDE (balanced)
+            draggable: !readOnly, // Allow panning even in read-only
+            contextMenu: !readOnly, // Disable context menu in read-only
+            toolBar: !readOnly, // Disable toolbar in read-only
+            nodeMenu: !readOnly, // Disable node menu in read-only
+            keypress: !readOnly, // Disable keyboard shortcuts in read-only
             locale: 'en',
             theme: {
                 name: 'Vibrant',
@@ -127,6 +138,11 @@ const MindmapEditor = () => {
             });
 
             mind.bus.addListener('operation', (operation) => {
+                // Block operations in read-only mode
+                if (readOnly) {
+                    return;
+                }
+                
                 setIsDirty(true);
                 if (['addChild', 'insertSibling', 'finishEdit', 'beginEdit'].includes(operation.name)) {
                     setTimeout(() => {
@@ -181,7 +197,7 @@ const MindmapEditor = () => {
     };
 
     const updateNodeData = (key, value, nodeId = null) => {
-        if (!mindRef.current) return;
+        if (!mindRef.current || isReadOnly) return; // Block updates in read-only mode
 
         // Helper to update a single node
         const updateSingleNode = (id, k, v) => {
@@ -220,9 +236,32 @@ const MindmapEditor = () => {
 
     const fetchMindmap = async () => {
         try {
+            // Always use getOne for normal mindmap routes (/teacher/mindmaps/:id or /student/mindmaps/:id)
+            // Share link routes use /mindmap/public/:shareLink which uses PublicMindmapView component
             const response = await mindmapService.getOne(id);
             if (response.success) {
                 setTitle(response.data.title);
+                const ownerStatus = response.data.isOwner !== false;
+                setIsOwner(ownerStatus);
+                setIsViaShareLink(false); // This is normal access, not via share link
+
+                // Check user's permission if not owner
+                let userPermission = 'edit'; // Default to edit for owner
+                if (!ownerStatus && response.data.shared_with && Array.isArray(response.data.shared_with)) {
+                    const userId = user?._id || user?.id;
+                    const userShare = response.data.shared_with.find(
+                        share => String(share.user_id) === String(userId) || share.email === user?.email
+                    );
+                    if (userShare) {
+                        userPermission = userShare.permission || 'view';
+                    } else {
+                        userPermission = 'view'; // Default to view if shared but permission not found
+                    }
+                }
+                
+                setMyPermission(userPermission);
+                const readOnlyMode = !ownerStatus && userPermission === 'view';
+                setIsReadOnly(readOnlyMode);
 
                 let mapData = response.data.data;
                 if (!mapData || !mapData.nodeData) {
@@ -230,13 +269,125 @@ const MindmapEditor = () => {
                 } else {
                     if (!mapData.arrows) mapData.arrows = [];
                     if (!mapData.summaries) mapData.summaries = [];
+                    // Ensure direction is set to SIDE (balanced) if not set
+                    if (mapData.direction === undefined) {
+                        mapData.direction = MindElixir.SIDE;
+                    }
                 }
 
-                initMindmap(mapData);
+                initMindmap(mapData, readOnlyMode);
             }
         } catch (error) {
             console.error('Failed to fetch mindmap:', error);
+            toast.error(t('mindmap.loadFailed') || 'Failed to load mindmap');
         }
+    };
+
+    // Share functionality
+    const fetchShareInfo = async () => {
+        try {
+            const response = await mindmapService.getShareInfo(id);
+            if (response.success) {
+                setShareInfo(response.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch share info:', error);
+        }
+    };
+
+    const handleOpenShare = async () => {
+        setIsShareOpen(true);
+        await fetchShareInfo();
+    };
+
+    const handleShare = async () => {
+        if (!shareEmail.trim()) return;
+        
+        try {
+            setShareLoading(true);
+            const response = await mindmapService.share(id, {
+                email: shareEmail,
+                permission: sharePermission
+            });
+            if (response.success) {
+                setShareInfo(prev => ({ ...prev, shared_with: response.data.shared_with }));
+                setShareEmail('');
+                toast.success(t('mindmap.share.shareSuccess') + ' ' + shareEmail);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || t('mindmap.share.shareFailed'));
+        } finally {
+            setShareLoading(false);
+        }
+    };
+
+    const handleUnshare = async (userId) => {
+        try {
+            const response = await mindmapService.unshare(id, userId);
+            if (response.success) {
+                setShareInfo(prev => ({ ...prev, shared_with: response.data.shared_with }));
+                toast.success(t('mindmap.share.removeAccess'));
+            }
+        } catch (error) {
+            toast.error(t('mindmap.share.shareFailed'));
+        }
+    };
+
+    const handleUpdateUserPermission = async (userEmail, newPermission) => {
+        try {
+            const response = await mindmapService.share(id, {
+                email: userEmail,
+                permission: newPermission
+            });
+            if (response.success) {
+                setShareInfo(prev => ({ ...prev, shared_with: response.data.shared_with }));
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || t('mindmap.share.shareFailed'));
+        }
+    };
+
+    const handleTogglePublic = async (isPublic, permission) => {
+        try {
+            const response = await mindmapService.togglePublic(id, {
+                is_public: isPublic,
+                permission: permission || shareInfo.public_permission || 'view'
+            });
+            if (response.success) {
+                setShareInfo(prev => ({
+                    ...prev,
+                    is_public: response.data.is_public,
+                    share_link: response.data.share_link,
+                    public_permission: response.data.public_permission || 'view'
+                }));
+            }
+        } catch (error) {
+            toast.error(t('mindmap.share.shareFailed'));
+        }
+    };
+
+    const handleUpdatePublicPermission = async (newPermission) => {
+        if (!shareInfo.is_public) return;
+        try {
+            const response = await mindmapService.togglePublic(id, {
+                is_public: true,
+                permission: newPermission
+            });
+            if (response.success) {
+                setShareInfo(prev => ({
+                    ...prev,
+                    public_permission: response.data.public_permission || 'view'
+                }));
+            }
+        } catch (error) {
+            toast.error(t('mindmap.share.shareFailed'));
+        }
+    };
+
+    const handleCopyLink = () => {
+        const link = `${window.location.origin}/mindmap/public/${shareInfo.share_link}`;
+        navigator.clipboard.writeText(link);
+        toast.success(t('mindmap.share.linkCopied'));
     };
 
     const updateNodeStyle = (prop, value, nodeId = null) => {
@@ -356,7 +507,7 @@ const MindmapEditor = () => {
             return;
         }
         if (!selectedNode) {
-            alert('Please select a node first');
+            toast.error(t('mindmap.selectNodeFirst'));
             return;
         }
 
@@ -437,10 +588,10 @@ const MindmapEditor = () => {
                     topic: newTopic
                 }));
             } else {
-                alert('Upload failed: No URL returned');
+                toast.error(t('mindmap.uploadFailed'));
             }
         } catch (error) {
-            alert('Failed to upload image: ' + error.message);
+            toast.error(t('mindmap.uploadFailed') + ': ' + error.message);
         } finally {
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
@@ -453,24 +604,27 @@ const MindmapEditor = () => {
     };
 
     const handleSave = async () => {
-        if (!mindRef.current) return;
+        if (!mindRef.current || isReadOnly) return; // Block save in read-only mode
 
         try {
             const data = mindRef.current.getData();
+            
+            // Normal save via ObjectID (share link routes use PublicMindmapView component)
             await mindmapService.update(id, {
                 title,
                 data,
                 updated_at: new Date()
             });
+            
             setIsDirty(false); // Reset dirty state on save
-            alert('Mindmap saved successfully!');
+            toast.success(t('mindmap.saveSuccess'));
         } catch (error) {
-            alert('Failed to save mindmap: ' + error.message);
+            toast.error(t('mindmap.saveFailed') + ': ' + error.message);
         }
     };
 
     const handleBack = () => {
-        const rolePath = user.role === 'teacher' ? 'teacher' : 'student';
+        const rolePath = user?.role === 'teacher' ? 'teacher' : 'student';
         navigate(`/${rolePath}/mindmaps`);
     };
 
@@ -572,7 +726,7 @@ const MindmapEditor = () => {
                 }
             }
         } catch (error) {
-            alert('Export failed. Please ensure html2canvas is installed and try again. Error: ' + error.message);
+            toast.error(t('mindmap.exportFailed') + ': ' + error.message);
         }
     };
 
@@ -583,9 +737,13 @@ const MindmapEditor = () => {
     };
 
     const handleAddChild = () => {
+        if (isReadOnly) {
+            toast.error(t('mindmap.viewOnlyPermission'));
+            return;
+        }
         if (mindRef.current) {
             if (!mindRef.current.currentNode) {
-                alert('Please select a node first');
+                toast.error(t('mindmap.selectNodeFirst'));
                 return;
             }
             mindRef.current.addChild();
@@ -593,14 +751,18 @@ const MindmapEditor = () => {
     };
 
     const handleAddSibling = () => {
+        if (isReadOnly) {
+            toast.error(t('mindmap.viewOnlyPermission'));
+            return;
+        }
         if (mindRef.current) {
             const currentNode = mindRef.current.currentNode;
             if (!currentNode) {
-                alert('Please select a node first');
+                toast.error(t('mindmap.selectNodeFirst'));
                 return;
             }
             if (currentNode.root) {
-                alert('Cannot add sibling to root node');
+                toast.error(t('mindmap.cannotAddSiblingToRoot'));
                 return;
             }
             mindRef.current.insertSibling('after');
@@ -608,9 +770,13 @@ const MindmapEditor = () => {
     };
 
     const handleDeleteNode = () => {
+        if (isReadOnly) {
+            toast.error(t('mindmap.viewOnlyPermission'));
+            return;
+        }
         if (mindRef.current) {
             if (!mindRef.current.currentNode) {
-                alert('Please select a node first');
+                toast.error(t('mindmap.selectNodeFirst'));
                 return;
             }
             mindRef.current.removeNodes([mindRef.current.currentNode]);
@@ -638,7 +804,7 @@ const MindmapEditor = () => {
                 setIsInspectorOpen(true);
             }
         } else {
-            alert('Please select a node on the map first.');
+            toast.error(t('mindmap.selectNodeFirst'));
         }
     };
 
@@ -646,11 +812,12 @@ const MindmapEditor = () => {
         <div className="mindmap-editor-container">
             <div className="mindmap-toolbar">
                 <div className="toolbar-left">
-                    <button className="back-btn" onClick={handleBack}>
-                        &larr; Back
+                    <button className="back-btn" onClick={handleBack} title="Back">
+                        <span>←</span>
+                        <span className="btn-text">Back</span>
                     </button>
                     <div className="mindmap-title-wrapper">
-                        {isEditingTitle ? (
+                        {isEditingTitle && !isViaShareLink && isOwner ? (
                             <input
                                 type="text"
                                 className="mindmap-title-input"
@@ -673,45 +840,74 @@ const MindmapEditor = () => {
                         ) : (
                             <div
                                 className="mindmap-title-display"
-                                onClick={() => setIsEditingTitle(true)}
+                                onClick={() => !isViaShareLink && isOwner && setIsEditingTitle(true)}
                                 title={title}
+                                style={{ cursor: (isViaShareLink || !isOwner) ? 'default' : 'pointer' }}
                             >
                                 {title || 'Untitled Mindmap'}
+                                {!isOwner && (
+                                    <span style={{ 
+                                        marginLeft: '8px', 
+                                        fontSize: '11px', 
+                                        color: '#999',
+                                        fontWeight: 'normal'
+                                    }}>
+                                        {isReadOnly ? '(View Only)' : '(Can Edit)'}
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>
                 </div>
                 <div className="editor-actions">
                     <button className="action-btn" onClick={() => setIsTutorialOpen(true)} title="Tutorial">
-                        ❓ Tutorial
+                        <span>❓</span>
+                        <span className="action-btn-text">Tutorial</span>
                     </button>
-                    <button className="action-btn" onClick={handleUndo} title="Undo (Ctrl+Z)">
-                        ↩️ Undo
-                    </button>
-                    <button className="action-btn" onClick={handleRedo} title="Redo (Ctrl+Y)">
-                        ↪️ Redo
-                    </button>
-                    <button className="action-btn" onClick={() => setIsThemeOpen(!isThemeOpen)} title="Customize Theme">
-                        🎨 Theme
-                    </button>
-                    <button className="action-btn" onClick={handleAddChild} title="Add Child Node (Tab)">
-                        ➕ Child
-                    </button>
-                    <button className="action-btn" onClick={handleAddSibling} title="Add Sibling Node (Enter)">
-                        ➕ Sibling
-                    </button>
-                    <button className="action-btn" onClick={handleDeleteNode} title="Delete Node (Del)">
-                        🗑️ Delete
-                    </button>
+                    {!isReadOnly && (
+                        <>
+                            <button className="action-btn" onClick={handleUndo} title="Undo (Ctrl+Z)">
+                                <span>↩️</span>
+                                <span className="action-btn-text">Undo</span>
+                            </button>
+                            <button className="action-btn" onClick={handleRedo} title="Redo (Ctrl+Y)">
+                                <span>↪️</span>
+                                <span className="action-btn-text">Redo</span>
+                            </button>
+                            <button className="action-btn" onClick={() => setIsThemeOpen(!isThemeOpen)} title="Customize Theme">
+                                <span>🎨</span>
+                                <span className="action-btn-text">Theme</span>
+                            </button>
+                            <button className="action-btn" onClick={handleAddChild} title="Add Child Node (Tab)">
+                                <span>➕</span>
+                                <span className="action-btn-text">Child</span>
+                            </button>
+                            <button className="action-btn" onClick={handleAddSibling} title="Add Sibling Node (Enter)">
+                                <span>➕</span>
+                                <span className="action-btn-text">Sibling</span>
+                            </button>
+                            <button className="action-btn" onClick={handleDeleteNode} title="Delete Node (Del)">
+                                <span>🗑️</span>
+                                <span className="action-btn-text">Delete</span>
+                            </button>
+                            <button className="save-btn" onClick={handleSave} title="Save">
+                                <span>💾</span>
+                                <span className="btn-text">Save</span>
+                            </button>
+                        </>
+                    )}
                     <button className="action-btn" onClick={handleOpenInspector} title="Open Node Properties">
-                        ⚙️ Properties
+                        <span>⚙️</span>
+                        <span className="action-btn-text">Properties</span>
                     </button>
                     <button className="action-btn" onClick={handleCenter} title="Center Map">
-                        🎯 Center
+                        <span>🎯</span>
+                        <span className="action-btn-text">Center</span>
                     </button>
                     <div className="dropdown">
                         <button className="action-btn" title="Export">
-                            ⬇️ Export
+                            <span>⬇️</span>
+                            <span className="action-btn-text">Export</span>
                         </button>
                         <div className="dropdown-content">
                             <button onClick={() => handleExport('json')}>JSON</button>
@@ -719,16 +915,80 @@ const MindmapEditor = () => {
                             <button onClick={() => handleExport('svg')}>SVG</button>
                         </div>
                     </div>
-                    <button className="save-btn" onClick={handleSave}>
-                        💾 Save
-                    </button>
-                </div >
-            </div >
+                    {isOwner && (
+                        <button className="action-btn share-btn" onClick={handleOpenShare} title="Share Mindmap">
+                            <span>🔗</span>
+                            <span className="action-btn-text">Share</span>
+                        </button>
+                    )}
+                    {!isOwner && (
+                        <>
+                            {isReadOnly ? (
+                                <span className="read-only-badge" style={{ 
+                                    padding: '8px 12px', 
+                                    background: '#fff3cd', 
+                                    color: '#856404', 
+                                    borderRadius: '4px',
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}>
+                                    👁️ {t('mindmap.viewOnly') || 'View Only'}
+                                </span>
+                            ) : (
+                                <span className="can-edit-badge" style={{ 
+                                    padding: '8px 12px', 
+                                    background: '#d4edda', 
+                                    color: '#155724', 
+                                    borderRadius: '4px',
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}>
+                                    ✏️ {t('mindmap.canEdit') || 'Can Edit'}
+                                </span>
+                            )}
+                        </>
+                    )}
+                </div>
+                <div className="toolbar-right">
+                    {user?.profile?.avatar || user?.avatar ? (
+                        <img 
+                            src={user?.profile?.avatar || user?.avatar} 
+                            alt={user?.name || 'User'} 
+                            className="user-avatar-header"
+                            title={user?.name || user?.email || 'User'}
+                            onClick={handleBack}
+                        />
+                    ) : (
+                        <div 
+                            className="user-avatar-placeholder"
+                            title={user?.name || user?.email || 'User'}
+                            onClick={handleBack}
+                        >
+                            {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                </div>
+            </div>
 
             <div className="editor-body">
-                <div className="mindmap-instructions">
-                    <small>💡 Tips: Change theme for all nodes. Select node then click &quot;Properties&quot; to edit.</small>
-                </div>
+                {showTips && (
+                        <div className="mindmap-instructions">
+                        <small>💡 {t('mindmap.tips') || 'Tips: Change theme for all nodes. Select node then click "Properties" to edit. Right click and drag to move the map.'}</small>
+                        <button 
+                            className="tips-close-btn" 
+                            onClick={() => setShowTips(false)}
+                            title="Hide tips"
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
                 <div
                     id="mindmap-canvas"
                     ref={containerRef}
@@ -740,41 +1000,69 @@ const MindmapEditor = () => {
                     <div className="modal-backdrop" onClick={() => setIsTutorialOpen(false)}>
                         <div className="tutorial-modal" onClick={(e) => e.stopPropagation()}>
                             <h3>
-                                Mindmap Shortcuts
+                                {t('mindmap.tutorial.title') || 'Mindmap Shortcuts'}
                                 <button onClick={() => setIsTutorialOpen(false)}>&times;</button>
                             </h3>
                             <div className="tutorial-content">
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Create child node</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.createChild') || 'Create child node'}</span>
                                     <span className="shortcut-key">Tab</span>
                                 </div>
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Create sibling node</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.createSibling') || 'Create sibling node'}</span>
                                     <span className="shortcut-key">Enter</span>
                                 </div>
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Delete node</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.deleteNode') || 'Delete node'}</span>
                                     <span className="shortcut-key">Del / Backspace</span>
                                 </div>
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Center map</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.centerMap') || 'Center map'}</span>
                                     <span className="shortcut-key">F1 / Ctrl + Enter</span>
                                 </div>
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Edit node</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.editNode') || 'Edit node'}</span>
                                     <span className="shortcut-key">Dbl Click / F2</span>
                                 </div>
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Zoom In/Out</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.zoom') || 'Zoom In/Out'}</span>
                                     <span className="shortcut-key">Ctrl + Scroll</span>
                                 </div>
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Move Node</span>
-                                    <span className="shortcut-key">Drag</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.zoomIn') || 'Zoom in mind map'}</span>
+                                    <span className="shortcut-key">Ctrl + +</span>
                                 </div>
                                 <div className="shortcut-item">
-                                    <span className="shortcut-desc">Open Context Menu</span>
-                                    <span className="shortcut-key">Right Click</span>
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.zoomOut') || 'Zoom out mind map'}</span>
+                                    <span className="shortcut-key">Ctrl + -</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.resetZoom') || 'Reset zoom'}</span>
+                                    <span className="shortcut-key">Ctrl + 0</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.collapseAll') || 'Collapse all nodes'}</span>
+                                    <span className="shortcut-key">Ctrl + K, Ctrl + 0</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.expandAll') || 'Expand all nodes'}</span>
+                                    <span className="shortcut-key">Ctrl + K, Ctrl + =</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.expandToLevel') || 'Expand to level N'}</span>
+                                    <span className="shortcut-key">Ctrl + K, Ctrl + 1-9</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.moveNode') || 'Move Node'}</span>
+                                    <span className="shortcut-key">{t('mindmap.tutorial.drag') || 'Drag'}</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.moveMap') || 'Move Map'}</span>
+                                    <span className="shortcut-key">{t('mindmap.tutorial.rightClickDrag') || 'Right Click + Drag'}</span>
+                                </div>
+                                <div className="shortcut-item">
+                                    <span className="shortcut-desc">{t('mindmap.tutorial.openContextMenu') || 'Open Context Menu'}</span>
+                                    <span className="shortcut-key">{t('mindmap.tutorial.rightClick') || 'Right Click'}</span>
                                 </div>
                             </div>
                         </div>
@@ -872,131 +1160,150 @@ const MindmapEditor = () => {
                                     value={selectedNode.topic || ''}
                                     onChange={handleTopicChange}
                                     onBlur={handleTopicBlur}
-                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ddd' }}
+                                    disabled={isReadOnly}
+                                    readOnly={isReadOnly}
+                                    style={{ 
+                                        width: '100%', 
+                                        padding: '0.5rem', 
+                                        borderRadius: '6px', 
+                                        border: '1px solid #ddd',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        cursor: isReadOnly ? 'not-allowed' : 'text'
+                                    }}
                                 />
-                                <button onClick={handleInsertImage} style={{ marginTop: '0.5rem', fontSize: '0.8rem', padding: '0.2rem 0.5rem', cursor: 'pointer' }}>
-                                    🖼️ Insert Image
-                                </button>
+                                {!isReadOnly && (
+                                    <button onClick={handleInsertImage} style={{ marginTop: '0.5rem', fontSize: '0.8rem', padding: '0.2rem 0.5rem', cursor: 'pointer' }}>
+                                        🖼️ Insert Image
+                                    </button>
+                                )}
                             </div>
                             {selectedNode.image && (
                                 <div className="inspector-group">
                                     <label>Image</label>
                                     <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', alignItems: 'center' }}>
                                         <img src={selectedNode.image.url} alt="Node" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }} />
-                                        <button
-                                            onClick={() => {
-                                                updateNodeData('image', null, selectedNode.id);
-                                                setSelectedNode(prev => {
-                                                    const newState = { ...prev };
-                                                    delete newState.image;
-                                                    return newState;
-                                                });
-                                            }}
-                                            style={{ color: '#ff4d4f', border: '1px solid #ff4d4f', background: 'none', cursor: 'pointer', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <div style={{ flex: 1 }}>
-                                            <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '2px' }}>Width (px)</label>
-                                            <input
-                                                type="number"
-                                                value={selectedNode.image.width}
-                                                onChange={(e) => {
-                                                    const val = parseInt(e.target.value);
-                                                    const newImage = { ...selectedNode.image, width: val };
-                                                    setSelectedNode(prev => ({ ...prev, image: newImage }));
-                                                    updateNodeData('image', newImage, selectedNode.id);
+                                        {!isReadOnly && (
+                                            <button
+                                                onClick={() => {
+                                                    updateNodeData('image', null, selectedNode.id);
+                                                    setSelectedNode(prev => {
+                                                        const newState = { ...prev };
+                                                        delete newState.image;
+                                                        return newState;
+                                                    });
                                                 }}
-                                                style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #ddd' }}
-                                            />
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '2px' }}>Height (px)</label>
-                                            <input
-                                                type="number"
-                                                value={selectedNode.image.height}
-                                                onChange={(e) => {
-                                                    const val = parseInt(e.target.value);
-                                                    const newImage = { ...selectedNode.image, height: val };
-                                                    setSelectedNode(prev => ({ ...prev, image: newImage }));
-                                                    updateNodeData('image', newImage, selectedNode.id);
-                                                }}
-                                                style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #ddd' }}
-                                            />
-                                        </div>
+                                                style={{ color: '#ff4d4f', border: '1px solid #ff4d4f', background: 'none', cursor: 'pointer', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
                                     </div>
+                                    {!isReadOnly && (
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '2px' }}>Width (px)</label>
+                                                <input
+                                                    type="number"
+                                                    value={selectedNode.image.width}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value);
+                                                        const newImage = { ...selectedNode.image, width: val };
+                                                        setSelectedNode(prev => ({ ...prev, image: newImage }));
+                                                        updateNodeData('image', newImage, selectedNode.id);
+                                                    }}
+                                                    style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '2px' }}>Height (px)</label>
+                                                <input
+                                                    type="number"
+                                                    value={selectedNode.image.height}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value);
+                                                        const newImage = { ...selectedNode.image, height: val };
+                                                        setSelectedNode(prev => ({ ...prev, image: newImage }));
+                                                        updateNodeData('image', newImage, selectedNode.id);
+                                                    }}
+                                                    style={{ width: '100%', padding: '4px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            <div className="inspector-group">
-                                <label>Style</label>
-                                <div className="style-controls">
-                                    <input
-                                        type="color"
-                                        title="Text Color"
-                                        value={selectedNode.style?.color || '#000000'}
-                                        onChange={(e) => updateNodeStyle('color', e.target.value, selectedNode.id)}
-                                    />
-                                    <input
-                                        type="color"
-                                        title="Background Color"
-                                        value={selectedNode.style?.background || '#ffffff'}
-                                        onChange={(e) => updateNodeStyle('background', e.target.value, selectedNode.id)}
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder="Size"
-                                        min="12" max="60"
-                                        style={{ width: '50px' }}
-                                        value={parseInt(selectedNode.style?.fontSize) || 15}
-                                        onChange={(e) => updateNodeStyle('fontSize', e.target.value + 'px', selectedNode.id)}
-                                    />
-                                    <button
-                                        className={`style-btn ${selectedNode.style?.fontWeight === 'bold' ? 'active' : ''}`}
-                                        onClick={() => updateNodeStyle('fontWeight', selectedNode.style?.fontWeight === 'bold' ? 'normal' : 'bold', selectedNode.id)}
-                                        title="Bold"
-                                    >
-                                        <span style={{ fontWeight: 'bold' }}>B</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="inspector-group">
-                                <label>Tags (comma separated)</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Important, Todo"
-                                    value={selectedNode.tags ? selectedNode.tags.join(', ') : ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setSelectedNode(prev => ({ ...prev, tags: val.split(',').map(t => t.trim()) }));
-                                    }}
-                                    onBlur={(e) => updateNodeTags(e.target.value.split(',').filter(t => t.trim()), selectedNode.id)}
-                                />
-                            </div>
-                            <div className="inspector-group">
-                                <label>Icons (comma separated)</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. 😀, 🚀"
-                                    value={selectedNode.icons ? selectedNode.icons.join(', ') : ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setSelectedNode(prev => ({ ...prev, icons: val.split(',').map(t => t.trim()) }));
-                                    }}
-                                    onBlur={(e) => updateNodeIcons(e.target.value.split(',').filter(t => t.trim()), selectedNode.id)}
-                                />
-                            </div>
-                            <div className="inspector-group">
-                                <label>Hyperlink</label>
-                                <input
-                                    type="text"
-                                    placeholder="https://example.com"
-                                    value={selectedNode.hyperLink || ''}
-                                    onChange={(e) => setSelectedNode(prev => ({ ...prev, hyperLink: e.target.value }))}
-                                    onBlur={(e) => handleUpdateHyperlink(e.target.value, selectedNode.id)}
-                                />
-                            </div>
+                            {!isReadOnly && (
+                                <>
+                                    <div className="inspector-group">
+                                        <label>Style</label>
+                                        <div className="style-controls">
+                                            <input
+                                                type="color"
+                                                title="Text Color"
+                                                value={selectedNode.style?.color || '#000000'}
+                                                onChange={(e) => updateNodeStyle('color', e.target.value, selectedNode.id)}
+                                            />
+                                            <input
+                                                type="color"
+                                                title="Background Color"
+                                                value={selectedNode.style?.background || '#ffffff'}
+                                                onChange={(e) => updateNodeStyle('background', e.target.value, selectedNode.id)}
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Size"
+                                                min="12" max="60"
+                                                style={{ width: '50px' }}
+                                                value={parseInt(selectedNode.style?.fontSize) || 15}
+                                                onChange={(e) => updateNodeStyle('fontSize', e.target.value + 'px', selectedNode.id)}
+                                            />
+                                            <button
+                                                className={`style-btn ${selectedNode.style?.fontWeight === 'bold' ? 'active' : ''}`}
+                                                onClick={() => updateNodeStyle('fontWeight', selectedNode.style?.fontWeight === 'bold' ? 'normal' : 'bold', selectedNode.id)}
+                                                title="Bold"
+                                            >
+                                                <span style={{ fontWeight: 'bold' }}>B</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="inspector-group">
+                                        <label>Tags (comma separated)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Important, Todo"
+                                            value={selectedNode.tags ? selectedNode.tags.join(', ') : ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setSelectedNode(prev => ({ ...prev, tags: val.split(',').map(t => t.trim()) }));
+                                            }}
+                                            onBlur={(e) => updateNodeTags(e.target.value.split(',').filter(t => t.trim()), selectedNode.id)}
+                                        />
+                                    </div>
+                                    <div className="inspector-group">
+                                        <label>Icons (comma separated)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. 😀, 🚀"
+                                            value={selectedNode.icons ? selectedNode.icons.join(', ') : ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setSelectedNode(prev => ({ ...prev, icons: val.split(',').map(t => t.trim()) }));
+                                            }}
+                                            onBlur={(e) => updateNodeIcons(e.target.value.split(',').filter(t => t.trim()), selectedNode.id)}
+                                        />
+                                    </div>
+                                    <div className="inspector-group">
+                                        <label>Hyperlink</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://example.com"
+                                            value={selectedNode.hyperLink || ''}
+                                            onChange={(e) => setSelectedNode(prev => ({ ...prev, hyperLink: e.target.value }))}
+                                            onBlur={(e) => handleUpdateHyperlink(e.target.value, selectedNode.id)}
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
@@ -1008,6 +1315,160 @@ const MindmapEditor = () => {
                 accept="image/*"
                 onChange={handleImageUpload}
             />
+
+            {/* Share Modal - Google Drive Style */}
+            {isShareOpen && (
+                <div className="modal-backdrop" onClick={() => setIsShareOpen(false)}>
+                    <div className="share-modal google-style" onClick={(e) => e.stopPropagation()}>
+                        <div className="share-modal-header">
+                            <h3>{t('mindmap.share.title')} "{title || 'Untitled Mindmap'}"</h3>
+                            <button className="close-btn" onClick={() => setIsShareOpen(false)}>&times;</button>
+                        </div>
+                        
+                        <div className="share-modal-body">
+                            {/* Share by Email Input */}
+                            <div className="share-input-wrapper">
+                                <input
+                                    type="email"
+                                    className="share-email-input"
+                                    placeholder={t('mindmap.share.addPeople')}
+                                    value={shareEmail}
+                                    onChange={(e) => setShareEmail(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleShare()}
+                                />
+                                {shareEmail.trim() && (
+                                    <div className="share-input-actions">
+                                        <select 
+                                            value={sharePermission} 
+                                            onChange={(e) => setSharePermission(e.target.value)}
+                                            className="share-permission-select"
+                                        >
+                                            <option value="view">{t('mindmap.share.viewer')}</option>
+                                            <option value="edit">{t('mindmap.share.editor')}</option>
+                                        </select>
+                                        <button 
+                                            className="share-add-btn"
+                                            onClick={handleShare}
+                                            disabled={shareLoading || !shareEmail.trim()}
+                                        >
+                                            {shareLoading ? '...' : t('mindmap.share.shareButton')}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* People with Access Section */}
+                            <div className="share-section">
+                                <label className="share-section-title">
+                                    {t('mindmap.share.peopleWithAccess')} ({1 + (shareInfo.shared_with?.length || 0)})
+                                </label>
+                                <div className="shared-users-list">
+                                    {/* Owner */}
+                                    <div className="shared-user-item owner">
+                                        <div className="shared-user-info">
+                                            <div className="shared-user-avatar" style={{
+                                                backgroundImage: user?.profile?.avatar ? `url(${user.profile.avatar})` : undefined,
+                                                backgroundSize: 'cover',
+                                                backgroundPosition: 'center'
+                                            }}>
+                                                {!user?.profile?.avatar && (user?.name?.charAt(0).toUpperCase() || 'U')}
+                                            </div>
+                                            <div className="shared-user-details">
+                                                <span className="shared-user-name">{user?.name || 'You'} ({t('mindmap.share.you')})</span>
+                                                <span className="shared-user-email">{user?.email}</span>
+                                            </div>
+                                        </div>
+                                        <span className="owner-badge">{t('mindmap.share.owner')}</span>
+                                    </div>
+
+                                    {/* Shared Users */}
+                                    {shareInfo.shared_with && shareInfo.shared_with.map((share, index) => (
+                                        <div key={index} className="shared-user-item">
+                                            <div className="shared-user-info">
+                                                <div className="shared-user-avatar">
+                                                    {share.email?.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="shared-user-details">
+                                                    <span className="shared-user-name">{share.name || share.email}</span>
+                                                    <span className="shared-user-email">{share.email}</span>
+                                                </div>
+                                            </div>
+                                            <div className="shared-user-actions">
+                                                <select
+                                                    value={share.permission || 'view'}
+                                                    onChange={(e) => handleUpdateUserPermission(share.email, e.target.value)}
+                                                    className="permission-dropdown"
+                                                >
+                                                    <option value="view">{t('mindmap.share.viewer')}</option>
+                                                    <option value="edit">{t('mindmap.share.editor')}</option>
+                                                </select>
+                                                <button 
+                                                    className="remove-share-btn"
+                                                    onClick={() => handleUnshare(share.user_id)}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* General Access Section */}
+                            <div className="share-section">
+                                <label className="share-section-title">{t('mindmap.share.generalAccess')}</label>
+                                <div className="general-access-box">
+                                    <div className="access-icon">
+                                        {shareInfo.is_public ? (
+                                            <span className="icon-public">🌐</span>
+                                        ) : (
+                                            <span className="icon-restricted">🔒</span>
+                                        )}
+                                    </div>
+                                    <div className="access-details">
+                                        <select
+                                            value={shareInfo.is_public ? 'public' : 'restricted'}
+                                            onChange={(e) => handleTogglePublic(e.target.value === 'public', shareInfo.public_permission || 'view')}
+                                            className="access-type-select"
+                                        >
+                                            <option value="restricted">{t('mindmap.share.restricted')}</option>
+                                            <option value="public">{t('mindmap.share.anyoneWithLink')}</option>
+                                        </select>
+                                        <span className="access-description">
+                                            {shareInfo.is_public 
+                                                ? (shareInfo.public_permission === 'edit' 
+                                                    ? t('mindmap.share.anyoneWithLinkEditDesc')
+                                                    : t('mindmap.share.anyoneWithLinkDesc'))
+                                                : t('mindmap.share.restrictedDesc')}
+                                        </span>
+                                    </div>
+                                    {shareInfo.is_public && (
+                                        <select
+                                            value={shareInfo.public_permission || 'view'}
+                                            onChange={(e) => handleUpdatePublicPermission(e.target.value)}
+                                            className="permission-dropdown"
+                                        >
+                                            <option value="view">{t('mindmap.share.viewer')}</option>
+                                            <option value="edit">{t('mindmap.share.editor')}</option>
+                                        </select>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="share-modal-footer">
+                            {shareInfo.is_public && shareInfo.share_link && (
+                                <button className="copy-link-btn" onClick={handleCopyLink}>
+                                    🔗 {t('mindmap.share.copyLink')}
+                                </button>
+                            )}
+                            <button className="share-done-btn" onClick={() => setIsShareOpen(false)}>
+                                {t('mindmap.share.done')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

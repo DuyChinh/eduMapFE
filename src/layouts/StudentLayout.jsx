@@ -15,6 +15,8 @@ import {
   MoonOutlined,
   SunOutlined,
   ScanOutlined,
+  DownOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +35,7 @@ const StudentLayout = () => {
   const [selectedRole, setSelectedRole] = useState('');
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
+  const [openKeys, setOpenKeys] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
@@ -56,6 +59,16 @@ const StudentLayout = () => {
     refreshProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  // Initialize openKeys based on current path (only when sidebar is expanded)
+  useEffect(() => {
+    if (!collapsed && location.pathname.includes('/mindmaps')) {
+      setOpenKeys(['mindmaps']);
+    } else if (collapsed) {
+      // Clear openKeys when sidebar is collapsed to let hover/click handle popup
+      setOpenKeys([]);
+    }
+  }, [location.pathname, collapsed]);
 
   const handleLogout = () => {
     logout();
@@ -117,16 +130,32 @@ const StudentLayout = () => {
   const getSelectedKey = () => {
     const pathname = location.pathname;
 
-    // Check if current path starts with any of the main routes
-    if (pathname.startsWith('/student/mindmaps')) {
-      return 'mindmaps';
+    // Check mindmap submenu routes
+    if (pathname === '/student/mindmaps' || pathname === '/student/mindmaps/') {
+      return 'mindmaps-mymaps';
     }
-    if (pathname.startsWith('/student/mindmaps')) {
-      return 'mindmaps';
+    if (pathname.startsWith('/student/mindmaps/shared')) {
+      return 'mindmaps-shared';
+    }
+    if (pathname.startsWith('/student/mindmaps/trash')) {
+      return 'mindmaps-trash';
+    }
+    // If editing a specific mindmap, default to My Maps
+    if (pathname.startsWith('/student/mindmaps/')) {
+      return 'mindmaps-mymaps';
     }
 
     // Default fallback
     return pathname;
+  };
+
+  // Determine which submenu should be open
+  const getOpenKeys = () => {
+    const pathname = location.pathname;
+    if (pathname.startsWith('/student/mindmaps')) {
+      return ['mindmaps'];
+    }
+    return [];
   };
 
   const displayName = user?.name || user?.email || '';
@@ -147,25 +176,44 @@ const StudentLayout = () => {
       key: ROUTES.STUDENT_DASHBOARD,
       icon: <img src="/home.png" alt="Home" className="menu-icon-image" />,
       label: t('dashboard.home'),
-      onClick: () => navigate(ROUTES.STUDENT_DASHBOARD),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.STUDENT_DASHBOARD); },
     },
     {
       key: ROUTES.STUDENT_CLASSES,
       icon: <img src="/class.png" alt="Classes" className="menu-icon-image" />,
       label: t('student.myClasses'),
-      onClick: () => navigate(ROUTES.STUDENT_CLASSES),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.STUDENT_CLASSES); },
     },
     {
       key: ROUTES.STUDENT_RESULTS,
       icon: <img src="/exam.png" alt="Results" className="menu-icon-image" />,
       label: t('student.examResults'),
-      onClick: () => navigate(ROUTES.STUDENT_RESULTS),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.STUDENT_RESULTS); },
     },
     {
       key: 'mindmaps',
       icon: <img src="/mind_map.png" alt="Mindmaps" className="menu-icon-image" />,
       label: 'Mindmaps',
-      onClick: () => navigate('/student/mindmaps'),
+      children: [
+        {
+          key: 'mindmaps-mymaps',
+          icon: <img src="/my_maps.png" alt="My Maps" className="menu-icon-image" />,
+          label: 'My Maps',
+          onClick: () => navigate('/student/mindmaps'),
+        },
+        {
+          key: 'mindmaps-shared',
+          icon: <img src="/shared.png" alt="Shared" className="menu-icon-image" />,
+          label: 'Shared',
+          onClick: () => navigate('/student/mindmaps/shared'),
+        },
+        {
+          key: 'mindmaps-trash',
+          icon: <img src="/trash.png" alt="Trash" className="menu-icon-image" />,
+          label: 'Trash',
+          onClick: () => navigate('/student/mindmaps/trash'),
+        },
+      ],
     },
   ];
 
@@ -224,6 +272,12 @@ const StudentLayout = () => {
           theme="dark"
           mode="inline"
           selectedKeys={[getSelectedKey()]}
+          openKeys={openKeys}
+          onOpenChange={(keys) => {
+            // Only keep the last opened submenu
+            const latestOpenKey = keys.find(key => !openKeys.includes(key));
+            setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
+          }}
           items={menuItems}
           className="dashboard-menu"
         />

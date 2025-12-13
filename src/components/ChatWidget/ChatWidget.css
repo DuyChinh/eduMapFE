@@ -6,6 +6,17 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* Move chat widget to left side on mindmap editor pages */
+.chat-widget-container.chat-position-left {
+  right: auto;
+  left: 20px;
+}
+
+.chat-widget-container.chat-position-left .chat-window {
+  right: auto;
+  left: 0;
+}
+
 .chat-toggle-btn {
   width: 70px;
   height: 70px;
