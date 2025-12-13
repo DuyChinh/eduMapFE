@@ -321,6 +321,8 @@
   },
   "classes": {
     "title": "クラス管理",
+    "overview": "概要",
+    "newsfeed": "ニュースフィード",
     "name": "クラス名",
     "code": "クラスコード",
     "students": "学生",
@@ -616,8 +618,6 @@
     "subjectRequired": "科目を選択してください！",
     "scheduling": "スケジュール",
     "timezone": "タイムゾーン",
-    "startTime": "開始時刻",
-    "endTime": "終了時刻",
     "availableFrom": "利用可能開始",
     "availableUntil": "利用可能終了",
     "viewSettings": "表示設定",
@@ -1019,6 +1019,10 @@
     "commentDeleteContent": "本当にこのコメントを削除しますか？",
     "commentDeleteOk": "削除",
     "commentDeleteCancel": "キャンセル",
+    "addLink": "リンクを追加",
+    "linkUrl": "URL (https://...)",
+    "linkTitle": "タイトル (任意)",
+    "add": "追加",
     "save": "保存",
     "cancel": "キャンセル"
   },
@@ -1059,5 +1063,16 @@
     "deleting": "削除中...",
     "processing": "処理中...",
     "timeout": "タイムアウトしました。ページを再読み込みしてください。"
+  },
+  "notifications": {
+    "title": "通知",
+    "markAllRead": "すべて既読にする",
+    "noNotifications": "新しい通知はありません",
+    "viewMore": "もっと見る",
+    "NOTIFICATION_NEW_POST": "がクラス「{{className}}」に新しい投稿をしました",
+    "NOTIFICATION_NEW_COMMENT_OWN": "がクラス「{{className}}」のあなたの投稿にコメントしました",
+    "NOTIFICATION_NEW_COMMENT_OTHER": "がクラス「{{className}}」の投稿にコメントしました",
+    "NOTIFICATION_CLASS_REMOVAL": "がクラス「{{className}}」からあなたを削除しました",
+    "NOTIFICATION_CLASS_ADDITION": "がクラス「{{className}}」にあなたを追加しました"
   }
 }

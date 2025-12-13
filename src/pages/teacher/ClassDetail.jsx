@@ -43,6 +43,11 @@ const ClassDetail = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
 
+  // Parse query params to check for postId
+  const searchParams = new URLSearchParams(window.location.search);
+  const postId = searchParams.get('postId');
+  const [activeTab, setActiveTab] = useState(postId ? 'newsfeed' : 'overview');
+
   const [classData, setClassData] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -292,11 +297,12 @@ const ClassDetail = () => {
       </div>
 
       <Tabs
-        defaultActiveKey="overview"
+        activeKey={activeTab}
+        onChange={setActiveTab}
         items={[
           {
             key: 'overview',
-            label: 'Tổng quan',
+            label: t('classes.overview'),
             children: (
               <>
                 {/* Class Information */}
@@ -381,8 +387,8 @@ const ClassDetail = () => {
           },
           {
             key: 'newsfeed',
-            label: 'Bảng tin',
-            children: <ClassFeed classId={classId} />
+            label: t('classes.newsfeed'),
+            children: <ClassFeed classId={classId} highlightPostId={postId} />
           }
         ]}
       />

@@ -22,6 +22,7 @@ import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { ROUTES, USER_ROLES } from '../constants/config';
 import QRScanner from '../components/common/QRScanner';
+import NotificationDropdown from '../components/common/NotificationDropdown';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -268,11 +269,7 @@ const StudentLayout = () => {
               className="theme-toggle-btn"
             />
 
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              className="notification-btn"
-            />
+            <NotificationDropdown />
 
             <Dropdown
               menu={{ items: userMenuItems }}

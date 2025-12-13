@@ -23,6 +23,7 @@ import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import QRScanner from '../components/common/QRScanner';
+import NotificationDropdown from '../components/common/NotificationDropdown';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -275,11 +276,7 @@ const TeacherLayout = () => {
               className="theme-toggle-btn"
             />
 
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              className="notification-btn"
-            />
+            <NotificationDropdown />
 
             <Dropdown
               menu={{ items: userMenuItems }}
