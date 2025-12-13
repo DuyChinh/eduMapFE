@@ -724,7 +724,7 @@ const EditQuestion = () => {
                   }}
                   placeholder={t('questions.explanationPlaceholder')}
                   rows={3}
-                  showPreview={true}
+                  showPreview={false}
                   showToolbar={true}
                 />
               </Form.Item>
