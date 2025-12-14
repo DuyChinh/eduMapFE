@@ -239,8 +239,15 @@
       "questions": "Câu hỏi",
       "exams": "Đề thi",
       "classes": "Lớp học",
-      "students": "Học sinh"
+      "students": "Học sinh",
+      "totalSubmissions": "Tổng số bài nộp",
+      "averageScore": "Điểm trung bình",
+      "recentExams": "Đề thi gần đây",
+      "recentSubmissions": "Bài nộp gần đây"
     },
+    "published": "đã xuất bản",
+    "last7Days": "7 ngày qua",
+    "submissions": "bài nộp",
     "quickStart": "Bắt đầu nhanh",
     "actions": {
       "createExam": "Tạo bài tập hoặc đề thi",
@@ -248,10 +255,25 @@
       "fromBank": "Tạo đề từ ngân hàng chung",
       "fromBankDesc": "Chọn câu hỏi từ kho đề có sẵn",
       "downloadExam": "Tải đề từ kho đề EduMap",
-      "downloadExamDesc": "Import đề thi từ thư viện EduMap"
+      "downloadExamDesc": "Import đề thi từ thư viện EduMap",
+      "manageQuestions": "Quản lý câu hỏi",
+      "manageQuestionsDesc": "Tạo và tổ chức ngân hàng câu hỏi của bạn",
+      "manageClasses": "Quản lý lớp học",
+      "manageClassesDesc": "Tạo và quản lý các lớp học của bạn"
     },
     "recentActivities": "Hoạt động gần đây",
-    "noActivities": "Chưa có hoạt động nào"
+    "noActivities": "Chưa có hoạt động nào",
+    "noData": "Chưa có dữ liệu",
+    "charts": {
+      "examStatus": "Phân bố trạng thái đề thi",
+      "published": "Đã xuất bản",
+      "draft": "Bản nháp",
+      "scoreDistribution": "Phân bố điểm số",
+      "scoreRange": "Khoảng điểm",
+      "students": "Học sinh",
+      "submissionsOverTime": "Bài nộp theo thời gian",
+      "topExams": "Đề thi có kết quả tốt nhất"
+    }
   },
   "studentDashboard": {
     "welcome": "Chào mừng đến với EduMap! 🎓",
@@ -261,12 +283,34 @@
       "classes": "Lớp học",
       "exams": "Bài thi",
       "completed": "Đã hoàn thành",
-      "upcoming": "Sắp tới"
+      "upcoming": "Sắp tới",
+      "averageScore": "Điểm trung bình",
+      "passRate": "Tỷ lệ đạt",
+      "recentActivity": "Hoạt động gần đây"
     },
+    "last7Days": "7 ngày qua",
     "upcomingExams": "Bài thi sắp tới",
     "noExams": "Chưa có bài thi nào",
     "recentResults": "Kết quả gần đây",
-    "noResults": "Chưa có kết quả nào"
+    "noResults": "Chưa có kết quả nào",
+    "noData": "Chưa có dữ liệu",
+    "charts": {
+      "scoreDistribution": "Phân bố điểm số",
+      "scoreRange": "Khoảng điểm",
+      "exams": "Số bài thi",
+      "performanceOverTime": "Hiệu suất theo thời gian",
+      "date": "Ngày",
+      "averageScore": "Điểm trung bình (%)"
+    },
+    "table": {
+      "examName": "Tên bài thi",
+      "score": "Điểm",
+      "percentage": "Phần trăm",
+      "submittedAt": "Nộp lúc",
+      "totalMarks": "Tổng điểm",
+      "startTime": "Thời gian bắt đầu",
+      "endTime": "Thời gian kết thúc"
+    }
   },
   "teacherPages": {
     "questions": {

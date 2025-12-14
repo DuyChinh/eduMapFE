@@ -234,14 +234,21 @@
     "passwordStrength": "Strength"
   },
   "teacherDashboard": {
-    "welcomeBack": "Welcome back! 🎉",
+    "welcomeBack": "Welcome back! 📚",
     "description": "You can create exercises, exams online or offline with multiple choice sheets.",
     "statistics": {
       "questions": "Questions",
       "exams": "Exams",
       "classes": "Classes",
-      "students": "Students"
+      "students": "Students",
+      "totalSubmissions": "Total Submissions",
+      "averageScore": "Average Score",
+      "recentExams": "Recent Exams",
+      "recentSubmissions": "Recent Submissions"
     },
+    "published": "published",
+    "last7Days": "last 7 days",
+    "submissions": "submissions",
     "quickStart": "Quick Start",
     "actions": {
       "createExam": "Create exercise or exam",
@@ -249,10 +256,25 @@
       "fromBank": "Create exam from shared bank",
       "fromBankDesc": "Select questions from available question bank",
       "downloadExam": "Download exam from EduMap",
-      "downloadExamDesc": "Import exams from EduMap library"
+      "downloadExamDesc": "Import exams from EduMap library",
+      "manageQuestions": "Manage Questions",
+      "manageQuestionsDesc": "Create and organize your question bank",
+      "manageClasses": "Manage Classes",
+      "manageClassesDesc": "Create and manage your classes"
     },
     "recentActivities": "Recent Activities",
-    "noActivities": "No activities yet"
+    "noActivities": "No activities yet",
+    "noData": "No data available",
+    "charts": {
+      "examStatus": "Exam Status Distribution",
+      "published": "Published",
+      "draft": "Draft",
+      "scoreDistribution": "Score Distribution",
+      "scoreRange": "Score Range",
+      "students": "Students",
+      "submissionsOverTime": "Submissions Over Time",
+      "topExams": "Top Performing Exams"
+    }
   },
   "studentDashboard": {
     "welcome": "Welcome to EduMap! 🎓",
@@ -262,12 +284,34 @@
       "classes": "Classes",
       "exams": "Exams",
       "completed": "Completed",
-      "upcoming": "Upcoming"
+      "upcoming": "Upcoming",
+      "averageScore": "Average Score",
+      "passRate": "Pass Rate",
+      "recentActivity": "Recent Activity"
     },
+    "last7Days": "last 7 days",
     "upcomingExams": "Upcoming Exams",
     "noExams": "No exams yet",
     "recentResults": "Recent Results",
-    "noResults": "No results yet"
+    "noResults": "No results yet",
+    "noData": "No data available",
+    "charts": {
+      "scoreDistribution": "Score Distribution",
+      "scoreRange": "Score Range",
+      "exams": "Exams",
+      "performanceOverTime": "Performance Over Time",
+      "date": "Date",
+      "averageScore": "Average Score (%)"
+    },
+    "table": {
+      "examName": "Exam Name",
+      "score": "Score",
+      "percentage": "Percentage",
+      "submittedAt": "Submitted At",
+      "totalMarks": "Total Marks",
+      "startTime": "Start Time",
+      "endTime": "End Time"
+    }
   },
   "teacherPages": {
     "questions": {
