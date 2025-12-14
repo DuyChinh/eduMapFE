@@ -17,6 +17,15 @@ const uploadService = {
             throw error;
         }
     },
+    deleteImage: async (url) => {
+        try {
+            const response = await axiosClient.post('/upload/delete', { url });
+            return response;
+        } catch (error) {
+            console.error('Delete error:', error);
+            throw error;
+        }
+    },
 };
 
 export default uploadService;
