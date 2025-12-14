@@ -804,7 +804,26 @@
       "filterByStatus": "Filter by status",
       "allStatuses": "All statuses",
       "searchByName": "Search by name",
-      "searchPlaceholder": "Enter student name..."
+      "searchPlaceholder": "Enter student name...",
+      "sortBy": "Sort by",
+      "sortByNameAZ": "Name (A-Z)",
+      "sortByScoreAsc": "Score (Ascending)",
+      "sortByScoreDesc": "Score (Descending)"
+    },
+    "export": {
+      "exportExcel": "Export Excel",
+      "success": "Exported successfully!",
+      "failed": "Failed to export",
+      "no": "No",
+      "studentName": "Student Name",
+      "studentCode": "Student Code",
+      "status": "Status",
+      "score": "Score",
+      "totalMarks": "Total Marks",
+      "percentage": "Percentage",
+      "timeSpent": "Time Spent",
+      "startedAt": "Started At",
+      "submittedAt": "Submitted At"
     },
     "viewDetail": "View Detail",
     "subjectsLoadFailed": "Failed to load subjects",

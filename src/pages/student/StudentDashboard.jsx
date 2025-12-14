@@ -251,7 +251,7 @@ const StudentDashboard = () => {
       {/* Performance Metrics */}
       <Row gutter={[20, 20]} className="metrics-row">
         <Col xs={24} md={8}>
-          <Card className="metric-card" bordered={false}>
+          <Card className="metric-card" variant="borderless">
             <div className="metric-header">
               <TrophyOutlined className="metric-icon gold" />
               <Text className="metric-label">{t('studentDashboard.statistics.averageScore')}</Text>
@@ -273,7 +273,7 @@ const StudentDashboard = () => {
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="metric-card" bordered={false}>
+          <Card className="metric-card" variant="borderless">
             <div className="metric-header">
               <CheckCircleOutlined className="metric-icon green" />
               <Text className="metric-label">{t('studentDashboard.statistics.passRate')}</Text>
@@ -295,7 +295,7 @@ const StudentDashboard = () => {
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="metric-card" bordered={false}>
+          <Card className="metric-card" variant="borderless">
             <div className="metric-header">
               <FireOutlined className="metric-icon orange" />
               <Text className="metric-label">{t('studentDashboard.statistics.recentActivity')}</Text>
@@ -319,7 +319,7 @@ const StudentDashboard = () => {
                 <span>{t('studentDashboard.charts.scoreDistribution')}</span>
               </div>
             }
-            bordered={false}
+            variant="borderless"
           >
             {charts.scoreDistribution && charts.scoreDistribution.some(item => item.count > 0) ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -363,7 +363,7 @@ const StudentDashboard = () => {
                 <span>{t('studentDashboard.charts.performanceOverTime')}</span>
               </div>
             }
-            bordered={false}
+            variant="borderless"
           >
             {charts.performanceOverTime && charts.performanceOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -424,13 +424,13 @@ const StudentDashboard = () => {
                 {t('common.viewAll')} <ArrowRightOutlined />
               </Button>
             }
-            bordered={false}
+            variant="borderless"
           >
             {recentResults && recentResults.length > 0 ? (
               <Table
                 columns={recentResultsColumns}
-                dataSource={recentResults}
-                rowKey="examId"
+                dataSource={recentResults.map((item, idx) => ({ ...item, _key: item.examId || item.submissionId || `result-${idx}` }))}
+                rowKey="_key"
                 pagination={false}
                 size="middle"
                 className="modern-table"
@@ -462,13 +462,13 @@ const StudentDashboard = () => {
                 {t('common.viewAll')} <ArrowRightOutlined />
               </Button>
             }
-            bordered={false}
+            variant="borderless"
           >
             {upcomingExams && upcomingExams.length > 0 ? (
               <Table
                 columns={upcomingExamsColumns}
-                dataSource={upcomingExams}
-                rowKey="examId"
+                dataSource={upcomingExams.map((item, idx) => ({ ...item, _key: item.examId || `exam-${idx}` }))}
+                rowKey="_key"
                 pagination={false}
                 size="middle"
                 className="modern-table"

@@ -803,7 +803,26 @@
       "allStatuses": "Tất cả trạng thái",
       "searchByName": "Tìm kiếm theo tên",
       "searchPlaceholder": "Nhập tên học sinh...",
-      "items": "mục"
+      "items": "mục",
+      "sortBy": "Sắp xếp theo",
+      "sortByNameAZ": "Tên (A-Z)",
+      "sortByScoreAsc": "Điểm tăng dần",
+      "sortByScoreDesc": "Điểm giảm dần"
+    },
+    "export": {
+      "exportExcel": "Xuất Excel",
+      "success": "Xuất file thành công!",
+      "failed": "Xuất file thất bại",
+      "no": "STT",
+      "studentName": "Tên học sinh",
+      "studentCode": "Mã học sinh",
+      "status": "Trạng thái",
+      "score": "Điểm",
+      "totalMarks": "Tổng điểm",
+      "percentage": "Phần trăm",
+      "timeSpent": "Thời gian làm bài",
+      "startedAt": "Bắt đầu lúc",
+      "submittedAt": "Nộp lúc"
     },
     "viewDetail": "Xem chi tiết",
     "subjectsLoadFailed": "Không thể tải danh sách môn học",

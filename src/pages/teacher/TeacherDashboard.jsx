@@ -198,7 +198,7 @@ const TeacherDashboard = () => {
       {/* Performance Metrics */}
       <Row gutter={[20, 20]} className="metrics-row">
         <Col xs={24} sm={12} md={6}>
-          <Card className="metric-card" bordered={false}>
+          <Card className="metric-card" variant="borderless">
             <div className="metric-header">
               <CheckCircleOutlined className="metric-icon blue" />
               <Text className="metric-label">{t('teacherDashboard.statistics.totalSubmissions')}</Text>
@@ -209,7 +209,7 @@ const TeacherDashboard = () => {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card className="metric-card" bordered={false}>
+          <Card className="metric-card" variant="borderless">
             <div className="metric-header">
               <TrophyOutlined className="metric-icon gold" />
               <Text className="metric-label">{t('teacherDashboard.statistics.averageScore')}</Text>
@@ -232,7 +232,7 @@ const TeacherDashboard = () => {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card className="metric-card" bordered={false}>
+          <Card className="metric-card" variant="borderless">
             <div className="metric-header">
               <BookOutlined className="metric-icon green" />
               <Text className="metric-label">{t('teacherDashboard.statistics.recentExams')}</Text>
@@ -244,7 +244,7 @@ const TeacherDashboard = () => {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card className="metric-card" bordered={false}>
+          <Card className="metric-card" variant="borderless">
             <div className="metric-header">
               <ClockCircleOutlined className="metric-icon orange" />
               <Text className="metric-label">{t('teacherDashboard.statistics.recentSubmissions')}</Text>
@@ -268,7 +268,7 @@ const TeacherDashboard = () => {
                 <span>{t('teacherDashboard.charts.examStatus')}</span>
               </div>
             }
-            bordered={false}
+            variant="borderless"
           >
             {pieChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -310,7 +310,7 @@ const TeacherDashboard = () => {
                 <span>{t('teacherDashboard.charts.scoreDistribution')}</span>
               </div>
             }
-            bordered={false}
+            variant="borderless"
           >
             {charts.scoreDistribution.some(item => item.count > 0) ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -358,7 +358,7 @@ const TeacherDashboard = () => {
                 <span>{t('teacherDashboard.charts.submissionsOverTime')}</span>
               </div>
             }
-            bordered={false}
+            variant="borderless"
           >
             {charts.submissionsOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -408,7 +408,7 @@ const TeacherDashboard = () => {
               <span>{t('teacherDashboard.charts.topExams')}</span>
             </div>
           }
-          bordered={false}
+          variant="borderless"
         >
           <Row gutter={[20, 20]}>
             {charts.topExams.map((exam, index) => (
@@ -452,7 +452,7 @@ const TeacherDashboard = () => {
             <span>{t('teacherDashboard.quickStart')}</span>
           </div>
         }
-        bordered={false}
+        variant="borderless"
       >
         <Row gutter={[20, 20]}>
           <Col xs={24} sm={12} lg={8}>
