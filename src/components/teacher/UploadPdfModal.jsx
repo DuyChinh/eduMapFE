@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Modal, 
   Upload, 
@@ -15,29 +15,29 @@ import {
   Card,
   Radio,
   Divider,
-  Tag
+  Tag,
+  DatePicker
 } from 'antd';
 import {
   InboxOutlined,
   FileOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import PropTypes from 'prop-types';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
 import pdfExamService from '../../api/pdfExamService';
-import examService from '../../api/examService';
 
 const { Dragger } = Upload;
 const { Step } = Steps;
 const { Option } = Select;
 
-const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
+const UploadPdfModal = ({ open, onClose, onSuccess, subjects }) => {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const [form] = Form.useForm();
   
   const [currentStep, setCurrentStep] = useState(0);
-  const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [creating, setCreating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -45,17 +45,67 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
   const [allQuestions, setAllQuestions] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState({});
 
+  const mathJaxConfig = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true,
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    },
+  };
+
+  const renderMathContent = (content) => {
+    if (!content) return '';
+    
+    const contentStr = typeof content === 'string' ? content : String(content);
+    const lines = contentStr.split('\n');
+    
+    return (
+      <>
+        {lines.map((line, index) => {
+          if (!line.trim()) {
+            return <br key={index} />;
+          }
+          
+          const hasDollarSigns = line.includes('$');
+          
+          if (hasDollarSigns) {
+            return (
+              <span key={index} style={{ 
+                display: 'inline',
+                fontFamily: 'inherit'
+              }}>
+                <MathJax inline dynamic>{line}</MathJax>
+                {index < lines.length - 1 && <br />}
+              </span>
+            );
+          } else {
+            return (
+              <span key={index} style={{ 
+                display: 'inline',
+                fontFamily: 'inherit'
+              }}>
+                {line}
+                {index < lines.length - 1 && <br />}
+              </span>
+            );
+          }
+        })}
+      </>
+    );
+  };
+
   const handleFileChange = (info) => {
     const { file } = info;
     
-    // Since beforeUpload returns false, we handle the file immediately
     if (file.originFileObj) {
       setUploadedFile(file.originFileObj);
-      setUploading(false);
       message.success(t('exams.fileUploaded'));
     } else if (file instanceof File) {
       setUploadedFile(file);
-      setUploading(false);
       message.success(t('exams.fileUploaded'));
     }
   };
@@ -105,11 +155,10 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
         
         setAllQuestions(questions);
         
-        // Initialize selected answers (default to first answer for each question)
         const initialAnswers = {};
         questions.forEach(q => {
           if (q.answers && q.answers.length > 0) {
-            initialAnswers[q.questionNumber] = q.answers[0].key || q.answers[0].letter || 'A';
+            initialAnswers[q.questionNumber] = q.correctAnswer || q.answers[0].key || 'A';
           }
         });
         setSelectedAnswers(initialAnswers);
@@ -172,6 +221,7 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
             text: ans.text
           })),
           correctAnswer: answerKey,
+          explanation: q.explanation || '',
           level: q.level || 1,
           tags: q.tags || []
         };
@@ -189,7 +239,9 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
         isAllowUser: values.isAllowUser || 'everyone',
         maxAttempts: values.maxAttempts || 1,
         viewMark: values.viewMark !== undefined ? values.viewMark : 1,
-        viewExamAndAnswer: values.viewExamAndAnswer !== undefined ? values.viewExamAndAnswer : 1
+        viewExamAndAnswer: values.viewExamAndAnswer !== undefined ? values.viewExamAndAnswer : 1,
+        startTime: values.startTime ? values.startTime.toISOString() : undefined,
+        endTime: values.endTime ? values.endTime.toISOString() : undefined
       };
 
       const result = await pdfExamService.createExamFromPdf(examData);
@@ -255,11 +307,12 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
       footer={null}
       destroyOnHidden
     >
-      <Steps current={currentStep} style={{ marginBottom: 24 }}>
-        <Step title={t('exams.uploadFile')} icon={<FileOutlined />} />
-        <Step title={t('exams.reviewQuestions')} icon={<CheckCircleOutlined />} />
-        <Step title={t('exams.complete')} icon={<CheckCircleOutlined />} />
-      </Steps>
+      <MathJaxContext config={mathJaxConfig}>
+        <Steps current={currentStep} style={{ marginBottom: 24 }}>
+          <Step title={t('exams.uploadFile')} icon={<FileOutlined />} />
+          <Step title={t('exams.reviewQuestions')} icon={<CheckCircleOutlined />} />
+          <Step title={t('exams.complete')} icon={<CheckCircleOutlined />} />
+        </Steps>
 
       {/* Step 1: Upload PDF */}
       {currentStep === 0 && (
@@ -281,7 +334,7 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
             </p>
           </Dragger>
 
-          {uploadedFile && (
+          {uploadedFile && !parsing && (
             <Alert
               message={t('exams.fileReady')}
               description={`${uploadedFile.name} (${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)`}
@@ -291,16 +344,26 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
             />
           )}
 
+          {parsing && (
+            <Alert
+              message={t('exams.parsingInProgress') || 'Đang xử lý PDF...'}
+              description={t('exams.parsingHint') || 'AI đang trích xuất câu hỏi từ PDF. Quá trình này có thể mất 1-2 phút đối với file lớn. Vui lòng đợi...'}
+              type="info"
+              showIcon
+              style={{ marginTop: 16 }}
+            />
+          )}
+
           <div style={{ marginTop: 24, textAlign: 'right' }}>
             <Space>
-              <Button onClick={handleModalClose}>
+              <Button onClick={handleModalClose} disabled={parsing}>
                 {t('common.cancel')}
               </Button>
               <Button 
                 type="primary" 
                 onClick={handleParsePdf}
                 loading={parsing}
-                disabled={!uploadedFile}
+                disabled={!uploadedFile || parsing}
               >
                 {parsing ? t('exams.parsing') : t('exams.parsePdf')}
               </Button>
@@ -331,13 +394,15 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
               isAllowUser: 'everyone',
               maxAttempts: 1,
               viewMark: 1,
-              viewExamAndAnswer: 1
+              viewExamAndAnswer: 1,
+              startTime: null,
+              endTime: null
             }}
           >
             <Form.Item
               name="examName"
-              label={t('exams.examName')}
-              rules={[{ required: true, message: t('exams.pleaseEnterExamName') }]}
+              label={t('exams.name')}
+              rules={[{ required: true, message: t('exams.nameRequired') }]}
             >
               <Input placeholder={parsedData.filename?.replace('.pdf', '')} />
             </Form.Item>
@@ -451,18 +516,53 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
                 </Select>
               </Form.Item>
             </Space>
+
+            <Space style={{ width: '100%', marginTop: 16 }} size="large">
+              <Form.Item
+                name="startTime"
+                label={t('exams.startTime')}
+                rules={[{ required: true, message: t('exams.startTimeRequired') }]}
+              >
+                <DatePicker 
+                  showTime 
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: 200 }}
+                  placeholder={t('exams.selectStartTime')}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="endTime"
+                label={t('exams.endTime')}
+                rules={[
+                  { required: true, message: t('exams.endTimeRequired') },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || !getFieldValue('startTime')) {
+                        return Promise.resolve();
+                      }
+                      if (value.isBefore(getFieldValue('startTime'))) {
+                        return Promise.reject(new Error(t('exams.endTimeMustBeAfterStartTime')));
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker 
+                  showTime 
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: 200 }}
+                  placeholder={t('exams.selectEndTime')}
+                />
+              </Form.Item>
+            </Space>
           </Form>
 
-          {/* Questions Preview */}
           <Card 
             title={
               <Space>
                 <span>{t('exams.questions')} ({allQuestions.length})</span>
-                {marksPerQuestion > 0 && (
-                  <Tag color="blue">
-                    {t('exams.marksPerQuestion')} {marksPerQuestion}
-                  </Tag>
-                )}
               </Space>
             }
             style={{ marginTop: 16, maxHeight: '60vh', overflowY: 'auto' }}
@@ -481,43 +581,112 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
                     }}
                   >
                     <div style={{ marginBottom: 12 }}>
-                      <strong>
-                        {t('exams.question')} {question.questionNumber}:
-                      </strong>
-                      <div style={{ marginTop: 8, marginBottom: 12 }}>
-                        {question.questionText}
-                      </div>
-                    </div>
-                    
-                    <Divider style={{ margin: '12px 0' }} />
-                    
-                    <div>
-                      <div style={{ marginBottom: 8, fontWeight: 'bold' }}>
-                        {t('exams.selectCorrectAnswer')}:
-                      </div>
-                      <Radio.Group
-                        value={selectedAnswers[question.questionNumber]}
-                        onChange={(e) => handleAnswerChange(question.questionNumber, e.target.value)}
-                      >
-                        <Space direction="vertical">
-                          {question.answers?.map((answer) => {
-                            const answerKey = answer.key || answer.letter;
-                            const isSelected = selectedAnswers[question.questionNumber] === answerKey;
-                            
-                            return (
-                              <Radio key={answerKey} value={answerKey}>
-                                <Space>
-                                  <Tag color={isSelected ? 'blue' : 'default'}>
-                                    {answerKey}
-                                  </Tag>
-                                  <span>{answer.text}</span>
-                                </Space>
-                              </Radio>
-                            );
-                          })}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <Space>
+                          <strong>
+                            {t('exams.question')} {question.questionNumber}:
+                          </strong>
+                          <Tag color={question.type === 'multiple-choice' ? 'blue' : 'orange'}>
+                            {question.type === 'multiple-choice' ? t('exams.multipleChoice') : t('exams.essay')}
+                          </Tag>
                         </Space>
-                      </Radio.Group>
+                        {marksPerQuestion > 0 && (
+                          <Tag color="purple">
+                            {marksPerQuestion} {t('exams.marks')}
+                          </Tag>
+                        )}
+                      </div>
+                      <div style={{ marginTop: 8, marginBottom: 12 }}>
+                        {renderMathContent(question.questionText)}
+                      </div>
                     </div>
+                    
+                    {question.answers && question.answers.length > 0 && (
+                      <>
+                        <Divider style={{ margin: '12px 0' }} />
+                        
+                        <div>
+                          <Radio.Group
+                            value={selectedAnswers[question.questionNumber]}
+                            onChange={(e) => handleAnswerChange(question.questionNumber, e.target.value)}
+                            style={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+                          >
+                            {question.answers.map((answer) => {
+                                const answerKey = answer.key || answer.letter;
+                                const isSelected = selectedAnswers[question.questionNumber] === answerKey;
+                                const isAICorrect = answer.isCorrect === true;
+                                
+                                return (
+                                  <Radio 
+                                    key={answerKey} 
+                                    value={answerKey}
+                                    style={{ 
+                                      width: '100%',
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                      marginBottom: 8
+                                    }}
+                                  >
+                                    <div style={{ 
+                                      display: 'flex', 
+                                      alignItems: 'flex-start',
+                                      width: '100%',
+                                      gap: '8px'
+                                    }}>
+                                      <Tag 
+                                        color={isSelected ? 'blue' : (isAICorrect ? 'green' : 'default')}
+                                        style={{ marginTop: 2 }}
+                                      >
+                                        {answerKey}
+                                      </Tag>
+                                      <div style={{ 
+                                        flex: 1,
+                                        wordWrap: 'break-word',
+                                        overflowWrap: 'break-word'
+                                      }}>
+                                        {renderMathContent(answer.text)}
+                                      </div>
+                                      {isAICorrect && !isSelected && (
+                                        <Tag color="green" style={{ fontSize: 11, marginTop: 2 }}>
+                                          AI ✓
+                                        </Tag>
+                                      )}
+                                    </div>
+                                  </Radio>
+                                );
+                              })}
+                          </Radio.Group>
+                        </div>
+                      </>
+                    )}
+
+                    {question.explanation && (
+                      <>
+                        <Divider style={{ margin: '12px 0' }} />
+                        <div style={{ 
+                          backgroundColor: '#e6f7ff', 
+                          padding: '12px', 
+                          borderRadius: '4px',
+                          borderLeft: '3px solid #1890ff'
+                        }}>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            marginBottom: 8, 
+                            color: '#1890ff',
+                            fontSize: '13px'
+                          }}>
+                            {t('questions.explanation')}:
+                          </div>
+                          <div style={{ 
+                            fontSize: '13px',
+                            color: '#595959',
+                            lineHeight: '1.6'
+                          }}>
+                            {renderMathContent(question.explanation)}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </Card>
                 ))}
               </Space>
@@ -550,8 +719,20 @@ const UploadPdfModal = ({ open, onClose, onSuccess, subjects, grades }) => {
           <Progress percent={100} status="success" style={{ marginTop: 24 }} />
         </div>
       )}
+      </MathJaxContext>
     </Modal>
   );
+};
+
+UploadPdfModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+  onSuccess: PropTypes.func,
+  subjects: PropTypes.arrayOf(PropTypes.shape({
+    _id: PropTypes.string,
+    id: PropTypes.string,
+    name: PropTypes.string
+  }))
 };
 
 export default UploadPdfModal;

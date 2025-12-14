@@ -43,6 +43,10 @@ const chatApi = {
     searchSessions: (query) => {
         const url = '/ai/sessions/search';
         return axiosClient.get(url, { params: { q: query } });
+    },
+    checkMessageStatus: (messageId) => {
+        const url = `/ai/message/${messageId}/status`;
+        return axiosClient.get(url);
     }
 };
 

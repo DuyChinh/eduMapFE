@@ -13,8 +13,9 @@ import {
   SwapOutlined,
   TeamOutlined,
   UserOutlined,
-  ShareAltOutlined,
   ScanOutlined,
+  DownOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
@@ -34,6 +35,7 @@ const TeacherLayout = () => {
   const [selectedRole, setSelectedRole] = useState('');
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
+  const [openKeys, setOpenKeys] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
@@ -51,12 +53,21 @@ const TeacherLayout = () => {
       try {
         await fetchProfile();
       } catch (error) {
-
+        // silent
       }
     };
     refreshProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  // Initialize openKeys based on current path - only when sidebar is expanded
+  useEffect(() => {
+    if (!collapsed && location.pathname.includes('/mindmaps')) {
+      setOpenKeys(['mindmaps']);
+    } else if (collapsed) {
+      setOpenKeys([]);
+    }
+  }, [location.pathname, collapsed]);
 
   const handleLogout = () => {
     logout();
@@ -118,25 +129,32 @@ const TeacherLayout = () => {
   const getSelectedKey = () => {
     const pathname = location.pathname;
 
-    // Check if current path starts with any of the main routes
-    if (pathname.startsWith('/teacher/questions')) {
-      return ROUTES.TEACHER_QUESTIONS;
+    // Check mindmap submenu routes
+    if (pathname === '/teacher/mindmaps' || pathname === '/teacher/mindmaps/') {
+      return 'mindmaps-mymaps';
     }
-    if (pathname.startsWith('/teacher/exams')) {
-      return ROUTES.TEACHER_EXAMS;
+    if (pathname.startsWith('/teacher/mindmaps/shared')) {
+      return 'mindmaps-shared';
     }
-    if (pathname.startsWith('/teacher/classes')) {
-      return ROUTES.TEACHER_CLASSES;
+    if (pathname.startsWith('/teacher/mindmaps/trash')) {
+      return 'mindmaps-trash';
     }
-    if (pathname.startsWith('/teacher/dashboard')) {
-      return ROUTES.TEACHER_DASHBOARD;
-    }
-    if (pathname.startsWith('/teacher/mindmaps')) {
-      return 'mindmaps';
+    // If editing a specific mindmap, default to My Maps
+    if (pathname.startsWith('/teacher/mindmaps/')) {
+      return 'mindmaps-mymaps';
     }
 
     // Default fallback
     return pathname;
+  };
+
+  // Determine which submenu should be open
+  const getOpenKeys = () => {
+    const pathname = location.pathname;
+    if (pathname.startsWith('/teacher/mindmaps')) {
+      return ['mindmaps'];
+    }
+    return [];
   };
 
   const displayName = user?.name || user?.email || '';
@@ -147,8 +165,8 @@ const TeacherLayout = () => {
     user?.role === USER_ROLES.TEACHER
       ? t('role.teacher')
       : user?.role === USER_ROLES.STUDENT
-      ? t('role.student')
-      : '';
+        ? t('role.student')
+        : '';
 
   const isProfileLoading = loading && !(user && user.profile && user.profile.avatar);
 
@@ -157,31 +175,50 @@ const TeacherLayout = () => {
       key: ROUTES.TEACHER_DASHBOARD,
       icon: <img src="/home.png" alt="Home" className="menu-icon-image" />,
       label: t('dashboard.home'),
-      onClick: () => navigate(ROUTES.TEACHER_DASHBOARD),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.TEACHER_DASHBOARD); },
     },
     {
       key: ROUTES.TEACHER_QUESTIONS,
       icon: <img src="/question.png" alt="Question bank" className="menu-icon-image" />,
       label: t('teacher.questionBank'),
-      onClick: () => navigate(ROUTES.TEACHER_QUESTIONS),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.TEACHER_QUESTIONS); },
     },
     {
       key: ROUTES.TEACHER_EXAMS,
       icon: <img src="/exam.png" alt="Exams" className="menu-icon-image" />,
       label: t('teacher.examManagement'),
-      onClick: () => navigate(ROUTES.TEACHER_EXAMS),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.TEACHER_EXAMS); },
     },
     {
       key: ROUTES.TEACHER_CLASSES,
       icon: <img src="/class.png" alt="Classes" className="menu-icon-image" />,
       label: t('teacher.classManagement'),
-      onClick: () => navigate(ROUTES.TEACHER_CLASSES),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.TEACHER_CLASSES); },
     },
     {
       key: 'mindmaps',
-      icon: <ShareAltOutlined />,
+      icon: <img src="/mind_map.png" alt="Mindmaps" className="menu-icon-image" />,
       label: 'Mindmaps',
-      onClick: () => navigate('/teacher/mindmaps'),
+      children: [
+        {
+          key: 'mindmaps-mymaps',
+          icon: <img src="/my_maps.png" alt="My Maps" className="menu-icon-image" />,
+          label: 'My Maps',
+          onClick: () => navigate('/teacher/mindmaps'),
+        },
+        {
+          key: 'mindmaps-shared',
+          icon: <img src="/shared.png" alt="Shared" className="menu-icon-image" />,
+          label: 'Shared',
+          onClick: () => navigate('/teacher/mindmaps/shared'),
+        },
+        {
+          key: 'mindmaps-trash',
+          icon: <img src="/trash.png" alt="Trash" className="menu-icon-image" />,
+          label: 'Trash',
+          onClick: () => navigate('/teacher/mindmaps/trash'),
+        },
+      ],
     },
   ];
 
@@ -240,24 +277,16 @@ const TeacherLayout = () => {
           theme="dark"
           mode="inline"
           selectedKeys={[getSelectedKey()]}
+          openKeys={openKeys}
+          onOpenChange={(keys) => {
+            // Only keep the last opened submenu
+            const latestOpenKey = keys.find(key => !openKeys.includes(key));
+            setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
+          }}
           items={menuItems}
           className="dashboard-menu"
         />
 
-        <div className="sider-footer">
-          {!collapsed && (
-            <div className="user-info-compact">
-              <Avatar
-                src={user?.avatar}
-                icon={!user?.avatar && <UserOutlined />}
-              />
-              <div className="user-details">
-                <div className="user-name">{user?.name}</div>
-                <div className="user-role">{t('teacher.role')}</div>
-              </div>
-            </div>
-          )}
-        </div>
       </Sider>
 
       <Layout>
@@ -299,10 +328,13 @@ const TeacherLayout = () => {
             >
               <div className="user-dropdown">
                 <Avatar
-                  src={user?.avatar}
-                  icon={!user?.avatar && <UserOutlined />}
+                  src={avatarSrc}
+                  icon={!avatarSrc && <UserOutlined />}
                 />
-                <span className="user-name-header">{user?.name}</span>
+                <div className="user-info-header">
+                  <span className="user-name-header">{user?.name}</span>
+                  <span className="user-role-header">{roleLabel}</span>
+                </div>
               </div>
             </Dropdown>
           </Space>

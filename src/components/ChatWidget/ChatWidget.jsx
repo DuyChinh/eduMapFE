@@ -233,9 +233,19 @@ const ChatWidget = () => {
                 id: msg._id,
                 text: msg.message,
                 sender: msg.sender,
-                attachments: msg.attachments || []
+                attachments: msg.attachments || [],
+                isPending: msg.status === 'pending',
+                isError: msg.isError || msg.status === 'error'
             }));
             setMessages(history);
+            
+            const pendingMessages = history.filter(msg => msg.isPending && msg.sender === 'bot');
+            if (pendingMessages.length > 0) {
+                pendingMessages.forEach(msg => {
+                    pollMessageStatus(msg.id, msg.id);
+                });
+            }
+            
             if (window.innerWidth < 768) {
                 setShowSidebar(false);
             }
@@ -359,6 +369,57 @@ const ChatWidget = () => {
         setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const pollMessageStatus = useCallback(async (messageId, botMessageTempId) => {
+        console.log('🔍 [ChatWidget] Starting poll for messageId:', messageId);
+        const maxAttempts = 60;
+        let attempts = 0;
+
+        const pollInterval = setInterval(async () => {
+            attempts++;
+            console.log(`🔍 [ChatWidget] Poll attempt ${attempts}/${maxAttempts}`);
+
+            try {
+                const statusResponse = await chatApi.checkMessageStatus(messageId);
+                const { status, message: updatedMessage } = statusResponse.data;
+                console.log(`🔍 [ChatWidget] Status:`, status);
+
+                if (status === 'completed') {
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: updatedMessage, isPending: false }
+                            : msg
+                    ));
+                    clearInterval(pollInterval);
+                    setIsLoading(false);
+                } else if (status === 'error') {
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: updatedMessage || t('chat.error'), isError: true, isPending: false }
+                            : msg
+                    ));
+                    clearInterval(pollInterval);
+                    setIsLoading(false);
+                }
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    setMessages(prev => prev.map(msg =>
+                        msg.id === botMessageTempId
+                            ? { ...msg, text: t('chat.timeout'), isError: true, isPending: false }
+                            : msg
+                    ));
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.error('Failed to check message status:', error);
+                clearInterval(pollInterval);
+                setIsLoading(false);
+            }
+        }, 2000);
+
+        return () => clearInterval(pollInterval);
+    }, [t]);
+
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if ((!inputText.trim() && selectedFiles.length === 0) || isLoading) return;
@@ -381,28 +442,44 @@ const ChatWidget = () => {
         setSelectedFiles([]);
         setIsLoading(true);
 
-        // Create abort controller for this request
         const controller = new AbortController();
         setAbortController(controller);
 
         try {
             const response = await chatApi.sendMessage(inputText, currentSessionId, filesToSend, controller.signal);
+            
+            const responseData = response.data.data || response.data;
+            
+            console.log('🔍 [ChatWidget] Backend response:', {
+                status: responseData.status,
+                messageId: responseData.messageId,
+                hasResponse: !!responseData.response
+            });
 
-            if (response.data.sessionId && response.data.sessionId !== currentSessionId) {
-                setCurrentSessionId(response.data.sessionId);
+            if (responseData.sessionId && responseData.sessionId !== currentSessionId) {
+                setCurrentSessionId(responseData.sessionId);
                 if (isExpanded) fetchSessions();
             }
 
+            const botMessageTempId = Date.now() + 1;
             const botMessage = {
-                id: Date.now() + 1,
-                text: response.data.response,
-                sender: 'bot'
+                id: botMessageTempId,
+                text: responseData.response,
+                sender: 'bot',
+                isPending: responseData.status === 'pending'
             };
             setMessages(prev => [...prev, botMessage]);
+
+            if (responseData.status === 'pending' && responseData.messageId) {
+                console.log('🔍 [ChatWidget] Starting polling for pending message');
+                pollMessageStatus(responseData.messageId, botMessageTempId);
+            } else {
+                console.log('🔍 [ChatWidget] Message completed immediately');
+                setIsLoading(false);
+            }
         } catch (error) {
             if (error.name === 'CanceledError' || error.message === 'canceled') {
                 console.log('Request was cancelled by user');
-                // Don't show error message for user-cancelled requests
             } else {
                 console.error('Failed to send message:', error);
                 const errorMessage = {
@@ -413,8 +490,8 @@ const ChatWidget = () => {
                 };
                 setMessages(prev => [...prev, errorMessage]);
             }
-        } finally {
             setIsLoading(false);
+        } finally {
             setAbortController(null);
         }
     };
@@ -595,8 +672,14 @@ const ChatWidget = () => {
         return null;
     };
 
+    // Check if we're on mindmap editor page to move chat to left side
+    const isMindmapEditor = location.pathname.includes('/mindmaps/') && 
+        !location.pathname.endsWith('/mindmaps') && 
+        !location.pathname.includes('/shared') && 
+        !location.pathname.includes('/trash');
+
     return (
-        <div className="chat-widget-container">
+        <div className={`chat-widget-container ${isMindmapEditor ? 'chat-position-left' : ''}`}>
             {!isOpen && (
                 <button className="chat-toggle-btn" onClick={toggleChat}>
                     <img src="/chatbot.gif" alt="Chatbot" style={{ width: 70, height: 70, objectFit: 'contain' }} />
@@ -915,7 +998,15 @@ const ChatWidget = () => {
                                             ) : (
                                                 <div className="message-text">
                                                     {msg.sender === 'bot' ? (
-                                                        <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                        <>
+                                                            <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                            {msg.isPending && (
+                                                                <div className="pending-indicator" style={{ marginTop: '8px', fontSize: '0.85em', color: '#888', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    <div className="spinner-small"></div>
+                                                                    <span>{t('chat.processing') || 'Đang xử lý...'}</span>
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     ) : (
                                                         msg.text
                                                     )}
