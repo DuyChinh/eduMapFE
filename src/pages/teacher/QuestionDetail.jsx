@@ -254,14 +254,21 @@ const QuestionDetail = () => {
   return (
     <div style={{ padding: '24px' }}>
       {/* Breadcrumb */}
-      <Breadcrumb style={{ marginBottom: '16px' }}>
-        <Breadcrumb.Item>
-          <Button type="link" onClick={handleBack} style={{ padding: 0 }}>
-            {t('questions.title')}
-          </Button>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>{questionData.name || t('questions.detail')}</Breadcrumb.Item>
-      </Breadcrumb>
+      <Breadcrumb 
+        style={{ marginBottom: '16px' }}
+        items={[
+          {
+            title: (
+              <Button type="link" onClick={handleBack} style={{ padding: 0 }}>
+                {t('questions.title')}
+              </Button>
+            )
+          },
+          {
+            title: questionData.name || t('questions.detail')
+          }
+        ]}
+      />
 
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>

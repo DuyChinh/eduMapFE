@@ -106,7 +106,7 @@ const PublicTakeExam = () => {
         }
         
         message.error(t('publicTakeExam.examNotFound'));
-        navigate('/');
+        window.location.href = '/';
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -169,7 +169,7 @@ const PublicTakeExam = () => {
             <Button 
               type="primary" 
               size="large"
-              onClick={() => navigate('/student/dashboard')}
+              onClick={() => window.location.href = '/student/dashboard'}
             >
               {t('takeExam.backToDashboard')}
             </Button>
@@ -184,7 +184,7 @@ const PublicTakeExam = () => {
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Card>
           <Title level={4}>{t('publicTakeExam.examNotFound')}</Title>
-          <Button onClick={() => navigate('/')}>{t('publicTakeExam.goHome')}</Button>
+          <Button onClick={() => window.location.href = '/'}>{t('publicTakeExam.goHome')}</Button>
         </Card>
       </div>
     );

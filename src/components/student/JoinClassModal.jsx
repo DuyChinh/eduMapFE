@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal, Form, Input, Button, message, Alert, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 import classService from '../../api/classService';
 
-const JoinClassModal = ({ visible, onCancel, onSuccess }) => {
+const JoinClassModal = ({ visible, onCancel, onSuccess, initialCode }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+
+  // Auto-fill the code when modal opens with initialCode from QR scan
+  useEffect(() => {
+    if (visible && initialCode) {
+      form.setFieldsValue({ code: initialCode });
+    }
+  }, [visible, initialCode, form]);
 
   const handleSubmit = async (values) => {
     setLoading(true);

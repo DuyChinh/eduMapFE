@@ -19,7 +19,7 @@ import {
   Modal,
   Spin
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined, PartitionOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined, PartitionOutlined, EyeOutlined, FileAddOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import examService from '../../api/examService';
@@ -27,6 +27,7 @@ import questionService from '../../api/questionService';
 import classService from '../../api/classService';
 import { ROUTES } from '../../constants/config';
 import PreviewExamModal from '../../components/teacher/PreviewExamModal';
+import UploadPdfModal from '../../components/teacher/UploadPdfModal';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 
@@ -50,6 +51,8 @@ const CreateExam = () => {
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [previewExamData, setPreviewExamData] = useState(null);
+  const [uploadPdfModalVisible, setUploadPdfModalVisible] = useState(false);
+  const [grades, setGrades] = useState([]); // For PDF modal
   const classesFetchedRef = useRef(false); // Track if classes have been fetched
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -693,7 +696,7 @@ const CreateExam = () => {
                 </Select>
               </Form.Item>
 
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Input
                   placeholder={t('exams.searchQuestionsByName') || 'Tìm kiếm câu hỏi theo tên...'}
                   prefix={<SearchOutlined />}
@@ -701,11 +704,18 @@ const CreateExam = () => {
                   onChange={(e) => handleSearchQueryChange(e.target.value)}
                   allowClear
                   style={{ 
-                    width: '50%',
-                    maxWidth: '100%'
+                    flex: 1,
+                    minWidth: '200px'
                   }}
                   className="question-search-input"
                 />
+                <Button
+                  icon={<FileAddOutlined />}
+                  onClick={() => setUploadPdfModalVisible(true)}
+                  type="dashed"
+                >
+                  {t('exams.createExamByPDF') || 'Create Exam by PDF'}
+                </Button>
               </div>
               <style>{`
                 @media (max-width: 768px) {
@@ -1084,6 +1094,19 @@ const CreateExam = () => {
         examData={previewExamData || form.getFieldsValue()}
         questions={selectedQuestions}
         subjects={subjects}
+      />
+
+      {/* Upload PDF Modal */}
+      <UploadPdfModal
+        open={uploadPdfModalVisible}
+        onClose={() => setUploadPdfModalVisible(false)}
+        onSuccess={(exam) => {
+          message.success(t('exams.examCreatedFromPDF') || 'Exam created from PDF successfully');
+          // Navigate to exam detail page
+          navigate(`/teacher/exams/${exam._id || exam.id}`);
+        }}
+        subjects={subjects}
+        grades={grades}
       />
     </div>
   );

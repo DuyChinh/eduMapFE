@@ -22,7 +22,8 @@ import {
   UserAddOutlined,
   ReloadOutlined,
   DeleteOutlined,
-  EyeOutlined
+  EyeOutlined,
+  QrcodeOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import classService from '../../api/classService';
@@ -32,6 +33,7 @@ import { ROUTES } from '../../constants/config';
 import EditClassModal from '../../components/teacher/EditClassModal';
 import AddStudentsModal from '../../components/teacher/AddStudentsModal';
 import ClassFeed from '../../components/teacher/ClassFeed';
+import QRCodeModal from '../../components/common/QRCodeModal';
 
 const { Title, Text } = Typography;
 
@@ -46,6 +48,7 @@ const ClassDetail = () => {
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addStudentsModalVisible, setAddStudentsModalVisible] = useState(false);
+  const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
 
   const fetchClassDetail = async () => {
     setLoading(true);
@@ -303,9 +306,19 @@ const ClassDetail = () => {
                       <Text strong>{classData.name}</Text>
                     </Descriptions.Item>
                     <Descriptions.Item label={t('classes.code')}>
-                      <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '16px' }}>
-                        {classData.code}
-                      </Tag>
+                      <Space>
+                        <Tag color="blue" style={{ fontFamily: 'monospace', fontSize: '16px' }}>
+                          {classData.code}
+                        </Tag>
+                        <Tooltip title={t('classes.showQRCode') || 'Show QR Code'}>
+                          <Button
+                            type="text"
+                            icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+                            onClick={() => setQrCodeModalVisible(true)}
+                            size="small"
+                          />
+                        </Tooltip>
+                      </Space>
                     </Descriptions.Item>
                     <Descriptions.Item label={t('classes.academicYear')}>
                       {classData.metadata?.academicYear || '-'}
@@ -387,6 +400,15 @@ const ClassDetail = () => {
         classData={classData}
         onCancel={() => setAddStudentsModalVisible(false)}
         onSuccess={handleAddStudentsSuccess}
+      />
+
+      <QRCodeModal
+        open={qrCodeModalVisible}
+        onCancel={() => setQrCodeModalVisible(false)}
+        value={classData?.code || ''}
+        title={t('classes.classCodeQR') || 'Class Code QR'}
+        description={t('classes.qrDescription') || 'Students can scan this QR code to join the class'}
+        filename={classData?.name ? `qr_class_${classData.name.replace(/[^a-zA-Z0-9]/g, '_')}` : `qr_class_${classData?.code || 'class'}`}
       />
     </div>
   );

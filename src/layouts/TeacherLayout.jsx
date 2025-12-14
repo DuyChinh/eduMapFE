@@ -14,6 +14,7 @@ import {
   TeamOutlined,
   UserOutlined,
   ShareAltOutlined,
+  ScanOutlined,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
@@ -22,6 +23,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
+import QRScanner from '../components/common/QRScanner';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -31,6 +33,7 @@ const TeacherLayout = () => {
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
+  const [qrScannerVisible, setQrScannerVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
@@ -52,7 +55,8 @@ const TeacherLayout = () => {
       }
     };
     refreshProfile();
-  }, [fetchProfile, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const handleLogout = () => {
     logout();
@@ -268,6 +272,14 @@ const TeacherLayout = () => {
           <Space size="large" className="header-actions">
             <Button
               type="text"
+              icon={<ScanOutlined />}
+              onClick={() => setQrScannerVisible(true)}
+              title={t('qrScanner.scanQR') || 'Scan QR Code'}
+              className="qr-scan-btn"
+            />
+
+            <Button
+              type="text"
               icon={theme === 'dark' ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
@@ -371,6 +383,13 @@ const TeacherLayout = () => {
           </Button>
         </Space>
       </Modal>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        open={qrScannerVisible}
+        onClose={() => setQrScannerVisible(false)}
+        userRole="teacher"
+      />
     </Layout>
   );
 };
