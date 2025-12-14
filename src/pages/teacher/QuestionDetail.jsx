@@ -415,28 +415,84 @@ const QuestionDetail = () => {
               </div>
             )}
 
+            {/* Options for True/False */}
+            {questionData.type === 'tf' && (
+              <div style={{ marginBottom: '16px' }}>
+                <Text strong>{t('questions.choices')}:</Text>
+                <div style={{ marginTop: '8px' }}>
+                  <Radio.Group 
+                    value={questionData.answer === true || questionData.answer === 'true'} 
+                    disabled 
+                    style={{ width: '100%' }}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Radio value={true} style={{
+                        width: '100%',
+                        whiteSpace: 'normal',
+                        alignItems: 'flex-start',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ display: 'flex' }}>
+                          <Text strong style={{ marginRight: '4px' }}>A.</Text>
+                          <span style={{ wordBreak: 'break-word' }}>{t('questions.true')}</span>
+                        </div>
+                      </Radio>
+                      <Radio value={false} style={{
+                        width: '100%',
+                        whiteSpace: 'normal',
+                        alignItems: 'flex-start',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ display: 'flex' }}>
+                          <Text strong style={{ marginRight: '4px' }}>B.</Text>
+                          <span style={{ wordBreak: 'break-word' }}>{t('questions.false')}</span>
+                        </div>
+                      </Radio>
+                    </Space>
+                  </Radio.Group>
+                </div>
+              </div>
+            )}
+
             {/* Answer */}
-            {questionData.answer !== undefined && questionData.answer !== '' && (
+            {(questionData.answer !== undefined && questionData.answer !== '' || questionData.type === 'tf') && (
               <div style={{ marginBottom: '16px' }}>
                 <Divider />
                 <Text strong>{t('questions.answer')}:</Text>
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                    {questionData.type === 'mcq'
-                      ? (
-                        <span>
-                          {`${String.fromCharCode(65 + questionData.answer)} - `}
-                          {
-                            typeof questionData.choices[questionData.answer] === 'object'
-                              ? questionData.choices[questionData.answer].text
-                              : questionData.choices[questionData.answer]
-                          }
-                        </span>
-                      )
-                      : questionData.answer
-                    }
-                  </Tag>
-                </div>
+                {questionData.type === 'mcq' ? (
+                  <div style={{ marginTop: '8px' }}>
+                    <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                      <span>
+                        {`${String.fromCharCode(65 + questionData.answer)} - `}
+                        {
+                          typeof questionData.choices[questionData.answer] === 'object'
+                            ? questionData.choices[questionData.answer].text
+                            : questionData.choices[questionData.answer]
+                        }
+                      </span>
+                    </Tag>
+                  </div>
+                ) : questionData.type === 'tf' ? (
+                  <div style={{ marginTop: '8px' }}>
+                    <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                      {questionData.answer === true || questionData.answer === 'true' ? t('questions.true') : t('questions.false')}
+                    </Tag>
+                  </div>
+                ) : (
+                  <Paragraph style={{
+                    marginTop: '8px',
+                    padding: '12px',
+                    background: '#f6ffed',
+                    border: '1px solid #b7eb8f',
+                    borderRadius: '4px',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'inherit'
+                  }}>
+                    {questionData.answer}
+                  </Paragraph>
+                )}
               </div>
             )}
 

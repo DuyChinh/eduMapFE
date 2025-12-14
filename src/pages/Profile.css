@@ -1,49 +1,235 @@
-.profile-page {
+/* Profile Page Container */
+.profile-page-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
 }
 
-.profile-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* Hero Card */
+.profile-hero-card {
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+  margin-bottom: 24px;
+  border: none;
 }
 
-.profile-header {
+.profile-hero-card .ant-card-body {
+  padding: 48px 40px;
+}
+
+.profile-hero-content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 24px;
+  gap: 40px;
   flex-wrap: wrap;
 }
 
-.profile-info {
+/* Avatar Section */
+.profile-avatar-section {
+  flex-shrink: 0;
+}
+
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-main-avatar {
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  background: white;
+}
+
+.avatar-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: white;
   display: flex;
   align-items: center;
-  gap: 24px;
-  flex: 1;
-}
-
-.profile-avatar {
+  justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 3px solid #667eea;
 }
 
-.profile-details {
+.role-emoji {
+  font-size: 24px;
+}
+
+/* Info Section */
+.profile-info-section {
   flex: 1;
+  min-width: 300px;
+  color: white;
 }
 
-.avatar-upload-section {
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.profile-name {
+  color: white !important;
+  margin: 0 !important;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.verified-badge {
+  font-size: 24px;
+  color: #52c41a;
+  background: white;
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.profile-tags {
+  margin-bottom: 20px;
+}
+
+.role-tag,
+.status-tag {
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.profile-contact-info {
+  margin-top: 20px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.contact-icon {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.contact-text {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: 15px;
+}
+
+/* Action Section */
+.profile-action-section {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.edit-profile-btn {
+  height: 48px;
+  padding: 0 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 24px;
+  border: 2px solid white;
+  background: white;
+  color: #667eea;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.edit-profile-btn:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #764ba2 !important;
+  border-color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Info Cards */
+.info-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.info-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.info-card .ant-card-head {
+  border-bottom: 2px solid #f0f0f0;
+  padding: 20px 24px;
+}
+
+.info-card .ant-card-head-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.info-card .ant-card-body {
+  padding: 24px;
+}
+
+.info-card .ant-descriptions-item-label {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.info-card .ant-descriptions-item-content {
+  color: #262626;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Edit Profile Modal */
+.edit-profile-modal .ant-modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: none;
+}
+
+.edit-profile-modal .ant-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.edit-profile-modal .ant-modal-body {
+  padding: 0 24px 24px;
+}
+
+.edit-profile-modal .ant-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.modal-avatar-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 24px 0;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  gap: 20px;
+  padding: 32px 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  margin-bottom: 24px;
 }
 
-.avatar-preview {
+.modal-avatar-preview {
   position: relative;
+}
+
+.modal-avatar {
+  border: 5px solid white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .avatar-uploading-overlay {
@@ -52,30 +238,170 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
 }
 
-@media (max-width: 768px) {
-  .profile-page {
-    padding: 16px;
+.modal-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.upload-hint {
+  font-size: 12px;
+  text-align: center;
+  display: block;
+  color: #8c8c8c;
+}
+
+/* Form Styling */
+.edit-profile-modal .ant-form-item-label > label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.edit-profile-modal .ant-input {
+  border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .profile-hero-content {
+    gap: 32px;
   }
 
-  .profile-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .profile-info-section {
+    min-width: auto;
   }
 
-  .profile-info {
-    flex-direction: column;
-    align-items: flex-start;
+  .profile-action-section {
+    width: 100%;
   }
 
-  .profile-header button {
+  .edit-profile-btn {
     width: 100%;
   }
 }
 
+@media (max-width: 768px) {
+  .profile-page-container {
+    padding: 16px;
+  }
+
+  .profile-hero-card .ant-card-body {
+    padding: 32px 24px;
+  }
+
+  .profile-hero-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .profile-avatar-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .profile-info-section {
+    width: 100%;
+  }
+
+  .profile-name {
+    font-size: 28px !important;
+  }
+
+  .profile-main-avatar {
+    width: 120px !important;
+    height: 120px !important;
+  }
+
+  .avatar-badge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .role-emoji {
+    font-size: 20px;
+  }
+
+  .profile-tags {
+    justify-content: center;
+  }
+
+  .profile-contact-info {
+    display: flex;
+    justify-content: center;
+  }
+
+  .contact-item {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .profile-hero-card .ant-card-body {
+    padding: 24px 16px;
+  }
+
+  .profile-name {
+    font-size: 24px !important;
+  }
+
+  .profile-main-avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .edit-profile-btn {
+    font-size: 14px;
+    padding: 0 24px;
+  }
+
+  .modal-avatar-section {
+    padding: 24px 0;
+  }
+
+  .modal-avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+}
+
+/* Dark Mode Support */
+body.dark-mode .info-card {
+  background: #1f1f1f;
+}
+
+body.dark-mode .info-card .ant-card-head {
+  border-bottom-color: #303030;
+}
+
+body.dark-mode .info-card .ant-card-head-title {
+  color: #e6e6e6;
+}
+
+body.dark-mode .info-card .ant-descriptions-item-label {
+  color: #a6a6a6;
+}
+
+body.dark-mode .info-card .ant-descriptions-item-content {
+  color: #e6e6e6;
+}
+
+body.dark-mode .modal-avatar-section {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+}
+
+body.dark-mode .upload-hint {
+  color: #a6a6a6;
+}

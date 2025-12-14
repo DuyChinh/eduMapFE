@@ -156,7 +156,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
   };
 
   const renderAnswer = () => {
-    if (!questionData.answer) return null;
+    if (questionData.answer === undefined && questionData.type !== 'tf') return null;
 
     if (questionData.type === 'mcq') {
       const answerIndex = parseInt(questionData.answer);
@@ -171,12 +171,32 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           {renderMathContent(answerText)}
         </div>
       );
+    } else if (questionData.type === 'tf') {
+      return (
+        <div>
+          <Text strong>{t('questions.correctAnswer')}: </Text>
+          <Paragraph style={{
+            marginTop: '8px',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            whiteSpace: 'pre-wrap'
+          }}>
+            {questionData.answer === true || questionData.answer === 'true' 
+              ? t('questions.true') 
+              : t('questions.false')}
+          </Paragraph>
+        </div>
+      );
     } else {
       return (
         <div>
           <Text strong>{t('questions.correctAnswer')}: </Text>
           <Paragraph style={{
             marginTop: '8px',
+            padding: '12px',
+            background: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: '4px',
             wordWrap: 'break-word',
             overflowWrap: 'break-word',
             whiteSpace: 'pre-wrap'
@@ -189,72 +209,116 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
   };
 
   const renderChoices = () => {
-    if (questionData.type !== 'mcq' || !questionData.choices) return null;
+    // Render MCQ choices
+    if (questionData.type === 'mcq' && questionData.choices) {
+      return (
+        <div>
+          <Text strong>{t('questions.choices')}:</Text>
+          <Radio.Group style={{ marginTop: '8px', width: '100%' }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              {questionData.choices.map((choice, index) => {
+                // Handle both object format {key, text} and string format
+                // Handle both object format {key, text} and string format
+                let choiceText = '';
+                let choiceKey = String.fromCharCode(65 + index); // Default key A, B, C...
 
-    return (
-      <div>
-        <Text strong>{t('questions.choices')}:</Text>
-        <Radio.Group style={{ marginTop: '8px', width: '100%' }}>
-          <Space direction="vertical" style={{ width: '100%' }}>
-            {questionData.choices.map((choice, index) => {
-              // Handle both object format {key, text} and string format
-              // Handle both object format {key, text} and string format
-              let choiceText = '';
-              let choiceKey = String.fromCharCode(65 + index); // Default key A, B, C...
-
-              if (typeof choice === 'string') {
-                choiceText = choice;
-              } else if (typeof choice === 'object' && choice !== null) {
-                choiceText = choice.text || '';
-                if (choice.key) {
-                  choiceKey = choice.key;
+                if (typeof choice === 'string') {
+                  choiceText = choice;
+                } else if (typeof choice === 'object' && choice !== null) {
+                  choiceText = choice.text || '';
+                  if (choice.key) {
+                    choiceKey = choice.key;
+                  }
                 }
-              }
 
-              if (!choiceText && !(typeof choice === 'object' && choice?.image)) {
-                choiceText = `${t('questions.choice')} ${index + 1}`;
-              }
+                if (!choiceText && !(typeof choice === 'object' && choice?.image)) {
+                  choiceText = `${t('questions.choice')} ${index + 1}`;
+                }
 
-              return (
-                <Radio key={index} value={index} style={{
-                  width: '100%',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  whiteSpace: 'pre-wrap',
-                  display: 'flex',
-                  alignItems: 'center', // Center vertically as per user preference/revert
-                  marginBottom: '8px'
-                }}>
-                  <span style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '4px' }}>
-                      <Text strong style={{ whiteSpace: 'nowrap' }}>{choiceKey}.</Text>
-                      <span style={{ flex: 1 }}>{renderMathContent(choiceText)}</span>
+                return (
+                  <Radio key={index} value={index} style={{
+                    width: '100%',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    display: 'flex',
+                    alignItems: 'center', // Center vertically as per user preference/revert
+                    marginBottom: '8px'
+                  }}>
+                    <span style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '4px' }}>
+                        <Text strong style={{ whiteSpace: 'nowrap' }}>{choiceKey}.</Text>
+                        <span style={{ flex: 1 }}>{renderMathContent(choiceText)}</span>
+                      </span>
+
+                      {choice.image && (
+                        <div style={{ marginTop: '8px', marginLeft: '20px' }}>
+                          <img
+                            src={choice.image}
+                            alt={`Choice ${choiceKey}`}
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '200px',
+                              objectFit: 'contain',
+                              borderRadius: '4px',
+                              border: '1px solid #f0f0f0'
+                            }}
+                          />
+                        </div>
+                      )}
                     </span>
+                  </Radio>
+                );
 
-                    {choice.image && (
-                      <div style={{ marginTop: '8px', marginLeft: '20px' }}>
-                        <img
-                          src={choice.image}
-                          alt={`Choice ${choiceKey}`}
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '200px',
-                            objectFit: 'contain',
-                            borderRadius: '4px',
-                            border: '1px solid #f0f0f0'
-                          }}
-                        />
-                      </div>
-                    )}
-                  </span>
-                </Radio>
-              );
+              })}
+            </Space>
+          </Radio.Group>
+        </div>
+      );
+    }
 
-            })}
-          </Space>
-        </Radio.Group>
-      </div>
-    );
+    // Render True/False choices
+    if (questionData.type === 'tf') {
+      return (
+        <div>
+          <Text strong>{t('questions.choices')}:</Text>
+          <Radio.Group style={{ marginTop: '8px', width: '100%' }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Radio value={true} style={{
+                width: '100%',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '8px'
+              }}>
+                <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '4px' }}>
+                  <Text strong style={{ whiteSpace: 'nowrap' }}>A.</Text>
+                  <span>{t('questions.true')}</span>
+                </span>
+              </Radio>
+              <Radio value={false} style={{
+                width: '100%',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '8px'
+              }}>
+                <span style={{ display: 'inline-flex', alignItems: 'flex-start', gap: '4px' }}>
+                  <Text strong style={{ whiteSpace: 'nowrap' }}>B.</Text>
+                  <span>{t('questions.false')}</span>
+                </span>
+              </Radio>
+            </Space>
+          </Radio.Group>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
