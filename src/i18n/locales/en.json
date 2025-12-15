@@ -979,7 +979,10 @@
     "correctAnswer": "Correct Answer",
     "noAnswer": "No answer",
     "answersNotAvailable": "Answers are not available yet",
-    "answersNotAvailableDesc": "The exam answers will be available after all students have completed the exam."
+    "answersNotAvailableDesc": "The exam answers will be available after all students have completed the exam.",
+    "congratulations": "Congratulations on completing the exam!",
+    "examSubmitted": "Your exam has been submitted successfully",
+    "totalScore": "Total Score"
   },
   "publicTakeExam": {
     "loading": "Loading exam...",
@@ -1105,7 +1108,10 @@
     },
     "question": "Question",
     "correctAnswer": "Correct Answer",
-    "studentAnswer": "Student's Answer"
+    "studentAnswer": "Student's Answer",
+    "yourAnswer": "Your Answer",
+    "noAnswer": "No answer",
+    "sampleAnswer": "Sample Answer"
   },
   "mindmap": {
     "unsavedChanges": "You have unsaved changes like drawing, layout, or node properties. Do you really want to leave without saving?",

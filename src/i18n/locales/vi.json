@@ -978,7 +978,10 @@
     "correctAnswer": "Đáp án đúng",
     "noAnswer": "Chưa trả lời",
     "answersNotAvailable": "Đáp án chưa khả dụng",
-    "answersNotAvailableDesc": "Đáp án sẽ được hiển thị sau khi tất cả học sinh hoàn thành bài thi."
+    "answersNotAvailableDesc": "Đáp án sẽ được hiển thị sau khi tất cả học sinh hoàn thành bài thi.",
+    "congratulations": "Chúc mừng bạn đã hoàn thành bài thi!",
+    "examSubmitted": "Bài thi của bạn đã được nộp thành công",
+    "totalScore": "Tổng điểm"
   },
   "publicTakeExam": {
     "loading": "Đang tải đề thi...",
@@ -1104,7 +1107,10 @@
     },
     "question": "Câu",
     "correctAnswer": "Đáp án đúng",
-    "studentAnswer": "Đáp án học sinh chọn"
+    "studentAnswer": "Đáp án học sinh chọn",
+    "yourAnswer": "Câu trả lời của bạn",
+    "noAnswer": "Chưa trả lời",
+    "sampleAnswer": "Câu trả lời mẫu"
   },
   "mindmap": {
     "unsavedChanges": "Bạn có những thay đổi chưa được lưu như bản vẽ, bố cục hoặc thuộc tính nút. Bạn có thực sự muốn rời đi mà không lưu không?",
