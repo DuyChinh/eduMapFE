@@ -125,6 +125,10 @@
 }
 
 /* Header */
+header.dashboard-header {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
 .dashboard-header {
   background: white;
   padding: 0 24px;
@@ -223,7 +227,7 @@
 
 /* Content */
 .dashboard-content {
-  margin: 24px;
+  margin: 0 22px 24px 22px;
   padding: 24px;
   background: white;
   border-radius: 12px;
@@ -269,9 +273,9 @@
 }
 
 /* Dark Mode Styles */
+
 body.dark-mode .dashboard-header {
-  background: #141414;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #1f1f1f;
 }
 
 body.dark-mode .trigger-btn:hover {
