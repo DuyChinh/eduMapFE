@@ -25,6 +25,7 @@ import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import QRScanner from '../components/common/QRScanner';
+import NotificationDropdown from '../components/common/NotificationDropdown';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -320,7 +321,20 @@ const TeacherLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
+        <div className="sider-footer">
+          {!collapsed && (
+            <div className="user-info-compact">
+              <Avatar
+                src={avatarSrc}
+                icon={!avatarSrc && <UserOutlined />}
+              />
+              <div className="user-details">
+                <div className="user-name">{user?.name}</div>
+                <div className="user-role">{t('teacher.role')}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </Sider>
 
       <Layout>

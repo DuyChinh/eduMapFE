@@ -75,18 +75,18 @@ const EditExam = () => {
     try {
       const response = await examService.getExamById(examId);
       const examData = response.data || response;
-      
+
       // Extract subjectId - handle both object (populated) and string (ID) cases
-      const subjectIdValue = examData.subjectId 
-        ? (typeof examData.subjectId === 'object' && examData.subjectId._id 
-          ? examData.subjectId._id 
+      const subjectIdValue = examData.subjectId
+        ? (typeof examData.subjectId === 'object' && examData.subjectId._id
+          ? examData.subjectId._id
           : examData.subjectId)
         : undefined;
 
       // Extract gradeId - handle both object (populated) and string (ID) cases
-      const gradeIdValue = examData.gradeId 
-        ? (typeof examData.gradeId === 'object' && examData.gradeId._id 
-          ? examData.gradeId._id 
+      const gradeIdValue = examData.gradeId
+        ? (typeof examData.gradeId === 'object' && examData.gradeId._id
+          ? examData.gradeId._id
           : examData.gradeId)
         : undefined;
 
@@ -129,7 +129,7 @@ const EditExam = () => {
         const formattedQuestions = examData.questions.map((q, index) => {
           const questionId = q.questionId?._id || q.questionId;
           const questionObj = typeof q.questionId === 'object' ? q.questionId : null;
-          
+
           // If questionId is populated object, preserve full data
           if (questionObj && questionObj.text) {
             return {
@@ -141,7 +141,7 @@ const EditExam = () => {
               isRequired: q.isRequired !== undefined ? q.isRequired : true
             };
           }
-          
+
           // Otherwise, just store metadata
           return {
             _id: questionId,
@@ -173,7 +173,7 @@ const EditExam = () => {
     try {
       const currentLang = localStorage.getItem('language') || 'vi';
       const response = await questionService.getSubjects({ lang: currentLang });
-      
+
       let subjectsData = [];
       if (Array.isArray(response)) {
         subjectsData = response;
@@ -182,7 +182,7 @@ const EditExam = () => {
       } else if (response.items && Array.isArray(response.items)) {
         subjectsData = response.items;
       }
-      
+
       setSubjects(subjectsData);
     } catch (error) {
       console.error('Error fetching subjects:', error);
@@ -194,7 +194,7 @@ const EditExam = () => {
     if (loadingClasses || classesFetchedRef.current) {
       return;
     }
-    
+
     setLoadingClasses(true);
     classesFetchedRef.current = true;
     try {
@@ -224,7 +224,7 @@ const EditExam = () => {
         subjectId,
         limit: 1000 // Load more questions for client-side filtering
       };
-      
+
       const response = await questionService.getQuestions(params);
       const loadedQuestions = response.items || response.data || [];
       setAllQuestions(loadedQuestions);
@@ -313,7 +313,7 @@ const EditExam = () => {
       marks: 1,
       isRequired: true
     };
-    
+
     setSelectedQuestions([...selectedQuestions, newQuestion]);
   };
 
@@ -321,12 +321,12 @@ const EditExam = () => {
     const updated = selectedQuestions
       .filter(q => (q._id || q.id) !== questionId)
       .map((q, index) => ({ ...q, order: index + 1 }));
-    
+
     setSelectedQuestions(updated);
   };
 
   const handleUpdateQuestionMarks = (questionId, marks) => {
-    setSelectedQuestions(selectedQuestions.map(q => 
+    setSelectedQuestions(selectedQuestions.map(q =>
       (q._id || q.id) === questionId ? { ...q, marks } : q
     ));
   };
@@ -502,8 +502,8 @@ const EditExam = () => {
     <div>
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(ROUTES.TEACHER_EXAMS)}
           >
             {t('common.back')}
@@ -604,14 +604,14 @@ const EditExam = () => {
                   if (isAllowUser === 'class') {
                     // fetchClasses is already called in useEffect on mount
                     // No need to call again here to avoid infinite loop
-                    
+
                     return (
                       <Form.Item
                         label={t('exams.allowedClasses')}
                         name="allowedClassIds"
                         rules={[
-                          { 
-                            required: true, 
+                          {
+                            required: true,
                             message: t('exams.allowedClassesRequired')
                           }
                         ]}
@@ -639,12 +639,12 @@ const EditExam = () => {
                 }}
               </Form.Item>
 
-                <Form.Item
-                  label={t('exams.examPassword')}
-                  name="examPassword"
-                >
-                  <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
-                </Form.Item>
+              <Form.Item
+                label={t('exams.examPassword')}
+                name="examPassword"
+              >
+                <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
+              </Form.Item>
 
               <Space style={{ width: '100%' }} size="large">
                 <Form.Item
@@ -687,7 +687,7 @@ const EditExam = () => {
                 label={t('exams.subject')}
                 name="subjectId"
               >
-                <Select 
+                <Select
                   placeholder={t('exams.selectSubject')}
                   showSearch
                   disabled
@@ -698,7 +698,7 @@ const EditExam = () => {
                   {subjects.map(subject => {
                     const currentLang = localStorage.getItem('language') || 'vi';
                     let subjectName = subject.name;
-                    
+
                     switch (currentLang) {
                       case 'en':
                         subjectName = subject.name_en || subject.name;
@@ -707,7 +707,7 @@ const EditExam = () => {
                         subjectName = subject.name_jp || subject.name;
                         break;
                     }
-                    
+
                     return (
                       <Option key={subject._id || subject.id} value={subject._id || subject.id}>
                         {subjectName}
@@ -724,7 +724,7 @@ const EditExam = () => {
                   value={questionSearchQuery}
                   onChange={(e) => handleSearchQueryChange(e.target.value)}
                   allowClear
-                  style={{ 
+                  style={{
                     width: '50%',
                     maxWidth: '100%'
                   }}
@@ -811,13 +811,13 @@ const EditExam = () => {
                         const totalQuestionMarks = calculateTotalQuestionMarks();
                         // Allow small difference (0.01) due to floating point precision
                         const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01;
-                        
+
                         if (totalMarks && !isValid) {
                           return (
                             <Typography.Text type="danger">
-                              {t('exams.marksMismatchWithValues', { 
-                                questionMarks: totalQuestionMarks, 
-                                totalMarks: totalMarks 
+                              {t('exams.marksMismatchWithValues', {
+                                questionMarks: totalQuestionMarks,
+                                totalMarks: totalMarks
                               })}
                             </Typography.Text>
                           );
@@ -1047,12 +1047,12 @@ const EditExam = () => {
                 const totalQuestionMarks = calculateTotalQuestionMarks();
                 // Allow small difference (0.01) due to floating point precision
                 const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01 && selectedQuestions.length > 0;
-                
+
                 const handlePreview = async () => {
                   try {
                     // Validate and get form values
                     const formValues = await form.validateFields();
-                    
+
                     // Prepare questions with full data for preview
                     const loadedQuestions = await Promise.all(
                       selectedQuestions.map(async (q) => {
@@ -1064,7 +1064,7 @@ const EditExam = () => {
                             marks: q.marks || 1
                           };
                         }
-                        
+
                         // If we have question ID, try to fetch full question data
                         const questionId = q._id || q.id;
                         if (questionId) {
@@ -1088,7 +1088,7 @@ const EditExam = () => {
                             };
                           }
                         }
-                        
+
                         return {
                           ...q,
                           order: q.order || 1,
@@ -1096,7 +1096,7 @@ const EditExam = () => {
                         };
                       })
                     );
-                    
+
                     setPreviewExamData(formValues);
                     setPreviewQuestions(loadedQuestions);
                     setPreviewModalVisible(true);
@@ -1130,22 +1130,22 @@ const EditExam = () => {
                     setPreviewModalVisible(true);
                   }
                 };
-                
+
                 return (
                   <Space>
                     <Button onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
                       {t('common.cancel')}
                     </Button>
-                    <Button 
+                    <Button
                       icon={<EyeOutlined />}
                       onClick={handlePreview}
                       disabled={selectedQuestions.length === 0}
                     >
                       {t('exams.preview') || 'Preview'}
                     </Button>
-                    <Button 
-                      type="primary" 
-                      htmlType="submit" 
+                    <Button
+                      type="primary"
+                      htmlType="submit"
                       loading={loading}
                       disabled={!isValid}
                     >
@@ -1160,7 +1160,7 @@ const EditExam = () => {
       </Card>
 
       {/* Preview Modal */}
-      <PreviewExamModal
+      {/* <PreviewExamModal
         open={previewModalVisible}
         onCancel={() => {
           setPreviewModalVisible(false);
@@ -1170,7 +1170,7 @@ const EditExam = () => {
         examData={previewExamData || form.getFieldsValue()}
         questions={previewQuestions.length > 0 ? previewQuestions : selectedQuestions}
         subjects={subjects}
-      />
+      /> */}
     </div>
   );
 };
