@@ -51,9 +51,9 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         autoMonitoring: examData.autoMonitoring || 'off',
         studentVerification: examData.studentVerification || false,
         eduMapOnly: examData.eduMapOnly || false,
-        hideGroupTitles: examData.hideGroupTitles || false,
+        hideGroupTitles: examData.hideGroupTitles !== undefined ? !examData.hideGroupTitles : true,
         sectionsStartFromQ1: examData.sectionsStartFromQ1 || false,
-        hideLeaderboard: examData.hideLeaderboard || false,
+        hideLeaderboard: examData.hideLeaderboard !== undefined ? !examData.hideLeaderboard : true,
         addTitleInfo: examData.addTitleInfo || false,
         preExamNotification: examData.preExamNotification || false,
         preExamNotificationText: examData.preExamNotificationText || '',
@@ -87,9 +87,9 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         autoMonitoring: values.autoMonitoring || 'off',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
-        hideGroupTitles: values.hideGroupTitles || false,
+        hideGroupTitles: !values.hideGroupTitles,
         sectionsStartFromQ1: values.sectionsStartFromQ1 || false,
-        hideLeaderboard: values.hideLeaderboard || false,
+        hideLeaderboard: !values.hideLeaderboard,
         addTitleInfo: values.addTitleInfo || false,
         preExamNotification: values.preExamNotification || false,
         preExamNotificationText: values.preExamNotificationText || '',
@@ -265,7 +265,10 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
               name="timezone"
             >
               <Select>
-                <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</Option>
+                <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh (Vietnam)</Option>
+                <Option value="Asia/Tokyo">Asia/Tokyo (Japan)</Option>
+                <Option value="Europe/London">Europe/London (UK)</Option>
+                <Option value="America/New_York">America/New_York (US Eastern)</Option>
                 <Option value="UTC">UTC</Option>
               </Select>
             </Form.Item>
@@ -355,7 +358,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
 
             <Space direction="vertical" style={{ width: '100%' }}>
               <Form.Item name="hideGroupTitles" valuePropName="checked">
-                <Switch checkedChildren={t('exams.hideGroupTitles')} unCheckedChildren={t('exams.showGroupTitles')} />
+                <Switch checkedChildren={t('exams.showGroupTitles')} unCheckedChildren={t('exams.hideGroupTitles')} />
               </Form.Item>
 
               <Form.Item name="sectionsStartFromQ1" valuePropName="checked">
@@ -363,7 +366,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
               </Form.Item>
 
               <Form.Item name="hideLeaderboard" valuePropName="checked">
-                <Switch checkedChildren={t('exams.hideLeaderboard')} unCheckedChildren={t('exams.showLeaderboard')} />
+                <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
               </Form.Item>
 
               <Form.Item name="addTitleInfo" valuePropName="checked">

@@ -76,9 +76,9 @@ const CreateExam = () => {
       autoMonitoring: 'off',
       studentVerification: false,
       eduMapOnly: false,
-      hideGroupTitles: false,
+      hideGroupTitles: true,
       sectionsStartFromQ1: false,
-      hideLeaderboard: false,
+      hideLeaderboard: true,
       addTitleInfo: false,
       preExamNotification: false,
       blockLateEntry: false,
@@ -304,9 +304,9 @@ const CreateExam = () => {
         autoMonitoring: values.autoMonitoring || 'off',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
-        hideGroupTitles: values.hideGroupTitles || false,
+        hideGroupTitles: !values.hideGroupTitles,
         sectionsStartFromQ1: values.sectionsStartFromQ1 || false,
-        hideLeaderboard: values.hideLeaderboard || false,
+        hideLeaderboard: !values.hideLeaderboard,
         addTitleInfo: values.addTitleInfo || false,
         preExamNotification: values.preExamNotification || false,
         preExamNotificationText: values.preExamNotificationText || '',
@@ -730,7 +730,10 @@ const CreateExam = () => {
                 name="timezone"
               >
                 <Select>
-                  <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</Option>
+                  <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh (Vietnam)</Option>
+                  <Option value="Asia/Tokyo">Asia/Tokyo (Japan)</Option>
+                  <Option value="Europe/London">Europe/London (UK)</Option>
+                  <Option value="America/New_York">America/New_York (US Eastern)</Option>
                   <Option value="UTC">UTC</Option>
                 </Select>
               </Form.Item>
@@ -826,7 +829,7 @@ const CreateExam = () => {
 
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Form.Item name="hideGroupTitles" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.hideGroupTitles')} unCheckedChildren={t('exams.showGroupTitles')} />
+                  <Switch checkedChildren={t('exams.showGroupTitles')} unCheckedChildren={t('exams.hideGroupTitles')} />
                 </Form.Item>
 
                 <Form.Item name="sectionsStartFromQ1" valuePropName="checked">
@@ -834,7 +837,7 @@ const CreateExam = () => {
                 </Form.Item>
 
                 <Form.Item name="hideLeaderboard" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.hideLeaderboard')} unCheckedChildren={t('exams.showLeaderboard')} />
+                  <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
                 </Form.Item>
 
                 <Form.Item name="addTitleInfo" valuePropName="checked">
