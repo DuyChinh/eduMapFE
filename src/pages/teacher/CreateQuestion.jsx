@@ -130,17 +130,19 @@ const CreateQuestion = () => {
   const [previewKey, setPreviewKey] = useState(0);
 
   // Get current form values for preview
+  // Get current form values for preview
   const getCurrentFormData = () => {
-    const formValues = form.getFieldsValue();
+    // Rely on questionData state which is kept in sync with form via onValuesChange
+    // This avoids calling form.getFieldsValue() during render which causes warnings
     return {
-      name: formValues.name || questionData.name,
-      text: formValues.text || questionData.text,
-      type: formValues.type || questionData.type,
-      subjectId: formValues.subject || questionData.subject,
+      name: questionData.name,
+      text: questionData.text,
+      type: questionData.type,
+      subjectId: questionData.subjectId,
       choices: questionData.choices,
-      answer: formValues.answer !== undefined ? formValues.answer : questionData.answer,
-      explanation: formValues.explanation || questionData.explanation,
-      isPublic: formValues.isPublic !== undefined ? formValues.isPublic : questionData.isPublic,
+      answer: questionData.answer,
+      explanation: questionData.explanation,
+      isPublic: questionData.isPublic,
       images: questionData.images
     };
   };
@@ -191,7 +193,18 @@ const CreateQuestion = () => {
     }
   };
 
-  const removeChoiceImage = (index) => {
+  const removeChoiceImage = async (index) => {
+    try {
+      const imageUrl = questionData.choices[index].image;
+      if (imageUrl) {
+        await uploadService.deleteImage(imageUrl);
+        message.success('Image deleted');
+      }
+    } catch (error) {
+      console.error('Failed to delete image from cloud', error);
+      // Proceed to remove from UI anyway
+    }
+
     const newChoices = [...questionData.choices];
     newChoices[index] = { ...newChoices[index], image: '' };
     setQuestionData(prev => ({
@@ -211,8 +224,18 @@ const CreateQuestion = () => {
   };
 
   // Remove choice
-  const removeChoice = (index) => {
+  const removeChoice = async (index) => {
     if (questionData.choices.length > 2) {
+      try {
+        const choice = questionData.choices[index];
+        if (choice && choice.image) {
+          await uploadService.deleteImage(choice.image);
+          message.success('Choice image deleted');
+        }
+      } catch (error) {
+        console.error('Failed to delete choice image', error);
+      }
+
       const newChoices = questionData.choices.filter((_, i) => i !== index);
       setQuestionData(prev => ({
         ...prev,
@@ -248,7 +271,17 @@ const CreateQuestion = () => {
     }
   };
 
-  const removeQuestionImage = (indexToRemove) => {
+  const removeQuestionImage = async (indexToRemove) => {
+    try {
+      const imageUrl = questionData.images[indexToRemove];
+      if (imageUrl) {
+        await uploadService.deleteImage(imageUrl);
+        message.success('Image deleted');
+      }
+    } catch (error) {
+      console.error('Failed to delete image from cloud', error);
+    }
+
     setQuestionData(prev => ({
       ...prev,
       images: prev.images.filter((_, index) => index !== indexToRemove)
@@ -401,7 +434,7 @@ const CreateQuestion = () => {
                   >
                     <div>
                       {uploading ? <LoadingOutlined /> : <PlusOutlined />}
-                      <div style={{ marginTop: 8 }}>Upload</div>
+                      <div style={{ marginTop: 8 }}>{t('common.upload')}</div>
                     </div>
                   </Upload>
                 </div>
