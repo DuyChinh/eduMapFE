@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 const { Title, Text, Paragraph } = Typography;
 
 const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects = [] }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const mathJaxConfig = {
     tex: {
@@ -90,7 +90,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
     
     // If subjectId is already an object with name properties
     if (typeof subjectId === 'object' && subjectId !== null) {
-      const currentLang = localStorage.getItem('language') || 'vi';
+      const currentLang = i18n.language || 'vi';
       switch (currentLang) {
         case 'en':
           return subjectId.name_en || subjectId.name || '-';
@@ -110,7 +110,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
     const subject = subjects.find(s => (s._id || s.id) === subjectId);
     if (!subject) return String(subjectId);
     
-    const currentLang = localStorage.getItem('language') || 'vi';
+    const currentLang = i18n.language || 'vi';
     switch (currentLang) {
       case 'en':
         return subject.name_en || subject.name || String(subjectId);

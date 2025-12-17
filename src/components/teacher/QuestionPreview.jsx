@@ -5,7 +5,7 @@ import { MathJax, MathJaxContext } from 'better-react-mathjax';
 const { Title, Text, Paragraph } = Typography;
 
 const QuestionPreview = ({ questionData, subjects = [] }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Function to get subject name from ID based on current language
   const getSubjectName = (subjectId) => {
@@ -14,7 +14,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
     if (!subject) return subjectId;
 
     // Get current language
-    const currentLang = localStorage.getItem('language') || 'vi';
+    const currentLang = i18n.language || 'vi';
 
     // Return appropriate name based on language
     switch (currentLang) {

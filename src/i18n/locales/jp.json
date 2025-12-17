@@ -240,8 +240,15 @@
       "questions": "問題",
       "exams": "試験",
       "classes": "クラス",
-      "students": "学生"
+      "students": "学生",
+      "totalSubmissions": "提出総数",
+      "averageScore": "平均スコア",
+      "recentExams": "最近の試験",
+      "recentSubmissions": "最近の提出"
     },
+    "published": "公開済み",
+    "last7Days": "過去7日間",
+    "submissions": "提出",
     "quickStart": "クイックスタート",
     "actions": {
       "createExam": "演習または試験を作成",
@@ -249,10 +256,25 @@
       "fromBank": "共有バンクから試験を作成",
       "fromBankDesc": "利用可能な問題バンクから問題を選択",
       "downloadExam": "EduMapから試験をダウンロード",
-      "downloadExamDesc": "EduMapライブラリから試験をインポート"
+      "downloadExamDesc": "EduMapライブラリから試験をインポート",
+      "manageQuestions": "問題を管理",
+      "manageQuestionsDesc": "問題バンクを作成・整理",
+      "manageClasses": "クラスを管理",
+      "manageClassesDesc": "クラスを作成・管理"
     },
     "recentActivities": "最近のアクティビティ",
-    "noActivities": "アクティビティはまだありません"
+    "noActivities": "アクティビティはまだありません",
+    "noData": "データがありません",
+    "charts": {
+      "examStatus": "試験状況分布",
+      "published": "公開済み",
+      "draft": "下書き",
+      "scoreDistribution": "スコア分布",
+      "scoreRange": "スコア範囲",
+      "students": "学生",
+      "submissionsOverTime": "提出の推移",
+      "topExams": "トップパフォーマンス試験"
+    }
   },
   "studentDashboard": {
     "welcome": "EduMapへようこそ！ 🎓",
@@ -262,12 +284,31 @@
       "classes": "クラス",
       "exams": "試験",
       "completed": "完了",
-      "upcoming": "予定"
+      "upcoming": "予定",
+      "averageScore": "平均スコア",
+      "passRate": "合格率",
+      "recentActivity": "最近のアクティビティ"
     },
+    "last7Days": "過去7日間",
     "upcomingExams": "予定の試験",
     "noExams": "試験はまだありません",
     "recentResults": "最近の結果",
-    "noResults": "結果はまだありません"
+    "noResults": "結果はまだありません",
+    "noData": "データがありません",
+    "charts": {
+      "scoreDistribution": "スコア分布",
+      "scoreRange": "スコア範囲",
+      "exams": "試験",
+      "performanceOverTime": "パフォーマンスの推移",
+      "date": "日付",
+      "averageScore": "平均スコア (%)"
+    },
+    "table": {
+      "examName": "試験名",
+      "score": "スコア",
+      "status": "ステータス",
+      "submittedAt": "提出日時"
+    }
   },
   "teacherPages": {
     "questions": {

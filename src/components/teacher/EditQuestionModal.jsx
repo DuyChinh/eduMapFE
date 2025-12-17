@@ -23,14 +23,13 @@ const EditQuestionModal = ({ visible, questionData, onCancel, onSuccess }) => {
     explanation: '',
     isPublic: true
   });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Fetch subjects on component mount
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const currentLang = localStorage.getItem('language') || 'vi';
-        const response = await questionService.getSubjects({ lang: currentLang });
+        const response = await questionService.getSubjects();
         
         let subjectsData = [];
         if (Array.isArray(response)) {
