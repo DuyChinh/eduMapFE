@@ -38,7 +38,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [questionSearchLoading, setQuestionSearchLoading] = useState(false);
   const [questionSearchQuery, setQuestionSearchQuery] = useState('');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Fetch subjects on mount
   useEffect(() => {
@@ -119,8 +119,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
 
   const fetchSubjects = async () => {
     try {
-      const currentLang = localStorage.getItem('language') || 'vi';
-      const response = await questionService.getSubjects({ lang: currentLang });
+      const response = await questionService.getSubjects();
       
       let subjectsData = [];
       if (Array.isArray(response)) {
@@ -468,7 +467,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
                 }}
               >
                 {subjects.map(subject => {
-                  const currentLang = localStorage.getItem('language') || 'vi';
+                  const currentLang = i18n.language || 'vi';
                   let subjectName = subject.name;
                   
                   switch (currentLang) {

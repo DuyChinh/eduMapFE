@@ -117,8 +117,8 @@ const EditExam = () => {
         preExamNotificationText: examData.preExamNotificationText || '',
         startTime: examData.startTime ? dayjs(examData.startTime) : undefined,
         endTime: examData.endTime ? dayjs(examData.endTime) : undefined,
-        availableFrom: examData.availableFrom ? dayjs(examData.availableFrom) : undefined,
-        availableUntil: examData.availableUntil ? dayjs(examData.availableUntil) : undefined,
+        blockLateEntry: examData.lateEntryGracePeriod !== undefined && examData.lateEntryGracePeriod !== null,
+        lateEntryGracePeriod: examData.lateEntryGracePeriod !== undefined ? examData.lateEntryGracePeriod : 0,
         status: examData.status || 'draft',
         settings: examData.settings || {},
         allowedClassIds: examData.allowedClassIds || []
@@ -262,14 +262,27 @@ const EditExam = () => {
   const distributeMarksEvenly = (questions) => {
     const totalMarks = form.getFieldValue('totalMarks') || 100;
     if (questions.length === 0) return questions;
-
-    // Calculate marks per question - keep all decimal places
-    const marksPerQuestion = totalMarks / questions.length;
-
-    return questions.map((q) => ({
-      ...q,
-      marks: marksPerQuestion
-    }));
+    
+    // Calculate marks per question and round to 1 decimal place
+    const marksPerQuestion = Math.round((totalMarks / questions.length) * 10) / 10;
+    
+    // Calculate the sum after rounding
+    const roundedTotal = marksPerQuestion * questions.length;
+    
+    // Calculate the difference to adjust the last question
+    const difference = parseFloat((totalMarks - roundedTotal).toFixed(1));
+    
+    return questions.map((q, index) => {
+      // Add the difference to the last question to ensure total matches exactly
+      const marks = index === questions.length - 1 
+        ? parseFloat((marksPerQuestion + difference).toFixed(1))
+        : marksPerQuestion;
+      
+      return {
+        ...q,
+        marks
+      };
+    });
   };
 
   const handleAutoDistributeMarks = () => {
@@ -382,16 +395,17 @@ const EditExam = () => {
       width: 120,
       render: (_, record) => {
         const marksValue = record.marks;
-        const marksStr = marksValue?.toString() || '0';
-
+        // Format to 1 decimal place for display
+        const displayValue = marksValue != null ? parseFloat(marksValue.toFixed(1)) : 0;
+        
         return (
           <InputNumber
             min={0}
-            step={0.01}
-            value={marksValue}
+            step={0.1}
+            value={displayValue}
             onChange={(value) => handleUpdateQuestionMarks(record._id || record.id, value)}
             style={{ width: '100%' }}
-            title={marksStr}
+            precision={1}
           />
         );
       },
@@ -418,9 +432,9 @@ const EditExam = () => {
     const totalQuestionMarks = calculateTotalQuestionMarks();
     // Allow small difference (0.01) due to decimal precision
     if (Math.abs(totalQuestionMarks - values.totalMarks) >= 0.01) {
-      message.error(t('exams.marksMismatchWithValues', {
-        questionMarks: totalQuestionMarks,
-        totalMarks: values.totalMarks
+      message.error(t('exams.marksMismatchWithValues', { 
+        questionMarks: totalQuestionMarks.toFixed(1), 
+        totalMarks: values.totalMarks 
       }));
       return;
     }
@@ -452,8 +466,7 @@ const EditExam = () => {
         preExamNotificationText: values.preExamNotificationText || '',
         startTime: values.startTime ? values.startTime.toISOString() : undefined,
         endTime: values.endTime ? values.endTime.toISOString() : undefined,
-        availableFrom: values.availableFrom ? values.availableFrom.toISOString() : undefined,
-        availableUntil: values.availableUntil ? values.availableUntil.toISOString() : undefined,
+        lateEntryGracePeriod: values.blockLateEntry ? (values.lateEntryGracePeriod || 0) : undefined,
         status: values.status,
         settings: values.settings || {},
         allowedClassIds: values.isAllowUser === 'class' ? (values.allowedClassIds || []) : [],
@@ -506,7 +519,7 @@ const EditExam = () => {
           onFinish={handleSubmit}
           autoComplete="off"
         >
-          <Collapse defaultActiveKey={['basic', 'questions']} ghost>
+          <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings']} ghost>
             {/* Basic Information */}
             <Collapse.Panel header={t('exams.basicInfo')} key="basic">
               <Form.Item
@@ -855,31 +868,37 @@ const EditExam = () => {
                 </Form.Item>
               </Space>
 
-              <Space style={{ width: '100%' }} size="large">
-                <Form.Item
-                  label={t('exams.availableFrom')}
-                  name="availableFrom"
-                  style={{ flex: 1 }}
-                >
-                  <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
+              <Form.Item 
+                name="blockLateEntry" 
+                valuePropName="checked"
+                style={{ marginBottom: '12px' }}
+              >
+                <Switch 
+                  checkedChildren={t('exams.blockLateEntry')} 
+                  unCheckedChildren={t('exams.allowLateEntryAnytime')} 
+                />
+              </Form.Item>
 
-                <Form.Item
-                  label={t('exams.availableUntil')}
-                  name="availableUntil"
-                  style={{ flex: 1 }}
-                >
-                  <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Space>
+              <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.blockLateEntry !== currentValues.blockLateEntry}>
+                {({ getFieldValue }) => {
+                  const blockLateEntry = getFieldValue('blockLateEntry');
+                  return blockLateEntry ? (
+                    <Form.Item 
+                      label={t('exams.lateEntryGracePeriod')}
+                      name="lateEntryGracePeriod"
+                      tooltip={t('exams.lateEntryGracePeriodTooltip')}
+                    >
+                      <InputNumber
+                        min={0}
+                        step={1}
+                        addonAfter={t('exams.minutes')}
+                        style={{ width: '200px' }}
+                        placeholder="0"
+                      />
+                    </Form.Item>
+                  ) : null;
+                }}
+              </Form.Item>
             </Collapse.Panel>
 
             {/* View Settings */}

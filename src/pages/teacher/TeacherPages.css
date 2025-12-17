@@ -1,94 +1,445 @@
-/* Teacher Dashboard */
-.teacher-dashboard {
+/* ========================================
+   Teacher Dashboard - Modern Professional Design
+   ======================================== */
+
+/* CSS Variables for Charts (Light Mode) */
+:root {
+  --chart-grid-color: #f0f0f0;
+  --chart-text-color: #666;
+  --chart-axis-color: #d9d9d9;
+  --chart-label-color: #333;
+  --tooltip-bg: rgba(255, 255, 255, 0.98);
+  --tooltip-border: #f0f0f0;
+  --tooltip-label-color: #666;
+  --tooltip-value-color: #333;
+}
+
+/* Dashboard Container */
+.dashboard-container {
   padding: 0;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.page-header {
+/* Loading State */
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+/* Header Section */
+.dashboard-header {
+  margin-bottom: 32px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.welcome-title {
+  margin-bottom: 8px !important;
+  font-weight: 700 !important;
+  color: #1a1a2e;
+  text-align: left !important;
+}
+
+.welcome-title .wave-emoji {
+  -webkit-text-fill-color: initial;
+  background: none;
+}
+
+.wave-emoji {
+  display: inline-block;
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  75% { transform: rotate(-15deg); }
+}
+
+.welcome-subtitle {
+  font-size: 16px;
+  color: #666;
+}
+
+/* Stats Grid */
+.stats-grid {
   margin-bottom: 24px;
 }
 
-.page-header h2 {
-  margin-bottom: 8px;
+/* Modern Stat Cards */
+.stat-card-modern {
+  position: relative;
+  padding: 24px;
+  border-radius: 16px;
+  color: white;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: default;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-/* Statistics Cards */
-.statistics-row {
-  margin-bottom: 24px;
-}
-
-.stat-card {
-  border-radius: 12px;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.stat-card:hover {
+.stat-card-modern:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
-.stat-card-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.stat-card-green {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
-}
-
-.stat-card-purple {
-  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-  color: white;
-}
-
-.stat-card-orange {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-}
-
-.stat-card .ant-statistic-title,
-.stat-card .ant-statistic-content {
-  color: white;
-}
-
-.stat-card .ant-statistic-title {
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.stat-card .ant-statistic-content-value {
-  font-size: 28px;
-  font-weight: bold;
-}
-
-/* Quick Actions */
-.quick-actions-card {
-  margin-bottom: 24px;
-  border-radius: 12px;
-}
-
-.action-card {
-  border-radius: 12px;
-  text-align: center;
-  transition: transform 0.3s, box-shadow 0.3s;
-  border: 2px solid #f0f0f0;
-}
-
-.action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
-}
-
-.action-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+.stat-card-modern .stat-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.stat-card-modern .stat-icon {
+  font-size: 28px;
   color: white;
+}
+
+.stat-card-modern .stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-card-modern .stat-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-card-modern .stat-value {
+  margin: 0 !important;
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  color: white !important;
+  line-height: 1.2 !important;
+}
+
+.stat-card-modern .stat-suffix {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.85;
+  margin-left: 6px;
+  display: inline-block;
+}
+
+.stat-card-modern .stat-decoration {
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.stat-card-modern .stat-decoration::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Stat Card Colors */
+.stat-questions {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-exams {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.stat-classes {
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+}
+
+.stat-students {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Metrics Row */
+.metrics-row {
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-icon {
+  font-size: 22px;
+}
+
+.metric-icon.gold { color: #faad14; }
+.metric-icon.green { color: #52c41a; }
+.metric-icon.blue { color: #667eea; }
+.metric-icon.orange { color: #ff7a45; }
+
+.metric-label {
+  font-size: 13px;
+  color: #8c8c8c;
+  font-weight: 500;
+}
+
+.metric-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.metric-body.simple-metric {
+  text-align: center;
+}
+
+.metric-number {
+  margin: 0 !important;
+  font-size: 36px !important;
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+.metric-subtitle {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.progress-text-sm {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Charts Section */
+.charts-row {
+  margin-bottom: 24px;
+}
+
+.chart-card-modern {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.chart-card-modern:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card-modern .ant-card-head {
+  border-bottom: 1px solid #f5f5f5;
+  padding: 16px 24px;
+}
+
+.chart-card-modern .ant-card-body {
+  padding: 24px;
+}
+
+.chart-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.chart-icon {
+  font-size: 18px;
+  color: #667eea;
+}
+
+.chart-icon.gold {
+  color: #faad14;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+/* Custom Tooltip */
+.custom-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #f0f0f0;
+}
+
+.tooltip-label {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.tooltip-value {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Top Exams Card */
+.top-exams-card {
+  margin-bottom: 24px;
+}
+
+.top-exam-card {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.top-exam-card:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+}
+
+.top-exam-card.rank-1 {
+  background: linear-gradient(135deg, #fff9e6 0%, #fffbe6 100%);
+  border: 1px solid #ffe58f;
+}
+
+.top-exam-card.rank-2 {
+  background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+  border: 1px solid #d9d9d9;
+}
+
+.top-exam-card.rank-3 {
+  background: linear-gradient(135deg, #fff7e6 0%, #fffbe6 100%);
+  border: 1px solid #ffd591;
+}
+
+.exam-rank {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.trophy-icon {
+  font-size: 20px;
+  color: #faad14;
+}
+
+.rank-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: #8c8c8c;
+}
+
+.exam-info {
+  margin-bottom: 12px;
+}
+
+.exam-name {
+  font-size: 15px;
+  color: #333;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.exam-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.exam-percentage {
+  font-size: 24px;
+  font-weight: 700;
+  color: #52c41a;
+}
+
+.exam-submissions {
+  font-size: 12px;
+}
+
+/* Quick Actions */
+.quick-actions-card-modern {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.quick-actions-card-modern .ant-card-head {
+  border-bottom: 1px solid #f5f5f5;
+  padding: 16px 24px;
+}
+
+.action-card-modern {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 14px;
+  border: 2px solid #f0f0f0;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-card-modern:hover {
+  border-color: #667eea;
+  background: #fff;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+}
+
+.action-icon-modern {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
 .action-icon-blue {
@@ -103,52 +454,19 @@
   background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
 }
 
-.action-card h4 {
-  margin-bottom: 8px;
-  font-size: 16px;
+.action-text h4 {
+  margin: 0 0 4px 0 !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #333;
 }
 
-.action-card p {
-  font-size: 14px;
-  margin-bottom: 0;
+.action-text .ant-typography-secondary {
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-/* Recent Activities */
-.recent-activities-card {
-  border-radius: 12px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.empty-state p {
-  margin-top: 16px;
-  font-size: 16px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .stat-card .ant-statistic-content-value {
-    font-size: 24px;
-  }
-  
-  .action-icon {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .action-icon svg {
-    font-size: 24px !important;
-  }
-  
-  .action-card h4 {
-    font-size: 14px;
-  }
-}
-
-/* Responsive table with scroll for all teacher pages */
+/* Responsive table with scroll */
 .ant-table-wrapper {
   overflow-x: auto;
 }
@@ -157,42 +475,58 @@
   min-width: 600px;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
+  .stat-card-modern {
+    padding: 20px;
+  }
+  
+  .stat-card-modern .stat-value {
+    font-size: 22px !important;
+  }
+  
+  .stat-card-modern .stat-suffix {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+  
+  .stat-card-modern .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .stat-card-modern .stat-icon {
+    font-size: 22px;
+  }
+  
+  .metric-body {
+    min-height: 80px;
+  }
+  
+  .metric-number {
+    font-size: 28px !important;
+  }
+  
+  .action-card-modern {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .action-icon-modern {
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+  }
+  
+  .action-text h4 {
+    font-size: 15px !important;
+  }
+
   .ant-table {
     min-width: 800px;
   }
-}
-
-/* Dark Mode Styles */
-/* Note: Stat cards with gradients (stat-card-blue, etc.) keep their colors in dark mode */
-/* Action cards and other elements need dark mode styling */
-
-body.dark-mode .page-header h2 {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-body.dark-mode .action-card {
-  background: #1f1f1f;
-  border-color: #434343;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-body.dark-mode .action-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-}
-
-body.dark-mode .action-card h4,
-body.dark-mode .action-card p {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-body.dark-mode .empty-state {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-body.dark-mode .empty-state p {
-  color: rgba(255, 255, 255, 0.65);
 }
 
 /* Responsive buttons */
@@ -209,37 +543,126 @@ body.dark-mode .empty-state p {
     min-width: auto;
     padding: 4px 8px;
   }
-  
-  /* Make filters stack on mobile */
-  .ant-select,
-  .ant-input-search {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
-  }
-  
-  /* Page headers responsive */
-  .page-header h2 {
-    font-size: 20px;
-  }
 }
 
-@media (max-width: 480px) {
-  .page-header h2 {
-    font-size: 18px;
-  }
-  
-  /* Stack action buttons on very small screens */
-  .ant-space {
-    width: 100%;
-  }
-  
-  .ant-space-item {
-    width: 100%;
-  }
-  
-  .ant-space-item .ant-btn {
-    width: 100%;
-  }
+/* Dark Mode Styles */
+body.dark-mode .dashboard-container {
+  background: transparent;
+}
+
+body.dark-mode .welcome-title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .welcome-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .metric-card {
+  background: #1f1f1f;
+  border-color: #434343;
+}
+
+body.dark-mode .metric-label {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .metric-number {
+  color: #fff !important;
+}
+
+body.dark-mode .progress-text-sm {
+  color: #fff;
+}
+
+body.dark-mode .chart-card-modern,
+body.dark-mode .quick-actions-card-modern {
+  background: #1f1f1f;
+  border-color: #434343;
+}
+
+body.dark-mode .chart-card-modern .ant-card-head,
+body.dark-mode .quick-actions-card-modern .ant-card-head {
+  border-color: #434343;
+}
+
+body.dark-mode .chart-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .top-exam-card {
+  background: #2a2a2a;
+  border-color: #434343;
+}
+
+body.dark-mode .top-exam-card.rank-1 {
+  background: linear-gradient(135deg, #3d3100 0%, #2a2a00 100%);
+  border-color: #7d6800;
+}
+
+body.dark-mode .exam-name {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .action-card-modern {
+  background: #2a2a2a;
+  border-color: #434343;
+}
+
+body.dark-mode .action-card-modern:hover {
+  background: #333;
+  border-color: #667eea;
+}
+
+body.dark-mode .action-text h4 {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .custom-tooltip {
+  background: #2a2a2a;
+  border-color: #434343;
+}
+
+body.dark-mode .tooltip-label {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .tooltip-value {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark Mode CSS Variables for Charts */
+body.dark-mode {
+  --chart-grid-color: #434343;
+  --chart-text-color: rgba(255, 255, 255, 0.65);
+  --chart-axis-color: #595959;
+  --chart-label-color: rgba(255, 255, 255, 0.85);
+  --tooltip-bg: #2a2a2a;
+  --tooltip-border: #434343;
+  --tooltip-label-color: rgba(255, 255, 255, 0.65);
+  --tooltip-value-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Score Distribution Card */
+.score-distribution-card {
+  border-radius: 12px;
+}
+
+.score-distribution-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+body.dark-mode .score-distribution-card {
+  background: #1f1f1f;
+  border-color: #434343;
+}
+
+body.dark-mode .score-distribution-card .ant-card-head {
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .score-distribution-card .ant-card-head-title {
+  color: rgba(255, 255, 255, 0.85);
 }
 

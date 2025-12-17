@@ -94,12 +94,11 @@ const ExamList = () => {
     fetchExams();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  // Fetch subjects on component mount and when language changes
+  // Fetch subjects on component mount
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const currentLang = i18n.language || localStorage.getItem('language') || 'vi';
-        const response = await questionService.getSubjects({ lang: currentLang });
+        const response = await questionService.getSubjects();
         
         let subjectsData = [];
         if (Array.isArray(response)) {
@@ -224,7 +223,7 @@ const ExamList = () => {
     if (!subject) return '-';
     if (typeof subject === 'string') return subject;
     
-    const currentLang = i18n.language || localStorage.getItem('language') || 'vi';
+    const currentLang = i18n.language || 'vi';
     switch (currentLang) {
       case 'en':
         return subject.name_en || subject.name || '-';

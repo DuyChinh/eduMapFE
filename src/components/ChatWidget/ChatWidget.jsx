@@ -161,11 +161,6 @@ const ChatWidget = () => {
         (location.pathname.includes('/exam/') && location.pathname.includes('/take')) || // Student exam: /student/exam/:examId/take
         location.pathname.match(/^\/exam\/[^/]+$/) || // Public exam route: /exam/:shareCode
         location.pathname.includes('/exam-error'); // Exam error page
-    
-    // If on exam page, don't render chatbot (after all hooks are called)
-    if (isExamPage) {
-        return null;
-    }
 
     const supportedLanguages = [
         { code: 'vi-VN', name: 'Tiếng Việt', flag: '🇻🇳' },
@@ -677,6 +672,11 @@ const ChatWidget = () => {
         !location.pathname.endsWith('/mindmaps') && 
         !location.pathname.includes('/shared') && 
         !location.pathname.includes('/trash');
+
+    // Don't render chatbot on exam pages
+    if (isExamPage) {
+        return null;
+    }
 
     return (
         <div className={`chat-widget-container ${isMindmapEditor ? 'chat-position-left' : ''}`}>

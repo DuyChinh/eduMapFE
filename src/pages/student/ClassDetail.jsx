@@ -34,13 +34,17 @@ const ClassDetail = () => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const postId = searchParams.get('postId');
+  const [activeTab, setActiveTab] = useState(postId ? 'newsfeed' : 'overview');
+
   const [classData, setClassData] = useState(null);
   const [students, setStudents] = useState([]);
   const [teacher, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchClassDetail = async () => {
-    setLoading(true);
+    if (!classData) setLoading(true);
     try {
       const response = await classService.getClassById(classId);
 
@@ -55,7 +59,7 @@ const ClassDetail = () => {
           const teacherResponse = await userService.getUserById(classInfo.teacherId);
           setTeacher(teacherResponse.data || teacherResponse);
         } catch (error) {
-          console.error('❌ Error fetching teacher:', classInfo.teacherId, error);
+          console.error('Error fetching teacher:', classInfo.teacherId, error);
           setTeacher({ _id: classInfo.teacherId, name: t('classes.teacher'), email: 'unknown@example.com' });
         }
       } else if (classInfo.teacher) {
@@ -74,7 +78,7 @@ const ClassDetail = () => {
             const studentResponse = await userService.getUserById(studentId);
             return studentResponse.data || studentResponse;
           } catch (error) {
-            console.error('❌ Error fetching student:', studentId, error);
+            console.error('Error fetching student:', studentId, error);
             return { _id: studentId, name: t('classes.unknownStudent'), email: 'unknown@example.com' };
           }
         });
@@ -83,8 +87,12 @@ const ClassDetail = () => {
         setStudents(studentsData);
       }
     } catch (error) {
-      console.error('❌ Student error fetching class detail:', error);
-      message.error('Failed to load class details');
+      console.error('Error fetching class detail:', error);
+      if (error.response && (error.response.status === 403 || error.response.status === 404)) {
+        message.error('Bạn đã bị xóa khỏi lớp học này.');
+      } else {
+        message.error('Failed to load class details');
+      }
       navigate(ROUTES.STUDENT_CLASSES);
     } finally {
       setLoading(false);
@@ -246,13 +254,13 @@ const ClassDetail = () => {
   const items = [
     {
       key: 'overview',
-      label: 'Tổng quan',
+      label: t('classes.overview'),
       children: overviewContent
     },
     {
       key: 'newsfeed',
-      label: 'Bảng tin',
-      children: <ClassFeed classId={classId} />
+      label: t('classes.newsfeed'),
+      children: <ClassFeed classId={classId} highlightPostId={postId} />
     }
   ];
 
@@ -271,7 +279,12 @@ const ClassDetail = () => {
         </Space>
       </div>
 
-      <Tabs defaultActiveKey="overview" items={items} destroyInactiveTabPane={true} />
+      <Tabs
+        activeKey={activeTab}
+        items={items}
+        destroyOnHidden={true}
+        onChange={(key) => setActiveTab(key)}
+      />
     </div>
   );
 };

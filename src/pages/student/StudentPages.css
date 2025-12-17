@@ -1,78 +1,399 @@
-/* Student Dashboard */
-.student-dashboard {
+/* ========================================
+   Student Dashboard - Modern Professional Design
+   ======================================== */
+
+/* Dashboard Container */
+.dashboard-container {
   padding: 0;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.page-header {
+/* Loading State */
+.dashboard-loading {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
   gap: 16px;
 }
 
-.page-header h2 {
-  margin-bottom: 8px;
+/* Header Section */
+.dashboard-header {
+  margin-bottom: 32px;
 }
 
-/* Statistics Cards */
-.statistics-row {
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.welcome-title {
+  margin-bottom: 8px !important;
+  font-weight: 700 !important;
+  color: #1a1a2e;
+}
+
+.welcome-title .wave-emoji {
+  -webkit-text-fill-color: initial;
+  background: none;
+}
+
+.wave-emoji {
+  display: inline-block;
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  75% { transform: rotate(-15deg); }
+}
+
+.welcome-subtitle {
+  font-size: 16px;
+  color: #666;
+}
+
+.join-class-btn {
+  height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+  transition: all 0.3s ease;
+}
+
+.join-class-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
+}
+
+/* Stats Grid */
+.stats-grid {
   margin-bottom: 24px;
 }
 
-.stat-card {
-  border-radius: 12px;
-  transition: transform 0.3s, box-shadow 0.3s;
+/* Modern Stat Cards */
+.stat-card-modern {
+  position: relative;
+  padding: 24px;
+  border-radius: 16px;
+  color: white;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: default;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.stat-card:hover {
+.stat-card-modern:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
-.stat-card-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.stat-card-modern .stat-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.stat-card-modern .stat-icon {
+  font-size: 28px;
   color: white;
 }
 
-.stat-card-green {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
+.stat-card-modern .stat-content {
+  flex: 1;
 }
 
-.stat-card-purple {
-  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-  color: white;
-}
-
-.stat-card-orange {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-}
-
-.stat-card .ant-statistic-title,
-.stat-card .ant-statistic-content {
-  color: white;
-}
-
-.stat-card .ant-statistic-title {
+.stat-card-modern .stat-label {
   font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  display: block;
   margin-bottom: 4px;
 }
 
-.stat-card .ant-statistic-content-value {
-  font-size: 28px;
-  font-weight: bold;
+.stat-card-modern .stat-value {
+  margin: 0 !important;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  color: white !important;
+  line-height: 1.2 !important;
 }
 
-/* Cards */
-.upcoming-exams-card,
-.recent-results-card {
+.stat-card-modern .stat-decoration {
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.stat-card-modern .stat-decoration::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Stat Card Colors */
+.stat-classes {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-exams {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.stat-completed {
+  background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+}
+
+.stat-upcoming {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Metrics Row */
+.metrics-row {
   margin-bottom: 24px;
-  border-radius: 12px;
 }
 
-/* Responsive table with scroll for all student pages */
+.metric-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metric-icon {
+  font-size: 24px;
+}
+
+.metric-icon.gold { color: #faad14; }
+.metric-icon.green { color: #52c41a; }
+.metric-icon.blue { color: #667eea; }
+.metric-icon.orange { color: #ff7a45; }
+
+.metric-label {
+  font-size: 14px;
+  color: #8c8c8c;
+  font-weight: 500;
+}
+
+.metric-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.metric-body.activity-metric {
+  text-align: center;
+}
+
+.activity-number {
+  margin: 0 !important;
+  font-size: 48px !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #ff7a45 0%, #ff4d4f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.progress-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Charts Section */
+.charts-row {
+  margin-bottom: 24px;
+}
+
+.chart-card-modern {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.chart-card-modern:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card-modern .ant-card-head {
+  border-bottom: 1px solid #f5f5f5;
+  padding: 16px 24px;
+}
+
+.chart-card-modern .ant-card-body {
+  padding: 24px;
+}
+
+.chart-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.chart-icon {
+  font-size: 18px;
+  color: #667eea;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+/* Custom Tooltip */
+.custom-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #f0f0f0;
+}
+
+.tooltip-label {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.tooltip-value {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Tables Section */
+.tables-row {
+  margin-bottom: 24px;
+}
+
+.table-card-modern {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.table-card-modern:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.table-card-modern .ant-card-head {
+  border-bottom: 1px solid #f5f5f5;
+  padding: 16px 24px;
+}
+
+.table-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.table-icon {
+  font-size: 18px;
+}
+
+.table-icon.green { color: #52c41a; }
+.table-icon.blue { color: #667eea; }
+
+.view-all-btn {
+  color: #667eea;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-all-btn:hover {
+  color: #764ba2;
+}
+
+/* Modern Table Styles */
+.modern-table .ant-table {
+  font-size: 14px;
+}
+
+.modern-table .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.modern-table .ant-table-tbody > tr > td {
+  padding: 16px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.modern-table .ant-table-tbody > tr:hover > td {
+  background: #fafafa;
+}
+
+.exam-name-cell {
+  color: #333;
+}
+
+.score-cell {
+  font-weight: 500;
+}
+
+.percentage-tag {
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.table-empty {
+  padding: 40px 0;
+}
+
+/* Responsive table with scroll */
 .ant-table-wrapper {
   overflow-x: auto;
 }
@@ -83,17 +404,38 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .page-header {
+  .header-content {
     flex-direction: column;
     align-items: stretch;
   }
   
-  .page-header button {
+  .join-class-btn {
     width: 100%;
   }
   
-  .stat-card .ant-statistic-content-value {
-    font-size: 24px;
+  .stat-card-modern {
+    padding: 20px;
+  }
+  
+  .stat-card-modern .stat-value {
+    font-size: 24px !important;
+  }
+  
+  .stat-card-modern .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .stat-card-modern .stat-icon {
+    font-size: 22px;
+  }
+  
+  .metric-body {
+    min-height: 100px;
+  }
+  
+  .activity-number {
+    font-size: 36px !important;
   }
 
   .ant-table {
@@ -102,16 +444,75 @@
 }
 
 /* Dark Mode Styles */
-/* Note: Stat cards with gradients (stat-card-blue, etc.) keep their colors in dark mode */
-/* Regular cards and other elements need dark mode styling */
+body.dark-mode .dashboard-container {
+  background: transparent;
+}
 
-body.dark-mode .page-header h2 {
+body.dark-mode .welcome-title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .welcome-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .metric-card {
+  background: #1f1f1f;
+  border-color: #434343;
+}
+
+body.dark-mode .metric-label {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .progress-text {
+  color: #fff;
+}
+
+body.dark-mode .chart-card-modern,
+body.dark-mode .table-card-modern {
+  background: #1f1f1f;
+  border-color: #434343;
+}
+
+body.dark-mode .chart-card-modern .ant-card-head,
+body.dark-mode .table-card-modern .ant-card-head {
+  border-color: #434343;
+}
+
+body.dark-mode .chart-title,
+body.dark-mode .table-title {
   color: rgba(255, 255, 255, 0.85);
 }
 
-body.dark-mode .upcoming-exams-card,
-body.dark-mode .recent-results-card {
-  background: #1f1f1f;
+body.dark-mode .modern-table .ant-table-thead > tr > th {
+  background: #2a2a2a;
+  color: rgba(255, 255, 255, 0.85);
   border-color: #434343;
+}
+
+body.dark-mode .modern-table .ant-table-tbody > tr > td {
+  border-color: #434343;
+}
+
+body.dark-mode .modern-table .ant-table-tbody > tr:hover > td {
+  background: #2a2a2a;
+}
+
+body.dark-mode .exam-name-cell {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .custom-tooltip {
+  background: #2a2a2a;
+  border-color: #434343;
+}
+
+body.dark-mode .tooltip-label {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .tooltip-value {
+  color: rgba(255, 255, 255, 0.85);
 }
 

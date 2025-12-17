@@ -24,6 +24,7 @@ import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { ROUTES, USER_ROLES } from '../constants/config';
 import QRScanner from '../components/common/QRScanner';
+import NotificationDropdown from '../components/common/NotificationDropdown';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -32,7 +33,6 @@ const StudentLayout = () => {
   const [collapsed, setCollapsed] = useState(true);
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
-  const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
   const [openKeys, setOpenKeys] = useState([]);
   const navigate = useNavigate();
@@ -118,11 +118,6 @@ const StudentLayout = () => {
     localStorage.setItem('language', lang);
     const langName = t(`language.${lang}`);
     message.success(`${t('language.languageChanged')} ${langName}`);
-    setIsLanguageModalVisible(false);
-  };
-
-  const showLanguageModal = () => {
-    setIsLanguageModalVisible(true);
   };
 
   // Function to determine selected menu key based on current path
@@ -224,12 +219,6 @@ const StudentLayout = () => {
       onClick: () => navigate('/student/profile'),
     },
     {
-      key: 'language',
-      icon: <GlobalOutlined />,
-      label: t('menu.language'),
-      onClick: showLanguageModal,
-    },
-    {
       key: 'refresh',
       icon: <ReloadOutlined />,
       label: t('menu.refresh'),
@@ -252,6 +241,52 @@ const StudentLayout = () => {
       danger: true,
     },
   ];
+
+  const languageMenuItems = [
+    {
+      key: 'vi',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+          <img src="/vietnam.png" alt="Vietnam" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          <span>Tiếng Việt</span>
+        </div>
+      ),
+      onClick: () => handleLanguageChange('vi'),
+    },
+    {
+      key: 'en',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+          <img src="/united-kingdom.png" alt="English" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          <span>English</span>
+        </div>
+      ),
+      onClick: () => handleLanguageChange('en'),
+    },
+    {
+      key: 'jp',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+          <img src="/japan.png" alt="Japan" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          <span>日本語</span>
+        </div>
+      ),
+      onClick: () => handleLanguageChange('jp'),
+    },
+  ];
+
+  const getCurrentLanguageFlag = () => {
+    switch (i18n.language) {
+      case 'vi':
+        return <img src="/vietnam.png" alt="Vietnam" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+      case 'en':
+        return <img src="/united-kingdom.png" alt="English" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+      case 'jp':
+        return <img src="/japan.png" alt="Japan" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+      default:
+        return <img src="/vietnam.png" alt="Vietnam" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+    }
+  };
 
   return (
     <Layout className="dashboard-layout">
@@ -280,7 +315,20 @@ const StudentLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
+        <div className="sider-footer">
+          {!collapsed && (
+            <div className="user-info-compact">
+              <Avatar
+                src={avatarSrc}
+                icon={!avatarSrc && <UserOutlined />}
+              />
+              <div className="user-details">
+                <div className="user-name">{user?.name}</div>
+                <div className="user-role">{t('student.role')}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </Sider>
 
       <Layout>
@@ -308,6 +356,20 @@ const StudentLayout = () => {
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
               className="theme-toggle-btn"
             />
+
+            <Dropdown
+              menu={{ items: languageMenuItems }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button
+                type="text"
+                className="language-btn"
+                style={{ fontSize: '24px', padding: '4px 8px' }}
+              >
+                {getCurrentLanguageFlag()}
+              </Button>
+            </Dropdown>
 
             <Button
               type="text"
@@ -370,44 +432,6 @@ const StudentLayout = () => {
             { value: USER_ROLES.STUDENT, label: t('role.student') },
           ]}
         />
-      </Modal>
-
-      {/* Language Change Modal */}
-      <Modal
-        title={t('language.selectLanguage')}
-        open={isLanguageModalVisible}
-        onCancel={() => setIsLanguageModalVisible(false)}
-        footer={null}
-      >
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <Button
-            block
-            size="large"
-            icon={<GlobalOutlined />}
-            onClick={() => handleLanguageChange('en')}
-            type={i18n.language === 'en' ? 'primary' : 'default'}
-          >
-            English
-          </Button>
-          <Button
-            block
-            size="large"
-            icon={<GlobalOutlined />}
-            onClick={() => handleLanguageChange('vi')}
-            type={i18n.language === 'vi' ? 'primary' : 'default'}
-          >
-            Tiếng Việt
-          </Button>
-          <Button
-            block
-            size="large"
-            icon={<GlobalOutlined />}
-            onClick={() => handleLanguageChange('jp')}
-            type={i18n.language === 'jp' ? 'primary' : 'default'}
-          >
-            日本語
-          </Button>
-        </Space>
       </Modal>
 
       {/* QR Scanner Modal */}
