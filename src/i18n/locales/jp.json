@@ -1214,6 +1214,7 @@
     "NOTIFICATION_NEW_COMMENT_OTHER": "がクラス「{{className}}」の投稿にコメントしました",
     "NOTIFICATION_CLASS_REMOVAL": "がクラス「{{className}}」からあなたを削除しました",
     "NOTIFICATION_CLASS_ADDITION": "がクラス「{{className}}」にあなたを追加しました"
+  },
   "publicMindmap": {
     "notAvailable": "マインドマップは利用できません",
     "readOnly": "(読み取り専用)",

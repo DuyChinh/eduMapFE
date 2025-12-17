@@ -1216,6 +1216,7 @@
     "commentDeleteCancel": "Hủy",
     "save": "Lưu",
     "cancel": "Hủy"
+  },
   "mindmap": {
     "unsavedChanges": "Bạn có những thay đổi chưa được lưu như bản vẽ, bố cục hoặc thuộc tính nút. Bạn có thực sự muốn rời đi mà không lưu không?",
     "deleteConfirmTitle": "Chuyển vào Thùng rác",
@@ -1352,6 +1353,7 @@
     "NOTIFICATION_NEW_COMMENT_OTHER": "đã bình luận về một bài viết trong lớp {{className}}",
     "NOTIFICATION_CLASS_REMOVAL": "đã xóa bạn khỏi lớp {{className}}",
     "NOTIFICATION_CLASS_ADDITION": "đã thêm bạn vào lớp {{className}}"
+  },
   "publicMindmap": {
     "notAvailable": "Mindmap không khả dụng",
     "readOnly": "(Chỉ xem)",

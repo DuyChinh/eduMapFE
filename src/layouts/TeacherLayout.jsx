@@ -321,20 +321,6 @@ const TeacherLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-        <div className="sider-footer">
-          {!collapsed && (
-            <div className="user-info-compact">
-              <Avatar
-                src={avatarSrc}
-                icon={!avatarSrc && <UserOutlined />}
-              />
-              <div className="user-details">
-                <div className="user-name">{user?.name}</div>
-                <div className="user-role">{t('teacher.role')}</div>
-              </div>
-            </div>
-          )}
-        </div>
       </Sider>
 
       <Layout>
