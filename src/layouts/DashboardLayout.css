@@ -178,6 +178,28 @@ header.dashboard-header {
   background: #f0f0f0;
 }
 
+.language-btn {
+  height: 40px;
+  width: 40px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.language-btn:hover {
+  background: #f0f0f0;
+  transform: scale(1.05);
+}
+
+.language-btn img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
 .notification-btn {
   font-size: 20px;
   width: 40px;
@@ -283,6 +305,10 @@ body.dark-mode .trigger-btn:hover {
 }
 
 body.dark-mode .qr-scan-btn:hover {
+  background: #262626;
+}
+
+body.dark-mode .language-btn:hover {
   background: #262626;
 }
 
