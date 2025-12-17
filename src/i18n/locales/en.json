@@ -234,14 +234,21 @@
     "passwordStrength": "Strength"
   },
   "teacherDashboard": {
-    "welcomeBack": "Welcome back! 🎉",
+    "welcomeBack": "Welcome back! 📚",
     "description": "You can create exercises, exams online or offline with multiple choice sheets.",
     "statistics": {
       "questions": "Questions",
       "exams": "Exams",
       "classes": "Classes",
-      "students": "Students"
+      "students": "Students",
+      "totalSubmissions": "Total Submissions",
+      "averageScore": "Average Score",
+      "recentExams": "Recent Exams",
+      "recentSubmissions": "Recent Submissions"
     },
+    "published": "published",
+    "last7Days": "last 7 days",
+    "submissions": "submissions",
     "quickStart": "Quick Start",
     "actions": {
       "createExam": "Create exercise or exam",
@@ -249,10 +256,25 @@
       "fromBank": "Create exam from shared bank",
       "fromBankDesc": "Select questions from available question bank",
       "downloadExam": "Download exam from EduMap",
-      "downloadExamDesc": "Import exams from EduMap library"
+      "downloadExamDesc": "Import exams from EduMap library",
+      "manageQuestions": "Manage Questions",
+      "manageQuestionsDesc": "Create and organize your question bank",
+      "manageClasses": "Manage Classes",
+      "manageClassesDesc": "Create and manage your classes"
     },
     "recentActivities": "Recent Activities",
-    "noActivities": "No activities yet"
+    "noActivities": "No activities yet",
+    "noData": "No data available",
+    "charts": {
+      "examStatus": "Exam Status Distribution",
+      "published": "Published",
+      "draft": "Draft",
+      "scoreDistribution": "Score Distribution",
+      "scoreRange": "Score Range",
+      "students": "Students",
+      "submissionsOverTime": "Submissions Over Time",
+      "topExams": "Top Performing Exams"
+    }
   },
   "studentDashboard": {
     "welcome": "Welcome to EduMap! 🎓",
@@ -262,12 +284,34 @@
       "classes": "Classes",
       "exams": "Exams",
       "completed": "Completed",
-      "upcoming": "Upcoming"
+      "upcoming": "Upcoming",
+      "averageScore": "Average Score",
+      "passRate": "Pass Rate",
+      "recentActivity": "Recent Activity"
     },
+    "last7Days": "last 7 days",
     "upcomingExams": "Upcoming Exams",
     "noExams": "No exams yet",
     "recentResults": "Recent Results",
-    "noResults": "No results yet"
+    "noResults": "No results yet",
+    "noData": "No data available",
+    "charts": {
+      "scoreDistribution": "Score Distribution",
+      "scoreRange": "Score Range",
+      "exams": "Exams",
+      "performanceOverTime": "Performance Over Time",
+      "date": "Date",
+      "averageScore": "Average Score (%)"
+    },
+    "table": {
+      "examName": "Exam Name",
+      "score": "Score",
+      "percentage": "Percentage",
+      "submittedAt": "Submitted At",
+      "totalMarks": "Total Marks",
+      "startTime": "Start Time",
+      "endTime": "End Time"
+    }
   },
   "teacherPages": {
     "questions": {
@@ -435,6 +479,12 @@
     "typeTF": "True/False",
     "typeShort": "Short Answer",
     "typeEssay": "Essay",
+    "mcq": "Multiple Choice",
+    "tf": "True/False",
+    "short": "Short Answer",
+    "essay": "Essay",
+    "public": "Public",
+    "private": "Private",
     "subject": "Subject",
     "selectSubject": "Select subject",
     "subjectRequired": "Please select a subject!",
@@ -620,6 +670,9 @@
     "marks": "Marks",
     "isRequired": "Required",
     "selectedQuestions": "Selected Questions",
+    "selectQuestions": "Select Questions",
+    "addQuestion": "Add Question",
+    "addMoreQuestions": "Add More Questions",
     "searchQuestions": "Search Questions",
     "searchQuestionsByName": "Search questions by name...",
     "enterQuestionName": "Please enter question name",
@@ -637,8 +690,14 @@
     "subjectRequired": "Please select subject!",
     "scheduling": "Scheduling",
     "timezone": "Timezone",
-    "availableFrom": "Available From",
-    "availableUntil": "Available Until",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "blockLateEntry": "Block late entry after",
+    "allowLateEntryAnytime": "Allow late entry anytime",
+    "lateEntryGracePeriod": "Grace period (minutes)",
+    "lateEntryGracePeriodTooltip": "Number of minutes students can enter after start time. 0 = block immediately after start time",
+    "minutes": "minutes",
+    "lateEntryBlocked": "Late entry not allowed. This exam blocks entry after the allowed time.",
     "viewSettings": "View Settings",
     "viewMark": "View Mark",
     "viewMarkRequired": "Please select when to view mark!",
@@ -760,7 +819,26 @@
       "filterByStatus": "Filter by status",
       "allStatuses": "All statuses",
       "searchByName": "Search by name",
-      "searchPlaceholder": "Enter student name..."
+      "searchPlaceholder": "Enter student name...",
+      "sortBy": "Sort by",
+      "sortByNameAZ": "Name (A-Z)",
+      "sortByScoreAsc": "Score (Ascending)",
+      "sortByScoreDesc": "Score (Descending)"
+    },
+    "export": {
+      "exportExcel": "Export Excel",
+      "success": "Exported successfully!",
+      "failed": "Failed to export",
+      "no": "No",
+      "studentName": "Student Name",
+      "studentCode": "Student Code",
+      "status": "Status",
+      "score": "Score",
+      "totalMarks": "Total Marks",
+      "percentage": "Percentage",
+      "timeSpent": "Time Spent",
+      "startedAt": "Started At",
+      "submittedAt": "Submitted At"
     },
     "viewDetail": "View Detail",
     "subjectsLoadFailed": "Failed to load subjects",
@@ -910,7 +988,10 @@
     "correctAnswer": "Correct Answer",
     "noAnswer": "No answer",
     "answersNotAvailable": "Answers are not available yet",
-    "answersNotAvailableDesc": "The exam answers will be available after all students have completed the exam."
+    "answersNotAvailableDesc": "The exam answers will be available after all students have completed the exam.",
+    "congratulations": "Congratulations on completing the exam!",
+    "examSubmitted": "Your exam has been submitted successfully",
+    "totalScore": "Total Score"
   },
   "publicTakeExam": {
     "loading": "Loading exam...",

@@ -1,4 +1,13 @@
-import { Column } from "@ant-design/charts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import {
   ArrowLeftOutlined,
   BarChartOutlined,
@@ -12,7 +21,10 @@ import {
   QrcodeOutlined,
   TeamOutlined,
   TrophyOutlined,
+  DownloadOutlined,
+  SortAscendingOutlined,
 } from "@ant-design/icons";
+import * as XLSX from 'xlsx';
 import {
   App,
   Avatar,
@@ -97,6 +109,7 @@ const ExamDetailNew = () => {
   const [showAllAttempts, setShowAllAttempts] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchName, setSearchName] = useState("");
+  const [sortOrder, setSortOrder] = useState("name-asc"); // name-asc, score-asc, score-desc
   // Pagination states
   const [submissionsPagination, setSubmissionsPagination] = useState({
     current: 1,
@@ -438,6 +451,142 @@ const ExamDetailNew = () => {
 
   const handleShowAllAttemptsToggle = () => {
     setShowAllAttempts(!showAllAttempts);
+  };
+
+  // Sort submissions based on sortOrder
+  const getSortedSubmissions = (data) => {
+    if (!data || data.length === 0) return data;
+    
+    const sorted = [...data];
+    
+    switch (sortOrder) {
+      case 'name-asc':
+        return sorted.sort((a, b) => {
+          const nameA = (a.student?.name || a.student?.email || '').toLowerCase();
+          const nameB = (b.student?.name || b.student?.email || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      case 'score-asc':
+        return sorted.sort((a, b) => {
+          const scoreA = a.score || 0;
+          const scoreB = b.score || 0;
+          
+          // Primary sort: by score ascending
+          if (scoreA !== scoreB) {
+            return scoreA - scoreB;
+          }
+          
+          // Secondary sort: by time spent (faster = better, so ascending)
+          const timeA = a.timeSpent || Infinity;
+          const timeB = b.timeSpent || Infinity;
+          if (timeA !== timeB) {
+            return timeA - timeB;
+          }
+          
+          // Tertiary sort: by name A-Z
+          const nameA = (a.student?.name || a.student?.email || '').toLowerCase();
+          const nameB = (b.student?.name || b.student?.email || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      case 'score-desc':
+        return sorted.sort((a, b) => {
+          const scoreA = a.score || 0;
+          const scoreB = b.score || 0;
+          
+          // Primary sort: by score descending
+          if (scoreA !== scoreB) {
+            return scoreB - scoreA;
+          }
+          
+          // Secondary sort: by time spent (faster = better, so ascending)
+          const timeA = a.timeSpent || Infinity;
+          const timeB = b.timeSpent || Infinity;
+          if (timeA !== timeB) {
+            return timeA - timeB;
+          }
+          
+          // Tertiary sort: by name A-Z
+          const nameA = (a.student?.name || a.student?.email || '').toLowerCase();
+          const nameB = (b.student?.name || b.student?.email || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      default:
+        return sorted;
+    }
+  };
+
+  // Export to Excel
+  const handleExportExcel = () => {
+    try {
+      // Get sorted data
+      const sortedData = getSortedSubmissions(submissions);
+      
+      // Prepare data for Excel
+      const excelData = sortedData.map((record, index) => ({
+        [t('exams.export.no')]: index + 1,
+        [t('exams.export.studentName')]: record.student?.name || record.student?.email || '-',
+        [t('exams.export.status')]: (() => {
+          const statusConfig = {
+            in_progress: t("exams.submissions.inProgress"),
+            submitted: t("exams.submissions.submitted"),
+            graded: t("exams.submissions.graded"),
+            late: t("exams.submissions.late"),
+          };
+          return statusConfig[record.status] || record.status;
+        })(),
+        [t('exams.export.score')]: record.score != null ? record.score : '-',
+        [t('exams.export.totalMarks')]: record.totalMarks || examData?.totalMarks || '-',
+        [t('exams.export.percentage')]: record.score != null && record.totalMarks 
+          ? `${Math.round((record.score / record.totalMarks) * 100)}%` 
+          : '-',
+        [t('exams.export.timeSpent')]: (() => {
+          if (!record.timeSpent) return '-';
+          const hours = Math.floor(record.timeSpent / 60);
+          const mins = record.timeSpent % 60;
+          return `${hours}h ${mins}m`;
+        })(),
+        [t('exams.export.startedAt')]: record.startedAt 
+          ? new Date(record.startedAt).toLocaleString('vi-VN')
+          : '-',
+        [t('exams.export.submittedAt')]: record.submittedAt 
+          ? new Date(record.submittedAt).toLocaleString('vi-VN')
+          : '-',
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Set column widths (removed Student Code column)
+      const colWidths = [
+        { wch: 5 },  // No
+        { wch: 25 }, // Student Name
+        { wch: 12 }, // Status
+        { wch: 10 }, // Score
+        { wch: 12 }, // Total Marks
+        { wch: 12 }, // Percentage
+        { wch: 12 }, // Time Spent
+        { wch: 20 }, // Started At
+        { wch: 20 }, // Submitted At
+      ];
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, t('exams.tabs.students'));
+
+      // Generate filename
+      const sortLabel = sortOrder === 'name-asc' ? 'A-Z' : 
+                       sortOrder === 'score-asc' ? 'score-asc' : 'score-desc';
+      const filename = `${examData?.name || 'Exam'}_Students_${sortLabel}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+      
+      message.success(t('exams.export.success'));
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      message.error(t('exams.export.failed'));
+    }
   };
 
   const submissionsColumns = [
@@ -964,33 +1113,72 @@ const ExamDetailNew = () => {
                       t("exams.stats.scoreDistribution") || "Phân bố điểm số"
                     }
                     style={{ marginTop: 16 }}
+                    className="score-distribution-card"
                   >
-                    <Column
-                      data={scoreDistribution}
-                      xField="range"
-                      yField="count"
-                      label={{
-                        position: "top",
-                        offset: 5,
-                        style: {
-                          fill: "#fff",
-                          fontSize: 16,
-                          fontWeight: "bold",
-                        },
-                      }}
-                      columnStyle={{
-                        fill: "#1890ff",
-                      }}
-                      height={400}
-                      meta={{
-                        range: {
-                          alias: t("exams.stats.scoreRange") || "Khoảng điểm",
-                        },
-                        count: {
-                          alias: t("exams.stats.studentCount") || "Số học sinh",
-                        },
-                      }}
-                    />
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart 
+                        data={scoreDistribution} 
+                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                      >
+                        <defs>
+                          <linearGradient id="colorScoreBar" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#667eea" stopOpacity={0.9}/>
+                            <stop offset="95%" stopColor="#764ba2" stopOpacity={0.9}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-color, #f0f0f0)" />
+                        <XAxis 
+                          dataKey="range" 
+                          tick={{ fill: 'var(--chart-text-color, #666)', fontSize: 12 }}
+                          axisLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                          tickLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          label={{ 
+                            value: t("exams.stats.scoreRange") || "Khoảng điểm", 
+                            position: 'insideBottom', 
+                            offset: -10,
+                            fill: 'var(--chart-text-color, #666)'
+                          }}
+                        />
+                        <YAxis 
+                          tick={{ fill: 'var(--chart-text-color, #666)', fontSize: 12 }}
+                          axisLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                          tickLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                          label={{ 
+                            value: t("exams.stats.studentCount") || "Số học sinh", 
+                            angle: -90, 
+                            position: 'insideLeft',
+                            fill: 'var(--chart-text-color, #666)'
+                          }}
+                        />
+                        <RechartsTooltip 
+                          contentStyle={{
+                            background: 'var(--tooltip-bg, rgba(255, 255, 255, 0.98))',
+                            border: '1px solid var(--tooltip-border, #f0f0f0)',
+                            borderRadius: 8,
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                          }}
+                          labelStyle={{ color: 'var(--tooltip-label-color, #666)', fontWeight: 600, marginBottom: 4 }}
+                          itemStyle={{ color: 'var(--tooltip-value-color, #333)' }}
+                          formatter={(value, name) => [value, t("exams.stats.studentCount") || "Số học sinh"]}
+                          labelFormatter={(label) => `${t("exams.stats.scoreRange") || "Khoảng điểm"}: ${label}`}
+                        />
+                        <Bar 
+                          dataKey="count" 
+                          fill="url(#colorScoreBar)" 
+                          radius={[8, 8, 0, 0]}
+                          maxBarSize={80}
+                          label={{
+                            position: 'top',
+                            fill: 'var(--chart-label-color, #333)',
+                            fontSize: 14,
+                            fontWeight: 600,
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </Card>
                 ) : statistics ? (
                   <Card style={{ marginTop: 16 }}>
@@ -1091,6 +1279,33 @@ const ExamDetailNew = () => {
                       style={{ width: 250 }}
                     />
                   </Space>
+                  <Space wrap>
+                    <Select
+                      value={sortOrder}
+                      onChange={setSortOrder}
+                      style={{ width: 200 }}
+                      suffixIcon={<SortAscendingOutlined />}
+                      placeholder={t("exams.submissions.sortBy")}
+                    >
+                      <Select.Option value="name-asc">
+                        {t("exams.submissions.sortByNameAZ")}
+                      </Select.Option>
+                      <Select.Option value="score-asc">
+                        {t("exams.submissions.sortByScoreAsc")}
+                      </Select.Option>
+                      <Select.Option value="score-desc">
+                        {t("exams.submissions.sortByScoreDesc")}
+                      </Select.Option>
+                    </Select>
+                    <Button
+                      type="primary"
+                      icon={<DownloadOutlined />}
+                      onClick={handleExportExcel}
+                      disabled={!submissions || submissions.length === 0}
+                    >
+                      {t("exams.export.exportExcel")}
+                    </Button>
+                  </Space>
                 </Space>
                 {submissionsLoading ? (
                   <div style={{ textAlign: "center", padding: "50px" }}>
@@ -1099,7 +1314,7 @@ const ExamDetailNew = () => {
                 ) : (
                   <Table
                     columns={submissionsColumns}
-                    dataSource={submissions}
+                    dataSource={getSortedSubmissions(submissions)}
                     rowKey={(record) => {
                       // Always use submission _id as primary key to avoid duplicates
                       if (record._id) return record._id;
