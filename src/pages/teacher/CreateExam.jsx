@@ -28,6 +28,7 @@ import classService from '../../api/classService';
 import { ROUTES } from '../../constants/config';
 import PreviewExamModal from '../../components/teacher/PreviewExamModal';
 import UploadPdfModal from '../../components/teacher/UploadPdfModal';
+import SelectQuestionsModal from '../../components/teacher/SelectQuestionsModal';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 
@@ -42,19 +43,17 @@ const CreateExam = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [subjects, setSubjects] = useState([]);
-  const [questions, setQuestions] = useState([]);
-  const [allQuestions, setAllQuestions] = useState([]); // Store all questions for client-side filtering
   const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [questionSearchLoading, setQuestionSearchLoading] = useState(false);
-  const [questionSearchQuery, setQuestionSearchQuery] = useState('');
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [previewExamData, setPreviewExamData] = useState(null);
   const [uploadPdfModalVisible, setUploadPdfModalVisible] = useState(false);
+  const [selectQuestionsModalVisible, setSelectQuestionsModalVisible] = useState(false);
+  const [currentSubjectId, setCurrentSubjectId] = useState(null);
   const [grades, setGrades] = useState([]); // For PDF modal
   const classesFetchedRef = useRef(false); // Track if classes have been fetched
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { message } = App.useApp();
 
@@ -82,6 +81,8 @@ const CreateExam = () => {
       hideLeaderboard: false,
       addTitleInfo: false,
       preExamNotification: false,
+      blockLateEntry: false,
+      lateEntryGracePeriod: 0,
       fee: 0,
       settings: {
         allowReview: true,
@@ -156,8 +157,7 @@ const CreateExam = () => {
 
   const fetchSubjects = async () => {
     try {
-      const currentLang = localStorage.getItem('language') || 'vi';
-      const response = await questionService.getSubjects({ lang: currentLang });
+      const response = await questionService.getSubjects();
       
       let subjectsData = [];
       if (Array.isArray(response)) {
@@ -196,52 +196,22 @@ const CreateExam = () => {
     }
   };
 
-  const loadQuestionsBySubject = async (subjectId) => {
-    if (!subjectId) {
-      setAllQuestions([]);
-      setQuestions([]);
-      setQuestionSearchQuery('');
-      return;
-    }
-
-    setQuestionSearchLoading(true);
-    try {
-      const params = {
-        subjectId,
-        limit: 1000 // Load more questions for client-side filtering
-      };
-      
-      const response = await questionService.getQuestions(params);
-      const loadedQuestions = response.items || response.data || [];
-      setAllQuestions(loadedQuestions);
-      // Apply current search filter if any
-      filterQuestions(loadedQuestions, questionSearchQuery);
-    } catch (error) {
-      console.error('Error loading questions:', error);
-      message.error(t('exams.searchQuestionsFailed'));
-    } finally {
-      setQuestionSearchLoading(false);
-    }
+  const handleOpenSelectQuestionsModal = (subjectId) => {
+    setCurrentSubjectId(subjectId);
+    setSelectQuestionsModalVisible(true);
   };
 
-  const filterQuestions = (questionsToFilter, searchQuery) => {
-    if (!searchQuery || searchQuery.trim() === '') {
-      setQuestions(questionsToFilter);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase().trim();
-    const filtered = questionsToFilter.filter(q => {
-      const name = (q.name || '').toLowerCase();
-      const text = (q.text || '').toLowerCase();
-      return name.includes(query) || text.includes(query);
-    });
-    setQuestions(filtered);
-  };
-
-  const handleSearchQueryChange = (value) => {
-    setQuestionSearchQuery(value);
-    filterQuestions(allQuestions, value);
+  const handleQuestionsSelected = (newQuestions) => {
+    // Add new questions to selected list with order and default marks
+    const questionsWithDetails = newQuestions.map((q, index) => ({
+      ...q,
+      order: selectedQuestions.length + index + 1,
+      marks: 1,
+      isRequired: true,
+    }));
+    
+    setSelectedQuestions([...selectedQuestions, ...questionsWithDetails]);
+    message.success(`${t('common.add')} ${newQuestions.length} ${t('questions.items')}`);
   };
 
   // Distribute marks evenly among questions
@@ -249,30 +219,26 @@ const CreateExam = () => {
     const totalMarks = form.getFieldValue('totalMarks') || 100;
     if (questions.length === 0) return questions;
     
-    // Calculate marks per question - keep all decimal places
-    const marksPerQuestion = totalMarks / questions.length;
+    // Calculate marks per question and round to 1 decimal place
+    const marksPerQuestion = Math.round((totalMarks / questions.length) * 10) / 10;
     
-    return questions.map((q) => ({
-      ...q,
-      marks: marksPerQuestion
-    }));
-  };
-
-  const handleAddQuestion = (question) => {
-    const questionId = question._id || question.id;
-    if (selectedQuestions.find(q => (q._id || q.id) === questionId)) {
-      message.warning(t('exams.questionAlreadyAdded'));
-      return;
-    }
-
-    const newQuestion = {
-      ...question,
-      order: selectedQuestions.length + 1,
-      marks: 1,
-      isRequired: true
-    };
+    // Calculate the sum after rounding
+    const roundedTotal = marksPerQuestion * questions.length;
     
-    setSelectedQuestions([...selectedQuestions, newQuestion]);
+    // Calculate the difference to adjust the last question
+    const difference = parseFloat((totalMarks - roundedTotal).toFixed(1));
+    
+    return questions.map((q, index) => {
+      // Add the difference to the last question to ensure total matches exactly
+      const marks = index === questions.length - 1 
+        ? parseFloat((marksPerQuestion + difference).toFixed(1))
+        : marksPerQuestion;
+      
+      return {
+        ...q,
+        marks
+      };
+    });
   };
 
   const handleRemoveQuestion = (questionId) => {
@@ -312,7 +278,7 @@ const CreateExam = () => {
     // Validate marks (allow small difference due to decimal precision)
     const totalQuestionMarks = calculateTotalQuestionMarks();
     if (Math.abs(totalQuestionMarks - values.totalMarks) >= 0.01) {
-      message.error(t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks}) phải bằng tổng điểm bài thi (${values.totalMarks})`);
+      message.error(t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks.toFixed(1)}) phải bằng tổng điểm bài thi (${values.totalMarks})`);
       return;
     }
 
@@ -346,8 +312,7 @@ const CreateExam = () => {
         preExamNotificationText: values.preExamNotificationText || '',
         startTime: values.startTime ? values.startTime.toISOString() : undefined,
         endTime: values.endTime ? values.endTime.toISOString() : undefined,
-        availableFrom: values.availableFrom ? values.availableFrom.toISOString() : undefined,
-        availableUntil: values.availableUntil ? values.availableUntil.toISOString() : undefined,
+        lateEntryGracePeriod: values.blockLateEntry ? (values.lateEntryGracePeriod || 0) : undefined,
         questions: selectedQuestions.map((q, index) => ({
           questionId: q._id || q.id,
           order: index + 1,
@@ -441,16 +406,17 @@ const CreateExam = () => {
       width: 120,
       render: (_, record) => {
         const marksValue = record.marks;
-        const marksStr = marksValue?.toString() || '0';
+        // Format to 1 decimal place for display
+        const displayValue = marksValue != null ? parseFloat(marksValue.toFixed(1)) : 0;
         
         return (
           <InputNumber
             min={0}
-            step={0.01}
-            value={marksValue}
+            step={0.1}
+            value={displayValue}
             onChange={(value) => handleUpdateQuestionMarks(record._id || record.id, value)}
             style={{ width: '100%' }}
-            title={marksStr}
+            precision={1}
           />
         );
       },
@@ -493,7 +459,7 @@ const CreateExam = () => {
           onFinish={(values) => handleSubmit(values, 'draft')}
           autoComplete="off"
         >
-          <Collapse defaultActiveKey={['basic', 'questions']} ghost>
+          <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings']} ghost>
             {/* Basic Information */}
             <Collapse.Panel header={t('exams.basicInfo')} key="basic">
               <Form.Item
@@ -659,23 +625,17 @@ const CreateExam = () => {
                 <Select
                   placeholder={t('exams.selectSubject')}
                   showSearch
-                  disabled={selectedQuestions.length > 0}
                   filterOption={(input, option) =>
                     (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                   onChange={(subjectId) => {
                     if (subjectId) {
-                      setQuestionSearchQuery('');
-                      loadQuestionsBySubject(subjectId);
-                    } else {
-                      setAllQuestions([]);
-                      setQuestions([]);
-                      setQuestionSearchQuery('');
+                      handleOpenSelectQuestionsModal(subjectId);
                     }
                   }}
                 >
                   {subjects.map(subject => {
-                    const currentLang = localStorage.getItem('language') || 'vi';
+                    const currentLang = i18n.language || 'vi';
                     let subjectName = subject.name;
                     
                     switch (currentLang) {
@@ -696,19 +656,22 @@ const CreateExam = () => {
                 </Select>
               </Form.Item>
 
-              <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Input
-                  placeholder={t('exams.searchQuestionsByName') || 'Tìm kiếm câu hỏi theo tên...'}
-                  prefix={<SearchOutlined />}
-                  value={questionSearchQuery}
-                  onChange={(e) => handleSearchQueryChange(e.target.value)}
-                  allowClear
-                  style={{ 
-                    flex: 1,
-                    minWidth: '200px'
+              <div style={{ marginBottom: 16 }}>
+                <Button
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    const subjectId = form.getFieldValue('subjectId');
+                    if (subjectId) {
+                      handleOpenSelectQuestionsModal(subjectId);
+                    } else {
+                      message.warning(t('exams.selectSubjectFirst'));
+                    }
                   }}
-                  className="question-search-input"
-                />
+                  type="dashed"
+                  style={{ marginRight: 8 }}
+                >
+                  {t('exams.addMoreQuestions') || 'Thêm câu hỏi'}
+                </Button>
                 <Button
                   icon={<FileAddOutlined />}
                   onClick={() => setUploadPdfModalVisible(true)}
@@ -717,61 +680,6 @@ const CreateExam = () => {
                   {t('exams.createExamByPDF') || 'Create Exam by PDF'}
                 </Button>
               </div>
-              <style>{`
-                @media (max-width: 768px) {
-                  .question-search-input {
-                    width: 100% !important;
-                  }
-                }
-              `}</style>
-
-              <Spin spinning={questionSearchLoading}>
-                {questions.length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <Table
-                      dataSource={questions}
-                      rowKey={(record) => record._id || record.id}
-                      pagination={false}
-                      size="small"
-                      scroll={{ y: questions.length > 5 ? 200 : undefined }}
-                      columns={[
-                        {
-                          title: t('questions.name'),
-                          dataIndex: 'name',
-                          key: 'name',
-                          ellipsis: true,
-                        },
-                        {
-                          title: t('questions.type'),
-                          dataIndex: 'type',
-                          key: 'type',
-                          width: 120,
-                          render: (type) => (
-                            <Tag color={getQuestionTypeColor(type)}>
-                              {getQuestionTypeText(type)}
-                            </Tag>
-                          ),
-                        },
-                        {
-                          title: t('common.actions'),
-                          key: 'actions',
-                          width: 100,
-                          render: (_, record) => (
-                            <Button
-                              type="link"
-                              icon={<PlusOutlined />}
-                              onClick={() => handleAddQuestion(record)}
-                              disabled={selectedQuestions.some(q => (q._id || q.id) === (record._id || record.id))}
-                            >
-                              {t('common.add')}
-                            </Button>
-                          ),
-                        },
-                      ]}
-                    />
-                  </div>
-                )}
-              </Spin>
 
               {selectedQuestions.length > 0 && (
                 <div>
@@ -803,7 +711,7 @@ const CreateExam = () => {
                         if (totalMarks && !isValid) {
                           return (
                             <Typography.Text type="danger">
-                              {t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks}) phải bằng tổng điểm bài thi (${totalMarks})`}
+                              {t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks.toFixed(1)}) phải bằng tổng điểm bài thi (${totalMarks})`}
                             </Typography.Text>
                           );
                         }
@@ -853,31 +761,37 @@ const CreateExam = () => {
                 </Form.Item>
               </Space>
 
-              <Space style={{ width: '100%' }} size="large">
-                <Form.Item
-                  label={t('exams.availableFrom')}
-                  name="availableFrom"
-                  style={{ flex: 1 }}
-                >
-                  <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
+              <Form.Item 
+                name="blockLateEntry" 
+                valuePropName="checked"
+                style={{ marginBottom: '12px' }}
+              >
+                <Switch 
+                  checkedChildren={t('exams.blockLateEntry')} 
+                  unCheckedChildren={t('exams.allowLateEntryAnytime')} 
+                />
+              </Form.Item>
 
-                <Form.Item
-                  label={t('exams.availableUntil')}
-                  name="availableUntil"
-                  style={{ flex: 1 }}
-                >
-                  <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Space>
+              <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.blockLateEntry !== currentValues.blockLateEntry}>
+                {({ getFieldValue }) => {
+                  const blockLateEntry = getFieldValue('blockLateEntry');
+                  return blockLateEntry ? (
+                    <Form.Item 
+                      label={t('exams.lateEntryGracePeriod')}
+                      name="lateEntryGracePeriod"
+                      tooltip={t('exams.lateEntryGracePeriodTooltip')}
+                    >
+                      <InputNumber
+                        min={0}
+                        step={1}
+                        addonAfter={t('exams.minutes')}
+                        style={{ width: '200px' }}
+                        placeholder="0"
+                      />
+                    </Form.Item>
+                  ) : null;
+                }}
+              </Form.Item>
             </Collapse.Panel>
 
             {/* View Settings */}
@@ -1107,6 +1021,15 @@ const CreateExam = () => {
         }}
         subjects={subjects}
         grades={grades}
+      />
+
+      {/* Select Questions Modal */}
+      <SelectQuestionsModal
+        visible={selectQuestionsModalVisible}
+        onCancel={() => setSelectQuestionsModalVisible(false)}
+        onConfirm={handleQuestionsSelected}
+        subjectId={currentSubjectId}
+        alreadySelectedIds={selectedQuestions.map(q => q._id || q.id)}
       />
     </div>
   );
