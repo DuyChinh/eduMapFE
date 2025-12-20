@@ -209,7 +209,7 @@ const ExamResultDetail = () => {
   // Format number - remove decimal if it's a whole number
   const formatNumber = (num) => {
     if (typeof num !== 'number') return num || 0;
-    const rounded = Number(num.toFixed(1));
+    const rounded = Number(num.toFixed(2));
     return rounded % 1 === 0 ? Math.round(rounded) : rounded;
   };
 

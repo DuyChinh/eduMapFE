@@ -104,7 +104,7 @@ const StudentDashboard = () => {
       dataIndex: 'score',
       key: 'score',
       render: (score, record) => {
-        const formattedScore = Number.isInteger(score) ? score : parseFloat(score).toFixed(1);
+        const formattedScore = Number.isInteger(score) ? score : parseFloat(score).toFixed(2);
         return <Text className="score-cell">{formattedScore} / {record.maxScore}</Text>;
       },
     },
@@ -124,7 +124,7 @@ const StudentDashboard = () => {
               fontWeight: 600 
             }}
           >
-            {percentage.toFixed(1)}%
+            {percentage.toFixed(2)}%
           </Tag>
         );
       },
@@ -266,7 +266,7 @@ const StudentDashboard = () => {
                 }}
                 strokeWidth={8}
                 format={(percent) => (
-                  <span className="progress-text">{percent.toFixed(1)}%</span>
+                  <span className="progress-text">{percent.toFixed(2)}%</span>
                 )}
               />
             </div>
@@ -288,7 +288,7 @@ const StudentDashboard = () => {
                 }}
                 strokeWidth={8}
                 format={(percent) => (
-                  <span className="progress-text">{percent.toFixed(1)}%</span>
+                  <span className="progress-text">{percent.toFixed(2)}%</span>
                 )}
               />
             </div>

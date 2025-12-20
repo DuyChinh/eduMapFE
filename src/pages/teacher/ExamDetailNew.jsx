@@ -357,7 +357,7 @@ const ExamDetailNew = () => {
       width: 120,
       render: (score, record) => {
         const formattedScore =
-          typeof score === "number" ? Number(score.toFixed(1)) : score || 0;
+          typeof score === "number" ? Number(score.toFixed(2)) : score || 0;
         return (
           <div>
             <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
@@ -646,7 +646,7 @@ const ExamDetailNew = () => {
         )
           return "-";
         const formattedScore =
-          typeof score === "number" ? Number(score.toFixed(1)) : score || 0;
+          typeof score === "number" ? Number(score.toFixed(2)) : score || 0;
         return (
           <div>
             <Text strong style={{ fontSize: 14 }}>
@@ -838,7 +838,7 @@ const ExamDetailNew = () => {
                           value: examData.totalMarks != null 
                             ? (Number.isInteger(examData.totalMarks) 
                               ? examData.totalMarks 
-                              : examData.totalMarks.toFixed(1))
+                              : examData.totalMarks.toFixed(2))
                             : "-",
                         },
                         {
@@ -981,8 +981,9 @@ const ExamDetailNew = () => {
                               width: 80,
                               render: (marks) => {
                                 if (marks == null) return "-";
-                                // If it's an integer, show as is. Otherwise, round to 1 decimal place
-                                return Number.isInteger(marks) ? marks : marks.toFixed(1);
+                                // If it's an integer, show as is. Otherwise, truncate to 2 decimal places
+                                if (Number.isInteger(marks)) return marks;
+                                return Math.floor(marks * 100) / 100;
                               },
                             },
                           ]}
@@ -1017,7 +1018,7 @@ const ExamDetailNew = () => {
                         title={t("exams.stats.averageScore")}
                         value={
                           statistics?.averageScore
-                            ? Number(statistics.averageScore.toFixed(1))
+                            ? Number(statistics.averageScore.toFixed(2))
                             : 0
                         }
                         suffix={`/ ${examData.totalMarks}`}
@@ -1059,7 +1060,7 @@ const ExamDetailNew = () => {
                           title={t("exams.stats.averageScore")}
                           value={
                             statistics.averageScore
-                              ? Number(statistics.averageScore.toFixed(1))
+                              ? Number(statistics.averageScore.toFixed(2))
                               : 0
                           }
                           suffix={`/ ${examData.totalMarks}`}
@@ -1072,7 +1073,7 @@ const ExamDetailNew = () => {
                           title={t("exams.stats.highestScore")}
                           value={
                             statistics.highestScore
-                              ? Number(statistics.highestScore.toFixed(1))
+                              ? Number(statistics.highestScore.toFixed(2))
                               : 0
                           }
                           suffix={`/ ${examData.totalMarks}`}
@@ -1085,7 +1086,7 @@ const ExamDetailNew = () => {
                           title={t("exams.stats.lowestScore")}
                           value={
                             statistics.lowestScore
-                              ? Number(statistics.lowestScore.toFixed(1))
+                              ? Number(statistics.lowestScore.toFixed(2))
                               : 0
                           }
                           suffix={`/ ${examData.totalMarks}`}

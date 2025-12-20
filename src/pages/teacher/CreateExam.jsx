@@ -39,6 +39,13 @@ const { TextArea } = Input;
 const { Option } = Select;
 const { Title } = Typography;
 
+// Helper function to truncate number to 2 decimal places (not rounding)
+const truncateToDecimals = (num, decimals = 2) => {
+  if (num == null || isNaN(num)) return 0;
+  const factor = Math.pow(10, decimals);
+  return Math.floor(num * factor) / factor;
+};
+
 const CreateExam = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -219,24 +226,13 @@ const CreateExam = () => {
     const totalMarks = form.getFieldValue('totalMarks') || 100;
     if (questions.length === 0) return questions;
     
-    // Calculate marks per question and round to 1 decimal place
-    const marksPerQuestion = Math.round((totalMarks / questions.length) * 10) / 10;
+    // Calculate exact marks per question (keep full precision)
+    const marksPerQuestion = totalMarks / questions.length;
     
-    // Calculate the sum after rounding
-    const roundedTotal = marksPerQuestion * questions.length;
-    
-    // Calculate the difference to adjust the last question
-    const difference = parseFloat((totalMarks - roundedTotal).toFixed(1));
-    
-    return questions.map((q, index) => {
-      // Add the difference to the last question to ensure total matches exactly
-      const marks = index === questions.length - 1 
-        ? parseFloat((marksPerQuestion + difference).toFixed(1))
-        : marksPerQuestion;
-      
+    return questions.map((q) => {
       return {
         ...q,
-        marks
+        marks: marksPerQuestion
       };
     });
   };
@@ -278,7 +274,7 @@ const CreateExam = () => {
     // Validate marks (allow small difference due to decimal precision)
     const totalQuestionMarks = calculateTotalQuestionMarks();
     if (Math.abs(totalQuestionMarks - values.totalMarks) >= 0.01) {
-      message.error(t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks.toFixed(1)}) phải bằng tổng điểm bài thi (${values.totalMarks})`);
+      message.error(t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${truncateToDecimals(totalQuestionMarks)}) phải bằng tổng điểm bài thi (${values.totalMarks})`);
       return;
     }
 
@@ -406,17 +402,17 @@ const CreateExam = () => {
       width: 120,
       render: (_, record) => {
         const marksValue = record.marks;
-        // Format to 1 decimal place for display
-        const displayValue = marksValue != null ? parseFloat(marksValue.toFixed(1)) : 0;
+        // Truncate to 2 decimal places for display (not rounding)
+        const displayValue = marksValue != null ? Math.floor(marksValue * 100) / 100 : 0;
         
         return (
           <InputNumber
             min={0}
-            step={0.1}
+            step={0.01}
             value={displayValue}
             onChange={(value) => handleUpdateQuestionMarks(record._id || record.id, value)}
             style={{ width: '100%' }}
-            precision={1}
+            precision={2}
           />
         );
       },
@@ -711,7 +707,7 @@ const CreateExam = () => {
                         if (totalMarks && !isValid) {
                           return (
                             <Typography.Text type="danger">
-                              {t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${totalQuestionMarks.toFixed(1)}) phải bằng tổng điểm bài thi (${totalMarks})`}
+                              {t('exams.marksMismatch') || `Tổng điểm các câu hỏi (${truncateToDecimals(totalQuestionMarks)}) phải bằng tổng điểm bài thi (${totalMarks})`}
                             </Typography.Text>
                           );
                         }

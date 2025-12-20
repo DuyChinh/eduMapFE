@@ -198,7 +198,7 @@ const ExamResults = () => {
       render: (score, record) => {
         const totalMarks = record.totalMarks || 1;
         const percentage = (score / totalMarks) * 100;
-        const formattedScore = typeof score === 'number' ? Number(score.toFixed(1)) : (score || 0);
+        const formattedScore = typeof score === 'number' ? Number(score.toFixed(2)) : (score || 0);
         return (
           <Space direction="vertical" size="small">
             <Text strong style={{ fontSize: 16, color: getScoreColor(percentage) }}>
@@ -415,7 +415,7 @@ const ExamResults = () => {
                     const latest = filteredSubmissions[0];
                     const totalMarks = latest.totalMarks || 1;
                     const percentage = ((latest.score || 0) / totalMarks) * 100;
-                    const formattedScore = typeof latest.score === 'number' ? Number(latest.score.toFixed(1)) : (latest.score || 0);
+                    const formattedScore = typeof latest.score === 'number' ? Number(latest.score.toFixed(2)) : (latest.score || 0);
                     return `${formattedScore}/${totalMarks}`;
                   })()
                   : '0/0'}

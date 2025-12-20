@@ -432,7 +432,7 @@ const StudentExamDetail = () => {
                 <div className="detail-item">
                   <Text strong>{t('submissionDetail.score')}: </Text>
                   <Text style={{ fontSize: 18, color: '#1890ff' }}>
-                    {typeof submissionData.score === 'number' ? Number(submissionData.score.toFixed(1)) : (submissionData.score || 0)}/{submissionData.totalMarks || 0}
+                    {typeof submissionData.score === 'number' ? Number(submissionData.score.toFixed(2)) : (submissionData.score || 0)}/{submissionData.totalMarks || 0}
                   </Text>
                 </div>
 
