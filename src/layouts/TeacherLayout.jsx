@@ -139,6 +139,26 @@ const TeacherLayout = () => {
       return 'mindmaps-mymaps';
     }
 
+    // Check exam routes (create, edit, view, monitor, submissions)
+    if (pathname.startsWith('/teacher/exams')) {
+      return ROUTES.TEACHER_EXAMS;
+    }
+
+    // Check question routes (create, edit, detail)
+    if (pathname.startsWith('/teacher/questions')) {
+      return ROUTES.TEACHER_QUESTIONS;
+    }
+
+    // Check class routes (detail, reports)
+    if (pathname.startsWith('/teacher/classes')) {
+      return ROUTES.TEACHER_CLASSES;
+    }
+
+    // Check dashboard route
+    if (pathname.startsWith('/teacher/dashboard')) {
+      return ROUTES.TEACHER_DASHBOARD;
+    }
+
     // Default fallback
     return pathname;
   };

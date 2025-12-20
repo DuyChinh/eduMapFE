@@ -124,8 +124,8 @@ const EditExam = () => {
         preExamNotificationText: examData.preExamNotificationText || '',
         startTime: examData.startTime ? dayjs(examData.startTime) : undefined,
         endTime: examData.endTime ? dayjs(examData.endTime) : undefined,
-        blockLateEntry: examData.lateEntryGracePeriod !== undefined && examData.lateEntryGracePeriod !== null,
-        lateEntryGracePeriod: examData.lateEntryGracePeriod !== undefined ? examData.lateEntryGracePeriod : 0,
+        blockLateEntry: examData.lateEntryGracePeriod === undefined || examData.lateEntryGracePeriod === null || examData.lateEntryGracePeriod < 0,
+        lateEntryGracePeriod: examData.lateEntryGracePeriod !== undefined && examData.lateEntryGracePeriod >= 0 ? examData.lateEntryGracePeriod : -1,
         status: examData.status || 'draft',
         settings: examData.settings || {},
         allowedClassIds: examData.allowedClassIds || []
@@ -462,7 +462,7 @@ const EditExam = () => {
         preExamNotificationText: values.preExamNotificationText || '',
         startTime: values.startTime ? values.startTime.toISOString() : undefined,
         endTime: values.endTime ? values.endTime.toISOString() : undefined,
-        lateEntryGracePeriod: values.blockLateEntry ? (values.lateEntryGracePeriod || 0) : undefined,
+        lateEntryGracePeriod: !values.blockLateEntry ? (values.lateEntryGracePeriod || 0) : -1,
         status: values.status,
         settings: values.settings || {},
         allowedClassIds: values.isAllowUser === 'class' ? (values.allowedClassIds || []) : [],
@@ -873,19 +873,38 @@ const EditExam = () => {
                 style={{ marginBottom: '12px' }}
               >
                 <Switch 
-                  checkedChildren={t('exams.blockLateEntry')} 
-                  unCheckedChildren={t('exams.allowLateEntryAnytime')} 
+                  checkedChildren={t('exams.allowLateEntryAnytime')} 
+                  unCheckedChildren={t('exams.blockLateEntry')}
+                  onChange={(checked) => {
+                    if (checked) {
+                      // When toggling on (allow late entry), set to -1
+                      form.setFieldsValue({ lateEntryGracePeriod: -1 });
+                    } else {
+                      // When toggling off (block late entry), if value is -1, set to 0
+                      const currentValue = form.getFieldValue('lateEntryGracePeriod');
+                      if (currentValue === -1 || currentValue === null || currentValue === undefined) {
+                        form.setFieldsValue({ lateEntryGracePeriod: 0 });
+                      }
+                    }
+                  }}
                 />
               </Form.Item>
 
               <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.blockLateEntry !== currentValues.blockLateEntry}>
                 {({ getFieldValue }) => {
                   const blockLateEntry = getFieldValue('blockLateEntry');
-                  return blockLateEntry ? (
+                  return !blockLateEntry ? (
                     <Form.Item 
                       label={t('exams.lateEntryGracePeriod')}
                       name="lateEntryGracePeriod"
                       tooltip={t('exams.lateEntryGracePeriodTooltip')}
+                      normalize={(value) => {
+                        // If value is -1, null, or undefined, normalize to 0 for display
+                        if (value === -1 || value === null || value === undefined) {
+                          return 0;
+                        }
+                        return value;
+                      }}
                     >
                       <InputNumber
                         min={0}
