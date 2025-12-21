@@ -1093,6 +1093,8 @@
     "submittedAt": "Submitted At",
     "mcq": "Multiple Choice",
     "questions": "questions",
+    "question": "Question",
+    "correctAnswer": "Correct Answer",
     "gradedBy": "Graded By",
     "viewActivityLog": "View detailed progress of the test",
     "deleteAndRetake": "Delete test and allow re-test",

@@ -6,6 +6,13 @@ import dayjs from 'dayjs';
 
 const { Title, Text, Paragraph } = Typography;
 
+// Helper function to truncate number to 2 decimal places (not rounding)
+const truncateToDecimals = (num, decimals = 2) => {
+  if (num == null || isNaN(num)) return 0;
+  const factor = Math.pow(10, decimals);
+  return Math.floor(num * factor) / factor;
+};
+
 const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects = [] }) => {
   const { t, i18n } = useTranslation();
 
@@ -181,7 +188,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
               </Descriptions.Item>
               <Descriptions.Item label={t('exams.totalMarks')}>
                 {typeof (examData.totalMarks || totalMarks) === 'number' 
-                  ? Number((examData.totalMarks || totalMarks).toFixed(1))
+                  ? truncateToDecimals(examData.totalMarks || totalMarks)
                   : (examData.totalMarks || totalMarks)}
               </Descriptions.Item>
               {examData.subjectId && (
@@ -239,7 +246,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
                         </Text>
                         <Tag color="blue">
                           {t('exams.marks')}: {typeof (question.marks || 1) === 'number' 
-                            ? Number((question.marks || 1).toFixed(1))
+                            ? truncateToDecimals(question.marks || 1)
                             : (question.marks || 1)}
                         </Tag>
                       </div>

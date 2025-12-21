@@ -1001,6 +1001,8 @@
     "submittedAt": "提出日時",
     "mcq": "選択問題",
     "questions": "問",
+    "question": "質問",
+    "correctAnswer": "正解",
     "gradedBy": "採点者",
     "viewActivityLog": "テストの詳細な進行状況を表示",
     "deleteAndRetake": "テストを削除して再受験を許可",

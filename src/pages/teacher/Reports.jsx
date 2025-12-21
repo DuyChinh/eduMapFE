@@ -155,7 +155,7 @@ const Reports = () => {
       key: 'accuracy',
       render: (rate) => (
         <Text style={{ color: rate >= 50 ? '#52c41a' : '#ff4d4f' }}>
-          {rate.toFixed(1)}%
+          {rate.toFixed(2)}%
         </Text>
       ),
       sorter: (a, b) => a.accuracyRate - b.accuracyRate
@@ -237,7 +237,7 @@ const Reports = () => {
                       <Statistic
                         title={dist.range}
                         value={dist.count}
-                        suffix={`(${dist.percentage.toFixed(1)}%)`}
+                        suffix={`(${dist.percentage.toFixed(2)}%)`}
                       />
                     </Card>
                   </Col>

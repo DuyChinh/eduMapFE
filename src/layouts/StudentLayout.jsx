@@ -139,6 +139,21 @@ const StudentLayout = () => {
       return 'mindmaps-mymaps';
     }
 
+    // Check class routes (detail)
+    if (pathname.startsWith('/student/classes')) {
+      return ROUTES.STUDENT_CLASSES;
+    }
+
+    // Check results routes (detail)
+    if (pathname.startsWith('/student/results')) {
+      return ROUTES.STUDENT_RESULTS;
+    }
+
+    // Check dashboard route
+    if (pathname.startsWith('/student/dashboard')) {
+      return ROUTES.STUDENT_DASHBOARD;
+    }
+
     // Default fallback
     return pathname;
   };

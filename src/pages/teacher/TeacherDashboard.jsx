@@ -225,7 +225,7 @@ const TeacherDashboard = () => {
                 }}
                 strokeWidth={8}
                 format={(percent) => (
-                  <span className="progress-text-sm">{percent.toFixed(1)}%</span>
+                  <span className="progress-text-sm">{percent.toFixed(2)}%</span>
                 )}
               />
             </div>
@@ -421,7 +421,7 @@ const TeacherDashboard = () => {
                   <div className="exam-info">
                     <Text strong className="exam-name">{exam.examName}</Text>
                     <div className="exam-stats">
-                      <span className="exam-percentage">{exam.avgPercentage.toFixed(1)}%</span>
+                      <span className="exam-percentage">{exam.avgPercentage.toFixed(2)}%</span>
                       <Text type="secondary" className="exam-submissions">
                         {exam.totalSubmissions} {t('teacherDashboard.submissions')}
                       </Text>

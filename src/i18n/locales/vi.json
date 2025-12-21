@@ -1092,6 +1092,8 @@
     "submittedAt": "Thời gian nộp bài",
     "mcq": "Trắc nghiệm",
     "questions": "câu",
+    "question": "Câu hỏi",
+    "correctAnswer": "Đáp án đúng",
     "gradedBy": "Giáo viên chấm",
     "viewActivityLog": "Xem chi tiết quá trình làm bài",
     "deleteAndRetake": "Xóa bài thi và cho thi lại",
