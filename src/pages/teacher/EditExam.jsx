@@ -28,6 +28,7 @@ import examService from '../../api/examService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import PreviewExamModal from '../../components/teacher/PreviewExamModal';
+import SelectQuestionsModal from '../../components/teacher/SelectQuestionsModal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -58,6 +59,8 @@ const EditExam = () => {
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [previewExamData, setPreviewExamData] = useState(null);
   const [previewQuestions, setPreviewQuestions] = useState([]);
+  const [selectQuestionsModalVisible, setSelectQuestionsModalVisible] = useState(false);
+  const [currentSubjectId, setCurrentSubjectId] = useState(null);
   const classesFetchedRef = useRef(false); // Track if classes have been fetched
   const { examId } = useParams();
   const { t } = useTranslation();
@@ -294,6 +297,29 @@ const EditExam = () => {
     const questionsWithDistributedMarks = distributeMarksEvenly(selectedQuestions);
     setSelectedQuestions(questionsWithDistributedMarks);
     message.success(t('exams.marksDistributed'));
+  };
+
+  const handleOpenSelectQuestionsModal = () => {
+    const subjectId = form.getFieldValue('subjectId');
+    if (subjectId) {
+      setCurrentSubjectId(subjectId);
+      setSelectQuestionsModalVisible(true);
+    } else {
+      message.warning(t('exams.selectSubjectFirst'));
+    }
+  };
+
+  const handleQuestionsSelected = (newQuestions) => {
+    // Add new questions to selected list with order and default marks
+    const questionsWithDetails = newQuestions.map((q, index) => ({
+      ...q,
+      order: selectedQuestions.length + index + 1,
+      marks: 1,
+      isRequired: true,
+    }));
+    
+    setSelectedQuestions([...selectedQuestions, ...questionsWithDetails]);
+    message.success(`${t('common.add')} ${newQuestions.length} ${t('questions.items') || 'questions'}`);
   };
 
   const handleAddQuestion = (question) => {
@@ -713,73 +739,15 @@ const EditExam = () => {
                 </Select>
               </Form.Item>
 
-              <div style={{ marginBottom: 16 }}>
-                <Input
-                  placeholder={t('exams.searchQuestionsByName')}
-                  prefix={<SearchOutlined />}
-                  value={questionSearchQuery}
-                  onChange={(e) => handleSearchQueryChange(e.target.value)}
-                  allowClear
-                  style={{
-                    width: '50%',
-                    maxWidth: '100%'
-                  }}
-                  className="question-search-input"
-                />
-              </div>
-              <style>{`
-                @media (max-width: 768px) {
-                  .question-search-input {
-                    width: 100% !important;
-                  }
-                }
-              `}</style>
-
-              {questions.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <Table
-                    dataSource={questions}
-                    rowKey={(record) => record._id || record.id}
-                    pagination={false}
-                    size="small"
-                    scroll={{ y: questions.length > 5 ? 200 : undefined }}
-                    columns={[
-                      {
-                        title: t('questions.name'),
-                        dataIndex: 'name',
-                        key: 'name',
-                        ellipsis: true,
-                      },
-                      {
-                        title: t('questions.type'),
-                        dataIndex: 'type',
-                        key: 'type',
-                        width: 120,
-                        render: (type) => (
-                          <Tag color={getQuestionTypeColor(type)}>
-                            {getQuestionTypeText(type)}
-                          </Tag>
-                        ),
-                      },
-                      {
-                        title: t('common.actions'),
-                        key: 'actions',
-                        width: 100,
-                        render: (_, record) => (
-                          <Button
-                            type="link"
-                            icon={<PlusOutlined />}
-                            onClick={() => handleAddQuestion(record)}
-                            disabled={selectedQuestions.some(q => (q._id || q.id) === (record._id || record.id))}
-                          >
-                            {t('common.add')}
-                          </Button>
-                        ),
-                      },
-                    ]}
-                  />
-                </div>
-              )}
+              {/* Add Questions Button */}
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={handleOpenSelectQuestionsModal}
+                style={{ marginBottom: 16 }}
+              >
+                {t('exams.addMoreQuestions') || 'Add Questions'}
+              </Button>
 
               {selectedQuestions.length > 0 && (
                 <div>
@@ -1189,6 +1157,15 @@ const EditExam = () => {
         questions={previewQuestions.length > 0 ? previewQuestions : selectedQuestions}
         subjects={subjects}
       /> */}
+
+      {/* Select Questions Modal */}
+      <SelectQuestionsModal
+        visible={selectQuestionsModalVisible}
+        onCancel={() => setSelectQuestionsModalVisible(false)}
+        onConfirm={handleQuestionsSelected}
+        subjectId={currentSubjectId}
+        alreadySelectedIds={selectedQuestions.map(q => q._id || q.id)}
+      />
     </div>
   );
 };
