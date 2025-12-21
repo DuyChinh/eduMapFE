@@ -54,7 +54,10 @@ const ClassDetail = () => {
       setClassData(classInfo);
 
       // Fetch teacher details
-      if (classInfo.teacherId) {
+      if (classInfo.teacherId && typeof classInfo.teacherId === 'object') {
+        const t = classInfo.teacherId;
+        setTeacher({ ...t, avatar: t.avatar || t.profile?.avatar });
+      } else if (classInfo.teacherId) {
         try {
           const teacherResponse = await userService.getUserById(classInfo.teacherId);
           setTeacher(teacherResponse.data || teacherResponse);
@@ -69,8 +72,12 @@ const ClassDetail = () => {
 
       // Extract students from class data and fetch their details
       if (classInfo.students && Array.isArray(classInfo.students)) {
-        // If students data is already available
-        setStudents(classInfo.students);
+        // Map students to hoist avatar from profile if needed
+        const mappedStudents = classInfo.students.map(s => ({
+          ...s,
+          avatar: s.avatar || s.profile?.avatar
+        }));
+        setStudents(mappedStudents);
       } else if (classInfo.studentIds && Array.isArray(classInfo.studentIds)) {
         // If only student IDs are available, fetch student details
         const studentPromises = classInfo.studentIds.map(async (studentId) => {
