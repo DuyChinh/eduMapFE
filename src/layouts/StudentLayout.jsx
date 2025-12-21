@@ -187,24 +187,24 @@ const StudentLayout = () => {
     {
       key: 'mindmaps',
       icon: <img src="/mind_map.png" alt="Mindmaps" className="menu-icon-image" />,
-      label: 'Mindmaps',
+      label: t('sidebar.mindmaps'),
       children: [
         {
           key: 'mindmaps-mymaps',
           icon: <img src="/my_maps.png" alt="My Maps" className="menu-icon-image" />,
-          label: 'My Maps',
+          label: t('sidebar.myMaps'),
           onClick: () => navigate('/student/mindmaps'),
         },
         {
           key: 'mindmaps-shared',
           icon: <img src="/shared.png" alt="Shared" className="menu-icon-image" />,
-          label: 'Shared',
+          label: t('sidebar.shared'),
           onClick: () => navigate('/student/mindmaps/shared'),
         },
         {
           key: 'mindmaps-trash',
           icon: <img src="/trash.png" alt="Trash" className="menu-icon-image" />,
-          label: 'Trash',
+          label: t('sidebar.trash'),
           onClick: () => navigate('/student/mindmaps/trash'),
         },
       ],

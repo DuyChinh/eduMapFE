@@ -3,6 +3,12 @@
     "name": "EduMap",
     "description": "Online Exam Platform"
   },
+  "sidebar": {
+    "mindmaps": "Mindmaps",
+    "myMaps": "My Maps",
+    "shared": "Shared",
+    "trash": "Trash"
+  },
   "auth": {
     "login": "Login",
     "register": "Register",
@@ -124,7 +130,8 @@
     "copyFailed": "Failed to copy. Please try downloading instead.",
     "more": "More",
     "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out"
+    "zoomOut": "Zoom Out",
+    "clearFilters": "Clear Filters"
   },
   "qrScanner": {
     "title": "Scan QR Code",
@@ -515,6 +522,7 @@
     "filterByType": "Filter by type",
     "filterByLevel": "Filter by level",
     "filterBySubject": "Filter by subject",
+    "showGradeLetter": "Show grade letter",
     "levelEasy": "Easy",
     "levelMedium": "Medium",
     "levelHard": "Hard",
@@ -612,6 +620,7 @@
     "searchPlaceholder": "Search exams...",
     "filterByStatus": "Filter by status",
     "filterBySubject": "Filter by subject",
+    "showGradeLetter": "Show grade letter",
     "subject": "Subject",
     "fetchFailed": "Failed to load exams",
     "createSuccess": "Exam created successfully!",
@@ -789,8 +798,13 @@
       "score": "Score",
       "noScoreData": "No score data available",
       "fetchFailed": "Failed to load statistics",
-      "noData": "No statistics data available"
+      "noData": "No statistics data available",
+      "examScores": "Exam Scores (Latest Attempt)",
+      "subjectPerformance": "Performance by Subject",
+      "scoreTrend": "Score Trend Over Time",
+      "needMoreData": "Need at least 2 exams to show trend"
     },
+    "chartFilters": "Chart Filters",
     "leaderboard": {
       "rank": "Rank",
       "student": "Student",
@@ -1327,9 +1341,13 @@
     "createMindmapWithAI": "Create Mindmap with AI",
     "createMindmapWithAIDesc": "Describe what you want to create and AI will generate a mindmap for you",
     "titleOptional": "Title (Optional)",
+    "mindmapName": "Mindmap Name",
+    "optional": "Optional",
+    "titleNote": "Note: Title is not used for AI generation. Please describe clearly in description.",
     "titlePlaceholder": "e.g., Project Planning, Study Guide...",
-    "describeMindmap": "Describe your mindmap *",
-    "describeMindmapPlaceholder": "e.g., Create a mindmap about the water cycle with main stages and processes",
+    "describeMindmap": "Describe your mindmap",
+    "descriptionRequired": "Description is required",
+    "describeMindmapPlaceholder": "e.g., Knowledge needed to master fractions in 5th grade math",
     "aiTip": "💡 Tip: Be specific about the topic and structure you want",
     "generateMindmap": "✨ Generate Mindmap",
     "lastOpened": "Last opened",

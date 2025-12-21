@@ -3,6 +3,12 @@
     "name": "EduMap",
     "description": "Nền tảng thi trực tuyến"
   },
+  "sidebar": {
+    "mindmaps": "Sơ đồ tư duy",
+    "myMaps": "Của tôi",
+    "shared": "Được chia sẻ",
+    "trash": "Thùng rác"
+  },
   "auth": {
     "login": "Đăng nhập",
     "register": "Đăng ký",
@@ -124,7 +130,8 @@
     "copyFailed": "Không thể sao chép. Vui lòng thử tải xuống.",
     "more": "Xem thêm",
     "zoomIn": "Phóng to",
-    "zoomOut": "Thu nhỏ"
+    "zoomOut": "Thu nhỏ",
+    "clearFilters": "Xóa bộ lọc"
   },
   "qrScanner": {
     "title": "Quét mã QR",
@@ -514,6 +521,7 @@
     "filterByType": "Lọc theo loại",
     "filterByLevel": "Lọc theo độ khó",
     "filterBySubject": "Lọc theo môn học",
+    "showGradeLetter": "Hiển thị điểm chữ",
     "levelEasy": "Dễ",
     "levelMedium": "Trung bình",
     "levelHard": "Khó",
@@ -611,6 +619,7 @@
     "searchPlaceholder": "Tìm kiếm đề thi...",
     "filterByStatus": "Lọc theo trạng thái",
     "filterBySubject": "Lọc theo môn học",
+    "showGradeLetter": "Hiển thị điểm chữ",
     "subject": "Môn học",
     "fetchFailed": "Không thể tải danh sách đề thi",
     "createSuccess": "Tạo đề thi thành công!",
@@ -788,8 +797,13 @@
       "score": "Điểm",
       "noScoreData": "Chưa có dữ liệu điểm số",
       "fetchFailed": "Không thể tải thống kê",
-      "noData": "Chưa có dữ liệu thống kê"
+      "noData": "Chưa có dữ liệu thống kê",
+      "examScores": "Điểm các bài kiểm tra (Lần thi gần nhất)",
+      "subjectPerformance": "Kết quả theo môn học",
+      "scoreTrend": "Xu hướng điểm số theo thời gian",
+      "needMoreData": "Cần ít nhất 2 bài kiểm tra để hiển thị xu hướng"
     },
+    "chartFilters": "Bộ lọc biểu đồ",
     "leaderboard": {
       "rank": "Hạng",
       "student": "Học sinh",
@@ -1297,9 +1311,13 @@
     "createMindmapWithAI": "Tạo Mindmap bằng AI",
     "createMindmapWithAIDesc": "Mô tả những gì bạn muốn tạo và AI sẽ tạo mindmap cho bạn",
     "titleOptional": "Tiêu đề (Tùy chọn)",
+    "mindmapName": "Tên Mindmap",
+    "optional": "Tùy chọn",
+    "titleNote": "Lưu ý: Tiêu đề không được dùng cho AI tạo mindmap. Vui lòng mô tả rõ ràng ở phần mô tả.",
     "titlePlaceholder": "ví dụ: Lập kế hoạch dự án, Hướng dẫn học tập...",
-    "describeMindmap": "Mô tả mindmap của bạn *",
-    "describeMindmapPlaceholder": "ví dụ: Tạo mindmap về chu trình nước với các giai đoạn và quy trình chính",
+    "describeMindmap": "Mô tả mindmap của bạn",
+    "descriptionRequired": "Vui lòng nhập mô tả",
+    "describeMindmapPlaceholder": "ví dụ: Các kiến thức cần học để nắm vững phân số toán lớp 5",
     "aiTip": "💡 Mẹo: Hãy cụ thể về chủ đề và cấu trúc bạn muốn",
     "generateMindmap": "✨ Tạo Mindmap",
     "lastOpened": "Lần mở cuối",
