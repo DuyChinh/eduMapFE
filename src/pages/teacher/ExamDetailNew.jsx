@@ -1002,7 +1002,7 @@ const ExamDetailNew = () => {
                       <Statistic
                         title={t("exams.stats.totalQuestions")}
                         value={examData.questions?.length || 0}
-                        prefix={<img src="/question.png" alt="Questions" style={{ width: 20, height: 20 }} />}
+                        prefix={<img src="/question.png" alt="Questions" style={{ width: 24, height: 24 }} />}
                       />
                     </Card>
                     <Card>

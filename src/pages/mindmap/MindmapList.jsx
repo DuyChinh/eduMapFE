@@ -196,6 +196,8 @@ const MindmapList = () => {
                 closeAIModal();
                 const rolePath = user?.role === 'teacher' ? 'teacher' : 'student';
                 navigate(`/${rolePath}/mindmaps/${response.data._id}`);
+            } else {
+                toast.error(response.message || 'Failed to generate mindmap');
             }
         } catch (error) {
             console.error('Error generating mindmap with AI:', error);
