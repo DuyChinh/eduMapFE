@@ -916,7 +916,12 @@
     "correctAnswer": "正解",
     "noAnswer": "回答なし",
     "answersNotAvailable": "回答はまだ利用できません",
-    "answersNotAvailableDesc": "すべての学生が試験を完了した後、回答が表示されます。"
+    "answersNotAvailableDesc": "すべての学生が試験を完了した後、回答が表示されます。",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "singleView": "一問ずつ表示",
+    "allView": "全問題表示",
+    "answered": "回答済み"
   },
   "publicTakeExam": {
     "loading": "試験を読み込み中...",

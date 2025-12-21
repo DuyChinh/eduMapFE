@@ -966,7 +966,7 @@
     "passwordPlaceholder": "Enter exam password",
     "pleaseEnterPassword": "Please enter the exam password",
     "startExam": "Start Exam",
-    "goBack": "Go Back",
+    "goBack": "Back",
     "candidate": "Candidate",
     "candidateLabel": "Candidate",
     "questionList": "Question List",
@@ -1008,7 +1008,12 @@
     "answersNotAvailableDesc": "The exam answers will be available after all students have completed the exam.",
     "congratulations": "Congratulations on completing the exam!",
     "examSubmitted": "Your exam has been submitted successfully",
-    "totalScore": "Total Score"
+    "totalScore": "Total Score",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "singleView": "Single Question View",
+    "allView": "All Questions View",
+    "answered": "answered"
   },
   "publicTakeExam": {
     "loading": "Loading exam...",

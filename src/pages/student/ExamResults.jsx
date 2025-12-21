@@ -17,10 +17,12 @@ import {
   Tabs,
   Switch,
   Empty,
+  Divider,
 } from 'antd';
 import {
   ClockCircleOutlined,
   EyeOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { getMySubmissions } from '../../api/submissionService';
@@ -41,7 +43,7 @@ import {
   Cell,
 } from 'recharts';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
@@ -177,6 +179,17 @@ const ExamResults = () => {
     const secs = seconds % 60;
     const formatNumber = (num) => num < 10 ? `0${num}` : `${num}`;
     return `${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(secs)}`;
+  };
+
+  // Helper function to get correct answer count from submission
+  const getCorrectAnswerCount = (submission) => {
+    if (!submission?.answers) return 0;
+    return submission.answers.filter(answer => answer.isCorrect).length;
+  };
+
+  // Helper function to get total questions from submission
+  const getTotalQuestions = (submission) => {
+    return submission?.answers?.length || 0;
   };
 
   // Helper function to get subject name from exam based on language (for charts)
@@ -739,93 +752,8 @@ const ExamResults = () => {
   return (
     <div>
       <Row gutter={[24, 24]}>
-        {/* Left Sidebar */}
-        <Col xs={24} lg={8}>
-          <Card>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                {overallStats?.totalExams > 0 && filteredSubmissions.length > 0
-                  ? (() => {
-                    const latest = filteredSubmissions[0];
-                    const totalMarks = latest.totalMarks || 1;
-                    const percentage = ((latest.score || 0) / totalMarks) * 100;
-                    const formattedScore = typeof latest.score === 'number' ? Number(latest.score.toFixed(2)) : (latest.score || 0);
-                    return `${formattedScore}/${totalMarks}`;
-                  })()
-                  : '0/0'}
-              </Title>
-              <Text type="secondary">{t('studentResults.currentScore')}</Text>
-            </div>
-
-            <Divider />
-
-            <div>
-              <Title level={5}>{t('studentResults.detailedInfo')}</Title>
-
-              {filteredSubmissions.length > 0 && (() => {
-                const latest = filteredSubmissions[0];
-                return (
-                  <>
-                    <div style={{ marginBottom: 12 }}>
-                      <Text strong>{t('studentResults.timeSpent')}: </Text>
-                      <Text>{formatTimeSpent(latest.timeSpent)}</Text>
-                    </div>
-
-                    <div style={{ marginBottom: 12 }}>
-                      <Text strong>{t('studentResults.submittedAt')}: </Text>
-                      <Text>
-                        {latest.submittedAt
-                          ? new Date(latest.submittedAt).toLocaleString('vi-VN')
-                          : '-'
-                        }
-                      </Text>
-                    </div>
-
-                    <div style={{ marginBottom: 12 }}>
-                      <Text strong>{t('studentResults.mcq')}: </Text>
-                      <Text>
-                        {getCorrectAnswerCount(latest)} ({getCorrectAnswerCount(latest)}/{getTotalQuestions(latest)} {t('studentResults.questions')})
-                      </Text>
-                    </div>
-
-                    <Divider />
-
-                    <Space direction="vertical" style={{ width: '100%' }} size="small">
-                      <Button
-                        icon={<EyeOutlined />}
-                        block
-                        onClick={() => {
-                          if (filteredSubmissions.length > 0) {
-                            navigate(`/student/results/${filteredSubmissions[0]._id}`);
-                          }
-                        }}
-                      >
-                        {t('studentResults.viewDetail')}
-                      </Button>
-
-                      <Button
-                        icon={<CopyOutlined />}
-                        block
-                        onClick={() => {
-                          if (filteredSubmissions.length > 0) {
-                            const link = `${window.location.origin}/student/results/${filteredSubmissions[0]._id}`;
-                            navigator.clipboard.writeText(link);
-                            message.success(t('exams.linkCopied'));
-                          }
-                        }}
-                      >
-                        {t('studentResults.copyLinkToTeacher')}
-                      </Button>
-                    </Space>
-                  </>
-                );
-              })()}
-            </div>
-          </Card>
-        </Col>
-
         {/* Main Content */}
-        <Col xs={24} lg={16}>
+        <Col xs={24} lg={24}>
           <Card>
             <Tabs items={tabItems} />
           </Card>

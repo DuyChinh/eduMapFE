@@ -1007,7 +1007,12 @@
     "answersNotAvailableDesc": "Đáp án sẽ được hiển thị sau khi tất cả học sinh hoàn thành bài thi.",
     "congratulations": "Chúc mừng bạn đã hoàn thành bài thi!",
     "examSubmitted": "Bài thi của bạn đã được nộp thành công",
-    "totalScore": "Tổng điểm"
+    "totalScore": "Tổng điểm",
+    "zoomIn": "Phóng to",
+    "zoomOut": "Thu nhỏ",
+    "singleView": "Xem từng câu hỏi",
+    "allView": "Xem tất cả câu hỏi",
+    "answered": "đã trả lời"
   },
   "publicTakeExam": {
     "loading": "Đang tải đề thi...",
