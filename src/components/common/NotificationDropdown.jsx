@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dropdown, Badge, Button, List, Avatar, Typography, Space, Spin, Empty, theme } from 'antd';
 import { BellOutlined, UserOutlined } from '@ant-design/icons';
+import { FaRegBell } from "react-icons/fa6";
 import { useNavigate } from 'react-router-dom';
 import notificationService from '../../api/notificationService';
 import { useTranslation } from 'react-i18next';
@@ -72,6 +73,19 @@ const NotificationDropdown = () => {
             } else {
                 navigate(`${basePath}/classes/${cid}`);
             }
+        } else {
+            // Handle notifications without classId (e.g. System, Mindmap, Exam)
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const basePath = user.role === 'teacher' ? '/teacher' : '/student';
+
+            if (item.type === 'MINDMAP_SHARED' || item.onModel === 'Mindmap') {
+                navigate(`${basePath}/mindmaps/shared`);
+            } else if (item.type === 'EXAM_PUBLISHED') {
+                navigate(`${basePath}/classes`); 
+            } else if (item.type === 'LATE_SUBMISSION') {
+                // Teacher: go to exams or dashboard
+                navigate(`${basePath}/exams`);
+            }
         }
     };
 
@@ -139,7 +153,11 @@ const NotificationDropdown = () => {
                                                     content === 'NOTIFICATION_NEW_COMMENT_OWN' ||
                                                     content === 'NOTIFICATION_NEW_COMMENT_OTHER' ||
                                                     content === 'NOTIFICATION_CLASS_REMOVAL' ||
-                                                    content === 'NOTIFICATION_CLASS_ADDITION') {
+                                                    content === 'NOTIFICATION_CLASS_ADDITION' ||
+                                                    content === 'EXAM_PUBLISHED' ||
+                                                    content === 'SUBMISSION_GRADED' ||
+                                                    content === 'LATE_SUBMISSION' ||
+                                                    content === 'MINDMAP_SHARED') {
                                                     return t(`notifications.${content}`, { className, defaultValue: content });
                                                 }
                                                 // Handle legacy formats containing "đã ..."
@@ -188,10 +206,10 @@ const NotificationDropdown = () => {
             placement="bottomRight"
             arrow={{ pointAtCenter: true }}
         >
-            <Badge count={unreadCount} overflowCount={99} size="small" offset={[-5, 35]}>
+            <Badge count={unreadCount} overflowCount={99} size="small" offset={[-7, 9]}>
                 <Button
                     type="text"
-                    icon={<BellOutlined style={{ fontSize: 20 }} />}
+                    icon={<FaRegBell style={{ fontSize: 20 }} />}
                     className="notification-btn"
                 />
             </Badge>

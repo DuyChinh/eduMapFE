@@ -372,11 +372,7 @@ const StudentLayout = () => {
               </Button>
             </Dropdown>
 
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              className="notification-btn"
-            />
+            <NotificationDropdown />
 
             <Dropdown
               menu={{ items: userMenuItems }}
