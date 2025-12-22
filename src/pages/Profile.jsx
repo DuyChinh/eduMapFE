@@ -1,34 +1,37 @@
 import { useState } from 'react';
-import { 
-  Card, 
-  Descriptions, 
-  Avatar, 
-  Typography, 
-  Space, 
-  Tag, 
-  Button, 
-  Modal, 
-  Form, 
-  Input, 
-  Upload, 
-  message, 
+import {
+  Card,
+  Descriptions,
+  Avatar,
+  Typography,
+  Space,
+  Tag,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Upload,
+  message,
   Spin,
   Row,
   Col,
   Divider,
+  DatePicker,
 } from 'antd';
-import { 
-  MailOutlined, 
-  UserOutlined, 
-  EditOutlined, 
-  CameraOutlined, 
+import {
+  MailOutlined,
+  UserOutlined,
+  EditOutlined,
+  CameraOutlined,
   LoadingOutlined,
   PhoneOutlined,
   IdcardOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   SafetyOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import useAuthStore from '../store/authStore';
 import { USER_ROLES } from '../constants/config';
 import uploadService from '../api/uploadService';
@@ -67,15 +70,17 @@ const Profile = () => {
     user.role === USER_ROLES.TEACHER
       ? 'Teacher'
       : user.role === USER_ROLES.STUDENT
-      ? 'Student'
-      : user.role === USER_ROLES.ADMIN
-      ? 'Admin'
-      : user.role;
+        ? 'Student'
+        : user.role === USER_ROLES.ADMIN
+          ? 'Admin'
+          : user.role;
 
   const showEditModal = () => {
     form.setFieldsValue({
       name: user.name,
-      phone: user.profile?.phone || '',
+      phone: user.phone || user.profile?.phone || '',
+      address: user.address || '',
+      dob: user.dob ? dayjs(user.dob) : null,
     });
     setAvatarUrl(null);
     setAvatarPublicId(null);
@@ -127,7 +132,7 @@ const Profile = () => {
       }
 
       const response = await uploadService.uploadImage(file);
-      
+
       // Response structure after axios interceptor: { success: true, data: { url, public_id } }
       if (response.success && response.data?.url) {
         setAvatarUrl(response.data.url);
@@ -154,12 +159,10 @@ const Profile = () => {
 
       const updateData = {
         name: values.name,
+        phone: values.phone?.trim() || null,
+        address: values.address?.trim() || null,
+        dob: values.dob ? values.dob.toISOString() : null,
       };
-
-      // Update phone using dot notation
-      if (values.phone !== undefined) {
-        updateData['profile.phone'] = values.phone.trim() || null;
-      }
 
       // Only update avatar if a new one was uploaded
       // Use dot notation to update nested field without overwriting entire profile object
@@ -175,8 +178,8 @@ const Profile = () => {
       form.resetFields();
     } catch (error) {
       console.error('Update profile error:', error);
-      const errorMessage = typeof error === 'string' 
-        ? error 
+      const errorMessage = typeof error === 'string'
+        ? error
         : error?.message || 'Failed to update profile';
       message.error(errorMessage);
     } finally {
@@ -190,6 +193,16 @@ const Profile = () => {
     day: 'numeric'
   }) : 'N/A';
 
+  // Helper to format DOB
+  const formattedDOB = user.dob ? new Date(user.dob).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }) : 'Not provided';
+
+  // Get display phone
+  const displayPhone = user.phone || user.profile?.phone;
+
   return (
     <div className="profile-page-container">
       {/* Profile Header Card */}
@@ -197,9 +210,9 @@ const Profile = () => {
         <div className="profile-hero-content">
           <div className="profile-avatar-section">
             <div className="avatar-wrapper">
-              <Avatar 
-                size={140} 
-                src={currentAvatarSrc} 
+              <Avatar
+                size={140}
+                src={currentAvatarSrc}
                 icon={!currentAvatarSrc && <UserOutlined />}
                 className="profile-main-avatar"
               />
@@ -208,7 +221,7 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="profile-info-section">
             <div className="profile-name-row">
               <Title level={2} className="profile-name">
@@ -218,17 +231,17 @@ const Profile = () => {
                 <CheckCircleOutlined className="verified-badge" />
               )}
             </div>
-            
+
             <Space size="middle" wrap className="profile-tags">
-              <Tag 
-                color={roleColorMap[user.role]} 
+              <Tag
+                color={roleColorMap[user.role]}
                 className="role-tag"
                 icon={<SafetyOutlined />}
               >
                 {roleLabel}
               </Tag>
               {user.status && (
-                <Tag 
+                <Tag
                   color={user.status === 'active' ? 'success' : 'default'}
                   className="status-tag"
                 >
@@ -236,17 +249,17 @@ const Profile = () => {
                 </Tag>
               )}
             </Space>
-            
+
             <div className="profile-contact-info">
               <Space direction="vertical" size="small">
                 <div className="contact-item">
                   <MailOutlined className="contact-icon" />
                   <Text className="contact-text">{user.email}</Text>
                 </div>
-                {user.profile?.phone && (
+                {displayPhone && (
                   <div className="contact-item">
                     <PhoneOutlined className="contact-icon" />
-                    <Text className="contact-text">{user.profile.phone}</Text>
+                    <Text className="contact-text">{displayPhone}</Text>
                   </div>
                 )}
                 <div className="contact-item">
@@ -260,10 +273,10 @@ const Profile = () => {
           </div>
 
           <div className="profile-action-section">
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               size="large"
-              icon={<EditOutlined />} 
+              icon={<EditOutlined />}
               onClick={showEditModal}
               className="edit-profile-btn"
             >
@@ -276,14 +289,14 @@ const Profile = () => {
       {/* Account Details */}
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={12}>
-          <Card 
+          <Card
             title={
               <Space>
                 <IdcardOutlined />
                 <span>Account Information</span>
               </Space>
-            } 
-            bordered={false} 
+            }
+            bordered={false}
             className="info-card"
           >
             <Descriptions column={1} labelStyle={{ fontWeight: 600 }}>
@@ -300,29 +313,28 @@ const Profile = () => {
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card 
+          <Card
             title={
               <Space>
                 <UserOutlined />
                 <span>Additional Information</span>
               </Space>
-            } 
-            bordered={false} 
+            }
+            bordered={false}
             className="info-card"
           >
             <Descriptions column={1} labelStyle={{ fontWeight: 600 }}>
-              {user.profile?.phone ? (
-                <Descriptions.Item label="Phone">{user.profile.phone}</Descriptions.Item>
-              ) : (
-                <Descriptions.Item label="Phone">
-                  <Text type="secondary">Not provided</Text>
-                </Descriptions.Item>
-              )}
+              <Descriptions.Item label="Phone">
+                {displayPhone || <Text type="secondary">Not provided</Text>}
+              </Descriptions.Item>
+              <Descriptions.Item label="Date of Birth">
+                {formattedDOB}
+              </Descriptions.Item>
+              <Descriptions.Item label="Address">
+                {user.address || <Text type="secondary">Not provided</Text>}
+              </Descriptions.Item>
               {user.profile?.studentId ? (
                 <Descriptions.Item label="Student ID">{user.profile.studentId}</Descriptions.Item>
-              ) : null}
-              {user.profile?.department ? (
-                <Descriptions.Item label="Department">{user.profile.department}</Descriptions.Item>
               ) : null}
               <Descriptions.Item label="Member Since">
                 {createdDate}
@@ -350,13 +362,13 @@ const Profile = () => {
         className="edit-profile-modal"
       >
         <Divider />
-        
+
         <Form form={form} layout="vertical">
           <div className="modal-avatar-section">
             <div className="modal-avatar-preview">
-              <Avatar 
-                size={120} 
-                src={avatarUrl || currentAvatarSrc} 
+              <Avatar
+                size={120}
+                src={avatarUrl || currentAvatarSrc}
                 icon={!avatarUrl && !currentAvatarSrc && <UserOutlined />}
                 className="modal-avatar"
               />
@@ -366,7 +378,7 @@ const Profile = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="modal-avatar-actions">
               <Upload
                 accept="image/*"
@@ -374,8 +386,8 @@ const Profile = () => {
                 beforeUpload={handleUpload}
                 disabled={uploading}
               >
-                <Button 
-                  icon={<CameraOutlined />} 
+                <Button
+                  icon={<CameraOutlined />}
                   loading={uploading}
                   size="large"
                   type="dashed"
@@ -401,38 +413,68 @@ const Profile = () => {
               { max: 50, message: 'Name cannot exceed 50 characters!' },
             ]}
           >
-            <Input 
+            <Input
               size="large"
-              placeholder="Enter your full name" 
+              placeholder="Enter your full name"
               prefix={<UserOutlined />}
             />
           </Form.Item>
 
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="Phone Number"
+                name="phone"
+                rules={[
+                  {
+                    pattern: /^[0-9+\-\s()]*$/,
+                    message: 'Please enter a valid phone number!'
+                  },
+                  {
+                    min: 10,
+                    message: 'Phone number must be at least 10 digits!'
+                  },
+                  {
+                    max: 15,
+                    message: 'Phone number cannot exceed 15 digits!'
+                  },
+                ]}
+              >
+                <Input
+                  size="large"
+                  placeholder="Phone number"
+                  prefix={<PhoneOutlined />}
+                  allowClear
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Date of Birth"
+                name="dob"
+              >
+                <DatePicker
+                  size="large"
+                  style={{ width: '100%' }}
+                  format="DD/MM/YYYY"
+                  placeholder="Select date"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <Form.Item
-            label="Phone Number"
-            name="phone"
-            rules={[
-              { 
-                pattern: /^[0-9+\-\s()]*$/, 
-                message: 'Please enter a valid phone number!' 
-              },
-              { 
-                min: 10, 
-                message: 'Phone number must be at least 10 digits!' 
-              },
-              { 
-                max: 15, 
-                message: 'Phone number cannot exceed 15 digits!' 
-              },
-            ]}
+            label="Address"
+            name="address"
           >
-            <Input 
+            <Input
               size="large"
-              placeholder="Enter your phone number (optional)" 
-              prefix={<PhoneOutlined />}
+              placeholder="Enter your address"
+              prefix={<EnvironmentOutlined />}
               allowClear
             />
           </Form.Item>
+
         </Form>
       </Modal>
     </div>
