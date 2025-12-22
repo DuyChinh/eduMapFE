@@ -2,7 +2,7 @@ import axiosInstance from './axios';
 
 const mindmapService = {
     create: (data) => axiosInstance.post('/mindmaps', data),
-    generateWithAI: (prompt, title) => axiosInstance.post('/mindmaps/generate-ai', { prompt, title }),
+    generateWithAI: (prompt, title) => axiosInstance.post('/mindmaps/generate-ai', { prompt, title }, { timeout: 120000 }), // 2 minutes timeout for AI generation
     getAll: () => axiosInstance.get('/mindmaps'),
     getOne: (id) => axiosInstance.get(`/mindmaps/${id}`),
     update: (id, data) => axiosInstance.put(`/mindmaps/${id}`, data),

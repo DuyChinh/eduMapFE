@@ -3,6 +3,12 @@
     "name": "EduMap",
     "description": "オンライン試験プラットフォーム"
   },
+  "sidebar": {
+    "mindmaps": "マインドマップ",
+    "myMaps": "マイマップ",
+    "shared": "共有",
+    "trash": "ゴミ箱"
+  },
   "auth": {
     "login": "ログイン",
     "register": "登録",
@@ -124,7 +130,8 @@
     "copyFailed": "コピーに失敗しました。ダウンロードをお試しください。",
     "more": "もっと見る",
     "zoomIn": "ズームイン",
-    "zoomOut": "ズームアウト"
+    "zoomOut": "ズームアウト",
+    "clearFilters": "フィルターをクリア"
   },
   "qrScanner": {
     "title": "QRコードをスキャン",
@@ -363,6 +370,7 @@
   },
   "classes": {
     "title": "クラス管理",
+    "bulletinBoard": "ニュースフィード",
     "overview": "概要",
     "newsfeed": "ニュースフィード",
     "name": "クラス名",
@@ -505,6 +513,7 @@
     "filterByType": "タイプでフィルター",
     "filterByLevel": "レベルでフィルター",
     "filterBySubject": "科目でフィルター",
+    "showGradeLetter": "成績文字で表示",
     "levelEasy": "簡単",
     "levelMedium": "普通",
     "levelHard": "難しい",
@@ -591,6 +600,7 @@
     "searchPlaceholder": "試験を検索...",
     "filterByStatus": "ステータスでフィルター",
     "filterBySubject": "科目でフィルター",
+    "showGradeLetter": "成績文字で表示",
     "subject": "科目",
     "fetchFailed": "試験の読み込みに失敗しました",
     "createSuccess": "試験が正常に作成されました！",
@@ -651,6 +661,7 @@
     "selectedQuestions": "選択された問題",
     "selectQuestions": "問題を選択",
     "addQuestion": "問題を追加",
+    "addQuestions": "問題を追加",
     "addMoreQuestions": "問題を追加",
     "searchQuestions": "問題を検索",
     "searchQuestionsByName": "名前で問題を検索...",
@@ -761,8 +772,13 @@
       "score": "スコア",
       "noScoreData": "スコアデータがありません",
       "fetchFailed": "統計の読み込みに失敗しました",
-      "noData": "統計データがありません"
+      "noData": "統計データがありません",
+      "examScores": "試験スコア（最新の受験）",
+      "subjectPerformance": "科目別成績",
+      "scoreTrend": "スコアの推移",
+      "needMoreData": "推移を表示するには2回以上の試験が必要です"
     },
+    "chartFilters": "グラフフィルター",
     "leaderboard": {
       "rank": "順位",
       "student": "学生",
@@ -901,7 +917,12 @@
     "correctAnswer": "正解",
     "noAnswer": "回答なし",
     "answersNotAvailable": "回答はまだ利用できません",
-    "answersNotAvailableDesc": "すべての学生が試験を完了した後、回答が表示されます。"
+    "answersNotAvailableDesc": "すべての学生が試験を完了した後、回答が表示されます。",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "singleView": "一問ずつ表示",
+    "allView": "全問題表示",
+    "answered": "回答済み"
   },
   "publicTakeExam": {
     "loading": "試験を読み込み中...",
@@ -1160,9 +1181,13 @@
     "createMindmapWithAI": "AIでマインドマップを作成",
     "createMindmapWithAIDesc": "作成したい内容を説明すると、AIがマインドマップを生成します",
     "titleOptional": "タイトル（オプション）",
+    "mindmapName": "マインドマップ名",
+    "optional": "オプション",
+    "titleNote": "注意：タイトルはAI生成には使用されません。説明欄で詳しく記述してください。",
     "titlePlaceholder": "例：プロジェクト計画、学習ガイド...",
-    "describeMindmap": "マインドマップを説明 *",
-    "describeMindmapPlaceholder": "例：主要な段階とプロセスを含む水循環に関するマインドマップを作成",
+    "describeMindmap": "マインドマップを説明",
+    "descriptionRequired": "説明を入力してください",
+    "describeMindmapPlaceholder": "例：小学5年生の分数を理解するために必要な知識",
     "aiTip": "💡 ヒント：トピックと構造を具体的に指定してください",
     "generateMindmap": "✨ マインドマップを生成",
     "lastOpened": "最後に開いた",

@@ -3,6 +3,12 @@
     "name": "EduMap",
     "description": "Online Exam Platform"
   },
+  "sidebar": {
+    "mindmaps": "Mindmaps",
+    "myMaps": "My Maps",
+    "shared": "Shared",
+    "trash": "Trash"
+  },
   "auth": {
     "login": "Login",
     "register": "Register",
@@ -124,7 +130,8 @@
     "copyFailed": "Failed to copy. Please try downloading instead.",
     "more": "More",
     "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out"
+    "zoomOut": "Zoom Out",
+    "clearFilters": "Clear Filters"
   },
   "qrScanner": {
     "title": "Scan QR Code",
@@ -171,6 +178,7 @@
     "loginNow": "Login now",
     "nameRequired": "Please enter your name!",
     "nameMinLength": "Name must be at least 2 characters!",
+    "nameMaxLength": "Name must not exceed 128 characters!",
     "confirmPasswordRequired": "Please confirm your password!",
     "passwordMismatch": "Passwords do not match!",
     "registerSuccess": "Registration successful! Please login.",
@@ -329,6 +337,7 @@
     },
     "classes": {
       "title": "Class Management",
+      "bulletinBoard": "Bulletin Board",
       "createNew": "Create New Class",
       "noClasses": "No classes yet. Create your first class!",
       "emptyDescription": "No classes yet. Create your first class!"
@@ -367,6 +376,7 @@
   },
   "classes": {
     "title": "Class Management",
+    "bulletinBoard": "Newsfeed",
     "overview": "Overview",
     "newsfeed": "Newsfeed",
     "name": "Class Name",
@@ -515,6 +525,7 @@
     "filterByType": "Filter by type",
     "filterByLevel": "Filter by level",
     "filterBySubject": "Filter by subject",
+    "showGradeLetter": "Show grade letter",
     "levelEasy": "Easy",
     "levelMedium": "Medium",
     "levelHard": "Hard",
@@ -612,6 +623,7 @@
     "searchPlaceholder": "Search exams...",
     "filterByStatus": "Filter by status",
     "filterBySubject": "Filter by subject",
+    "showGradeLetter": "Show grade letter",
     "subject": "Subject",
     "fetchFailed": "Failed to load exams",
     "createSuccess": "Exam created successfully!",
@@ -674,6 +686,7 @@
     "selectedQuestions": "Selected Questions",
     "selectQuestions": "Select Questions",
     "addQuestion": "Add Question",
+    "addQuestions": "Add Questions",
     "addMoreQuestions": "Add More Questions",
     "searchQuestions": "Search Questions",
     "searchQuestionsByName": "Search questions by name...",
@@ -789,8 +802,13 @@
       "score": "Score",
       "noScoreData": "No score data available",
       "fetchFailed": "Failed to load statistics",
-      "noData": "No statistics data available"
+      "noData": "No statistics data available",
+      "examScores": "Exam Scores (Latest Attempt)",
+      "subjectPerformance": "Performance by Subject",
+      "scoreTrend": "Score Trend Over Time",
+      "needMoreData": "Need at least 2 exams to show trend"
     },
+    "chartFilters": "Chart Filters",
     "leaderboard": {
       "rank": "Rank",
       "student": "Student",
@@ -951,7 +969,7 @@
     "passwordPlaceholder": "Enter exam password",
     "pleaseEnterPassword": "Please enter the exam password",
     "startExam": "Start Exam",
-    "goBack": "Go Back",
+    "goBack": "Back",
     "candidate": "Candidate",
     "candidateLabel": "Candidate",
     "questionList": "Question List",
@@ -993,7 +1011,12 @@
     "answersNotAvailableDesc": "The exam answers will be available after all students have completed the exam.",
     "congratulations": "Congratulations on completing the exam!",
     "examSubmitted": "Your exam has been submitted successfully",
-    "totalScore": "Total Score"
+    "totalScore": "Total Score",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "singleView": "Single Question View",
+    "allView": "All Questions View",
+    "answered": "answered"
   },
   "publicTakeExam": {
     "loading": "Loading exam...",
@@ -1248,7 +1271,6 @@
     "save": "Save",
     "cancel": "Cancel"
   },
-
   "mindmap": {
     "unsavedChanges": "You have unsaved changes like drawing, layout, or node properties. Do you really want to leave without saving?",
     "deleteConfirmTitle": "Move to Trash",
@@ -1329,9 +1351,13 @@
     "createMindmapWithAI": "Create Mindmap with AI",
     "createMindmapWithAIDesc": "Describe what you want to create and AI will generate a mindmap for you",
     "titleOptional": "Title (Optional)",
+    "mindmapName": "Mindmap Name",
+    "optional": "Optional",
+    "titleNote": "Note: Title is not used for AI generation. Please describe clearly in description.",
     "titlePlaceholder": "e.g., Project Planning, Study Guide...",
-    "describeMindmap": "Describe your mindmap *",
-    "describeMindmapPlaceholder": "e.g., Create a mindmap about the water cycle with main stages and processes",
+    "describeMindmap": "Describe your mindmap",
+    "descriptionRequired": "Description is required",
+    "describeMindmapPlaceholder": "e.g., Knowledge needed to master fractions in 5th grade math",
     "aiTip": "💡 Tip: Be specific about the topic and structure you want",
     "generateMindmap": "✨ Generate Mindmap",
     "lastOpened": "Last opened",

@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'react';
-import { 
-  Table, 
-  Button, 
-  Space, 
-  Tag, 
-  Popconfirm, 
-  message, 
-  Card, 
-  Input, 
+import {
+  Table,
+  Button,
+  Space,
+  Tag,
+  Popconfirm,
+  message,
+  Card,
+  Input,
   Select,
   Pagination,
   Tooltip
 } from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
   UserAddOutlined,
   ReloadOutlined,
   SearchOutlined,
-  QrcodeOutlined
+  QrcodeOutlined,
+  ArrowRightOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -47,7 +48,7 @@ const ClassList = () => {
     q: '',
     sort: '-createdAt'
   });
-  
+
   // Modal states
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -55,7 +56,7 @@ const ClassList = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
   const [selectedClassForQR, setSelectedClassForQR] = useState(null);
-  
+
   // Bulk delete states
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
@@ -67,9 +68,9 @@ const ClassList = () => {
   const fetchClasses = async (params = {}) => {
     setLoading(true);
     try {
-      
+
       let response;
-      
+
       // Use Search API if there's a search query (minimum 2 characters)
       if (filters.q && filters.q.length >= 2) {
         response = await classService.searchClasses(filters.q, user?.email);
@@ -84,8 +85,8 @@ const ClassList = () => {
         };
         response = await classService.getClasses(listParams);
       }
-      
-      
+
+
       // Axios interceptor returns response.data, so response is already the data
       // API returns { ok: true, items: [...], total: 100, page: 1, limit: 20, pages: 5 }
       const classesData = response.items || [];
@@ -97,7 +98,7 @@ const ClassList = () => {
         current: response.page || 1,
         pageSize: response.limit || prev.pageSize,
       }));
-      
+
     } catch (error) {
       console.error('❌ Error fetching classes:', error);
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('classes.fetchFailed'));
@@ -117,7 +118,7 @@ const ClassList = () => {
     // Debug token
     const token = localStorage.getItem('auth_token');
     const authStorage = localStorage.getItem('auth-storage');
-    
+
     fetchClasses();
   }, [filters, isAuthenticated, navigate]);
 
@@ -149,9 +150,9 @@ const ClassList = () => {
       setBulkDeleteLoading(true);
       const deletePromises = selectedRowKeys.map(id => classService.deleteClass(id));
       await Promise.all(deletePromises);
-      
+
       message.success(
-        t('classes.bulkDeleteSuccess') || 
+        t('classes.bulkDeleteSuccess') ||
         `Successfully deleted ${selectedRowKeys.length} class(es)`
       );
       setSelectedRowKeys([]);
@@ -221,8 +222,8 @@ const ClassList = () => {
         }
         return (
           <Tooltip title={t('classes.showQRCode') || 'Show QR Code'}>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
               onClick={() => {
                 setSelectedClassForQR(record);
@@ -263,23 +264,58 @@ const ClassList = () => {
       },
     },
     {
+      title: t('classes.bulletinBoard') || 'Bulletin Board',
+      key: 'latestPost',
+      width: 250,
+      render: (_, record) => {
+        if (!record.latestPost) {
+          return <span style={{ color: '#d9d9d9', fontStyle: 'italic' }}>No updates</span>;
+        }
+        const { author, content, createdAt } = record.latestPost;
+        const shortContent = content.length > 50 ? content.substring(0, 50) + '...' : content;
+
+        return (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', fontSize: '13px' }}>
+              <div style={{ fontWeight: 600, color: '#1890ff' }}>
+                {author?.name || 'Unknown'}
+              </div>
+              <div style={{ color: '#595959' }}>
+                {shortContent}
+              </div>
+              <div style={{ fontSize: '11px', color: '#8c8c8c', marginTop: 2 }}>
+                {new Date(createdAt).toLocaleDateString()}
+              </div>
+            </div>
+            <Tooltip title={t('classes.viewDetails') || 'View Details'}>
+              <Button
+                type="text"
+                icon={<ArrowRightOutlined style={{ color: '#1890ff' }} />}
+                onClick={() => navigate(`${ROUTES.TEACHER_CLASSES}/${record._id}?tab=newsfeed`)}
+              />
+            </Tooltip>
+          </div>
+        );
+      },
+    },
+    {
       title: t('common.actions'),
       key: 'actions',
       render: (_, record) => (
         <Space size="small">
           <Tooltip title={t('classes.viewDetails')}>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<EyeOutlined />}
               onClick={() => {
                 navigate(`${ROUTES.TEACHER_CLASSES}/${record._id}`);
               }}
             />
           </Tooltip>
-          
+
           <Tooltip title={t('classes.edit')}>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<EditOutlined />}
               onClick={() => {
                 setSelectedClass(record);
@@ -287,10 +323,10 @@ const ClassList = () => {
               }}
             />
           </Tooltip>
-          
+
           <Tooltip title={t('classes.addStudents')}>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<UserAddOutlined />}
               onClick={() => {
                 setSelectedClass(record);
@@ -298,15 +334,15 @@ const ClassList = () => {
               }}
             />
           </Tooltip>
-          
+
           <Tooltip title={t('classes.regenerateCode')}>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<ReloadOutlined />}
               onClick={() => handleRegenerateCode(record._id)}
             />
           </Tooltip>
-          
+
           <Popconfirm
             title={t('classes.confirmDelete')}
             onConfirm={() => handleDelete(record._id)}
@@ -314,9 +350,9 @@ const ClassList = () => {
             cancelText={t('common.no')}
           >
             <Tooltip title={t('classes.delete')}>
-              <Button 
-                type="text" 
-                danger 
+              <Button
+                type="text"
+                danger
                 icon={<DeleteOutlined />}
               />
             </Tooltip>
@@ -329,9 +365,9 @@ const ClassList = () => {
   return (
     <Card>
       <div style={{ marginBottom: 16 }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 12
@@ -339,7 +375,7 @@ const ClassList = () => {
           <Search
             placeholder={t('classes.searchPlaceholder')}
             allowClear
-            style={{ 
+            style={{
               width: '100%',
               maxWidth: 300,
               minWidth: 200
@@ -347,7 +383,7 @@ const ClassList = () => {
             onSearch={handleSearch}
             prefix={<SearchOutlined />}
           />
-          
+
           <Space wrap size="small">
             {selectedRowKeys.length > 0 && (
               <Popconfirm
@@ -357,7 +393,7 @@ const ClassList = () => {
                 cancelText={t('common.no')}
                 okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
               >
-                <Button 
+                <Button
                   danger
                   icon={<DeleteOutlined />}
                   loading={bulkDeleteLoading}
@@ -366,9 +402,9 @@ const ClassList = () => {
                 </Button>
               </Popconfirm>
             )}
-            
-            <Button 
-              type="primary" 
+
+            <Button
+              type="primary"
               icon={<PlusOutlined />}
               onClick={() => setCreateModalVisible(true)}
             >
@@ -391,7 +427,7 @@ const ClassList = () => {
           ...pagination,
           showSizeChanger: true,
           showQuickJumper: true,
-          showTotal: (total, range) => 
+          showTotal: (total, range) =>
             `${range[0]}-${range[1]} of ${total} ${t('classes.items')}`,
           responsive: true,
         }}

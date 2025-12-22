@@ -19,7 +19,7 @@ const Exams = () => {
         <img 
           src="/exam.png" 
           alt="Exam" 
-          style={{ width: 24, height: 24, objectFit: 'contain' }} 
+          style={{ width: 28, height: 28, objectFit: 'contain' }} 
         />
         <Title level={2} style={{ margin: 0, flex: 1 }}>{t('teacherPages.exams.title')}</Title>
       </div>

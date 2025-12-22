@@ -46,7 +46,8 @@ const ClassDetail = () => {
   // Parse query params to check for postId
   const searchParams = new URLSearchParams(window.location.search);
   const postId = searchParams.get('postId');
-  const [activeTab, setActiveTab] = useState(postId ? 'newsfeed' : 'overview');
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(postId ? 'newsfeed' : (tabParam || 'overview'));
 
   const [classData, setClassData] = useState(null);
   const [students, setStudents] = useState([]);
