@@ -8,24 +8,25 @@ import axiosInstance from './axios';
 export const uploadPdfForParsing = async (file) => {
   const formData = new FormData();
   formData.append('pdf', file);
-  
+
   console.log('📤 Sending PDF to backend:', file.name, file.size);
-  
+
   try {
     const response = await axiosInstance.post('/exams/upload-pdf', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      timeout: 180000
+      // Increased timeout to 5 minutes (300000ms) for large files or slower fallback processing
+      timeout: 300000
     });
-    
+
     console.log('📥 Raw axios response:', response);
     console.log('📊 Response structure:', {
       ok: response.ok,
       hasData: !!response.data,
       dataKeys: response.data ? Object.keys(response.data) : []
     });
-    
+
     return response;
   } catch (error) {
     console.error('❌ Service error:', error);
@@ -49,4 +50,3 @@ const pdfExamService = {
 };
 
 export default pdfExamService;
-
