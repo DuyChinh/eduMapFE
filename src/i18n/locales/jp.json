@@ -370,6 +370,7 @@
   },
   "classes": {
     "title": "クラス管理",
+    "bulletinBoard": "ニュースフィード",
     "overview": "概要",
     "newsfeed": "ニュースフィード",
     "name": "クラス名",

@@ -178,6 +178,7 @@
     "loginNow": "Login now",
     "nameRequired": "Please enter your name!",
     "nameMinLength": "Name must be at least 2 characters!",
+    "nameMaxLength": "Name must not exceed 128 characters!",
     "confirmPasswordRequired": "Please confirm your password!",
     "passwordMismatch": "Passwords do not match!",
     "registerSuccess": "Registration successful! Please login.",
@@ -336,6 +337,7 @@
     },
     "classes": {
       "title": "Class Management",
+      "bulletinBoard": "Bulletin Board",
       "createNew": "Create New Class",
       "noClasses": "No classes yet. Create your first class!",
       "emptyDescription": "No classes yet. Create your first class!"
@@ -374,6 +376,7 @@
   },
   "classes": {
     "title": "Class Management",
+    "bulletinBoard": "Newsfeed",
     "overview": "Overview",
     "newsfeed": "Newsfeed",
     "name": "Class Name",
@@ -1268,7 +1271,6 @@
     "save": "Save",
     "cancel": "Cancel"
   },
-
   "mindmap": {
     "unsavedChanges": "You have unsaved changes like drawing, layout, or node properties. Do you really want to leave without saving?",
     "deleteConfirmTitle": "Move to Trash",

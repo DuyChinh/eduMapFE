@@ -373,6 +373,7 @@
   },
   "classes": {
     "title": "Quản lý lớp học",
+    "bulletinBoard": "Newsfeed",
     "overview": "Tổng quan",
     "newsfeed": "Bảng tin",
     "name": "Tên lớp",
