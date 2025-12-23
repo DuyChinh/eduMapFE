@@ -121,6 +121,7 @@ const MindmapList = () => {
     const [aiPrompt, setAiPrompt] = useState('');
     const [aiTitle, setAiTitle] = useState('');
     const [aiGenerating, setAiGenerating] = useState(false);
+    const [descriptionError, setDescriptionError] = useState(false);
 
     useEffect(() => {
         fetchMindmaps();
@@ -173,19 +174,23 @@ const MindmapList = () => {
         setIsAIModalOpen(true);
         setAiPrompt('');
         setAiTitle('');
+        setDescriptionError(false);
     };
 
     const closeAIModal = () => {
         setIsAIModalOpen(false);
         setAiPrompt('');
         setAiTitle('');
+        setDescriptionError(false);
     };
 
     const handleGenerateWithAI = async () => {
         if (!aiPrompt.trim()) {
+            setDescriptionError(true);
             toast.error(t('mindmap.pleaseEnterPrompt') || 'Please enter a prompt');
             return;
         }
+        setDescriptionError(false);
 
         try {
             setAiGenerating(true);
@@ -196,6 +201,8 @@ const MindmapList = () => {
                 closeAIModal();
                 const rolePath = user?.role === 'teacher' ? 'teacher' : 'student';
                 navigate(`/${rolePath}/mindmaps/${response.data._id}`);
+            } else {
+                toast.error(response.message || 'Failed to generate mindmap');
             }
         } catch (error) {
             console.error('Error generating mindmap with AI:', error);
@@ -428,7 +435,7 @@ const MindmapList = () => {
                         <div className="modal-body">
                             <div style={{ marginBottom: '16px' }}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                                    {t('mindmap.titleOptional') || 'Title (Optional)'}
+                                    {t('mindmap.mindmapName') || 'Mindmap Name'} ({t('mindmap.optional') || 'Optional'})
                                 </label>
                                 <input
                                     type="text"
@@ -438,22 +445,33 @@ const MindmapList = () => {
                                     placeholder={t('mindmap.titlePlaceholder') || 'e.g., Project Planning, Study Guide...'}
                                     disabled={aiGenerating}
                                 />
+                                <div style={{ 
+                                    marginTop: '6px', 
+                                    fontSize: '12px', 
+                                    color: '#888',
+                                    fontStyle: 'italic'
+                                }}>
+                                    ⚠️ {t('mindmap.titleNote') || 'Note: Title is not used for AI generation. Please describe clearly in description.'}
+                                </div>
                             </div>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                                    {t('mindmap.describeMindmap') || 'Describe your mindmap *'}
+                                    {t('mindmap.describeMindmap') || 'Describe your mindmap'} <span style={{ color: '#ff4d4f' }}>*</span>
                                 </label>
                                 <textarea
                                     className="modal-input"
                                     value={aiPrompt}
-                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                    onChange={(e) => {
+                                        setAiPrompt(e.target.value);
+                                        if (e.target.value.trim()) setDescriptionError(false);
+                                    }}
                                     placeholder={t('mindmap.describeMindmapPlaceholder') || 'e.g., Create a mindmap about the water cycle with main stages and processes'}
                                     rows={6}
                                     style={{ 
                                         width: '100%', 
                                         padding: '12px',
                                         borderRadius: '8px',
-                                        border: '1px solid #ddd',
+                                        border: descriptionError ? '1px solid #ff4d4f' : '1px solid #ddd',
                                         fontSize: '14px',
                                         fontFamily: 'inherit',
                                         resize: 'vertical',
@@ -464,6 +482,16 @@ const MindmapList = () => {
                                         if (e.key === 'Escape') closeAIModal();
                                     }}
                                 />
+                                {descriptionError && (
+                                    <div style={{ 
+                                        marginTop: '6px', 
+                                        fontSize: '12px', 
+                                        color: '#ff4d4f',
+                                        fontWeight: 500
+                                    }}>
+                                        {t('mindmap.descriptionRequired') || 'Description is required'}
+                                    </div>
+                                )}
                                 <div style={{ 
                                     marginTop: '8px', 
                                     fontSize: '12px', 
@@ -487,9 +515,11 @@ const MindmapList = () => {
                                 onClick={handleGenerateWithAI}
                                 disabled={aiGenerating || !aiPrompt.trim()}
                                 style={{
-                                    background: aiGenerating ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    background: (aiGenerating || !aiPrompt.trim()) ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                     border: 'none',
-                                    color: '#fff'
+                                    color: '#fff',
+                                    cursor: (aiGenerating || !aiPrompt.trim()) ? 'not-allowed' : 'pointer',
+                                    opacity: (aiGenerating || !aiPrompt.trim()) ? 0.6 : 1
                                 }}
                             >
                                 {aiGenerating ? `⏳ ${t('mindmap.generating') || 'Generating...'}` : t('mindmap.generateMindmap') || '✨ Generate Mindmap'}

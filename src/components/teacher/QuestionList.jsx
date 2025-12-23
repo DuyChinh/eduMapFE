@@ -69,7 +69,7 @@ const QuestionList = () => {
   // Track selection order
   const [orderedSelectedIds, setOrderedSelectedIds] = useState([]);
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const fetchQuestions = async (params = {}) => {
@@ -113,8 +113,7 @@ const QuestionList = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const currentLang = localStorage.getItem('language') || 'vi';
-        const response = await questionService.getSubjects({ lang: currentLang });
+        const response = await questionService.getSubjects();
 
         // Handle different response structures
         let subjectsData = [];
@@ -137,45 +136,11 @@ const QuestionList = () => {
     fetchSubjects();
   }, []);
 
-  // Listen for language changes and refetch subjects
+  // Force re-render when language changes
   useEffect(() => {
-    const handleLanguageChange = () => {
-      const currentLang = localStorage.getItem('language') || 'vi';
-
-      // Refetch subjects with new language
-      const refetchSubjects = async () => {
-        try {
-          const response = await questionService.getSubjects({ lang: currentLang });
-          let subjectsData = [];
-          if (Array.isArray(response)) {
-            subjectsData = response;
-          } else if (response.data && Array.isArray(response.data)) {
-            subjectsData = response.data;
-          } else if (response.items && Array.isArray(response.items)) {
-            subjectsData = response.items;
-          }
-
-          setSubjects(subjectsData);
-        } catch (error) {
-          console.error('❌ Error refetching subjects:', error);
-          message.error('Failed to reload subjects');
-        }
-      };
-
-      refetchSubjects();
-    };
-
-    // Listen for storage changes (language changes)
-    window.addEventListener('storage', handleLanguageChange);
-
-    // Also listen for custom language change events
-    window.addEventListener('languageChanged', handleLanguageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleLanguageChange);
-      window.removeEventListener('languageChanged', handleLanguageChange);
-    };
-  }, []);
+    // The component will automatically re-render when i18n.language changes
+    // because we're using it directly in the render logic
+  }, [i18n.language]);
 
   const handleSearch = (value) => {
     setFilters(prev => ({ ...prev, q: value }));
@@ -507,7 +472,7 @@ const QuestionList = () => {
 
         // Get subject name from subjects array
         const subjectObj = subjects.find(s => (s._id || s.id) === actualSubjectId);
-        const currentLang = localStorage.getItem('language') || 'vi';
+        const currentLang = i18n.language || 'vi';
 
         let subjectName = actualSubjectId || 'N/A';
         if (subjectObj) {
@@ -700,7 +665,7 @@ const QuestionList = () => {
               onChange={(value) => handleFilterChange('subject', value)}
             >
               {subjects.map(subject => {
-                const currentLang = localStorage.getItem('language') || 'vi';
+                const currentLang = i18n.language || 'vi';
                 let subjectName = subject.name;
 
                 switch (currentLang) {

@@ -38,7 +38,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [questionSearchLoading, setQuestionSearchLoading] = useState(false);
   const [questionSearchQuery, setQuestionSearchQuery] = useState('');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Fetch subjects on mount
   useEffect(() => {
@@ -60,9 +60,9 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
         autoMonitoring: 'off',
         studentVerification: false,
         eduMapOnly: false,
-        hideGroupTitles: false,
+        hideGroupTitles: true,
         sectionsStartFromQ1: false,
-        hideLeaderboard: false,
+        hideLeaderboard: true,
         addTitleInfo: false,
         preExamNotification: false,
         fee: 0,
@@ -119,8 +119,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
 
   const fetchSubjects = async () => {
     try {
-      const currentLang = localStorage.getItem('language') || 'vi';
-      const response = await questionService.getSubjects({ lang: currentLang });
+      const response = await questionService.getSubjects();
       
       let subjectsData = [];
       if (Array.isArray(response)) {
@@ -237,9 +236,9 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
         autoMonitoring: values.autoMonitoring || 'off',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
-        hideGroupTitles: values.hideGroupTitles || false,
+        hideGroupTitles: !values.hideGroupTitles,
         sectionsStartFromQ1: values.sectionsStartFromQ1 || false,
-        hideLeaderboard: values.hideLeaderboard || false,
+        hideLeaderboard: !values.hideLeaderboard,
         addTitleInfo: values.addTitleInfo || false,
         preExamNotification: values.preExamNotification || false,
         preExamNotificationText: values.preExamNotificationText || '',
@@ -468,7 +467,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
                 }}
               >
                 {subjects.map(subject => {
-                  const currentLang = localStorage.getItem('language') || 'vi';
+                  const currentLang = i18n.language || 'vi';
                   let subjectName = subject.name;
                   
                   switch (currentLang) {
@@ -581,7 +580,10 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
               name="timezone"
             >
               <Select>
-                <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</Option>
+                <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh (Vietnam)</Option>
+                <Option value="Asia/Tokyo">Asia/Tokyo (Japan)</Option>
+                <Option value="Europe/London">Europe/London (UK)</Option>
+                <Option value="America/New_York">America/New_York (US Eastern)</Option>
                 <Option value="UTC">UTC</Option>
               </Select>
             </Form.Item>
@@ -671,7 +673,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
 
             <Space direction="vertical" style={{ width: '100%' }}>
               <Form.Item name="hideGroupTitles" valuePropName="checked">
-                <Switch checkedChildren={t('exams.hideGroupTitles')} unCheckedChildren={t('exams.showGroupTitles')} />
+                <Switch checkedChildren={t('exams.showGroupTitles')} unCheckedChildren={t('exams.hideGroupTitles')} />
               </Form.Item>
 
               <Form.Item name="sectionsStartFromQ1" valuePropName="checked">
@@ -679,7 +681,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
               </Form.Item>
 
               <Form.Item name="hideLeaderboard" valuePropName="checked">
-                <Switch checkedChildren={t('exams.hideLeaderboard')} unCheckedChildren={t('exams.showLeaderboard')} />
+                <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
               </Form.Item>
 
               <Form.Item name="addTitleInfo" valuePropName="checked">

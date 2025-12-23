@@ -28,6 +28,7 @@ import examService from '../../api/examService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import PreviewExamModal from '../../components/teacher/PreviewExamModal';
+import SelectQuestionsModal from '../../components/teacher/SelectQuestionsModal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -35,6 +36,13 @@ dayjs.extend(timezone);
 const { TextArea } = Input;
 const { Option } = Select;
 const { Title } = Typography;
+
+// Helper function to truncate number to 2 decimal places (not rounding)
+const truncateToDecimals = (num, decimals = 2) => {
+  if (num == null || isNaN(num)) return 0;
+  const factor = Math.pow(10, decimals);
+  return Math.floor(num * factor) / factor;
+};
 
 const EditExam = () => {
   const [form] = Form.useForm();
@@ -51,6 +59,8 @@ const EditExam = () => {
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [previewExamData, setPreviewExamData] = useState(null);
   const [previewQuestions, setPreviewQuestions] = useState([]);
+  const [selectQuestionsModalVisible, setSelectQuestionsModalVisible] = useState(false);
+  const [currentSubjectId, setCurrentSubjectId] = useState(null);
   const classesFetchedRef = useRef(false); // Track if classes have been fetched
   const { examId } = useParams();
   const { t } = useTranslation();
@@ -75,18 +85,18 @@ const EditExam = () => {
     try {
       const response = await examService.getExamById(examId);
       const examData = response.data || response;
-      
+
       // Extract subjectId - handle both object (populated) and string (ID) cases
-      const subjectIdValue = examData.subjectId 
-        ? (typeof examData.subjectId === 'object' && examData.subjectId._id 
-          ? examData.subjectId._id 
+      const subjectIdValue = examData.subjectId
+        ? (typeof examData.subjectId === 'object' && examData.subjectId._id
+          ? examData.subjectId._id
           : examData.subjectId)
         : undefined;
 
       // Extract gradeId - handle both object (populated) and string (ID) cases
-      const gradeIdValue = examData.gradeId 
-        ? (typeof examData.gradeId === 'object' && examData.gradeId._id 
-          ? examData.gradeId._id 
+      const gradeIdValue = examData.gradeId
+        ? (typeof examData.gradeId === 'object' && examData.gradeId._id
+          ? examData.gradeId._id
           : examData.gradeId)
         : undefined;
 
@@ -109,16 +119,16 @@ const EditExam = () => {
         autoMonitoring: examData.autoMonitoring || 'off',
         studentVerification: examData.studentVerification || false,
         eduMapOnly: examData.eduMapOnly || false,
-        hideGroupTitles: examData.hideGroupTitles || false,
+        hideGroupTitles: examData.hideGroupTitles !== undefined ? !examData.hideGroupTitles : true,
         sectionsStartFromQ1: examData.sectionsStartFromQ1 || false,
-        hideLeaderboard: examData.hideLeaderboard || false,
+        hideLeaderboard: examData.hideLeaderboard !== undefined ? !examData.hideLeaderboard : true,
         addTitleInfo: examData.addTitleInfo || false,
         preExamNotification: examData.preExamNotification || false,
         preExamNotificationText: examData.preExamNotificationText || '',
         startTime: examData.startTime ? dayjs(examData.startTime) : undefined,
         endTime: examData.endTime ? dayjs(examData.endTime) : undefined,
-        availableFrom: examData.availableFrom ? dayjs(examData.availableFrom) : undefined,
-        availableUntil: examData.availableUntil ? dayjs(examData.availableUntil) : undefined,
+        blockLateEntry: examData.lateEntryGracePeriod === undefined || examData.lateEntryGracePeriod === null || examData.lateEntryGracePeriod < 0,
+        lateEntryGracePeriod: examData.lateEntryGracePeriod !== undefined && examData.lateEntryGracePeriod >= 0 ? examData.lateEntryGracePeriod : -1,
         status: examData.status || 'draft',
         settings: examData.settings || {},
         allowedClassIds: examData.allowedClassIds || []
@@ -129,7 +139,7 @@ const EditExam = () => {
         const formattedQuestions = examData.questions.map((q, index) => {
           const questionId = q.questionId?._id || q.questionId;
           const questionObj = typeof q.questionId === 'object' ? q.questionId : null;
-          
+
           // If questionId is populated object, preserve full data
           if (questionObj && questionObj.text) {
             return {
@@ -141,7 +151,7 @@ const EditExam = () => {
               isRequired: q.isRequired !== undefined ? q.isRequired : true
             };
           }
-          
+
           // Otherwise, just store metadata
           return {
             _id: questionId,
@@ -173,7 +183,7 @@ const EditExam = () => {
     try {
       const currentLang = localStorage.getItem('language') || 'vi';
       const response = await questionService.getSubjects({ lang: currentLang });
-      
+
       let subjectsData = [];
       if (Array.isArray(response)) {
         subjectsData = response;
@@ -182,7 +192,7 @@ const EditExam = () => {
       } else if (response.items && Array.isArray(response.items)) {
         subjectsData = response.items;
       }
-      
+
       setSubjects(subjectsData);
     } catch (error) {
       console.error('Error fetching subjects:', error);
@@ -194,7 +204,7 @@ const EditExam = () => {
     if (loadingClasses || classesFetchedRef.current) {
       return;
     }
-    
+
     setLoadingClasses(true);
     classesFetchedRef.current = true;
     try {
@@ -224,7 +234,7 @@ const EditExam = () => {
         subjectId,
         limit: 1000 // Load more questions for client-side filtering
       };
-      
+
       const response = await questionService.getQuestions(params);
       const loadedQuestions = response.items || response.data || [];
       setAllQuestions(loadedQuestions);
@@ -263,13 +273,15 @@ const EditExam = () => {
     const totalMarks = form.getFieldValue('totalMarks') || 100;
     if (questions.length === 0) return questions;
     
-    // Calculate marks per question - keep all decimal places
+    // Calculate exact marks per question (keep full precision)
     const marksPerQuestion = totalMarks / questions.length;
     
-    return questions.map((q) => ({
-      ...q,
-      marks: marksPerQuestion
-    }));
+    return questions.map((q) => {
+      return {
+        ...q,
+        marks: marksPerQuestion
+      };
+    });
   };
 
   const handleAutoDistributeMarks = () => {
@@ -287,6 +299,29 @@ const EditExam = () => {
     message.success(t('exams.marksDistributed'));
   };
 
+  const handleOpenSelectQuestionsModal = () => {
+    const subjectId = form.getFieldValue('subjectId');
+    if (subjectId) {
+      setCurrentSubjectId(subjectId);
+      setSelectQuestionsModalVisible(true);
+    } else {
+      message.warning(t('exams.selectSubjectFirst'));
+    }
+  };
+
+  const handleQuestionsSelected = (newQuestions) => {
+    // Add new questions to selected list with order and default marks
+    const questionsWithDetails = newQuestions.map((q, index) => ({
+      ...q,
+      order: selectedQuestions.length + index + 1,
+      marks: 1,
+      isRequired: true,
+    }));
+    
+    setSelectedQuestions([...selectedQuestions, ...questionsWithDetails]);
+    message.success(`${t('common.add')} ${newQuestions.length} ${t('questions.items') || 'questions'}`);
+  };
+
   const handleAddQuestion = (question) => {
     const questionId = question._id || question.id;
     if (selectedQuestions.find(q => (q._id || q.id) === questionId)) {
@@ -300,7 +335,7 @@ const EditExam = () => {
       marks: 1,
       isRequired: true
     };
-    
+
     setSelectedQuestions([...selectedQuestions, newQuestion]);
   };
 
@@ -308,12 +343,12 @@ const EditExam = () => {
     const updated = selectedQuestions
       .filter(q => (q._id || q.id) !== questionId)
       .map((q, index) => ({ ...q, order: index + 1 }));
-    
+
     setSelectedQuestions(updated);
   };
 
   const handleUpdateQuestionMarks = (questionId, marks) => {
-    setSelectedQuestions(selectedQuestions.map(q => 
+    setSelectedQuestions(selectedQuestions.map(q =>
       (q._id || q.id) === questionId ? { ...q, marks } : q
     ));
   };
@@ -382,16 +417,17 @@ const EditExam = () => {
       width: 120,
       render: (_, record) => {
         const marksValue = record.marks;
-        const marksStr = marksValue?.toString() || '0';
+        // Truncate to 2 decimal places for display (not rounding)
+        const displayValue = marksValue != null ? Math.floor(marksValue * 100) / 100 : 0;
         
         return (
           <InputNumber
             min={0}
             step={0.01}
-            value={marksValue}
+            value={displayValue}
             onChange={(value) => handleUpdateQuestionMarks(record._id || record.id, value)}
             style={{ width: '100%' }}
-            title={marksStr}
+            precision={2}
           />
         );
       },
@@ -419,7 +455,7 @@ const EditExam = () => {
     // Allow small difference (0.01) due to decimal precision
     if (Math.abs(totalQuestionMarks - values.totalMarks) >= 0.01) {
       message.error(t('exams.marksMismatchWithValues', { 
-        questionMarks: totalQuestionMarks, 
+        questionMarks: truncateToDecimals(totalQuestionMarks), 
         totalMarks: values.totalMarks 
       }));
       return;
@@ -444,16 +480,15 @@ const EditExam = () => {
         autoMonitoring: values.autoMonitoring || 'off',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
-        hideGroupTitles: values.hideGroupTitles || false,
+        hideGroupTitles: !values.hideGroupTitles,
         sectionsStartFromQ1: values.sectionsStartFromQ1 || false,
-        hideLeaderboard: values.hideLeaderboard || false,
+        hideLeaderboard: !values.hideLeaderboard,
         addTitleInfo: values.addTitleInfo || false,
         preExamNotification: values.preExamNotification || false,
         preExamNotificationText: values.preExamNotificationText || '',
         startTime: values.startTime ? values.startTime.toISOString() : undefined,
         endTime: values.endTime ? values.endTime.toISOString() : undefined,
-        availableFrom: values.availableFrom ? values.availableFrom.toISOString() : undefined,
-        availableUntil: values.availableUntil ? values.availableUntil.toISOString() : undefined,
+        lateEntryGracePeriod: !values.blockLateEntry ? (values.lateEntryGracePeriod || 0) : -1,
         status: values.status,
         settings: values.settings || {},
         allowedClassIds: values.isAllowUser === 'class' ? (values.allowedClassIds || []) : [],
@@ -489,8 +524,8 @@ const EditExam = () => {
     <div>
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(ROUTES.TEACHER_EXAMS)}
           >
             {t('common.back')}
@@ -506,7 +541,7 @@ const EditExam = () => {
           onFinish={handleSubmit}
           autoComplete="off"
         >
-          <Collapse defaultActiveKey={['basic', 'questions']} ghost>
+          <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings']} ghost>
             {/* Basic Information */}
             <Collapse.Panel header={t('exams.basicInfo')} key="basic">
               <Form.Item
@@ -591,14 +626,14 @@ const EditExam = () => {
                   if (isAllowUser === 'class') {
                     // fetchClasses is already called in useEffect on mount
                     // No need to call again here to avoid infinite loop
-                    
+
                     return (
                       <Form.Item
                         label={t('exams.allowedClasses')}
                         name="allowedClassIds"
                         rules={[
-                          { 
-                            required: true, 
+                          {
+                            required: true,
                             message: t('exams.allowedClassesRequired')
                           }
                         ]}
@@ -626,12 +661,12 @@ const EditExam = () => {
                 }}
               </Form.Item>
 
-                <Form.Item
-                  label={t('exams.examPassword')}
-                  name="examPassword"
-                >
-                  <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
-                </Form.Item>
+              <Form.Item
+                label={t('exams.examPassword')}
+                name="examPassword"
+              >
+                <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
+              </Form.Item>
 
               <Space style={{ width: '100%' }} size="large">
                 <Form.Item
@@ -674,7 +709,7 @@ const EditExam = () => {
                 label={t('exams.subject')}
                 name="subjectId"
               >
-                <Select 
+                <Select
                   placeholder={t('exams.selectSubject')}
                   showSearch
                   disabled
@@ -685,7 +720,7 @@ const EditExam = () => {
                   {subjects.map(subject => {
                     const currentLang = localStorage.getItem('language') || 'vi';
                     let subjectName = subject.name;
-                    
+
                     switch (currentLang) {
                       case 'en':
                         subjectName = subject.name_en || subject.name;
@@ -694,7 +729,7 @@ const EditExam = () => {
                         subjectName = subject.name_jp || subject.name;
                         break;
                     }
-                    
+
                     return (
                       <Option key={subject._id || subject.id} value={subject._id || subject.id}>
                         {subjectName}
@@ -704,73 +739,15 @@ const EditExam = () => {
                 </Select>
               </Form.Item>
 
-              <div style={{ marginBottom: 16 }}>
-                <Input
-                  placeholder={t('exams.searchQuestionsByName')}
-                  prefix={<SearchOutlined />}
-                  value={questionSearchQuery}
-                  onChange={(e) => handleSearchQueryChange(e.target.value)}
-                  allowClear
-                  style={{ 
-                    width: '50%',
-                    maxWidth: '100%'
-                  }}
-                  className="question-search-input"
-                />
-              </div>
-              <style>{`
-                @media (max-width: 768px) {
-                  .question-search-input {
-                    width: 100% !important;
-                  }
-                }
-              `}</style>
-
-              {questions.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <Table
-                    dataSource={questions}
-                    rowKey={(record) => record._id || record.id}
-                    pagination={false}
-                    size="small"
-                    scroll={{ y: questions.length > 5 ? 200 : undefined }}
-                    columns={[
-                      {
-                        title: t('questions.name'),
-                        dataIndex: 'name',
-                        key: 'name',
-                        ellipsis: true,
-                      },
-                      {
-                        title: t('questions.type'),
-                        dataIndex: 'type',
-                        key: 'type',
-                        width: 120,
-                        render: (type) => (
-                          <Tag color={getQuestionTypeColor(type)}>
-                            {getQuestionTypeText(type)}
-                          </Tag>
-                        ),
-                      },
-                      {
-                        title: t('common.actions'),
-                        key: 'actions',
-                        width: 100,
-                        render: (_, record) => (
-                          <Button
-                            type="link"
-                            icon={<PlusOutlined />}
-                            onClick={() => handleAddQuestion(record)}
-                            disabled={selectedQuestions.some(q => (q._id || q.id) === (record._id || record.id))}
-                          >
-                            {t('common.add')}
-                          </Button>
-                        ),
-                      },
-                    ]}
-                  />
-                </div>
-              )}
+              {/* Add Questions Button */}
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={handleOpenSelectQuestionsModal}
+                style={{ marginBottom: 16 }}
+              >
+                {t('exams.addMoreQuestions') || 'Add Questions'}
+              </Button>
 
               {selectedQuestions.length > 0 && (
                 <div>
@@ -798,13 +775,13 @@ const EditExam = () => {
                         const totalQuestionMarks = calculateTotalQuestionMarks();
                         // Allow small difference (0.01) due to floating point precision
                         const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01;
-                        
+
                         if (totalMarks && !isValid) {
                           return (
                             <Typography.Text type="danger">
-                              {t('exams.marksMismatchWithValues', { 
-                                questionMarks: totalQuestionMarks, 
-                                totalMarks: totalMarks 
+                              {t('exams.marksMismatchWithValues', {
+                                questionMarks: truncateToDecimals(totalQuestionMarks),
+                                totalMarks: totalMarks
                               })}
                             </Typography.Text>
                           );
@@ -824,7 +801,10 @@ const EditExam = () => {
                 name="timezone"
               >
                 <Select>
-                  <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh</Option>
+                  <Option value="Asia/Ho_Chi_Minh">Asia/Ho_Chi_Minh (Vietnam)</Option>
+                  <Option value="Asia/Tokyo">Asia/Tokyo (Japan)</Option>
+                  <Option value="Europe/London">Europe/London (UK)</Option>
+                  <Option value="America/New_York">America/New_York (US Eastern)</Option>
                   <Option value="UTC">UTC</Option>
                 </Select>
               </Form.Item>
@@ -855,31 +835,56 @@ const EditExam = () => {
                 </Form.Item>
               </Space>
 
-              <Space style={{ width: '100%' }} size="large">
-                <Form.Item
-                  label={t('exams.availableFrom')}
-                  name="availableFrom"
-                  style={{ flex: 1 }}
-                >
-                  <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
+              <Form.Item 
+                name="blockLateEntry" 
+                valuePropName="checked"
+                style={{ marginBottom: '12px' }}
+              >
+                <Switch 
+                  checkedChildren={t('exams.allowLateEntryAnytime')} 
+                  unCheckedChildren={t('exams.blockLateEntry')}
+                  onChange={(checked) => {
+                    if (checked) {
+                      // When toggling on (allow late entry), set to -1
+                      form.setFieldsValue({ lateEntryGracePeriod: -1 });
+                    } else {
+                      // When toggling off (block late entry), if value is -1, set to 0
+                      const currentValue = form.getFieldValue('lateEntryGracePeriod');
+                      if (currentValue === -1 || currentValue === null || currentValue === undefined) {
+                        form.setFieldsValue({ lateEntryGracePeriod: 0 });
+                      }
+                    }
+                  }}
+                />
+              </Form.Item>
 
-                <Form.Item
-                  label={t('exams.availableUntil')}
-                  name="availableUntil"
-                  style={{ flex: 1 }}
-                >
-                  <DatePicker
-                    showTime
-                    format="YYYY-MM-DD HH:mm"
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-              </Space>
+              <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.blockLateEntry !== currentValues.blockLateEntry}>
+                {({ getFieldValue }) => {
+                  const blockLateEntry = getFieldValue('blockLateEntry');
+                  return !blockLateEntry ? (
+                    <Form.Item 
+                      label={t('exams.lateEntryGracePeriod')}
+                      name="lateEntryGracePeriod"
+                      tooltip={t('exams.lateEntryGracePeriodTooltip')}
+                      normalize={(value) => {
+                        // If value is -1, null, or undefined, normalize to 0 for display
+                        if (value === -1 || value === null || value === undefined) {
+                          return 0;
+                        }
+                        return value;
+                      }}
+                    >
+                      <InputNumber
+                        min={0}
+                        step={1}
+                        addonAfter={t('exams.minutes')}
+                        style={{ width: '200px' }}
+                        placeholder="0"
+                      />
+                    </Form.Item>
+                  ) : null;
+                }}
+              </Form.Item>
             </Collapse.Panel>
 
             {/* View Settings */}
@@ -914,7 +919,7 @@ const EditExam = () => {
 
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Form.Item name="hideGroupTitles" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.hideGroupTitles')} unCheckedChildren={t('exams.showGroupTitles')} />
+                  <Switch checkedChildren={t('exams.showGroupTitles')} unCheckedChildren={t('exams.hideGroupTitles')} />
                 </Form.Item>
 
                 <Form.Item name="sectionsStartFromQ1" valuePropName="checked">
@@ -922,7 +927,7 @@ const EditExam = () => {
                 </Form.Item>
 
                 <Form.Item name="hideLeaderboard" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.hideLeaderboard')} unCheckedChildren={t('exams.showLeaderboard')} />
+                  <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
                 </Form.Item>
 
                 <Form.Item name="addTitleInfo" valuePropName="checked">
@@ -1028,12 +1033,12 @@ const EditExam = () => {
                 const totalQuestionMarks = calculateTotalQuestionMarks();
                 // Allow small difference (0.01) due to floating point precision
                 const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01 && selectedQuestions.length > 0;
-                
+
                 const handlePreview = async () => {
                   try {
                     // Validate and get form values
                     const formValues = await form.validateFields();
-                    
+
                     // Prepare questions with full data for preview
                     const loadedQuestions = await Promise.all(
                       selectedQuestions.map(async (q) => {
@@ -1045,7 +1050,7 @@ const EditExam = () => {
                             marks: q.marks || 1
                           };
                         }
-                        
+
                         // If we have question ID, try to fetch full question data
                         const questionId = q._id || q.id;
                         if (questionId) {
@@ -1069,7 +1074,7 @@ const EditExam = () => {
                             };
                           }
                         }
-                        
+
                         return {
                           ...q,
                           order: q.order || 1,
@@ -1077,7 +1082,7 @@ const EditExam = () => {
                         };
                       })
                     );
-                    
+
                     setPreviewExamData(formValues);
                     setPreviewQuestions(loadedQuestions);
                     setPreviewModalVisible(true);
@@ -1111,22 +1116,22 @@ const EditExam = () => {
                     setPreviewModalVisible(true);
                   }
                 };
-                
+
                 return (
                   <Space>
                     <Button onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
                       {t('common.cancel')}
                     </Button>
-                    <Button 
+                    <Button
                       icon={<EyeOutlined />}
                       onClick={handlePreview}
                       disabled={selectedQuestions.length === 0}
                     >
                       {t('exams.preview') || 'Preview'}
                     </Button>
-                    <Button 
-                      type="primary" 
-                      htmlType="submit" 
+                    <Button
+                      type="primary"
+                      htmlType="submit"
                       loading={loading}
                       disabled={!isValid}
                     >
@@ -1141,7 +1146,7 @@ const EditExam = () => {
       </Card>
 
       {/* Preview Modal */}
-      <PreviewExamModal
+      {/* <PreviewExamModal
         open={previewModalVisible}
         onCancel={() => {
           setPreviewModalVisible(false);
@@ -1151,6 +1156,15 @@ const EditExam = () => {
         examData={previewExamData || form.getFieldsValue()}
         questions={previewQuestions.length > 0 ? previewQuestions : selectedQuestions}
         subjects={subjects}
+      /> */}
+
+      {/* Select Questions Modal */}
+      <SelectQuestionsModal
+        visible={selectQuestionsModalVisible}
+        onCancel={() => setSelectQuestionsModalVisible(false)}
+        onConfirm={handleQuestionsSelected}
+        subjectId={currentSubjectId}
+        alreadySelectedIds={selectedQuestions.map(q => q._id || q.id)}
       />
     </div>
   );

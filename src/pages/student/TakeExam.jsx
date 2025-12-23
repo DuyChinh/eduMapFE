@@ -1,34 +1,43 @@
 import {
   ArrowLeftOutlined,
+  ClockCircleOutlined,
   DownOutlined,
   FlagOutlined,
   MenuOutlined,
   SearchOutlined,
-  WarningOutlined
-} from '@ant-design/icons';
+  WarningOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined,
+  UnorderedListOutlined,
+  AppstoreOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import {
   App,
   Alert,
+  Avatar,
   Button,
   Card,
   Input,
   Modal,
   Radio,
   Space,
-  Typography
-} from 'antd';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
-import { logProctorEvent } from '../../api/proctorService';
+  Typography,
+  Tooltip,
+  Divider,
+} from "antd";
+import { MathJax, MathJaxContext } from "better-react-mathjax";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate, useParams } from "react-router-dom";
+import { logProctorEvent } from "../../api/proctorService";
 import {
   startSubmission,
   submitExam,
-  updateSubmissionAnswers
-} from '../../api/submissionService';
-import useAuthStore from '../../store/authStore';
-import './TakeExam.css';
+  updateSubmissionAnswers,
+} from "../../api/submissionService";
+import useAuthStore from "../../store/authStore";
+import "./TakeExam.css";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -46,14 +55,17 @@ const TakeExam = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [timeRemaining, setTimeRemaining] = useState(0); // seconds
-  const [autoSaveStatus, setAutoSaveStatus] = useState('idle'); // idle, saving, saved, error
+  const [autoSaveStatus, setAutoSaveStatus] = useState("idle"); // idle, saving, saved, error
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [examPassword, setExamPassword] = useState('');
+  const [examPassword, setExamPassword] = useState("");
   const [shareCode, setShareCode] = useState(null);
   const [showCandidateDropdown, setShowCandidateDropdown] = useState(false);
   const [currentVisibleQuestion, setCurrentVisibleQuestion] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState(new Set());
+  const [fontSize, setFontSize] = useState(100); // percentage: 80, 100, 120
+  const [viewMode, setViewMode] = useState("all"); // 'all' or 'single'
+  const [showQuestionList, setShowQuestionList] = useState(true);
 
   const autoSaveIntervalRef = useRef(null);
   const timerIntervalRef = useRef(null);
@@ -67,104 +79,121 @@ const TakeExam = () => {
   const handleTimeUpRef = useRef(null);
   const handleAutoSaveRef = useRef(null);
 
+  // Zoom handlers
+  const handleZoomIn = () => {
+    setFontSize((prev) => Math.min(prev + 20, 140)); // max 140%
+  };
+
+  const handleZoomOut = () => {
+    setFontSize((prev) => Math.max(prev - 20, 80)); // min 80%
+  };
+
+  // Toggle view mode (all questions vs single question)
+  const toggleViewMode = () => {
+    setViewMode((prev) => (prev === "all" ? "single" : "all"));
+  };
+
   // Function to start exam with password (defined early so it can be used in useEffect)
-  const startExamWithPassword = useCallback(async (passwordToUse) => {
-    if (examStartedRef.current || submission) {
-      return true;
-    }
-
-    try {
-      examStartedRef.current = true;
-      setLoading(true);
-
-      const response = await startSubmission(examId, passwordToUse);
-      let result;
-      if (response.ok && response.data) {
-        result = response.data;
-      } else if (response.data && response.data.submission) {
-        result = response.data;
-      } else if (response.submission) {
-        result = response;
-      } else {
-        throw new Error('Invalid response format from server');
+  const startExamWithPassword = useCallback(
+    async (passwordToUse) => {
+      if (examStartedRef.current || submission) {
+        return true;
       }
 
-      const submissionResult = result.submission;
-      const examData = result.exam;
+      try {
+        examStartedRef.current = true;
+        setLoading(true);
 
-      if (!submissionResult || !examData) {
-        console.error('Missing submission or exam in response:', result);
-        throw new Error('Invalid response format from server');
-      }
-
-      setSubmission(submissionResult);
-      setExam(examData);
-
-      // Initialize answers
-      const initialAnswers = {};
-      if (submissionResult.answers) {
-        submissionResult.answers.forEach(answer => {
-          initialAnswers[answer.questionId] = answer.value;
-        });
-      }
-      setAnswers(initialAnswers);
-
-      // Calculate time remaining
-      const durationSeconds = examData.duration * 60;
-      const startedAt = new Date(submissionResult.startedAt);
-      const now = new Date();
-      const elapsed = Math.floor((now - startedAt) / 1000);
-      const remaining = Math.max(0, durationSeconds - elapsed);
-      setTimeRemaining(remaining);
-      startTimeRef.current = startedAt;
-
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-
-      // Start timer
-      if (remaining > 0) {
-        timerIntervalRef.current = setInterval(() => {
-          setTimeRemaining(prev => {
-            if (prev <= 1) {
-              if (handleTimeUpRef.current) {
-                handleTimeUpRef.current();
-              }
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-
-      if (autoSaveIntervalRef.current) {
-        clearInterval(autoSaveIntervalRef.current);
-        autoSaveIntervalRef.current = null;
-      }
-
-      // Start auto-save
-      autoSaveIntervalRef.current = setInterval(() => {
-        if (handleAutoSaveRef.current) {
-          handleAutoSaveRef.current();
+        const response = await startSubmission(examId, passwordToUse);
+        let result;
+        if (response.ok && response.data) {
+          result = response.data;
+        } else if (response.data && response.data.submission) {
+          result = response.data;
+        } else if (response.submission) {
+          result = response;
+        } else {
+          throw new Error("Invalid response format from server");
         }
-      }, 5000);
 
-      message.success(t('takeExam.examStarted'));
+        const submissionResult = result.submission;
+        const examData = result.exam;
 
-      const storedPassword = sessionStorage.getItem('examPassword');
-      if (storedPassword) {
-        sessionStorage.removeItem('examPassword');
+        if (!submissionResult || !examData) {
+          console.error("Missing submission or exam in response:", result);
+          throw new Error("Invalid response format from server");
+        }
+
+        setSubmission(submissionResult);
+        setExam(examData);
+
+        // Initialize answers
+        const initialAnswers = {};
+        if (submissionResult.answers) {
+          submissionResult.answers.forEach((answer) => {
+            initialAnswers[answer.questionId] = answer.value;
+          });
+        }
+        setAnswers(initialAnswers);
+
+        // Calculate time remaining
+        const durationSeconds = examData.duration * 60;
+        const startedAt = new Date(submissionResult.startedAt);
+        const now = new Date();
+        const elapsed = Math.floor((now - startedAt) / 1000);
+        const remaining = Math.max(0, durationSeconds - elapsed);
+        setTimeRemaining(remaining);
+        startTimeRef.current = startedAt;
+
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+
+        // Start timer
+        if (remaining > 0) {
+          timerIntervalRef.current = setInterval(() => {
+            setTimeRemaining((prev) => {
+              if (prev <= 1) {
+                if (handleTimeUpRef.current) {
+                  handleTimeUpRef.current();
+                }
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
+
+        if (autoSaveIntervalRef.current) {
+          clearInterval(autoSaveIntervalRef.current);
+          autoSaveIntervalRef.current = null;
+        }
+
+        // Start auto-save
+        autoSaveIntervalRef.current = setInterval(() => {
+          if (handleAutoSaveRef.current) {
+            handleAutoSaveRef.current();
+          }
+        }, 5000);
+
+        message.success(t("takeExam.examStarted"));
+
+        const storedPassword = sessionStorage.getItem("examPassword");
+        if (storedPassword) {
+          sessionStorage.removeItem("examPassword");
+        }
+
+        return true;
+      } catch (error) {
+        examStartedRef.current = false;
+        throw error;
+      } finally {
+        setLoading(false);
       }
-
-      return true;
-    } catch (error) {
-      examStartedRef.current = false;
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [examId]);
+    },
+    [examId]
+  );
 
   // Proctoring: Track visibility and fullscreen
   useEffect(() => {
@@ -172,59 +201,51 @@ const TakeExam = () => {
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        logProctorEvent(
-          submission._id,
-          'visibility',
-          'medium',
-          { visible: false, reason: 'Tab switched or minimized' }
-        );
+        logProctorEvent(submission._id, "visibility", "medium", {
+          visible: false,
+          reason: "Tab switched or minimized",
+        });
       } else {
-        logProctorEvent(
-          submission._id,
-          'visibility',
-          'low',
-          { visible: true }
-        );
+        logProctorEvent(submission._id, "visibility", "low", { visible: true });
       }
     };
 
     const handleFullscreenChange = () => {
       logProctorEvent(
         submission._id,
-        'fullscreen',
-        document.fullscreenElement ? 'low' : 'medium',
+        "fullscreen",
+        document.fullscreenElement ? "low" : "medium",
         { fullscreen: !!document.fullscreenElement }
       );
     };
 
     const handleBeforeUnload = (e) => {
-      logProctorEvent(
-        submission._id,
-        'beforeunload',
-        'high',
-        { reason: 'Page unload attempt' }
-      );
+      logProctorEvent(submission._id, "beforeunload", "high", {
+        reason: "Page unload attempt",
+      });
       e.preventDefault();
-      e.returnValue = '';
+      e.returnValue = "";
     };
 
     // Prevent copy/paste and right-click
     const handleCopy = (e) => {
       e.preventDefault();
-      logProctorEvent(submission._id, 'copy_paste', 'high', { action: 'copy' });
-      message.warning('Copying is not allowed during the exam');
+      logProctorEvent(submission._id, "copy_paste", "high", { action: "copy" });
+      message.warning("Copying is not allowed during the exam");
     };
 
     const handlePaste = (e) => {
       e.preventDefault();
-      logProctorEvent(submission._id, 'copy_paste', 'high', { action: 'paste' });
-      message.warning('Pasting is not allowed during the exam');
+      logProctorEvent(submission._id, "copy_paste", "high", {
+        action: "paste",
+      });
+      message.warning("Pasting is not allowed during the exam");
     };
 
     const handleRightClick = (e) => {
       e.preventDefault();
-      logProctorEvent(submission._id, 'right_click', 'medium', {});
-      message.warning('Right-click is disabled during the exam');
+      logProctorEvent(submission._id, "right_click", "medium", {});
+      message.warning("Right-click is disabled during the exam");
     };
 
     const handleContextMenu = (e) => {
@@ -232,39 +253,41 @@ const TakeExam = () => {
     };
 
     // Add event listeners
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('copy', handleCopy);
-    document.addEventListener('paste', handlePaste);
-    document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('contextmenu', handleRightClick);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("contextmenu", handleRightClick);
 
     // Disable keyboard shortcuts
     const handleKeyDown = (e) => {
       // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
       if (
-        e.key === 'F12' ||
-        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-        (e.ctrlKey && e.key === 'u')
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) ||
+        (e.ctrlKey && e.key === "u")
       ) {
         e.preventDefault();
-        logProctorEvent(submission._id, 'tab_switch', 'high', { action: 'devtools' });
-        message.warning('Developer tools are disabled during the exam');
+        logProctorEvent(submission._id, "tab_switch", "high", {
+          action: "devtools",
+        });
+        message.warning("Developer tools are disabled during the exam");
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('copy', handleCopy);
-      document.removeEventListener('paste', handlePaste);
-      document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('contextmenu', handleRightClick);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("contextmenu", handleRightClick);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [submission]);
 
@@ -280,24 +303,26 @@ const TakeExam = () => {
         setLoading(true);
 
         // Check if came from public link (shareCode)
-        const storedShareCode = sessionStorage.getItem('shareCode');
+        const storedShareCode = sessionStorage.getItem("shareCode");
         if (storedShareCode) {
           setShareCode(storedShareCode);
         }
 
         // Get password from sessionStorage if available (from public link)
-        let storedPassword = sessionStorage.getItem('examPassword') || '';
+        let storedPassword = sessionStorage.getItem("examPassword") || "";
 
         // Always check if exam requires password before calling API
         // If no password in storage, fetch exam info to check if password is required
         if (!storedPassword) {
           try {
-            const examService = (await import('../../api/examService')).default;
+            const examService = (await import("../../api/examService")).default;
             let examResponse;
 
             // If we have shareCode, use it to get exam info (public endpoint)
             if (storedShareCode) {
-              examResponse = await examService.getExamByShareCode(storedShareCode);
+              examResponse = await examService.getExamByShareCode(
+                storedShareCode
+              );
             } else {
               // If no shareCode, try to get exam by ID (may require auth)
               // If this fails, we'll catch the error and let the API handle password check
@@ -321,7 +346,7 @@ const TakeExam = () => {
               return; // Wait for user to enter password
             }
           } catch (error) {
-            console.error('Error fetching exam info:', error);
+            console.error("Error fetching exam info:", error);
             // If we can't fetch exam info, try to proceed anyway
             // The API will return error if password is required
           }
@@ -332,13 +357,19 @@ const TakeExam = () => {
         await startExamWithPassword(storedPassword);
       } catch (error) {
         // Get error message from API like CreateClassModal pattern
-        const errorMessage = typeof error === 'string'
-          ? error
-          : (error?.response?.data?.message || error?.message || t('takeExam.failedToStart'));
+        const errorMessage =
+          typeof error === "string"
+            ? error
+            : error?.response?.data?.message ||
+              error?.message ||
+              t("takeExam.failedToStart");
 
         // If password error, show password modal
-        if (errorMessage.includes('password') || errorMessage.includes('Invalid exam password')) {
-          const storedShareCode = sessionStorage.getItem('shareCode');
+        if (
+          errorMessage.includes("password") ||
+          errorMessage.includes("Invalid exam password")
+        ) {
+          const storedShareCode = sessionStorage.getItem("shareCode");
           if (storedShareCode) {
             setShareCode(storedShareCode);
           }
@@ -352,14 +383,16 @@ const TakeExam = () => {
 
         // For other errors (max attempts, not available, etc.), show error page
         // No toast needed since we have error page
-        navigate('/student/exam-error', {
+        navigate("/student/exam-error", {
           state: {
             errorMessage,
-            errorType: errorMessage.includes('maximum') || errorMessage.includes('attempts')
-              ? 'maxAttempts'
-              : 'error'
+            errorType:
+              errorMessage.includes("maximum") ||
+              errorMessage.includes("attempts")
+                ? "maxAttempts"
+                : "error",
           },
-          replace: true
+          replace: true,
         });
       } finally {
         setLoading(false);
@@ -383,21 +416,23 @@ const TakeExam = () => {
 
   // Auto-save function
   const handleAutoSave = useCallback(async () => {
-    if (!submission || autoSaveStatus === 'saving') return;
+    if (!submission || autoSaveStatus === "saving") return;
 
     try {
-      setAutoSaveStatus('saving');
-      const answersArray = Object.entries(answers).map(([questionId, value]) => ({
-        questionId,
-        value
-      }));
+      setAutoSaveStatus("saving");
+      const answersArray = Object.entries(answers).map(
+        ([questionId, value]) => ({
+          questionId,
+          value,
+        })
+      );
 
       await updateSubmissionAnswers(submission._id, answersArray);
-      setAutoSaveStatus('saved');
-      setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      setAutoSaveStatus("saved");
+      setTimeout(() => setAutoSaveStatus("idle"), 2000);
     } catch (error) {
-      setAutoSaveStatus('error');
-      console.error('Auto-save failed:', error);
+      setAutoSaveStatus("error");
+      console.error("Auto-save failed:", error);
     }
   }, [submission, answers, autoSaveStatus]);
 
@@ -409,7 +444,7 @@ const TakeExam = () => {
   // Manual save
   const handleSave = async () => {
     await handleAutoSave();
-    message.success(t('takeExam.saved'));
+    message.success(t("takeExam.saved"));
   };
 
   // Handle submit (defined before handleTimeUp)
@@ -430,10 +465,12 @@ const TakeExam = () => {
       }
 
       // Final save before submit
-      const answersArray = Object.entries(answers).map(([questionId, value]) => ({
-        questionId,
-        value
-      }));
+      const answersArray = Object.entries(answers).map(
+        ([questionId, value]) => ({
+          questionId,
+          value,
+        })
+      );
       await updateSubmissionAnswers(submission._id, answersArray);
 
       // Submit exam
@@ -441,26 +478,39 @@ const TakeExam = () => {
 
       // Check if submission is late
       const submissionData = response.data?.data || response.data || response;
-      if (submissionData?.status === 'late') {
-        message.warning(t('takeExam.submittedLate') || 'Your exam was submitted after the time limit. It has been marked as late.');
+      if (submissionData?.status === "late") {
+        message.warning(
+          t("takeExam.submittedLate") ||
+            "Your exam was submitted after the time limit. It has been marked as late."
+        );
       } else {
-        message.success(t('takeExam.submitSuccess'));
+        message.success(t("takeExam.submitSuccess"));
       }
 
       // Navigate to result detail page to view answers
-      const submissionId = submissionData?._id || response.data?._id || response.data?.data?._id || response._id;
+      const submissionId =
+        submissionData?._id ||
+        response.data?._id ||
+        response.data?.data?._id ||
+        response._id;
       navigate(`/student/results/${submissionId}`, { replace: true });
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || t('takeExam.submitFailed');
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        t("takeExam.submitFailed");
 
       // If time limit exceeded beyond grace period, show error page
-      if (errorMessage.includes('Time limit exceeded') && errorMessage.includes('no longer accepted')) {
-        navigate('/student/exam-error', {
+      if (
+        errorMessage.includes("Time limit exceeded") &&
+        errorMessage.includes("no longer accepted")
+      ) {
+        navigate("/student/exam-error", {
           state: {
             errorMessage,
-            errorType: 'timeExceeded'
+            errorType: "timeExceeded",
           },
-          replace: true
+          replace: true,
         });
       } else {
         message.error(errorMessage);
@@ -477,7 +527,7 @@ const TakeExam = () => {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-    message.warning(t('takeExam.timeUp'));
+    message.warning(t("takeExam.timeUp"));
     await handleSubmit();
   }, [handleSubmit]);
 
@@ -486,12 +536,11 @@ const TakeExam = () => {
     handleTimeUpRef.current = handleTimeUp;
   }, [handleTimeUp]);
 
-
   // Handle answer change
   const handleAnswerChange = (questionId, value) => {
-    setAnswers(prev => ({
+    setAnswers((prev) => ({
       ...prev,
-      [questionId]: value
+      [questionId]: value,
     }));
   };
 
@@ -512,19 +561,21 @@ const TakeExam = () => {
     }
   };
 
-  // Format time (format: 00 : 39 : 05)
+  // Format time (format: 00:39:05)
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${secs.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Track visible question for sidebar highlighting (must be before early returns)
   useEffect(() => {
     if (!exam?.questions?.length) return;
 
-    const questionCards = document.querySelectorAll('.question-item-card');
+    const questionCards = document.querySelectorAll(".question-item-card");
     if (questionCards.length === 0) return;
 
     const observer = new IntersectionObserver(
@@ -538,7 +589,7 @@ const TakeExam = () => {
           }
         });
       },
-      { threshold: 0.5, rootMargin: '-100px 0px -100px 0px' }
+      { threshold: 0.5, rootMargin: "-100px 0px -100px 0px" }
     );
 
     questionCards.forEach((card) => observer.observe(card));
@@ -554,7 +605,7 @@ const TakeExam = () => {
       if (!exam || !exam.questions) return;
 
       exam.questions.forEach((q) => {
-        if (q.questionId?.type !== 'mcq' || !q.questionId?.choices) return;
+        if (q.questionId?.type !== "mcq" || !q.questionId?.choices) return;
 
         const questionId = q.questionId._id || q.questionId;
         const choiceRefs = choiceOptionsRefs.current[questionId];
@@ -563,7 +614,7 @@ const TakeExam = () => {
         // First, reset all widths to auto to get natural width
         choiceRefs.forEach((ref) => {
           if (ref) {
-            ref.style.width = 'auto';
+            ref.style.width = "auto";
           }
         });
 
@@ -595,29 +646,29 @@ const TakeExam = () => {
     const timer3 = setTimeout(equalizeChoiceWidths, 1000);
 
     // Also run when window resizes
-    window.addEventListener('resize', equalizeChoiceWidths);
+    window.addEventListener("resize", equalizeChoiceWidths);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
-      window.removeEventListener('resize', equalizeChoiceWidths);
+      window.removeEventListener("resize", equalizeChoiceWidths);
     };
   }, [exam, answers]);
 
   if (loading && !showPasswordModal) {
-    return <div className="take-exam-loading">{t('takeExam.loading')}</div>;
+    return <div className="take-exam-loading">{t("takeExam.loading")}</div>;
   }
 
   if (showPasswordModal) {
     return (
       <div className="take-exam-loading">
         <Modal
-          title={t('takeExam.enterPassword')}
+          title={t("takeExam.enterPassword")}
           open={showPasswordModal}
           onOk={async () => {
             if (!examPassword) {
-              message.error(t('takeExam.pleaseEnterPassword'));
+              message.error(t("takeExam.pleaseEnterPassword"));
               return;
             }
 
@@ -625,20 +676,21 @@ const TakeExam = () => {
               setShowPasswordModal(false);
               await startExamWithPassword(examPassword);
               // Clear password from storage
-              sessionStorage.removeItem('examPassword');
+              sessionStorage.removeItem("examPassword");
 
               passwordModalShownRef.current = false;
             } catch (error) {
-              const errorMessage = error.response?.data?.message || t('takeExam.failedToStart');
-              if (errorMessage.includes('password')) {
+              const errorMessage =
+                error.response?.data?.message || t("takeExam.failedToStart");
+              if (errorMessage.includes("password")) {
                 passwordModalShownRef.current = false;
                 setShowPasswordModal(true);
-                setExamPassword('');
+                setExamPassword("");
               } else {
                 if (shareCode) {
                   navigate(`/exam/${shareCode}`, { replace: true });
                 } else {
-                  navigate('/student/dashboard');
+                  navigate("/student/dashboard");
                 }
               }
             }
@@ -647,23 +699,25 @@ const TakeExam = () => {
             if (shareCode) {
               navigate(`/exam/${shareCode}`, { replace: true });
             } else {
-              navigate('/student/dashboard');
+              navigate("/student/dashboard");
             }
           }}
-          okText={t('takeExam.startExam')}
-          cancelText={t('common.cancel')}
+          okText={t("takeExam.startExam")}
+          cancelText={t("common.cancel")}
         >
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <p>{t('takeExam.passwordRequired')}</p>
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <p>{t("takeExam.passwordRequired")}</p>
             <Input.Password
-              placeholder={t('takeExam.passwordPlaceholder')}
+              placeholder={t("takeExam.passwordPlaceholder")}
               value={examPassword}
               onChange={(e) => setExamPassword(e.target.value)}
               onPressEnter={() => {
                 if (examPassword) {
                   // Trigger OK button
                   setTimeout(() => {
-                    const okButton = document.querySelector('.ant-modal-footer .ant-btn-primary');
+                    const okButton = document.querySelector(
+                      ".ant-modal-footer .ant-btn-primary"
+                    );
                     if (okButton) {
                       okButton.click();
                     }
@@ -680,19 +734,24 @@ const TakeExam = () => {
   }
 
   if (!exam || !submission) {
-    return <div>{t('takeExam.examNotFound')}</div>;
+    return <div>{t("takeExam.examNotFound")}</div>;
   }
 
   const questionOrder = submission.questionOrder || [];
   const totalQuestions = exam.questions.length;
-  const answeredCount = Object.keys(answers).filter(key => answers[key] !== undefined && answers[key] !== '').length;
-  const candidateName = user?.name || t('takeExam.candidate');
+  const answeredCount = Object.keys(answers).filter(
+    (key) => answers[key] !== undefined && answers[key] !== ""
+  ).length;
+  const candidateName = user?.name || t("takeExam.candidate");
 
   // Scroll to question
   const scrollToQuestion = (index) => {
-    const questionCards = document.querySelectorAll('.question-item-card');
+    const questionCards = document.querySelectorAll(".question-item-card");
     if (questionCards[index]) {
-      questionCards[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      questionCards[index].scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
       setCurrentVisibleQuestion(index);
     }
   };
@@ -700,7 +759,7 @@ const TakeExam = () => {
   // Toggle flag for question
   const toggleFlag = (index, e) => {
     e.stopPropagation(); // Prevent triggering scrollToQuestion
-    setFlaggedQuestions(prev => {
+    setFlaggedQuestions((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(index)) {
         newSet.delete(index);
@@ -713,13 +772,19 @@ const TakeExam = () => {
 
   const mathJaxConfig = {
     tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      inlineMath: [
+        ["$", "$"],
+        ["\\(", "\\)"],
+      ],
+      displayMath: [
+        ["$$", "$$"],
+        ["\\[", "\\]"],
+      ],
       processEscapes: true,
       processEnvironments: true,
     },
     options: {
-      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+      skipHtmlTags: ["script", "noscript", "style", "textarea", "pre"],
     },
   };
 
@@ -769,7 +834,7 @@ const TakeExam = () => {
   };
 
   const renderMathContent = (content) => {
-    if (!content) return '';
+    if (!content) return "";
 
     const contentStr = typeof content === 'string' ? content : String(content);
 
@@ -851,7 +916,10 @@ const TakeExam = () => {
 
   return (
     <MathJaxContext config={mathJaxConfig}>
-      <div className="take-exam-container">
+      <div
+        className="take-exam-container"
+        style={{ "--exam-font-scale": fontSize / 100 }}
+      >
         {/* Header */}
         <div className="take-exam-header-new">
           <div className="header-left">
@@ -861,35 +929,88 @@ const TakeExam = () => {
               onClick={() => navigate(-1)}
               className="back-button"
             >
-              {t('takeExam.goBack')}
+              {t("takeExam.goBack")}
             </Button>
           </div>
+
           <div className="header-center">
-            <div
-              className="candidate-dropdown"
-              onClick={() => setShowCandidateDropdown(!showCandidateDropdown)}
-            >
-              <span>{t('takeExam.candidateLabel')}: {candidateName}</span>
-              <DownOutlined className="dropdown-icon" />
+            <div className="candidate-info">
+              <Avatar
+                size={36}
+                src={user?.avatar}
+                icon={!user?.avatar && <UserOutlined />}
+                className="candidate-avatar"
+              />
+              <div className="candidate-details">
+                <span className="candidate-name">{candidateName}</span>
+                <span className="candidate-label">
+                  {t("takeExam.candidateLabel")}
+                </span>
+              </div>
             </div>
           </div>
+
           <div className="header-right">
-            <Space size="middle">
-              <div className="timer-new">
-                <Text strong className={timeRemaining < 300 ? 'time-warning' : ''}>
-                  {formatTime(timeRemaining)}
-                </Text>
+            <Space size={8} className="header-controls">
+              {/* Timer */}
+              <div
+                className={`timer-box ${
+                  timeRemaining < 300 ? "time-warning" : ""
+                }`}
+              >
+                <ClockCircleOutlined className="timer-icon" />
+                <span className="timer-text">{formatTime(timeRemaining)}</span>
               </div>
-              <Button
-                type="text"
-                icon={<SearchOutlined />}
-                className="header-icon-btn"
-              />
-              <Button
-                type="text"
-                icon={<MenuOutlined />}
-                className="header-icon-btn"
-              />
+
+              <Divider type="vertical" className="header-divider" />
+
+              {/* Zoom controls */}
+              <div className="zoom-controls">
+                <Tooltip title={t("takeExam.zoomOut")}>
+                  <Button
+                    type="text"
+                    icon={<ZoomOutOutlined />}
+                    onClick={handleZoomOut}
+                    disabled={fontSize <= 80}
+                    className="header-icon-btn"
+                  />
+                </Tooltip>
+                <span className="zoom-level">{fontSize}%</span>
+                <Tooltip title={t("takeExam.zoomIn")}>
+                  <Button
+                    type="text"
+                    icon={<ZoomInOutlined />}
+                    onClick={handleZoomIn}
+                    disabled={fontSize >= 140}
+                    className="header-icon-btn"
+                  />
+                </Tooltip>
+              </div>
+
+              <Divider type="vertical" className="header-divider" />
+
+              {/* View mode toggle */}
+              <Tooltip
+                title={
+                  viewMode === "all"
+                    ? t("takeExam.singleView")
+                    : t("takeExam.allView")
+                }
+              >
+                <Button
+                  type="text"
+                  icon={
+                    viewMode === "all" ? (
+                      <UnorderedListOutlined />
+                    ) : (
+                      <AppstoreOutlined />
+                    )
+                  }
+                  onClick={toggleViewMode}
+                  className="header-icon-btn view-mode-btn"
+                />
+              </Tooltip>
+
               <Button
                 type="primary"
                 onClick={() => setShowConfirmSubmit(true)}
@@ -897,7 +1018,7 @@ const TakeExam = () => {
                 loading={submitting}
                 className="submit-button"
               >
-                {t('takeExam.submit')}
+                {t("takeExam.submit")}
               </Button>
             </Space>
           </div>
@@ -907,216 +1028,579 @@ const TakeExam = () => {
         <div className="take-exam-wrapper">
           {/* Main Content - All Questions List */}
           <div className="take-exam-content-new">
-            {exam.questions.map((q, index) => {
-              const questionId = q.questionId._id || q.questionId;
-              const question = q.questionId;
-              const isAnswered = answers[questionId] !== undefined && answers[questionId] !== '';
+            {viewMode === "all"
+              ? // Hiển thị tất cả câu hỏi
+                exam.questions.map((q, index) => {
+                  const questionId = q.questionId._id || q.questionId;
+                  const question = q.questionId;
+                  const isAnswered =
+                    answers[questionId] !== undefined &&
+                    answers[questionId] !== "";
 
-              return (
-                <Card key={index} className="question-item-card">
-                  <div className="question-item-header">
-                    <Text strong className="question-number">{t('takeExam.questionNumber')} {index + 1}</Text>
-                    <Button
-                      type="text"
-                      icon={<FlagOutlined />}
-                      onClick={(e) => toggleFlag(index, e)}
-                      className={`flag-button ${flaggedQuestions.has(index) ? 'flagged' : ''}`}
-                      title={flaggedQuestions.has(index) ? t('takeExam.unflagQuestion') : t('takeExam.flagQuestion')}
-                    />
-                  </div>
-
-                  <div className="question-item-content">
-                    <Paragraph className="question-text" style={{
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      whiteSpace: 'pre-wrap',
-                      fontFamily: 'inherit'
-                    }}>
-                      {renderMathContent(question.text || question.name)}
-                    </Paragraph>
-
-                    {/* Render question images */}
-                    {question.images && question.images.length > 0 ? (
-                      <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                        {question.images.map((imgUrl, idx) => (
-                          <img
-                            key={idx}
-                            src={imgUrl}
-                            alt={`Question Illustration ${idx + 1}`}
-                            style={{
-                              maxWidth: '100%',
-                              maxHeight: '400px',
-                              objectFit: 'contain',
-                              borderRadius: '8px',
-                              border: '1px solid #f0f0f0'
-                            }}
-                          />
-                        ))}
-                      </div>
-                    ) : question.image ? (
-                      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
-                        <img
-                          src={question.image}
-                          alt="Question Illustration"
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '400px',
-                            objectFit: 'contain',
-                            borderRadius: '8px',
-                            border: '1px solid #f0f0f0'
-                          }}
+                  return (
+                    <Card key={index} className="question-item-card">
+                      <div className="question-item-header">
+                        <Text strong className="question-number">
+                          {t("takeExam.questionNumber")} {index + 1}
+                        </Text>
+                        <Button
+                          type="text"
+                          icon={<FlagOutlined />}
+                          onClick={(e) => toggleFlag(index, e)}
+                          className={`flag-button ${
+                            flaggedQuestions.has(index) ? "flagged" : ""
+                          }`}
+                          title={
+                            flaggedQuestions.has(index)
+                              ? t("takeExam.unflagQuestion")
+                              : t("takeExam.flagQuestion")
+                          }
                         />
                       </div>
-                    ) : null}
 
-                    {/* Render question based on type */}
-                    {question.type === 'mcq' && (
-                      <Radio.Group
-                        value={answers[questionId]}
-                        onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-                        className="question-options"
-                      >
-                        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                          {question.choices?.map((choice, idx) => {
-                            const isSelected = answers[questionId] === choice.key;
-                            const choiceRefKey = `${questionId}-${idx}`;
+                      <div className="question-item-content">
+                        <Paragraph
+                          className="question-text"
+                          style={{
+                            wordWrap: "break-word",
+                            overflowWrap: "break-word",
+                            whiteSpace: "pre-wrap",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {renderMathContent(question.text || question.name)}
+                        </Paragraph>
 
-                            // Initialize refs array for this question if not exists
-                            if (!choiceOptionsRefs.current[questionId]) {
-                              choiceOptionsRefs.current[questionId] = [];
-                            }
-
-                            return (
-                              <div
+                        {/* Render question images */}
+                        {question.images && question.images.length > 0 ? (
+                          <div
+                            style={{
+                              marginBottom: "16px",
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "8px",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {question.images.map((imgUrl, idx) => (
+                              <img
                                 key={idx}
-                                ref={(el) => {
-                                  if (el) {
-                                    choiceOptionsRefs.current[questionId][idx] = el;
-                                  }
+                                src={imgUrl}
+                                alt={`Question Illustration ${idx + 1}`}
+                                style={{
+                                  maxWidth: "100%",
+                                  maxHeight: "400px",
+                                  objectFit: "contain",
+                                  borderRadius: "8px",
+                                  border: "1px solid #f0f0f0",
                                 }}
-                                className={`choice-option ${isSelected ? 'choice-selected' : ''}`}
-                              >
-                                <Radio value={choice.key} className="choice-radio-new">
-                                  <span className="choice-label" style={{ display: 'inline', marginRight: '4px' }}>
-                                    {String.fromCharCode(65 + idx)}:
-                                  </span>
-                                  <span style={{
-                                    display: 'inline',
-                                    wordWrap: 'break-word',
-                                    overflowWrap: 'break-word',
-                                    whiteSpace: 'pre-wrap',
-                                    fontFamily: 'inherit'
-                                  }}>
-                                    {renderMathContent(choice.text)}
-                                  </span>
-                                  {/* Render choice image if exists */}
-                                  {choice.image && (
-                                    <div style={{ marginTop: '8px', marginLeft: '24px' }}>
-                                      <img
-                                        src={choice.image}
-                                        alt={`Choice ${String.fromCharCode(65 + idx)}`}
+                              />
+                            ))}
+                          </div>
+                        ) : question.image ? (
+                          <div
+                            style={{
+                              marginBottom: "16px",
+                              display: "flex",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <img
+                              src={question.image}
+                              alt="Question Illustration"
+                              style={{
+                                maxWidth: "100%",
+                                maxHeight: "400px",
+                                objectFit: "contain",
+                                borderRadius: "8px",
+                                border: "1px solid #f0f0f0",
+                              }}
+                            />
+                          </div>
+                        ) : null}
+
+                        {/* Render question based on type */}
+                        {question.type === "mcq" && (
+                          <Radio.Group
+                            value={answers[questionId]}
+                            onChange={(e) =>
+                              handleAnswerChange(questionId, e.target.value)
+                            }
+                            className="question-options"
+                          >
+                            <Space
+                              direction="vertical"
+                              size="middle"
+                              style={{ width: "100%" }}
+                            >
+                              {question.choices?.map((choice, idx) => {
+                                const isSelected =
+                                  answers[questionId] === choice.key;
+                                const choiceRefKey = `${questionId}-${idx}`;
+
+                                // Initialize refs array for this question if not exists
+                                if (!choiceOptionsRefs.current[questionId]) {
+                                  choiceOptionsRefs.current[questionId] = [];
+                                }
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    ref={(el) => {
+                                      if (el) {
+                                        choiceOptionsRefs.current[questionId][
+                                          idx
+                                        ] = el;
+                                      }
+                                    }}
+                                    className={`choice-option ${
+                                      isSelected ? "choice-selected" : ""
+                                    }`}
+                                  >
+                                    <Radio
+                                      value={choice.key}
+                                      className="choice-radio-new"
+                                    >
+                                      <span
+                                        className="choice-label"
                                         style={{
-                                          maxWidth: '100%',
-                                          maxHeight: '150px',
-                                          objectFit: 'contain',
-                                          borderRadius: '4px',
-                                          border: '1px solid #f0f0f0'
+                                          display: "inline",
+                                          marginRight: "4px",
                                         }}
-                                      />
-                                    </div>
-                                  )}
+                                      >
+                                        {String.fromCharCode(65 + idx)}:
+                                      </span>
+                                      <span
+                                        style={{
+                                          display: "inline",
+                                          wordWrap: "break-word",
+                                          overflowWrap: "break-word",
+                                          whiteSpace: "pre-wrap",
+                                          fontFamily: "inherit",
+                                        }}
+                                      >
+                                        {renderMathContent(choice.text)}
+                                      </span>
+                                      {/* Render choice image if exists */}
+                                      {choice.image && (
+                                        <div
+                                          style={{
+                                            marginTop: "8px",
+                                            marginLeft: "24px",
+                                          }}
+                                        >
+                                          <img
+                                            src={choice.image}
+                                            alt={`Choice ${String.fromCharCode(
+                                              65 + idx
+                                            )}`}
+                                            style={{
+                                              maxWidth: "100%",
+                                              maxHeight: "150px",
+                                              objectFit: "contain",
+                                              borderRadius: "4px",
+                                              border: "1px solid #f0f0f0",
+                                            }}
+                                          />
+                                        </div>
+                                      )}
+                                    </Radio>
+                                  </div>
+                                );
+                              })}
+                            </Space>
+                          </Radio.Group>
+                        )}
+
+                        {question.type === "tf" && (
+                          <Radio.Group
+                            value={answers[questionId]}
+                            onChange={(e) =>
+                              handleAnswerChange(questionId, e.target.value)
+                            }
+                            className="question-options"
+                          >
+                            <Space direction="vertical" size="middle">
+                              <div
+                                className={`choice-option ${
+                                  answers[questionId] === "true"
+                                    ? "choice-selected"
+                                    : ""
+                                }`}
+                              >
+                                <Radio
+                                  value="true"
+                                  className="choice-radio-new"
+                                >
+                                  <span className="choice-label">A:</span>
+                                  {t("takeExam.true")}
                                 </Radio>
                               </div>
-                            );
-                          })}
-                        </Space>
-                      </Radio.Group>
-                    )}
+                              <div
+                                className={`choice-option ${
+                                  answers[questionId] === "false"
+                                    ? "choice-selected"
+                                    : ""
+                                }`}
+                              >
+                                <Radio
+                                  value="false"
+                                  className="choice-radio-new"
+                                >
+                                  <span className="choice-label">B:</span>
+                                  {t("takeExam.false")}
+                                </Radio>
+                              </div>
+                            </Space>
+                          </Radio.Group>
+                        )}
 
-                    {question.type === 'tf' && (
-                      <Radio.Group
-                        value={answers[questionId]}
-                        onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-                        className="question-options"
-                      >
-                        <Space direction="vertical" size="middle">
-                          <div className={`choice-option ${answers[questionId] === 'true' ? 'choice-selected' : ''}`}>
-                            <Radio value="true" className="choice-radio-new">
-                              <span className="choice-label">A:</span>
-                              {t('takeExam.true')}
-                            </Radio>
-                          </div>
-                          <div className={`choice-option ${answers[questionId] === 'false' ? 'choice-selected' : ''}`}>
-                            <Radio value="false" className="choice-radio-new">
-                              <span className="choice-label">B:</span>
-                              {t('takeExam.false')}
-                            </Radio>
-                          </div>
-                        </Space>
-                      </Radio.Group>
-                    )}
+                        {(question.type === "short" ||
+                          question.type === "essay") && (
+                          <Input.TextArea
+                            rows={question.type === "essay" ? 8 : 4}
+                            value={answers[questionId] || ""}
+                            onChange={(e) =>
+                              handleAnswerChange(questionId, e.target.value)
+                            }
+                            placeholder={t("takeExam.enterYourAnswer")}
+                            className="answer-textarea"
+                          />
+                        )}
 
-                    {(question.type === 'short' || question.type === 'essay') && (
-                      <Input.TextArea
-                        rows={question.type === 'essay' ? 8 : 4}
-                        value={answers[questionId] || ''}
-                        onChange={(e) => handleAnswerChange(questionId, e.target.value)}
-                        placeholder={t('takeExam.enterYourAnswer')}
-                        className="answer-textarea"
-                      />
-                    )}
-
-                    {(question.type === 'mcq' || question.type === 'tf') && !isAnswered && (
-                      <div className="question-placeholder">
-                        <Text type="secondary">{t('takeExam.selectCorrectAnswer')}</Text>
+                        {(question.type === "mcq" || question.type === "tf") &&
+                          !isAnswered && (
+                            <div className="question-placeholder">
+                              <Text type="secondary">
+                                {t("takeExam.selectCorrectAnswer")}
+                              </Text>
+                            </div>
+                          )}
                       </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
+                    </Card>
+                  );
+                })
+              : // Hiển thị từng câu hỏi một (single view)
+                (() => {
+                  const q = exam.questions[currentQuestionIndex];
+                  const questionId = q.questionId._id || q.questionId;
+                  const question = q.questionId;
+                  const isAnswered =
+                    answers[questionId] !== undefined &&
+                    answers[questionId] !== "";
+
+                  return (
+                    <Card className="question-item-card">
+                      <div className="question-item-header">
+                        <Text strong className="question-number">
+                          {t("takeExam.questionNumber")}{" "}
+                          {currentQuestionIndex + 1}
+                        </Text>
+                        <Button
+                          type="text"
+                          icon={<FlagOutlined />}
+                          onClick={(e) => toggleFlag(currentQuestionIndex, e)}
+                          className={`flag-button ${
+                            flaggedQuestions.has(currentQuestionIndex)
+                              ? "flagged"
+                              : ""
+                          }`}
+                          title={
+                            flaggedQuestions.has(currentQuestionIndex)
+                              ? t("takeExam.unflagQuestion")
+                              : t("takeExam.flagQuestion")
+                          }
+                        />
+                      </div>
+
+                      <div className="question-item-content">
+                        <Paragraph
+                          className="question-text"
+                          style={{
+                            wordWrap: "break-word",
+                            overflowWrap: "break-word",
+                            whiteSpace: "pre-wrap",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {renderMathContent(question.text || question.name)}
+                        </Paragraph>
+
+                        {/* Render question images */}
+                        {question.images && question.images.length > 0 ? (
+                          <div
+                            style={{
+                              marginBottom: "16px",
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "8px",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {question.images.map((imgUrl, idx) => (
+                              <img
+                                key={idx}
+                                src={imgUrl}
+                                alt={`Question Illustration ${idx + 1}`}
+                                style={{
+                                  maxWidth: "100%",
+                                  maxHeight: "400px",
+                                  objectFit: "contain",
+                                  borderRadius: "8px",
+                                  border: "1px solid #f0f0f0",
+                                }}
+                              />
+                            ))}
+                          </div>
+                        ) : question.image ? (
+                          <div
+                            style={{
+                              marginBottom: "16px",
+                              display: "flex",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <img
+                              src={question.image}
+                              alt="Question Illustration"
+                              style={{
+                                maxWidth: "100%",
+                                maxHeight: "400px",
+                                objectFit: "contain",
+                                borderRadius: "8px",
+                                border: "1px solid #f0f0f0",
+                              }}
+                            />
+                          </div>
+                        ) : null}
+
+                        {/* Render question based on type */}
+                        {question.type === "mcq" && (
+                          <Radio.Group
+                            value={answers[questionId]}
+                            onChange={(e) =>
+                              handleAnswerChange(questionId, e.target.value)
+                            }
+                            className="question-options"
+                          >
+                            <Space
+                              direction="vertical"
+                              size="middle"
+                              style={{ width: "100%" }}
+                            >
+                              {question.choices?.map((choice, idx) => {
+                                const isSelected =
+                                  answers[questionId] === choice.key;
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`choice-option ${
+                                      isSelected ? "choice-selected" : ""
+                                    }`}
+                                  >
+                                    <Radio
+                                      value={choice.key}
+                                      className="choice-radio-new"
+                                    >
+                                      <span
+                                        className="choice-label"
+                                        style={{
+                                          display: "inline",
+                                          marginRight: "4px",
+                                        }}
+                                      >
+                                        {String.fromCharCode(65 + idx)}:
+                                      </span>
+                                      <span
+                                        style={{
+                                          display: "inline",
+                                          wordWrap: "break-word",
+                                          overflowWrap: "break-word",
+                                          whiteSpace: "pre-wrap",
+                                          fontFamily: "inherit",
+                                        }}
+                                      >
+                                        {renderMathContent(choice.text)}
+                                      </span>
+                                      {/* Render choice image if exists */}
+                                      {choice.image && (
+                                        <div
+                                          style={{
+                                            marginTop: "8px",
+                                            marginLeft: "24px",
+                                          }}
+                                        >
+                                          <img
+                                            src={choice.image}
+                                            alt={`Choice ${String.fromCharCode(
+                                              65 + idx
+                                            )}`}
+                                            style={{
+                                              maxWidth: "100%",
+                                              maxHeight: "150px",
+                                              objectFit: "contain",
+                                              borderRadius: "4px",
+                                              border: "1px solid #f0f0f0",
+                                            }}
+                                          />
+                                        </div>
+                                      )}
+                                    </Radio>
+                                  </div>
+                                );
+                              })}
+                            </Space>
+                          </Radio.Group>
+                        )}
+
+                        {question.type === "tf" && (
+                          <Radio.Group
+                            value={answers[questionId]}
+                            onChange={(e) =>
+                              handleAnswerChange(questionId, e.target.value)
+                            }
+                            className="question-options"
+                          >
+                            <Space direction="vertical" size="middle">
+                              <div
+                                className={`choice-option ${
+                                  answers[questionId] === "true"
+                                    ? "choice-selected"
+                                    : ""
+                                }`}
+                              >
+                                <Radio
+                                  value="true"
+                                  className="choice-radio-new"
+                                >
+                                  <span className="choice-label">A:</span>
+                                  {t("takeExam.true")}
+                                </Radio>
+                              </div>
+                              <div
+                                className={`choice-option ${
+                                  answers[questionId] === "false"
+                                    ? "choice-selected"
+                                    : ""
+                                }`}
+                              >
+                                <Radio
+                                  value="false"
+                                  className="choice-radio-new"
+                                >
+                                  <span className="choice-label">B:</span>
+                                  {t("takeExam.false")}
+                                </Radio>
+                              </div>
+                            </Space>
+                          </Radio.Group>
+                        )}
+
+                        {(question.type === "short" ||
+                          question.type === "essay") && (
+                          <Input.TextArea
+                            rows={question.type === "essay" ? 8 : 4}
+                            value={answers[questionId] || ""}
+                            onChange={(e) =>
+                              handleAnswerChange(questionId, e.target.value)
+                            }
+                            placeholder={t("takeExam.enterYourAnswer")}
+                            className="answer-textarea"
+                          />
+                        )}
+
+                        {(question.type === "mcq" || question.type === "tf") &&
+                          !isAnswered && (
+                            <div className="question-placeholder">
+                              <Text type="secondary">
+                                {t("takeExam.selectCorrectAnswer")}
+                              </Text>
+                            </div>
+                          )}
+                      </div>
+
+                      {/* Navigation buttons for single view */}
+                      <div className="question-navigation">
+                        <Button
+                          onClick={goToPrevious}
+                          disabled={currentQuestionIndex === 0}
+                        >
+                          {t("takeExam.previous")}
+                        </Button>
+                        <Button
+                          type="primary"
+                          onClick={goToNext}
+                          disabled={
+                            currentQuestionIndex === exam.questions.length - 1
+                          }
+                        >
+                          {t("takeExam.next")}
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })()}
           </div>
 
           {/* Question List Sidebar */}
           <div className="question-list-sidebar">
-            <div className="question-list-title">{t('takeExam.questionList')}</div>
-            <div className="question-list-grid">
-              {exam.questions.map((q, index) => {
-                const questionId = q.questionId._id || q.questionId;
-                const isAnswered = answers[questionId] !== undefined && answers[questionId] !== '';
-                const isCurrent = index === currentVisibleQuestion;
-                const isFlagged = flaggedQuestions.has(index);
+            <div className="question-list-content">
+              <div className="question-list-title">
+                {t("takeExam.questionList")}
+              </div>
+              <div className="question-list-grid">
+                {exam.questions.map((q, index) => {
+                  const questionId = q.questionId._id || q.questionId;
+                  const isAnswered =
+                    answers[questionId] !== undefined &&
+                    answers[questionId] !== "";
+                  const isCurrent =
+                    viewMode === "single"
+                      ? index === currentQuestionIndex
+                      : index === currentVisibleQuestion;
+                  const isFlagged = flaggedQuestions.has(index);
 
-                let buttonClass = 'question-list-btn';
-                if (isFlagged) {
-                  // Câu được gắn cờ - màu vàng
-                  buttonClass += ' question-flagged-yellow';
-                } else if (isCurrent) {
-                  // Câu đang làm - màu xanh da trời
-                  buttonClass += ' question-current-blue';
-                } else if (isAnswered) {
-                  // Câu đã làm - màu xanh lá
-                  buttonClass += ' question-answered-green';
-                } else {
-                  // Câu chưa làm - màu trắng
-                  buttonClass += ' question-unanswered-white';
-                }
+                  let buttonClass = "question-list-btn";
+                  if (isFlagged) {
+                    // Câu được gắn cờ - màu vàng
+                    buttonClass += " question-flagged-yellow";
+                  } else if (isCurrent) {
+                    // Câu đang làm - màu xanh da trời
+                    buttonClass += " question-current-blue";
+                  } else if (isAnswered) {
+                    // Câu đã làm - màu xanh lá
+                    buttonClass += " question-answered-green";
+                  } else {
+                    // Câu chưa làm - màu trắng
+                    buttonClass += " question-unanswered-white";
+                  }
 
-                return (
-                  <div key={index} className="question-list-item">
-                    <Button
-                      className={buttonClass}
-                      onClick={() => scrollToQuestion(index)}
-                      shape="round"
-                    >
-                      {(index + 1).toString().padStart(2, '0')}
-                    </Button>
-                    {isFlagged && (
-                      <FlagOutlined className="question-flag-icon" />
-                    )}
-                  </div>
-                );
-              })}
+                  return (
+                    <div key={index} className="question-list-item">
+                      <Button
+                        className={buttonClass}
+                        onClick={() => {
+                          if (viewMode === "single") {
+                            setCurrentQuestionIndex(index);
+                          } else {
+                            scrollToQuestion(index);
+                          }
+                        }}
+                        shape="round"
+                      >
+                        {(index + 1).toString().padStart(2, "0")}
+                      </Button>
+                      {isFlagged && (
+                        <FlagOutlined className="question-flag-icon" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="question-list-count">
+              {answeredCount}/{totalQuestions} {t("takeExam.answered")}
             </div>
           </div>
         </div>
@@ -1124,8 +1608,10 @@ const TakeExam = () => {
         {/* Time Warning */}
         {timeRemaining < 300 && timeRemaining > 0 && (
           <Alert
-            message={t('takeExam.timeWarning')}
-            description={`${t('takeExam.onlyTimeRemaining')} ${formatTime(timeRemaining)} ${t('takeExam.timeRemaining')}!`}
+            message={t("takeExam.timeWarning")}
+            description={`${t("takeExam.onlyTimeRemaining")} ${formatTime(
+              timeRemaining
+            )} ${t("takeExam.timeRemaining")}!`}
             type="warning"
             icon={<WarningOutlined />}
             showIcon
@@ -1136,23 +1622,26 @@ const TakeExam = () => {
 
         {/* Confirm Submit Modal */}
         <Modal
-          title={t('takeExam.confirmSubmit')}
+          title={t("takeExam.confirmSubmit")}
           open={showConfirmSubmit}
           onOk={handleSubmit}
           onCancel={() => setShowConfirmSubmit(false)}
           confirmLoading={submitting}
-          okText={t('common.yes') + ', ' + t('takeExam.submit')}
-          cancelText={t('common.cancel')}
+          okText={t("common.yes") + ", " + t("takeExam.submit")}
+          cancelText={t("common.cancel")}
         >
-          <p>{t('takeExam.confirmSubmitMessage')}</p>
-          <p>{t('takeExam.answeredQuestions')} {answeredCount} {t('takeExam.outOf')} {totalQuestions} {t('takeExam.questions')}.</p>
-          <p><strong>{t('takeExam.cannotUndo')}</strong></p>
+          <p>{t("takeExam.confirmSubmitMessage")}</p>
+          <p>
+            {t("takeExam.answeredQuestions")} {answeredCount}{" "}
+            {t("takeExam.outOf")} {totalQuestions} {t("takeExam.questions")}.
+          </p>
+          <p>
+            <strong>{t("takeExam.cannotUndo")}</strong>
+          </p>
         </Modal>
-
       </div>
     </MathJaxContext>
   );
 };
 
 export default TakeExam;
-

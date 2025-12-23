@@ -3,6 +3,12 @@
     "name": "EduMap",
     "description": "オンライン試験プラットフォーム"
   },
+  "sidebar": {
+    "mindmaps": "マインドマップ",
+    "myMaps": "マイマップ",
+    "shared": "共有",
+    "trash": "ゴミ箱"
+  },
   "auth": {
     "login": "ログイン",
     "register": "登録",
@@ -99,6 +105,7 @@
     "filter": "フィルター",
     "export": "エクスポート",
     "import": "インポート",
+    "upload": "アップロード",
     "loading": "読み込み中...",
     "noData": "データがありません",
     "viewAll": "すべて表示",
@@ -123,7 +130,8 @@
     "copyFailed": "コピーに失敗しました。ダウンロードをお試しください。",
     "more": "もっと見る",
     "zoomIn": "ズームイン",
-    "zoomOut": "ズームアウト"
+    "zoomOut": "ズームアウト",
+    "clearFilters": "フィルターをクリア"
   },
   "qrScanner": {
     "title": "QRコードをスキャン",
@@ -239,8 +247,15 @@
       "questions": "問題",
       "exams": "試験",
       "classes": "クラス",
-      "students": "学生"
+      "students": "学生",
+      "totalSubmissions": "提出総数",
+      "averageScore": "平均スコア",
+      "recentExams": "最近の試験",
+      "recentSubmissions": "最近の提出"
     },
+    "published": "公開済み",
+    "last7Days": "過去7日間",
+    "submissions": "提出",
     "quickStart": "クイックスタート",
     "actions": {
       "createExam": "演習または試験を作成",
@@ -248,10 +263,25 @@
       "fromBank": "共有バンクから試験を作成",
       "fromBankDesc": "利用可能な問題バンクから問題を選択",
       "downloadExam": "EduMapから試験をダウンロード",
-      "downloadExamDesc": "EduMapライブラリから試験をインポート"
+      "downloadExamDesc": "EduMapライブラリから試験をインポート",
+      "manageQuestions": "問題を管理",
+      "manageQuestionsDesc": "問題バンクを作成・整理",
+      "manageClasses": "クラスを管理",
+      "manageClassesDesc": "クラスを作成・管理"
     },
     "recentActivities": "最近のアクティビティ",
-    "noActivities": "アクティビティはまだありません"
+    "noActivities": "アクティビティはまだありません",
+    "noData": "データがありません",
+    "charts": {
+      "examStatus": "試験状況分布",
+      "published": "公開済み",
+      "draft": "下書き",
+      "scoreDistribution": "スコア分布",
+      "scoreRange": "スコア範囲",
+      "students": "学生",
+      "submissionsOverTime": "提出の推移",
+      "topExams": "トップパフォーマンス試験"
+    }
   },
   "studentDashboard": {
     "welcome": "EduMapへようこそ！ 🎓",
@@ -261,12 +291,31 @@
       "classes": "クラス",
       "exams": "試験",
       "completed": "完了",
-      "upcoming": "予定"
+      "upcoming": "予定",
+      "averageScore": "平均スコア",
+      "passRate": "合格率",
+      "recentActivity": "最近のアクティビティ"
     },
+    "last7Days": "過去7日間",
     "upcomingExams": "予定の試験",
     "noExams": "試験はまだありません",
     "recentResults": "最近の結果",
-    "noResults": "結果はまだありません"
+    "noResults": "結果はまだありません",
+    "noData": "データがありません",
+    "charts": {
+      "scoreDistribution": "スコア分布",
+      "scoreRange": "スコア範囲",
+      "exams": "試験",
+      "performanceOverTime": "パフォーマンスの推移",
+      "date": "日付",
+      "averageScore": "平均スコア (%)"
+    },
+    "table": {
+      "examName": "試験名",
+      "score": "スコア",
+      "status": "ステータス",
+      "submittedAt": "提出日時"
+    }
   },
   "teacherPages": {
     "questions": {
@@ -321,6 +370,9 @@
   },
   "classes": {
     "title": "クラス管理",
+    "bulletinBoard": "ニュースフィード",
+    "overview": "概要",
+    "newsfeed": "ニュースフィード",
     "name": "クラス名",
     "code": "クラスコード",
     "students": "学生",
@@ -411,6 +463,7 @@
     "answer": "答え",
     "images": "画像",
     "choices": "選択肢",
+    "images": "画像",
     "createdAt": "作成日",
     "viewDetails": "詳細を見る",
     "edit": "編集",
@@ -461,6 +514,7 @@
     "filterByType": "タイプでフィルター",
     "filterByLevel": "レベルでフィルター",
     "filterBySubject": "科目でフィルター",
+    "showGradeLetter": "成績文字で表示",
     "levelEasy": "簡単",
     "levelMedium": "普通",
     "levelHard": "難しい",
@@ -547,6 +601,7 @@
     "searchPlaceholder": "試験を検索...",
     "filterByStatus": "ステータスでフィルター",
     "filterBySubject": "科目でフィルター",
+    "showGradeLetter": "成績文字で表示",
     "subject": "科目",
     "fetchFailed": "試験の読み込みに失敗しました",
     "createSuccess": "試験が正常に作成されました！",
@@ -608,6 +663,10 @@
     "marks": "点数",
     "isRequired": "必須",
     "selectedQuestions": "選択された問題",
+    "selectQuestions": "問題を選択",
+    "addQuestion": "問題を追加",
+    "addQuestions": "問題を追加",
+    "addMoreQuestions": "問題を追加",
     "searchQuestions": "問題を検索",
     "searchQuestionsByName": "名前で問題を検索...",
     "enterQuestionName": "問題名を入力してください",
@@ -622,6 +681,14 @@
     "timezone": "タイムゾーン",
     "availableFrom": "利用可能開始",
     "availableUntil": "利用可能終了",
+    "startTime": "開始時刻",
+    "endTime": "終了時刻",
+    "blockLateEntry": "遅延入場をブロック",
+    "allowLateEntryAnytime": "いつでも遅延入場を許可",
+    "lateEntryGracePeriod": "猶予期間（分）",
+    "lateEntryGracePeriodTooltip": "開始時刻後に学生が入場できる分数。0 = 開始時刻後すぐにブロック",
+    "minutes": "分",
+    "lateEntryBlocked": "遅延入場は許可されていません。この試験は許容時間後の入場をブロックします。",
     "viewSettings": "表示設定",
     "viewMark": "点数表示",
     "viewMarkRequired": "点数を表示するタイミングを選択してください！",
@@ -711,8 +778,13 @@
       "score": "スコア",
       "noScoreData": "スコアデータがありません",
       "fetchFailed": "統計の読み込みに失敗しました",
-      "noData": "統計データがありません"
+      "noData": "統計データがありません",
+      "examScores": "試験スコア（最新の受験）",
+      "subjectPerformance": "科目別成績",
+      "scoreTrend": "スコアの推移",
+      "needMoreData": "推移を表示するには2回以上の試験が必要です"
     },
+    "chartFilters": "グラフフィルター",
     "leaderboard": {
       "rank": "順位",
       "student": "学生",
@@ -851,7 +923,12 @@
     "correctAnswer": "正解",
     "noAnswer": "回答なし",
     "answersNotAvailable": "回答はまだ利用できません",
-    "answersNotAvailableDesc": "すべての学生が試験を完了した後、回答が表示されます。"
+    "answersNotAvailableDesc": "すべての学生が試験を完了した後、回答が表示されます。",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "singleView": "一問ずつ表示",
+    "allView": "全問題表示",
+    "answered": "回答済み"
   },
   "publicTakeExam": {
     "loading": "試験を読み込み中...",
@@ -937,6 +1014,8 @@
     "submittedAt": "提出日時",
     "mcq": "選択問題",
     "questions": "問",
+    "question": "質問",
+    "correctAnswer": "正解",
     "gradedBy": "採点者",
     "viewActivityLog": "テストの詳細な進行状況を表示",
     "deleteAndRetake": "テストを削除して再受験を許可",
@@ -978,6 +1057,55 @@
     "question": "問題",
     "correctAnswer": "正解",
     "studentAnswer": "学生の回答"
+  },
+  "feed": {
+    "fetchFailed": "フィードの読み込みに失敗しました",
+    "postCreated": "投稿が作成されました",
+    "createFailed": "投稿の作成に失敗しました",
+    "postDeleted": "投稿が削除されました",
+    "deleteFailed": "投稿の削除に失敗しました",
+    "updateSuccess": "投稿が更新されました",
+    "updateFailed": "更新に失敗しました",
+    "lockSuccess": "コメントがロックされました",
+    "unlockSuccess": "コメントのロックが解除されました",
+    "actionFailed": "操作に失敗しました",
+    "commentFailed": "コメントに失敗したか、コメントがロックされています",
+    "commentDeleted": "コメントが削除されました",
+    "commentDeleteFailed": "コメントの削除に失敗しました",
+    "commentUpdated": "コメントが更新されました",
+    "commentUpdateFailed": "コメントの更新に失敗しました",
+    "refreshSuccess": "投稿が更新されました",
+    "justNow": "たった今",
+    "minutesAgo": "{{count}}分前",
+    "hoursAgo": "{{count}}時間前",
+    "daysAgo": "{{count}}日前",
+    "monthsAgo": "{{count}}ヶ月前",
+    "yearsAgo": "{{count}}年前",
+    "placeholder": "何を共有したいですか？",
+    "upload": "+ アップロード",
+    "locking": "コメントをロック中",
+    "lock": "コメントをロック",
+    "post": "投稿",
+    "refresh": "フィードを更新",
+    "edit": "編集",
+    "delete": "削除",
+    "deleteConfirmTitle": "この投稿を削除しますか？",
+    "deleteConfirmContent": "本当にこの投稿を削除しますか？",
+    "deleteConfirmOk": "削除",
+    "deleteConfirmCancel": "キャンセル",
+    "commentPlaceholder": "コメントを書く...",
+    "commentLockedPlaceholder": "コメントはロックされています",
+    "refreshCommentTooltip": "クリックしてコメントを更新",
+    "commentDeleteTitle": "コメントを削除",
+    "commentDeleteContent": "本当にこのコメントを削除しますか？",
+    "commentDeleteOk": "削除",
+    "commentDeleteCancel": "キャンセル",
+    "addLink": "リンクを追加",
+    "linkUrl": "URL (https://...)",
+    "linkTitle": "タイトル (任意)",
+    "add": "追加",
+    "save": "保存",
+    "cancel": "キャンセル"
   },
   "mindmap": {
     "unsavedChanges": "描画、レイアウト、またはノードプロパティなどの保存されていない変更があります。保存せずに終了してもよろしいですか？",
@@ -1059,9 +1187,13 @@
     "createMindmapWithAI": "AIでマインドマップを作成",
     "createMindmapWithAIDesc": "作成したい内容を説明すると、AIがマインドマップを生成します",
     "titleOptional": "タイトル（オプション）",
+    "mindmapName": "マインドマップ名",
+    "optional": "オプション",
+    "titleNote": "注意：タイトルはAI生成には使用されません。説明欄で詳しく記述してください。",
     "titlePlaceholder": "例：プロジェクト計画、学習ガイド...",
-    "describeMindmap": "マインドマップを説明 *",
-    "describeMindmapPlaceholder": "例：主要な段階とプロセスを含む水循環に関するマインドマップを作成",
+    "describeMindmap": "マインドマップを説明",
+    "descriptionRequired": "説明を入力してください",
+    "describeMindmapPlaceholder": "例：小学5年生の分数を理解するために必要な知識",
     "aiTip": "💡 ヒント：トピックと構造を具体的に指定してください",
     "generateMindmap": "✨ マインドマップを生成",
     "lastOpened": "最後に開いた",
@@ -1104,6 +1236,17 @@
     "deleting": "削除中...",
     "processing": "処理中...",
     "timeout": "タイムアウトしました。ページを再読み込みしてください。"
+  },
+  "notifications": {
+    "title": "通知",
+    "markAllRead": "すべて既読にする",
+    "noNotifications": "新しい通知はありません",
+    "viewMore": "もっと見る",
+    "NOTIFICATION_NEW_POST": "がクラス「{{className}}」に新しい投稿をしました",
+    "NOTIFICATION_NEW_COMMENT_OWN": "がクラス「{{className}}」のあなたの投稿にコメントしました",
+    "NOTIFICATION_NEW_COMMENT_OTHER": "がクラス「{{className}}」の投稿にコメントしました",
+    "NOTIFICATION_CLASS_REMOVAL": "がクラス「{{className}}」からあなたを削除しました",
+    "NOTIFICATION_CLASS_ADDITION": "がクラス「{{className}}」にあなたを追加しました"
   },
   "publicMindmap": {
     "notAvailable": "マインドマップは利用できません",

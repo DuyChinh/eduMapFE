@@ -53,6 +53,7 @@ import examStatsService from "../../api/examStatsService.js";
 import { ROUTES } from "../../constants/config";
 import PreviewExamModal from "../../components/teacher/PreviewExamModal";
 import QRCodeModal from "../../components/common/QRCodeModal";
+import LeaderboardView from "../../components/teacher/LeaderboardView";
 
 const { Title, Text } = Typography;
 
@@ -285,130 +286,7 @@ const ExamDetailNew = () => {
     return "-";
   };
 
-  const leaderboardColumns = [
-    {
-      title: t("exams.leaderboard.rank"),
-      dataIndex: "rank",
-      key: "rank",
-      width: 80,
-      render: (rank) => {
-        if (rank === 1) {
-          return (
-            <img 
-              src="/1st-medal.png" 
-              alt="1st Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
-            />
-          );
-        }
-        if (rank === 2) {
-          return (
-            <img 
-              src="/2nd-medal.png" 
-              alt="2nd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
-            />
-          );
-        }
-        if (rank === 3) {
-          return (
-            <img 
-              src="/3rd-medal.png" 
-              alt="3rd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
-            />
-          );
-        }
-        const colors = { 1: "#ffd700", 2: "#c0c0c0", 3: "#cd7f32" };
-        return (
-          <Tag
-            color={colors[rank] || "default"}
-            style={{ fontSize: "16px", fontWeight: "bold" }}
-          >
-            #{rank}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: t("exams.leaderboard.student"),
-      key: "student",
-      render: (_, record) => (
-        <Space>
-          <Avatar
-            src={record.student?.avatar}
-            icon={!record.student?.avatar && <TeamOutlined />}
-          />
-          <div>
-            <div style={{ fontWeight: 500 }}>
-              {record.student?.name || record.student?.email}
-            </div>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.student?.studentCode}
-            </Text>
-          </div>
-        </Space>
-      ),
-    },
-    {
-      title: t("exams.leaderboard.score"),
-      dataIndex: "score",
-      key: "score",
-      width: 120,
-      render: (score, record) => {
-        const formattedScore =
-          typeof score === "number" ? Number(score.toFixed(1)) : score || 0;
-        return (
-          <div>
-            <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
-              {formattedScore}/{record.totalMarks}
-            </Text>
-            <Progress
-              percent={Math.round((score / record.totalMarks) * 100)}
-              size="small"
-              showInfo={false}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      title: t("exams.leaderboard.timeSpent"),
-      dataIndex: "timeSpent",
-      key: "timeSpent",
-      width: 120,
-      render: (minutes) => {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours}h ${mins}m`;
-      },
-    },
-    {
-      title: t("exams.leaderboard.submittedAt"),
-      dataIndex: "submittedAt",
-      key: "submittedAt",
-      width: 170,
-      render: (date) => (date ? new Date(date).toLocaleString("vi-VN") : "-"),
-    },
-    {
-      title: t("common.actions"),
-      key: "actions",
-      width: 100,
-      render: (_, record) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() =>
-            navigate(
-              `/teacher/exams/${examId}/submissions/detail/${record._id}`
-            )
-          }
-        >
-          {t("exams.viewDetail")}
-        </Button>
-      ),
-    },
-  ];
+
 
   // Refetch submissions when filters change (with debounce for search)
   useEffect(() => {
@@ -646,7 +524,7 @@ const ExamDetailNew = () => {
         )
           return "-";
         const formattedScore =
-          typeof score === "number" ? Number(score.toFixed(1)) : score || 0;
+          typeof score === "number" ? Number(score.toFixed(2)) : score || 0;
         return (
           <div>
             <Text strong style={{ fontSize: 14 }}>
@@ -838,7 +716,7 @@ const ExamDetailNew = () => {
                           value: examData.totalMarks != null 
                             ? (Number.isInteger(examData.totalMarks) 
                               ? examData.totalMarks 
-                              : examData.totalMarks.toFixed(1))
+                              : examData.totalMarks.toFixed(2))
                             : "-",
                         },
                         {
@@ -981,8 +859,9 @@ const ExamDetailNew = () => {
                               width: 80,
                               render: (marks) => {
                                 if (marks == null) return "-";
-                                // If it's an integer, show as is. Otherwise, round to 1 decimal place
-                                return Number.isInteger(marks) ? marks : marks.toFixed(1);
+                                // If it's an integer, show as is. Otherwise, truncate to 2 decimal places
+                                if (Number.isInteger(marks)) return marks;
+                                return Math.floor(marks * 100) / 100;
                               },
                             },
                           ]}
@@ -1002,7 +881,7 @@ const ExamDetailNew = () => {
                       <Statistic
                         title={t("exams.stats.totalQuestions")}
                         value={examData.questions?.length || 0}
-                        prefix={<img src="/question.png" alt="Questions" style={{ width: 20, height: 20 }} />}
+                        prefix={<img src="/question.png" alt="Questions" style={{ width: 24, height: 24 }} />}
                       />
                     </Card>
                     <Card>
@@ -1017,7 +896,7 @@ const ExamDetailNew = () => {
                         title={t("exams.stats.averageScore")}
                         value={
                           statistics?.averageScore
-                            ? Number(statistics.averageScore.toFixed(1))
+                            ? Number(statistics.averageScore.toFixed(2))
                             : 0
                         }
                         suffix={`/ ${examData.totalMarks}`}
@@ -1059,7 +938,7 @@ const ExamDetailNew = () => {
                           title={t("exams.stats.averageScore")}
                           value={
                             statistics.averageScore
-                              ? Number(statistics.averageScore.toFixed(1))
+                              ? Number(statistics.averageScore.toFixed(2))
                               : 0
                           }
                           suffix={`/ ${examData.totalMarks}`}
@@ -1072,7 +951,7 @@ const ExamDetailNew = () => {
                           title={t("exams.stats.highestScore")}
                           value={
                             statistics.highestScore
-                              ? Number(statistics.highestScore.toFixed(1))
+                              ? Number(statistics.highestScore.toFixed(2))
                               : 0
                           }
                           suffix={`/ ${examData.totalMarks}`}
@@ -1085,7 +964,7 @@ const ExamDetailNew = () => {
                           title={t("exams.stats.lowestScore")}
                           value={
                             statistics.lowestScore
-                              ? Number(statistics.lowestScore.toFixed(1))
+                              ? Number(statistics.lowestScore.toFixed(2))
                               : 0
                           }
                           suffix={`/ ${examData.totalMarks}`}
@@ -1202,40 +1081,24 @@ const ExamDetailNew = () => {
               </span>
             ),
             children: (
-              <Card>
-                {leaderboardLoading ? (
-                  <div style={{ textAlign: "center", padding: "50px" }}>
-                    <Spin />
-                  </div>
-                ) : (
-                  <Table
-                    columns={leaderboardColumns}
-                    dataSource={leaderboard}
-                    rowKey={(record) => {
-                      // Use submission _id first, then combination of student and rank
-                      if (record._id) return record._id;
-                      const studentId = record.student?._id;
-                      const rank = record.rank;
-                      return studentId && rank
-                        ? `leaderboard-${studentId}-${rank}`
-                        : `leaderboard-${Math.random()}`;
-                    }}
-                    pagination={{
-                      current: leaderboardPagination.current,
-                      pageSize: leaderboardPagination.pageSize,
-                      total: leaderboardPagination.total,
-                      showSizeChanger: true,
-                      showTotal: (total, range) =>
-                        `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.leaderboard.items") || "items"}`,
-                      pageSizeOptions: ["10", "20", "50", "100"],
-                      defaultPageSize: 20,
-                      onChange: handleLeaderboardPaginationChange,
-                      onShowSizeChange: handleLeaderboardPaginationChange,
-                    }}
-                    scroll={{ x: 800 }}
-                    locale={{ emptyText: t("exams.leaderboard.noData") }}
-                  />
-                )}
+              <Card bodyStyle={{ padding: 0, overflow: 'hidden' }}>
+                <LeaderboardView
+                  data={leaderboard}
+                  loading={leaderboardLoading}
+                  pagination={{
+                    current: leaderboardPagination.current,
+                    pageSize: leaderboardPagination.pageSize,
+                    total: leaderboardPagination.total,
+                    showSizeChanger: true,
+                    showTotal: (total, range) =>
+                      `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${
+                        t("exams.leaderboard.items") || "items"
+                      }`,
+                    pageSizeOptions: ["10", "20", "50", "100"],
+                    defaultPageSize: 20,
+                  }}
+                  onChange={handleLeaderboardPaginationChange}
+                />
               </Card>
             ),
           },

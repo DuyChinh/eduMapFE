@@ -25,6 +25,7 @@ import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import QRScanner from '../components/common/QRScanner';
+import NotificationDropdown from '../components/common/NotificationDropdown';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -33,7 +34,6 @@ const TeacherLayout = () => {
   const [collapsed, setCollapsed] = useState(true);
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
-  const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [qrScannerVisible, setQrScannerVisible] = useState(false);
   const [openKeys, setOpenKeys] = useState([]);
   const navigate = useNavigate();
@@ -118,11 +118,6 @@ const TeacherLayout = () => {
     localStorage.setItem('language', lang);
     const langName = t(`language.${lang}`);
     message.success(`${t('language.languageChanged')} ${langName}`);
-    setIsLanguageModalVisible(false);
-  };
-
-  const showLanguageModal = () => {
-    setIsLanguageModalVisible(true);
   };
 
   // Function to determine selected menu key based on current path
@@ -142,6 +137,26 @@ const TeacherLayout = () => {
     // If editing a specific mindmap, default to My Maps
     if (pathname.startsWith('/teacher/mindmaps/')) {
       return 'mindmaps-mymaps';
+    }
+
+    // Check exam routes (create, edit, view, monitor, submissions)
+    if (pathname.startsWith('/teacher/exams')) {
+      return ROUTES.TEACHER_EXAMS;
+    }
+
+    // Check question routes (create, edit, detail)
+    if (pathname.startsWith('/teacher/questions')) {
+      return ROUTES.TEACHER_QUESTIONS;
+    }
+
+    // Check class routes (detail, reports)
+    if (pathname.startsWith('/teacher/classes')) {
+      return ROUTES.TEACHER_CLASSES;
+    }
+
+    // Check dashboard route
+    if (pathname.startsWith('/teacher/dashboard')) {
+      return ROUTES.TEACHER_DASHBOARD;
     }
 
     // Default fallback
@@ -198,24 +213,24 @@ const TeacherLayout = () => {
     {
       key: 'mindmaps',
       icon: <img src="/mind_map.png" alt="Mindmaps" className="menu-icon-image" />,
-      label: 'Mindmaps',
+      label: t('sidebar.mindmaps'),
       children: [
         {
           key: 'mindmaps-mymaps',
           icon: <img src="/my_maps.png" alt="My Maps" className="menu-icon-image" />,
-          label: 'My Maps',
+          label: t('sidebar.myMaps'),
           onClick: () => navigate('/teacher/mindmaps'),
         },
         {
           key: 'mindmaps-shared',
           icon: <img src="/shared.png" alt="Shared" className="menu-icon-image" />,
-          label: 'Shared',
+          label: t('sidebar.shared'),
           onClick: () => navigate('/teacher/mindmaps/shared'),
         },
         {
           key: 'mindmaps-trash',
           icon: <img src="/trash.png" alt="Trash" className="menu-icon-image" />,
-          label: 'Trash',
+          label: t('sidebar.trash'),
           onClick: () => navigate('/teacher/mindmaps/trash'),
         },
       ],
@@ -228,12 +243,6 @@ const TeacherLayout = () => {
       icon: <UserOutlined />,
       label: t('menu.account'),
       onClick: () => navigate('/teacher/profile'),
-    },
-    {
-      key: 'language',
-      icon: <GlobalOutlined />,
-      label: t('menu.language'),
-      onClick: showLanguageModal,
     },
     {
       key: 'refresh',
@@ -258,6 +267,52 @@ const TeacherLayout = () => {
       danger: true,
     },
   ];
+
+  const languageMenuItems = [
+    {
+      key: 'vi',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+          <img src="/vietnam.png" alt="Vietnam" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          <span>Tiếng Việt</span>
+        </div>
+      ),
+      onClick: () => handleLanguageChange('vi'),
+    },
+    {
+      key: 'en',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+          <img src="/united-kingdom.png" alt="English" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          <span>English</span>
+        </div>
+      ),
+      onClick: () => handleLanguageChange('en'),
+    },
+    {
+      key: 'jp',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0' }}>
+          <img src="/japan.png" alt="Japan" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          <span>日本語</span>
+        </div>
+      ),
+      onClick: () => handleLanguageChange('jp'),
+    },
+  ];
+
+  const getCurrentLanguageFlag = () => {
+    switch (i18n.language) {
+      case 'vi':
+        return <img src="/vietnam.png" alt="Vietnam" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+      case 'en':
+        return <img src="/united-kingdom.png" alt="English" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+      case 'jp':
+        return <img src="/japan.png" alt="Japan" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+      default:
+        return <img src="/vietnam.png" alt="Vietnam" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
+    }
+  };
 
   return (
     <Layout className="dashboard-layout">
@@ -286,7 +341,6 @@ const TeacherLayout = () => {
           items={menuItems}
           className="dashboard-menu"
         />
-
       </Sider>
 
       <Layout>
@@ -315,11 +369,21 @@ const TeacherLayout = () => {
               className="theme-toggle-btn"
             />
 
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              className="notification-btn"
-            />
+            <Dropdown
+              menu={{ items: languageMenuItems }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button
+                type="text"
+                className="language-btn"
+                style={{ fontSize: '24px', padding: '4px 8px' }}
+              >
+                {getCurrentLanguageFlag()}
+              </Button>
+            </Dropdown>
+
+            <NotificationDropdown />
 
             <Dropdown
               menu={{ items: userMenuItems }}
@@ -376,44 +440,6 @@ const TeacherLayout = () => {
             { value: USER_ROLES.STUDENT, label: t('role.student') },
           ]}
         />
-      </Modal>
-
-      {/* Language Change Modal */}
-      <Modal
-        title={t('language.selectLanguage')}
-        open={isLanguageModalVisible}
-        onCancel={() => setIsLanguageModalVisible(false)}
-        footer={null}
-      >
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <Button
-            block
-            size="large"
-            icon={<GlobalOutlined />}
-            onClick={() => handleLanguageChange('en')}
-            type={i18n.language === 'en' ? 'primary' : 'default'}
-          >
-            English
-          </Button>
-          <Button
-            block
-            size="large"
-            icon={<GlobalOutlined />}
-            onClick={() => handleLanguageChange('vi')}
-            type={i18n.language === 'vi' ? 'primary' : 'default'}
-          >
-            Tiếng Việt
-          </Button>
-          <Button
-            block
-            size="large"
-            icon={<GlobalOutlined />}
-            onClick={() => handleLanguageChange('jp')}
-            type={i18n.language === 'jp' ? 'primary' : 'default'}
-          >
-            日本語
-          </Button>
-        </Space>
       </Modal>
 
       {/* QR Scanner Modal */}

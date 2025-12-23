@@ -6,8 +6,15 @@ import dayjs from 'dayjs';
 
 const { Title, Text, Paragraph } = Typography;
 
+// Helper function to truncate number to 2 decimal places (not rounding)
+const truncateToDecimals = (num, decimals = 2) => {
+  if (num == null || isNaN(num)) return 0;
+  const factor = Math.pow(10, decimals);
+  return Math.floor(num * factor) / factor;
+};
+
 const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects = [] }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const mathJaxConfig = {
     tex: {
@@ -152,7 +159,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
 
     // If subjectId is already an object with name properties
     if (typeof subjectId === 'object' && subjectId !== null) {
-      const currentLang = localStorage.getItem('language') || 'vi';
+      const currentLang = i18n.language || 'vi';
       switch (currentLang) {
         case 'en':
           return subjectId.name_en || subjectId.name || '-';
