@@ -64,9 +64,10 @@ const CreateExam = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  // Fetch subjects on mount
+  // Fetch subjects and classes on mount
   useEffect(() => {
     fetchSubjects();
+    fetchClasses(); // Fetch classes on mount
     // Set default values
     const now = dayjs();
     form.setFieldsValue({
@@ -193,7 +194,16 @@ const CreateExam = () => {
     try {
       const response = await classService.getMyClasses();
       const classesData = response.items || response.data || [];
-      setClasses(classesData);
+      // Convert Mongoose documents to plain objects if needed
+      const normalizedClasses = classesData.map(cls => {
+        // Handle Mongoose document structure
+        if (cls._doc) {
+          return cls._doc;
+        }
+        // Handle plain object
+        return cls;
+      });
+      setClasses(normalizedClasses);
     } catch (error) {
       console.error('Error fetching classes:', error);
       message.error(t('classes.fetchFailed'));

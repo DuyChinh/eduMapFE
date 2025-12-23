@@ -68,7 +68,9 @@ const EditExam = () => {
   const { message } = App.useApp();
 
   useEffect(() => {
-    if (examId && !classesFetchedRef.current) {
+    if (examId) {
+      // Reset classesFetchedRef when examId changes
+      classesFetchedRef.current = false;
       fetchExamData();
       fetchSubjects();
       fetchClasses();
@@ -210,7 +212,16 @@ const EditExam = () => {
     try {
       const response = await classService.getMyClasses();
       const classesData = response.items || response.data || [];
-      setClasses(classesData);
+      // Convert Mongoose documents to plain objects if needed
+      const normalizedClasses = classesData.map(cls => {
+        // Handle Mongoose document structure
+        if (cls._doc) {
+          return cls._doc;
+        }
+        // Handle plain object
+        return cls;
+      });
+      setClasses(normalizedClasses);
     } catch (error) {
       console.error('Error fetching classes:', error);
       message.error(t('classes.fetchFailed'));
