@@ -150,6 +150,8 @@ const ExamResultDetail = () => {
   const questions = examData?.questions || [];
   const answers = submission.answers || [];
   const canViewAnswers = examData?.viewExamAndAnswer !== undefined && examData?.viewExamAndAnswer !== 0;
+  // Check if score can be viewed based on viewMark setting (0 = never, 1 = after completion, 2 = after all finish)
+  const canViewScore = examData?.viewMark !== 0;
 
   // Create answer map for easy lookup
   const answerMap = {};
@@ -369,6 +371,7 @@ const ExamResultDetail = () => {
       dataIndex: 'score',
       key: 'score',
       render: (score, record) => {
+        if (!canViewScore) return '--';
         const formattedScore = formatNumber(score);
         const formattedTotal = formatNumber(record.totalMarks);
         return `${formattedScore}/${formattedTotal}`;
@@ -378,7 +381,7 @@ const ExamResultDetail = () => {
       title: t('takeExam.percentage') || 'Percentage',
       dataIndex: 'percentage',
       key: 'percentage',
-      render: (percentage) => `${percentage}%`
+      render: (percentage) => canViewScore ? `${percentage}%` : '--'
     }
   ];
 
@@ -866,25 +869,38 @@ const ExamResultDetail = () => {
         {/* Score Summary */}
         <Card className="result-summary-card" style={{ marginBottom: '24px' }}>
           <Row gutter={24}>
-            <Col xs={24} sm={12} md={6}>
-              <Statistic
-                title={t('takeExam.yourScore') || 'Your Score'}
-                value={formatNumber(submission.score)}
-                suffix={`/ ${formatNumber(submission.maxScore)}`}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Statistic
-                title={t('takeExam.percentage') || 'Percentage'}
-                value={submission.percentage || 0}
-                suffix="%"
-                valueStyle={{
-                  color: submission.percentage >= 80 ? '#52c41a' :
-                    submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
-                }}
-              />
-            </Col>
+            {canViewScore ? (
+              <>
+                <Col xs={24} sm={12} md={6}>
+                  <Statistic
+                    title={t('takeExam.yourScore') || 'Your Score'}
+                    value={formatNumber(submission.score)}
+                    suffix={`/ ${formatNumber(submission.maxScore)}`}
+                    valueStyle={{ color: '#1890ff' }}
+                  />
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Statistic
+                    title={t('takeExam.percentage') || 'Percentage'}
+                    value={submission.percentage || 0}
+                    suffix="%"
+                    valueStyle={{
+                      color: submission.percentage >= 80 ? '#52c41a' :
+                        submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
+                    }}
+                  />
+                </Col>
+              </>
+            ) : (
+              <Col xs={24} sm={12} md={12}>
+                <Alert
+                  message={t('exams.viewMarkNever') || 'Điểm số không được hiển thị'}
+                  description={t('exams.viewMarkNeverDesc') || 'Giáo viên đã thiết lập không hiển thị điểm cho bài thi này.'}
+                  type="info"
+                  showIcon
+                />
+              </Col>
+            )}
             <Col xs={24} sm={12} md={6}>
               <Statistic
                 title={t('takeExam.status') || 'Status'}
@@ -1034,37 +1050,39 @@ const ExamResultDetail = () => {
               </Text>
 
               {/* Score highlight */}
-              <div style={{
-                marginTop: '40px',
-                padding: '32px',
-                background: 'rgba(255, 255, 255, 0.15)',
-                borderRadius: '12px',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-              }}>
-                <Row gutter={32} justify="center">
-                  <Col xs={12} sm={8}>
-                    <div>
-                      <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
-                        {formatNumber(submission.score)}
-                      </Text>
-                      <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                        {t('takeExam.totalScore') || 'Tổng điểm'}
-                      </Text>
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8}>
-                    <div>
-                      <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
-                        {submission.percentage || 0}%
-                      </Text>
-                      <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                        {t('takeExam.percentage') || 'Phần trăm'}
-                      </Text>
-                    </div>
-                  </Col>
-                </Row>
-              </div>
+              {canViewScore && (
+                <div style={{
+                  marginTop: '40px',
+                  padding: '32px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <Row gutter={32} justify="center">
+                    <Col xs={12} sm={8}>
+                      <div>
+                        <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
+                          {formatNumber(submission.score)}
+                        </Text>
+                        <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                          {t('takeExam.totalScore') || 'Tổng điểm'}
+                        </Text>
+                      </div>
+                    </Col>
+                    <Col xs={12} sm={8}>
+                      <div>
+                        <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
+                          {submission.percentage || 0}%
+                        </Text>
+                        <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                          {t('takeExam.percentage') || 'Phần trăm'}
+                        </Text>
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
+              )}
 
               {/* Success icon */}
               <div style={{ marginTop: '32px' }}>

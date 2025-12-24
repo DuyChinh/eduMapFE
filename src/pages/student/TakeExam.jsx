@@ -196,10 +196,19 @@ const TakeExam = () => {
     [examId]
   );
 
-  // Proctoring: Track visibility and fullscreen
+  // Proctoring: Track visibility and fullscreen based on autoMonitoring setting
   useEffect(() => {
-    if (!submission) return;
+    if (!submission || !exam) return;
 
+    // Get autoMonitoring setting from exam
+    const autoMonitoring = exam.autoMonitoring || 'off';
+    
+    // If monitoring is off, don't add any proctoring event listeners
+    if (autoMonitoring === 'off') {
+      return;
+    }
+
+    // Define event handlers
     const handleVisibilityChange = () => {
       if (document.hidden) {
         logProctorEvent(submission._id, "visibility", "medium", {
@@ -253,15 +262,6 @@ const TakeExam = () => {
       e.preventDefault();
     };
 
-    // Add event listeners
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("copy", handleCopy);
-    document.addEventListener("paste", handlePaste);
-    document.addEventListener("contextmenu", handleContextMenu);
-    document.addEventListener("contextmenu", handleRightClick);
-
     // Disable keyboard shortcuts
     const handleKeyDown = (e) => {
       // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
@@ -278,6 +278,27 @@ const TakeExam = () => {
       }
     };
 
+    // Add event listeners based on monitoring level
+    // screenExit: Only monitor visibility changes (tab switch, minimize)
+    if (autoMonitoring === 'screenExit') {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    }
+
+    // fullMonitoring (or any other value): Full monitoring
+    // Add all event listeners
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("contextmenu", handleRightClick);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
@@ -290,7 +311,7 @@ const TakeExam = () => {
       document.removeEventListener("contextmenu", handleRightClick);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [submission]);
+  }, [submission, exam]);
 
   // Initialize exam
   useEffect(() => {

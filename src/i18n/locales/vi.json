@@ -714,6 +714,7 @@
     "viewMark": "Hiển thị điểm",
     "viewMarkRequired": "Vui lòng chọn thời điểm hiển thị điểm!",
     "viewMarkNever": "Không hiển thị",
+    "viewMarkNeverDesc": "Giáo viên đã thiết lập không hiển thị điểm cho bài thi này.",
     "viewMarkAfterCompletion": "Sau khi hoàn thành",
     "viewMarkAfterAllFinish": "Sau khi tất cả hoàn thành",
     "viewExamAndAnswer": "Hiển thị đề và đáp án",

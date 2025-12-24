@@ -717,6 +717,7 @@
     "viewMark": "View Mark",
     "viewMarkRequired": "Please select when to view mark!",
     "viewMarkNever": "Never",
+    "viewMarkNeverDesc": "The teacher has configured this exam to not display marks.",
     "viewMarkAfterCompletion": "After Completion",
     "viewMarkAfterAllFinish": "After All Finish",
     "viewExamAndAnswer": "View Exam and Answer",

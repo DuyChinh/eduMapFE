@@ -687,6 +687,7 @@
     "viewMark": "点数表示",
     "viewMarkRequired": "点数を表示するタイミングを選択してください！",
     "viewMarkNever": "表示しない",
+    "viewMarkNeverDesc": "この試験では、教師が点数を表示しない設定にしています。",
     "viewMarkAfterCompletion": "完了後",
     "viewMarkAfterAllFinish": "全員完了後",
     "viewExamAndAnswer": "試験と回答の表示",

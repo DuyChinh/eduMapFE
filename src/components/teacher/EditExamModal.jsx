@@ -48,7 +48,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         gradeId: examData.gradeId,
         fee: examData.fee || 0,
         timezone: examData.timezone || 'Asia/Ho_Chi_Minh',
-        autoMonitoring: examData.autoMonitoring || 'off',
+        autoMonitoring: examData.autoMonitoring || 'fullMonitoring',
         studentVerification: examData.studentVerification || false,
         eduMapOnly: examData.eduMapOnly || false,
         hideGroupTitles: examData.hideGroupTitles !== undefined ? !examData.hideGroupTitles : true,
@@ -84,7 +84,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         gradeId: values.gradeId,
         fee: values.fee || 0,
         timezone: values.timezone || 'Asia/Ho_Chi_Minh',
-        autoMonitoring: values.autoMonitoring || 'off',
+        autoMonitoring: values.autoMonitoring || 'fullMonitoring',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
         hideGroupTitles: !values.hideGroupTitles,
@@ -136,7 +136,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         onFinish={handleSubmit}
         autoComplete="off"
       >
-        <Collapse defaultActiveKey={['basic']} ghost>
+        <Collapse defaultActiveKey={['basic', 'scheduling', 'viewSettings', 'security', 'advanced']} ghost>
           {/* Basic Information */}
           <Panel header={t('exams.basicInfo')} key="basic">
             <Form.Item
