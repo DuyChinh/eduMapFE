@@ -68,7 +68,21 @@ const NotificationDropdown = () => {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             const basePath = user.role === 'teacher' ? '/teacher' : '/student';
 
-            if (item.relatedId) {
+            // Check if this is a feed-related notification (new post, comment)
+            const isFeedNotification = item.content === 'NOTIFICATION_NEW_POST' ||
+                item.content === 'NOTIFICATION_NEW_COMMENT_OWN' ||
+                item.content === 'NOTIFICATION_NEW_COMMENT_OTHER' ||
+                item.content?.includes('đã đăng bài mới') ||
+                item.content?.includes('đã bình luận');
+
+            if (isFeedNotification) {
+                // Navigate to newsfeed tab with postId
+                if (item.relatedId) {
+                    navigate(`${basePath}/classes/${cid}?tab=newsfeed&postId=${item.relatedId}`);
+                } else {
+                    navigate(`${basePath}/classes/${cid}?tab=newsfeed`);
+                }
+            } else if (item.relatedId) {
                 navigate(`${basePath}/classes/${cid}?postId=${item.relatedId}`);
             } else {
                 navigate(`${basePath}/classes/${cid}`);
