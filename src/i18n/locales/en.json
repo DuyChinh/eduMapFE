@@ -1016,7 +1016,8 @@
     "zoomOut": "Zoom Out",
     "singleView": "Single Question View",
     "allView": "All Questions View",
-    "answered": "answered"
+    "answered": "answered",
+    "unanswered": "unanswered"
   },
   "publicTakeExam": {
     "loading": "Loading exam...",

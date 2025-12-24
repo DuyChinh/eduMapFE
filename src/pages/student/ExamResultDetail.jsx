@@ -325,7 +325,38 @@ const ExamResultDetail = () => {
             />
           );
         }
-        return <Text strong>#{rank}</Text>;
+        // Color palette for ranks 4+
+        const colors = [
+          { bg: '#e6f7ff', border: '#91d5ff', text: '#1890ff' }, // blue
+          { bg: '#f6ffed', border: '#b7eb8f', text: '#52c41a' }, // green
+          { bg: '#fff7e6', border: '#ffd591', text: '#fa8c16' }, // orange
+          { bg: '#f9f0ff', border: '#d3adf7', text: '#722ed1' }, // purple
+          { bg: '#fff0f6', border: '#ffadd2', text: '#eb2f96' }, // pink
+          { bg: '#e6fffb', border: '#87e8de', text: '#13c2c2' }, // cyan
+          { bg: '#fcffe6', border: '#eaff8f', text: '#a0d911' }, // lime
+          { bg: '#fff1f0', border: '#ffa39e', text: '#f5222d' }, // red
+        ];
+        const colorIndex = (rank - 4) % colors.length;
+        const color = colors[colorIndex];
+        return (
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              backgroundColor: color.bg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 600,
+              fontSize: 14,
+              color: color.text,
+              border: `2px solid ${color.border}`,
+            }}
+          >
+            {rank}
+          </div>
+        );
       }
     },
     {

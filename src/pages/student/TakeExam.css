@@ -422,6 +422,22 @@
   display: inline-block !important;
 }
 
+/* Hide raw LaTeX content before MathJax processes it */
+mjx-container[jax="CHTML"][display="true"] {
+  display: block !important;
+}
+
+/* Hide unprocessed MathJax elements - prevent flash of raw LaTeX */
+.MJX-tex-span {
+  visibility: visible !important;
+}
+
+/* Smooth transition when MathJax content appears */
+mjx-container {
+  opacity: 1;
+  transition: opacity 0.1s ease-in;
+}
+
 .question-navigation {
   display: flex;
   justify-content: space-between;

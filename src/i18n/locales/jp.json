@@ -922,7 +922,8 @@
     "zoomOut": "縮小",
     "singleView": "一問ずつ表示",
     "allView": "全問題表示",
-    "answered": "回答済み"
+    "answered": "回答済み",
+    "unanswered": "未回答"
   },
   "publicTakeExam": {
     "loading": "試験を読み込み中...",

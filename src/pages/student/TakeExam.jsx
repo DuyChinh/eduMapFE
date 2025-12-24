@@ -22,6 +22,7 @@ import {
   Modal,
   Radio,
   Space,
+  Spin,
   Typography,
   Tooltip,
   Divider,
@@ -657,7 +658,14 @@ const TakeExam = () => {
   }, [exam, answers]);
 
   if (loading && !showPasswordModal) {
-    return <div className="take-exam-loading">{t("takeExam.loading")}</div>;
+    return (
+      <div className="take-exam-loading" style={{ flexDirection: 'column' }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 16, fontSize: 16, color: '#595959' }}>
+          {t("takeExam.loading")}
+        </div>
+      </div>
+    );
   }
 
   if (showPasswordModal) {
@@ -786,6 +794,9 @@ const TakeExam = () => {
     options: {
       skipHtmlTags: ["script", "noscript", "style", "textarea", "pre"],
     },
+    startup: {
+      typeset: false, // Disable initial typeset, let components handle it
+    },
   };
 
   const renderMathContent = (content) => {
@@ -826,7 +837,7 @@ const TakeExam = () => {
                   if (part.match(/^\\[a-zA-Z]+/)) {
                     // This is a LaTeX command, render with MathJax
                     return (
-                      <MathJax key={partIndex} inline>
+                      <MathJax key={partIndex} inline hideUntilTypeset="first">
                         {`$${part}$`}
                       </MathJax>
                     );
@@ -849,7 +860,7 @@ const TakeExam = () => {
                   display: "inline",
                 }}
               >
-                <MathJax inline>{line}</MathJax>
+                <MathJax inline hideUntilTypeset="first">{line}</MathJax>
               </span>
             );
           } else {
@@ -1112,6 +1123,7 @@ const TakeExam = () => {
                                   }}
                                   className={`choice-option ${isSelected ? "choice-selected" : ""
                                     }`}
+                                  onClick={() => handleAnswerChange(questionId, choice.key)}
                                 >
                                   <Radio
                                     value={choice.key}
@@ -1350,6 +1362,7 @@ const TakeExam = () => {
                                   key={idx}
                                   className={`choice-option ${isSelected ? "choice-selected" : ""
                                     }`}
+                                  onClick={() => handleAnswerChange(questionId, choice.key)}
                                 >
                                   <Radio
                                     value={choice.key}
@@ -1572,22 +1585,136 @@ const TakeExam = () => {
 
         {/* Confirm Submit Modal */}
         <Modal
-          title={t("takeExam.confirmSubmit")}
+          title={null}
           open={showConfirmSubmit}
-          onOk={handleSubmit}
           onCancel={() => setShowConfirmSubmit(false)}
-          confirmLoading={submitting}
-          okText={t("common.yes") + ", " + t("takeExam.submit")}
-          cancelText={t("common.cancel")}
+          footer={null}
+          centered
+          width={480}
+          className="submit-confirm-modal"
         >
-          <p>{t("takeExam.confirmSubmitMessage")}</p>
-          <p>
-            {t("takeExam.answeredQuestions")} {answeredCount}{" "}
-            {t("takeExam.outOf")} {totalQuestions} {t("takeExam.questions")}.
-          </p>
-          <p>
-            <strong>{t("takeExam.cannotUndo")}</strong>
-          </p>
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            {/* Icon */}
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                margin: '0 auto 24px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(82, 196, 26, 0.35)',
+              }}
+            >
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Title */}
+            <Title level={3} style={{ marginBottom: 8, color: '#1f2937' }}>
+              {t("takeExam.confirmSubmit")}
+            </Title>
+
+            {/* Message */}
+            <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 24 }}>
+              {t("takeExam.confirmSubmitMessage")}
+            </Text>
+
+            {/* Progress Card */}
+            <div
+              style={{
+                background: answeredCount === totalQuestions 
+                  ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)' 
+                  : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
+                borderRadius: 16,
+                padding: '20px 24px',
+                marginBottom: 24,
+                border: answeredCount === totalQuestions 
+                  ? '1px solid #28a745' 
+                  : '1px solid #ffc107',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Text strong style={{ fontSize: 14, color: '#495057' }}>
+                  {t("takeExam.answeredQuestions")}
+                </Text>
+                <Text strong style={{ fontSize: 18, color: answeredCount === totalQuestions ? '#28a745' : '#856404' }}>
+                  {answeredCount} / {totalQuestions}
+                </Text>
+              </div>
+              <div
+                style={{
+                  height: 8,
+                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${(answeredCount / totalQuestions) * 100}%`,
+                    height: '100%',
+                    backgroundColor: answeredCount === totalQuestions ? '#28a745' : '#ffc107',
+                    borderRadius: 4,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+              {answeredCount < totalQuestions && (
+                <Text type="warning" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
+                  ⚠️ {totalQuestions - answeredCount} {t("takeExam.questions")} {t("takeExam.unanswered") || "chưa trả lời"}
+                </Text>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <Space size={16}>
+              <Button
+                size="large"
+                onClick={() => setShowConfirmSubmit(false)}
+                style={{
+                  minWidth: 140,
+                  height: 48,
+                  borderRadius: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                onClick={handleSubmit}
+                loading={submitting}
+                style={{
+                  minWidth: 140,
+                  height: 48,
+                  borderRadius: 12,
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)',
+                }}
+              >
+                {t("takeExam.submit")}
+              </Button>
+            </Space>
+          </div>
         </Modal>
       </div>
     </MathJaxContext>

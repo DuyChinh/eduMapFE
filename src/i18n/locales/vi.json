@@ -1013,7 +1013,8 @@
     "zoomOut": "Thu nhỏ",
     "singleView": "Xem từng câu hỏi",
     "allView": "Xem tất cả câu hỏi",
-    "answered": "đã trả lời"
+    "answered": "đã trả lời",
+    "unanswered": "chưa trả lời"
   },
   "publicTakeExam": {
     "loading": "Đang tải đề thi...",
