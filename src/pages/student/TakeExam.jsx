@@ -889,6 +889,53 @@ const TakeExam = () => {
     // 3. Split by lines to preserve structure
     const lines = processedStr.split('\n');
 
+    // If single line, render inline (no wrapping div)
+    if (lines.length === 1 && lines[0].trim()) {
+      const line = lines[0];
+      const chunks = line.split(/(\$[^$]+\$|\\\(.+?\\\))/g);
+
+      return (
+        <span style={{ display: 'inline', verticalAlign: 'middle' }}>
+          {chunks.map((chunk, i) => {
+            // Case 1: Existing LaTeX block ($...$) or (\(...\))
+            const isDollar = chunk.startsWith('$') && chunk.endsWith('$');
+            const isParen = chunk.startsWith('\\(') && chunk.endsWith('\\)');
+
+            if (isDollar || isParen) {
+              let rawMath = chunk;
+              if (isDollar) rawMath = chunk.slice(1, -1);
+              if (isParen) rawMath = chunk.slice(2, -2);
+
+              return (
+                <MathJax key={i} inline>
+                  {`$${rawMath}$`}
+                </MathJax>
+              );
+            }
+
+            // Case 2: Mixed Text with loose LaTeX cmd
+            const subParts = chunk.split(/(\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*)/g);
+
+            return (
+              <span key={i}>
+                {subParts.map((sub, j) => {
+                  if (sub.match(/^\\[a-zA-Z]+/)) {
+                    return (
+                      <MathJax key={j} inline>
+                        {`$${sub}$`}
+                      </MathJax>
+                    );
+                  }
+                  return <span key={j}>{sub}</span>;
+                })}
+              </span>
+            );
+          })}
+        </span>
+      );
+    }
+
+    // Multi-line content - use divs for each line
     return (
       <>
         {lines.map((line, index) => {
@@ -1194,7 +1241,8 @@ const TakeExam = () => {
                                     <span
                                       className="choice-label"
                                       style={{
-                                        display: "inline",
+                                        display: "inline-flex",
+                                        alignItems: "center",
                                         marginRight: "4px",
                                       }}
                                     >
@@ -1202,7 +1250,8 @@ const TakeExam = () => {
                                     </span>
                                     <span
                                       style={{
-                                        display: "inline",
+                                        display: "inline-flex",
+                                        alignItems: "center",
                                         wordWrap: "break-word",
                                         overflowWrap: "break-word",
                                         whiteSpace: "pre-wrap",
@@ -1433,7 +1482,8 @@ const TakeExam = () => {
                                     <span
                                       className="choice-label"
                                       style={{
-                                        display: "inline",
+                                        display: "inline-flex",
+                                        alignItems: "center",
                                         marginRight: "4px",
                                       }}
                                     >
@@ -1441,7 +1491,8 @@ const TakeExam = () => {
                                     </span>
                                     <span
                                       style={{
-                                        display: "inline",
+                                        display: "inline-flex",
+                                        alignItems: "center",
                                         wordWrap: "break-word",
                                         overflowWrap: "break-word",
                                         whiteSpace: "pre-wrap",

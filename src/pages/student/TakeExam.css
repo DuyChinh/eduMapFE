@@ -348,6 +348,7 @@
 
 .choice-radio-new .ant-radio {
   margin-right: 12px;
+  align-self: center;
 }
 
 .choice-radio-new .ant-radio-inner {
@@ -368,21 +369,28 @@
   font-weight: 600;
   margin-right: 4px;
   color: #262626;
-  display: inline;
+  display: inline-flex;
+  align-items: center;
   white-space: nowrap;
 }
 
 .choice-radio-new {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   white-space: normal;
 }
 
 .choice-radio-new .ant-radio-wrapper {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   white-space: normal;
   word-wrap: break-word;
+}
+
+.choice-radio-new .ant-radio + span {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .answer-textarea {
