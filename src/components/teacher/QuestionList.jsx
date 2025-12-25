@@ -23,13 +23,15 @@ import {
   SearchOutlined,
   UploadOutlined,
   DownloadOutlined,
-  FileExcelOutlined
+  FileExcelOutlined,
+  FilePdfOutlined
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import CreateQuestionModal from './CreateQuestionModal';
+import UploadQuestionsPdfModal from './UploadQuestionsPdfModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -57,6 +59,7 @@ const QuestionList = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importResults, setImportResults] = useState(null);
+  const [uploadPdfModalVisible, setUploadPdfModalVisible] = useState(false);
 
   // Bulk delete states
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -756,6 +759,14 @@ const QuestionList = () => {
             </Button>
 
             <Button
+              icon={<FilePdfOutlined />}
+              onClick={() => setUploadPdfModalVisible(true)}
+              className="responsive-button"
+            >
+              <span className="button-text">{t('questions.pdf.importButton')}</span>
+            </Button>
+
+            <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => navigate(ROUTES.TEACHER_QUESTIONS_CREATE)}
@@ -795,6 +806,13 @@ const QuestionList = () => {
           setCreateModalVisible(false);
           fetchQuestions();
         }}
+      />
+
+      <UploadQuestionsPdfModal
+        visible={uploadPdfModalVisible}
+        onClose={() => setUploadPdfModalVisible(false)}
+        onSuccess={() => fetchQuestions()}
+        subjects={subjects}
       />
 
       {/* Rename Modal */}
