@@ -112,6 +112,33 @@ const questionService = {
    */
   batchRename: async (questionIds, baseName) => {
     return await axiosInstance.post('/questions/batch-rename', { questionIds, baseName });
+  },
+
+  /**
+   * Upload PDF to parse questions
+   * @param {File} file - PDF file
+   * @returns {Promise} Response with parsed questions
+   */
+  uploadPdf: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Increase timeout for AI processing (5 minutes)
+    return await axiosInstance.post('/questions/upload-pdf', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 300000
+    });
+  },
+
+  /**
+   * Batch create questions from parsed data
+   * @param {Array} questions - List of questions to create
+   * @returns {Promise} Response with creation results
+   */
+  batchCreateQuestions: async (questions) => {
+    return await axiosInstance.post('/questions/batch-create', { questions });
   }
 };
 
