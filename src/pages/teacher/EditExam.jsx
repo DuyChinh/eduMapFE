@@ -68,7 +68,9 @@ const EditExam = () => {
   const { message } = App.useApp();
 
   useEffect(() => {
-    if (examId && !classesFetchedRef.current) {
+    if (examId) {
+      // Reset classesFetchedRef when examId changes
+      classesFetchedRef.current = false;
       fetchExamData();
       fetchSubjects();
       fetchClasses();
@@ -116,7 +118,7 @@ const EditExam = () => {
         gradeId: gradeIdValue,
         fee: examData.fee || 0,
         timezone: examData.timezone || 'Asia/Ho_Chi_Minh',
-        autoMonitoring: examData.autoMonitoring || 'off',
+        autoMonitoring: examData.autoMonitoring || 'fullMonitoring',
         studentVerification: examData.studentVerification || false,
         eduMapOnly: examData.eduMapOnly || false,
         hideGroupTitles: examData.hideGroupTitles !== undefined ? !examData.hideGroupTitles : true,
@@ -210,7 +212,16 @@ const EditExam = () => {
     try {
       const response = await classService.getMyClasses();
       const classesData = response.items || response.data || [];
-      setClasses(classesData);
+      // Convert Mongoose documents to plain objects if needed
+      const normalizedClasses = classesData.map(cls => {
+        // Handle Mongoose document structure
+        if (cls._doc) {
+          return cls._doc;
+        }
+        // Handle plain object
+        return cls;
+      });
+      setClasses(normalizedClasses);
     } catch (error) {
       console.error('Error fetching classes:', error);
       message.error(t('classes.fetchFailed'));
@@ -477,7 +488,7 @@ const EditExam = () => {
         gradeId: values.gradeId,
         fee: values.fee || 0,
         timezone: values.timezone || 'Asia/Ho_Chi_Minh',
-        autoMonitoring: values.autoMonitoring || 'off',
+        autoMonitoring: values.autoMonitoring || 'fullMonitoring',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
         hideGroupTitles: !values.hideGroupTitles,
@@ -541,7 +552,7 @@ const EditExam = () => {
           onFinish={handleSubmit}
           autoComplete="off"
         >
-          <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings']} ghost>
+          <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings', 'security', 'advanced']} ghost>
             {/* Basic Information */}
             <Collapse.Panel header={t('exams.basicInfo')} key="basic">
               <Form.Item
@@ -999,24 +1010,8 @@ const EditExam = () => {
                   <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
                 </Form.Item>
 
-                <Form.Item name={['settings', 'timeLimit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.timeLimit')} unCheckedChildren={t('exams.noTimeLimit')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'autoSubmit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.autoSubmit')} unCheckedChildren={t('exams.noAutoSubmit')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'confirmSubmit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.confirmSubmit')} unCheckedChildren={t('exams.noConfirmSubmit')} />
-                </Form.Item>
-
                 <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'preventRightClick']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.preventRightClick')} unCheckedChildren={t('exams.noPreventRightClick')} />
                 </Form.Item>
 
                 <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">

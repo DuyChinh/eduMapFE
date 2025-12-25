@@ -22,6 +22,7 @@ import {
   Modal,
   Radio,
   Space,
+  Spin,
   Typography,
   Tooltip,
   Divider,
@@ -195,10 +196,19 @@ const TakeExam = () => {
     [examId]
   );
 
-  // Proctoring: Track visibility and fullscreen
+  // Proctoring: Track visibility and fullscreen based on autoMonitoring setting
   useEffect(() => {
-    if (!submission) return;
+    if (!submission || !exam) return;
 
+    // Get autoMonitoring setting from exam
+    const autoMonitoring = exam.autoMonitoring || 'off';
+    
+    // If monitoring is off, don't add any proctoring event listeners
+    if (autoMonitoring === 'off') {
+      return;
+    }
+
+    // Define event handlers
     const handleVisibilityChange = () => {
       if (document.hidden) {
         logProctorEvent(submission._id, "visibility", "medium", {
@@ -252,15 +262,6 @@ const TakeExam = () => {
       e.preventDefault();
     };
 
-    // Add event listeners
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("copy", handleCopy);
-    document.addEventListener("paste", handlePaste);
-    document.addEventListener("contextmenu", handleContextMenu);
-    document.addEventListener("contextmenu", handleRightClick);
-
     // Disable keyboard shortcuts
     const handleKeyDown = (e) => {
       // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
@@ -277,6 +278,27 @@ const TakeExam = () => {
       }
     };
 
+    // Add event listeners based on monitoring level
+    // screenExit: Only monitor visibility changes (tab switch, minimize)
+    if (autoMonitoring === 'screenExit') {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    }
+
+    // fullMonitoring (or any other value): Full monitoring
+    // Add all event listeners
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("contextmenu", handleRightClick);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
@@ -289,7 +311,7 @@ const TakeExam = () => {
       document.removeEventListener("contextmenu", handleRightClick);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [submission]);
+  }, [submission, exam]);
 
   // Initialize exam
   useEffect(() => {
@@ -361,8 +383,8 @@ const TakeExam = () => {
           typeof error === "string"
             ? error
             : error?.response?.data?.message ||
-              error?.message ||
-              t("takeExam.failedToStart");
+            error?.message ||
+            t("takeExam.failedToStart");
 
         // If password error, show password modal
         if (
@@ -388,7 +410,7 @@ const TakeExam = () => {
             errorMessage,
             errorType:
               errorMessage.includes("maximum") ||
-              errorMessage.includes("attempts")
+                errorMessage.includes("attempts")
                 ? "maxAttempts"
                 : "error",
           },
@@ -481,7 +503,7 @@ const TakeExam = () => {
       if (submissionData?.status === "late") {
         message.warning(
           t("takeExam.submittedLate") ||
-            "Your exam was submitted after the time limit. It has been marked as late."
+          "Your exam was submitted after the time limit. It has been marked as late."
         );
       } else {
         message.success(t("takeExam.submitSuccess"));
@@ -657,7 +679,14 @@ const TakeExam = () => {
   }, [exam, answers]);
 
   if (loading && !showPasswordModal) {
-    return <div className="take-exam-loading">{t("takeExam.loading")}</div>;
+    return (
+      <div className="take-exam-loading" style={{ flexDirection: 'column' }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 16, fontSize: 16, color: '#595959' }}>
+          {t("takeExam.loading")}
+        </div>
+      </div>
+    );
   }
 
   if (showPasswordModal) {
@@ -786,6 +815,9 @@ const TakeExam = () => {
     options: {
       skipHtmlTags: ["script", "noscript", "style", "textarea", "pre"],
     },
+    startup: {
+      typeset: false, // Disable initial typeset, let components handle it
+    },
   };
 
   // Helper to clean TEXT parts (OCR errors, Chemical formulas)
@@ -882,33 +914,73 @@ const TakeExam = () => {
                   if (isDollar) rawMath = chunk.slice(1, -1);
                   if (isParen) rawMath = chunk.slice(2, -2);
 
-                  return (
-                    <MathJax key={i} inline>
-                      {`$${rawMath}$`}
-                    </MathJax>
-                  );
-                }
+          // Check if line contains LaTeX commands
+          const hasLatex =
+            line.includes("\\") || line.includes("^") || line.includes("_");
+          const hasDollarSigns = line.includes("$") || line.includes("\\(");
 
-                // Case 2: Mixed Text with loose LaTeX cmd
-                const subParts = chunk.split(/(\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*)/g);
-
-                return (
-                  <span key={i}>
-                    {subParts.map((sub, j) => {
-                      if (sub.match(/^\\[a-zA-Z]+/)) {
-                        return (
-                          <MathJax key={j} inline>
-                            {`$${sub}$`}
-                          </MathJax>
-                        );
-                      }
-                      return <span key={j}>{sub}</span>;
-                    })}
-                  </span>
-                );
-              })}
-            </div>
-          );
+          if (hasLatex && !hasDollarSigns) {
+            // Mixed content - need to parse and render properly
+            // Split by LaTeX patterns and render each part
+            const parts = line.split(
+              /(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g
+            );
+            return (
+              <span
+                key={index}
+                style={{
+                  fontFamily: "inherit",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  display: "inline",
+                }}
+              >
+                {parts.map((part, partIndex) => {
+                  if (part.match(/^\\[a-zA-Z]+/)) {
+                    // This is a LaTeX command, render with MathJax
+                    return (
+                      <MathJax key={partIndex} inline hideUntilTypeset="first">
+                        {`$${part}$`}
+                      </MathJax>
+                    );
+                  } else {
+                    // This is plain text, render as is
+                    return <span key={partIndex}>{part}</span>;
+                  }
+                })}
+              </span>
+            );
+          } else if (hasDollarSigns) {
+            // Already has dollar signs, render as is
+            return (
+              <span
+                key={index}
+                style={{
+                  fontFamily: "inherit",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  display: "inline",
+                }}
+              >
+                <MathJax inline hideUntilTypeset="first">{line}</MathJax>
+              </span>
+            );
+          } else {
+            // Plain text, render as is with preserved formatting
+            return (
+              <span
+                key={index}
+                style={{
+                  fontFamily: "inherit",
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                  display: "inline",
+                }}
+              >
+                {line}
+              </span>
+            );
+          }
         })}
       </>
     );
@@ -954,9 +1026,8 @@ const TakeExam = () => {
             <Space size={8} className="header-controls">
               {/* Timer */}
               <div
-                className={`timer-box ${
-                  timeRemaining < 300 ? "time-warning" : ""
-                }`}
+                className={`timer-box ${timeRemaining < 300 ? "time-warning" : ""
+                  }`}
               >
                 <ClockCircleOutlined className="timer-icon" />
                 <span className="timer-text">{formatTime(timeRemaining)}</span>
@@ -1030,84 +1101,62 @@ const TakeExam = () => {
           <div className="take-exam-content-new">
             {viewMode === "all"
               ? // Hiển thị tất cả câu hỏi
-                exam.questions.map((q, index) => {
-                  const questionId = q.questionId._id || q.questionId;
-                  const question = q.questionId;
-                  const isAnswered =
-                    answers[questionId] !== undefined &&
-                    answers[questionId] !== "";
+              exam.questions.map((q, index) => {
+                const questionId = q.questionId._id || q.questionId;
+                const question = q.questionId;
+                const isAnswered =
+                  answers[questionId] !== undefined &&
+                  answers[questionId] !== "";
 
-                  return (
-                    <Card key={index} className="question-item-card">
-                      <div className="question-item-header">
-                        <Text strong className="question-number">
-                          {t("takeExam.questionNumber")} {index + 1}
-                        </Text>
-                        <Button
-                          type="text"
-                          icon={<FlagOutlined />}
-                          onClick={(e) => toggleFlag(index, e)}
-                          className={`flag-button ${
-                            flaggedQuestions.has(index) ? "flagged" : ""
+                return (
+                  <Card key={index} className="question-item-card">
+                    <div className="question-item-header">
+                      <Text strong className="question-number">
+                        {t("takeExam.questionNumber")} {index + 1}
+                      </Text>
+                      <Button
+                        type="text"
+                        icon={<FlagOutlined />}
+                        onClick={(e) => toggleFlag(index, e)}
+                        className={`flag-button ${flaggedQuestions.has(index) ? "flagged" : ""
                           }`}
-                          title={
-                            flaggedQuestions.has(index)
-                              ? t("takeExam.unflagQuestion")
-                              : t("takeExam.flagQuestion")
-                          }
-                        />
-                      </div>
+                        title={
+                          flaggedQuestions.has(index)
+                            ? t("takeExam.unflagQuestion")
+                            : t("takeExam.flagQuestion")
+                        }
+                      />
+                    </div>
 
-                      <div className="question-item-content">
-                        <Paragraph
-                          className="question-text"
+                    <div className="question-item-content">
+                      <Paragraph
+                        className="question-text"
+                        style={{
+                          wordWrap: "break-word",
+                          overflowWrap: "break-word",
+                          whiteSpace: "pre-wrap",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {renderMathContent(question.text || question.name)}
+                      </Paragraph>
+
+                      {/* Render question images */}
+                      {question.images && question.images.length > 0 ? (
+                        <div
                           style={{
-                            wordWrap: "break-word",
-                            overflowWrap: "break-word",
-                            whiteSpace: "pre-wrap",
-                            fontFamily: "inherit",
+                            marginBottom: "16px",
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "8px",
+                            justifyContent: "center",
                           }}
                         >
-                          {renderMathContent(question.text || question.name)}
-                        </Paragraph>
-
-                        {/* Render question images */}
-                        {question.images && question.images.length > 0 ? (
-                          <div
-                            style={{
-                              marginBottom: "16px",
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: "8px",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {question.images.map((imgUrl, idx) => (
-                              <img
-                                key={idx}
-                                src={imgUrl}
-                                alt={`Question Illustration ${idx + 1}`}
-                                style={{
-                                  maxWidth: "100%",
-                                  maxHeight: "400px",
-                                  objectFit: "contain",
-                                  borderRadius: "8px",
-                                  border: "1px solid #f0f0f0",
-                                }}
-                              />
-                            ))}
-                          </div>
-                        ) : question.image ? (
-                          <div
-                            style={{
-                              marginBottom: "16px",
-                              display: "flex",
-                              justifyContent: "center",
-                            }}
-                          >
+                          {question.images.map((imgUrl, idx) => (
                             <img
-                              src={question.image}
-                              alt="Question Illustration"
+                              key={idx}
+                              src={imgUrl}
+                              alt={`Question Illustration ${idx + 1}`}
                               style={{
                                 maxWidth: "100%",
                                 maxHeight: "400px",
@@ -1116,147 +1165,166 @@ const TakeExam = () => {
                                 border: "1px solid #f0f0f0",
                               }}
                             />
-                          </div>
-                        ) : null}
+                          ))}
+                        </div>
+                      ) : question.image ? (
+                        <div
+                          style={{
+                            marginBottom: "16px",
+                            display: "flex",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <img
+                            src={question.image}
+                            alt="Question Illustration"
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "400px",
+                              objectFit: "contain",
+                              borderRadius: "8px",
+                              border: "1px solid #f0f0f0",
+                            }}
+                          />
+                        </div>
+                      ) : null}
 
-                        {/* Render question based on type */}
-                        {question.type === "mcq" && (
-                          <Radio.Group
-                            value={answers[questionId]}
-                            onChange={(e) =>
-                              handleAnswerChange(questionId, e.target.value)
-                            }
-                            className="question-options"
+                      {/* Render question based on type */}
+                      {question.type === "mcq" && (
+                        <Radio.Group
+                          value={answers[questionId]}
+                          onChange={(e) =>
+                            handleAnswerChange(questionId, e.target.value)
+                          }
+                          className="question-options"
+                        >
+                          <Space
+                            direction="vertical"
+                            size="middle"
+                            style={{ width: "100%" }}
                           >
-                            <Space
-                              direction="vertical"
-                              size="middle"
-                              style={{ width: "100%" }}
-                            >
-                              {question.choices?.map((choice, idx) => {
-                                const isSelected =
-                                  answers[questionId] === choice.key;
-                                const choiceRefKey = `${questionId}-${idx}`;
+                            {question.choices?.map((choice, idx) => {
+                              const isSelected =
+                                answers[questionId] === choice.key;
+                              const choiceRefKey = `${questionId}-${idx}`;
 
-                                // Initialize refs array for this question if not exists
-                                if (!choiceOptionsRefs.current[questionId]) {
-                                  choiceOptionsRefs.current[questionId] = [];
-                                }
+                              // Initialize refs array for this question if not exists
+                              if (!choiceOptionsRefs.current[questionId]) {
+                                choiceOptionsRefs.current[questionId] = [];
+                              }
 
-                                return (
-                                  <div
-                                    key={idx}
-                                    ref={(el) => {
-                                      if (el) {
-                                        choiceOptionsRefs.current[questionId][
-                                          idx
-                                        ] = el;
-                                      }
-                                    }}
-                                    className={`choice-option ${
-                                      isSelected ? "choice-selected" : ""
+                              return (
+                                <div
+                                  key={idx}
+                                  ref={(el) => {
+                                    if (el) {
+                                      choiceOptionsRefs.current[questionId][
+                                        idx
+                                      ] = el;
+                                    }
+                                  }}
+                                  className={`choice-option ${isSelected ? "choice-selected" : ""
                                     }`}
+                                  onClick={() => handleAnswerChange(questionId, choice.key)}
+                                >
+                                  <Radio
+                                    value={choice.key}
+                                    className="choice-radio-new"
                                   >
-                                    <Radio
-                                      value={choice.key}
-                                      className="choice-radio-new"
+                                    <span
+                                      className="choice-label"
+                                      style={{
+                                        display: "inline",
+                                        marginRight: "4px",
+                                      }}
                                     >
-                                      <span
-                                        className="choice-label"
+                                      {String.fromCharCode(65 + idx)}:
+                                    </span>
+                                    <span
+                                      style={{
+                                        display: "inline",
+                                        wordWrap: "break-word",
+                                        overflowWrap: "break-word",
+                                        whiteSpace: "pre-wrap",
+                                        fontFamily: "inherit",
+                                      }}
+                                    >
+                                      {renderMathContent(choice.text)}
+                                    </span>
+                                    {/* Render choice image if exists */}
+                                    {choice.image && (
+                                      <div
                                         style={{
-                                          display: "inline",
-                                          marginRight: "4px",
+                                          marginTop: "8px",
+                                          marginLeft: "24px",
                                         }}
                                       >
-                                        {String.fromCharCode(65 + idx)}:
-                                      </span>
-                                      <span
-                                        style={{
-                                          display: "inline",
-                                          wordWrap: "break-word",
-                                          overflowWrap: "break-word",
-                                          whiteSpace: "pre-wrap",
-                                          fontFamily: "inherit",
-                                        }}
-                                      >
-                                        {renderMathContent(choice.text)}
-                                      </span>
-                                      {/* Render choice image if exists */}
-                                      {choice.image && (
-                                        <div
+                                        <img
+                                          src={choice.image}
+                                          alt={`Choice ${String.fromCharCode(
+                                            65 + idx
+                                          )}`}
                                           style={{
-                                            marginTop: "8px",
-                                            marginLeft: "24px",
+                                            maxWidth: "100%",
+                                            maxHeight: "150px",
+                                            objectFit: "contain",
+                                            borderRadius: "4px",
+                                            border: "1px solid #f0f0f0",
                                           }}
-                                        >
-                                          <img
-                                            src={choice.image}
-                                            alt={`Choice ${String.fromCharCode(
-                                              65 + idx
-                                            )}`}
-                                            style={{
-                                              maxWidth: "100%",
-                                              maxHeight: "150px",
-                                              objectFit: "contain",
-                                              borderRadius: "4px",
-                                              border: "1px solid #f0f0f0",
-                                            }}
-                                          />
-                                        </div>
-                                      )}
-                                    </Radio>
-                                  </div>
-                                );
-                              })}
-                            </Space>
-                          </Radio.Group>
-                        )}
+                                        />
+                                      </div>
+                                    )}
+                                  </Radio>
+                                </div>
+                              );
+                            })}
+                          </Space>
+                        </Radio.Group>
+                      )}
 
-                        {question.type === "tf" && (
-                          <Radio.Group
-                            value={answers[questionId]}
-                            onChange={(e) =>
-                              handleAnswerChange(questionId, e.target.value)
-                            }
-                            className="question-options"
-                          >
-                            <Space direction="vertical" size="middle">
-                              <div
-                                className={`choice-option ${
-                                  answers[questionId] === "true"
-                                    ? "choice-selected"
-                                    : ""
+                      {question.type === "tf" && (
+                        <Radio.Group
+                          value={answers[questionId]}
+                          onChange={(e) =>
+                            handleAnswerChange(questionId, e.target.value)
+                          }
+                          className="question-options"
+                        >
+                          <Space direction="vertical" size="middle">
+                            <div
+                              className={`choice-option ${answers[questionId] === "true"
+                                  ? "choice-selected"
+                                  : ""
                                 }`}
+                            >
+                              <Radio
+                                value="true"
+                                className="choice-radio-new"
                               >
-                                <Radio
-                                  value="true"
-                                  className="choice-radio-new"
-                                >
-                                  <span className="choice-label">A:</span>
-                                  {t("takeExam.true")}
-                                </Radio>
-                              </div>
-                              <div
-                                className={`choice-option ${
-                                  answers[questionId] === "false"
-                                    ? "choice-selected"
-                                    : ""
+                                <span className="choice-label">A:</span>
+                                {t("takeExam.true")}
+                              </Radio>
+                            </div>
+                            <div
+                              className={`choice-option ${answers[questionId] === "false"
+                                  ? "choice-selected"
+                                  : ""
                                 }`}
+                            >
+                              <Radio
+                                value="false"
+                                className="choice-radio-new"
                               >
-                                <Radio
-                                  value="false"
-                                  className="choice-radio-new"
-                                >
-                                  <span className="choice-label">B:</span>
-                                  {t("takeExam.false")}
-                                </Radio>
-                              </div>
-                            </Space>
-                          </Radio.Group>
-                        )}
+                                <span className="choice-label">B:</span>
+                                {t("takeExam.false")}
+                              </Radio>
+                            </div>
+                          </Space>
+                        </Radio.Group>
+                      )}
 
-                        {(question.type === "short" ||
-                          question.type === "essay") && (
+                      {(question.type === "short" ||
+                        question.type === "essay") && (
                           <Input.TextArea
                             rows={question.type === "essay" ? 8 : 4}
                             value={answers[questionId] || ""}
@@ -1268,101 +1336,79 @@ const TakeExam = () => {
                           />
                         )}
 
-                        {(question.type === "mcq" || question.type === "tf") &&
-                          !isAnswered && (
-                            <div className="question-placeholder">
-                              <Text type="secondary">
-                                {t("takeExam.selectCorrectAnswer")}
-                              </Text>
-                            </div>
-                          )}
-                      </div>
-                    </Card>
-                  );
-                })
+                      {(question.type === "mcq" || question.type === "tf") &&
+                        !isAnswered && (
+                          <div className="question-placeholder">
+                            <Text type="secondary">
+                              {t("takeExam.selectCorrectAnswer")}
+                            </Text>
+                          </div>
+                        )}
+                    </div>
+                  </Card>
+                );
+              })
               : // Hiển thị từng câu hỏi một (single view)
-                (() => {
-                  const q = exam.questions[currentQuestionIndex];
-                  const questionId = q.questionId._id || q.questionId;
-                  const question = q.questionId;
-                  const isAnswered =
-                    answers[questionId] !== undefined &&
-                    answers[questionId] !== "";
+              (() => {
+                const q = exam.questions[currentQuestionIndex];
+                const questionId = q.questionId._id || q.questionId;
+                const question = q.questionId;
+                const isAnswered =
+                  answers[questionId] !== undefined &&
+                  answers[questionId] !== "";
 
-                  return (
-                    <Card className="question-item-card">
-                      <div className="question-item-header">
-                        <Text strong className="question-number">
-                          {t("takeExam.questionNumber")}{" "}
-                          {currentQuestionIndex + 1}
-                        </Text>
-                        <Button
-                          type="text"
-                          icon={<FlagOutlined />}
-                          onClick={(e) => toggleFlag(currentQuestionIndex, e)}
-                          className={`flag-button ${
-                            flaggedQuestions.has(currentQuestionIndex)
-                              ? "flagged"
-                              : ""
+                return (
+                  <Card key={questionId} className="question-item-card">
+                    <div className="question-item-header">
+                      <Text strong className="question-number">
+                        {t("takeExam.questionNumber")}{" "}
+                        {currentQuestionIndex + 1}
+                      </Text>
+                      <Button
+                        type="text"
+                        icon={<FlagOutlined />}
+                        onClick={(e) => toggleFlag(currentQuestionIndex, e)}
+                        className={`flag-button ${flaggedQuestions.has(currentQuestionIndex)
+                            ? "flagged"
+                            : ""
                           }`}
-                          title={
-                            flaggedQuestions.has(currentQuestionIndex)
-                              ? t("takeExam.unflagQuestion")
-                              : t("takeExam.flagQuestion")
-                          }
-                        />
-                      </div>
+                        title={
+                          flaggedQuestions.has(currentQuestionIndex)
+                            ? t("takeExam.unflagQuestion")
+                            : t("takeExam.flagQuestion")
+                        }
+                      />
+                    </div>
 
-                      <div className="question-item-content">
-                        <Paragraph
-                          className="question-text"
+                    <div className="question-item-content">
+                      <Paragraph
+                        className="question-text"
+                        style={{
+                          wordWrap: "break-word",
+                          overflowWrap: "break-word",
+                          whiteSpace: "pre-wrap",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {renderMathContent(question.text || question.name)}
+                      </Paragraph>
+
+                      {/* Render question images */}
+                      {question.images && question.images.length > 0 ? (
+                        <div
                           style={{
-                            wordWrap: "break-word",
-                            overflowWrap: "break-word",
-                            whiteSpace: "pre-wrap",
-                            fontFamily: "inherit",
+                            marginBottom: "16px",
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "8px",
+                            justifyContent: "center",
                           }}
                         >
-                          {renderMathContent(question.text || question.name)}
-                        </Paragraph>
-
-                        {/* Render question images */}
-                        {question.images && question.images.length > 0 ? (
-                          <div
-                            style={{
-                              marginBottom: "16px",
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: "8px",
-                              justifyContent: "center",
-                            }}
-                          >
-                            {question.images.map((imgUrl, idx) => (
-                              <img
-                                key={idx}
-                                src={imgUrl}
-                                alt={`Question Illustration ${idx + 1}`}
-                                style={{
-                                  maxWidth: "100%",
-                                  maxHeight: "400px",
-                                  objectFit: "contain",
-                                  borderRadius: "8px",
-                                  border: "1px solid #f0f0f0",
-                                }}
-                              />
-                            ))}
-                          </div>
-                        ) : question.image ? (
-                          <div
-                            style={{
-                              marginBottom: "16px",
-                              display: "flex",
-                              justifyContent: "center",
-                            }}
-                          >
+                          {question.images.map((imgUrl, idx) => (
                             <img
-                              src={question.image}
-                              alt="Question Illustration"
+                              key={idx}
+                              src={imgUrl}
+                              alt={`Question Illustration ${idx + 1}`}
                               style={{
                                 maxWidth: "100%",
                                 maxHeight: "400px",
@@ -1371,134 +1417,153 @@ const TakeExam = () => {
                                 border: "1px solid #f0f0f0",
                               }}
                             />
-                          </div>
-                        ) : null}
+                          ))}
+                        </div>
+                      ) : question.image ? (
+                        <div
+                          style={{
+                            marginBottom: "16px",
+                            display: "flex",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <img
+                            src={question.image}
+                            alt="Question Illustration"
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "400px",
+                              objectFit: "contain",
+                              borderRadius: "8px",
+                              border: "1px solid #f0f0f0",
+                            }}
+                          />
+                        </div>
+                      ) : null}
 
-                        {/* Render question based on type */}
-                        {question.type === "mcq" && (
-                          <Radio.Group
-                            value={answers[questionId]}
-                            onChange={(e) =>
-                              handleAnswerChange(questionId, e.target.value)
-                            }
-                            className="question-options"
+                      {/* Render question based on type */}
+                      {question.type === "mcq" && (
+                        <Radio.Group
+                          value={answers[questionId]}
+                          onChange={(e) =>
+                            handleAnswerChange(questionId, e.target.value)
+                          }
+                          className="question-options"
+                        >
+                          <Space
+                            direction="vertical"
+                            size="middle"
+                            style={{ width: "100%" }}
                           >
-                            <Space
-                              direction="vertical"
-                              size="middle"
-                              style={{ width: "100%" }}
-                            >
-                              {question.choices?.map((choice, idx) => {
-                                const isSelected =
-                                  answers[questionId] === choice.key;
+                            {question.choices?.map((choice, idx) => {
+                              const isSelected =
+                                answers[questionId] === choice.key;
 
-                                return (
-                                  <div
-                                    key={idx}
-                                    className={`choice-option ${
-                                      isSelected ? "choice-selected" : ""
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`choice-option ${isSelected ? "choice-selected" : ""
                                     }`}
+                                  onClick={() => handleAnswerChange(questionId, choice.key)}
+                                >
+                                  <Radio
+                                    value={choice.key}
+                                    className="choice-radio-new"
                                   >
-                                    <Radio
-                                      value={choice.key}
-                                      className="choice-radio-new"
+                                    <span
+                                      className="choice-label"
+                                      style={{
+                                        display: "inline",
+                                        marginRight: "4px",
+                                      }}
                                     >
-                                      <span
-                                        className="choice-label"
+                                      {String.fromCharCode(65 + idx)}:
+                                    </span>
+                                    <span
+                                      style={{
+                                        display: "inline",
+                                        wordWrap: "break-word",
+                                        overflowWrap: "break-word",
+                                        whiteSpace: "pre-wrap",
+                                        fontFamily: "inherit",
+                                      }}
+                                    >
+                                      {renderMathContent(choice.text)}
+                                    </span>
+                                    {/* Render choice image if exists */}
+                                    {choice.image && (
+                                      <div
                                         style={{
-                                          display: "inline",
-                                          marginRight: "4px",
+                                          marginTop: "8px",
+                                          marginLeft: "24px",
                                         }}
                                       >
-                                        {String.fromCharCode(65 + idx)}:
-                                      </span>
-                                      <span
-                                        style={{
-                                          display: "inline",
-                                          wordWrap: "break-word",
-                                          overflowWrap: "break-word",
-                                          whiteSpace: "pre-wrap",
-                                          fontFamily: "inherit",
-                                        }}
-                                      >
-                                        {renderMathContent(choice.text)}
-                                      </span>
-                                      {/* Render choice image if exists */}
-                                      {choice.image && (
-                                        <div
+                                        <img
+                                          src={choice.image}
+                                          alt={`Choice ${String.fromCharCode(
+                                            65 + idx
+                                          )}`}
                                           style={{
-                                            marginTop: "8px",
-                                            marginLeft: "24px",
+                                            maxWidth: "100%",
+                                            maxHeight: "150px",
+                                            objectFit: "contain",
+                                            borderRadius: "4px",
+                                            border: "1px solid #f0f0f0",
                                           }}
-                                        >
-                                          <img
-                                            src={choice.image}
-                                            alt={`Choice ${String.fromCharCode(
-                                              65 + idx
-                                            )}`}
-                                            style={{
-                                              maxWidth: "100%",
-                                              maxHeight: "150px",
-                                              objectFit: "contain",
-                                              borderRadius: "4px",
-                                              border: "1px solid #f0f0f0",
-                                            }}
-                                          />
-                                        </div>
-                                      )}
-                                    </Radio>
-                                  </div>
-                                );
-                              })}
-                            </Space>
-                          </Radio.Group>
-                        )}
+                                        />
+                                      </div>
+                                    )}
+                                  </Radio>
+                                </div>
+                              );
+                            })}
+                          </Space>
+                        </Radio.Group>
+                      )}
 
-                        {question.type === "tf" && (
-                          <Radio.Group
-                            value={answers[questionId]}
-                            onChange={(e) =>
-                              handleAnswerChange(questionId, e.target.value)
-                            }
-                            className="question-options"
-                          >
-                            <Space direction="vertical" size="middle">
-                              <div
-                                className={`choice-option ${
-                                  answers[questionId] === "true"
-                                    ? "choice-selected"
-                                    : ""
+                      {question.type === "tf" && (
+                        <Radio.Group
+                          value={answers[questionId]}
+                          onChange={(e) =>
+                            handleAnswerChange(questionId, e.target.value)
+                          }
+                          className="question-options"
+                        >
+                          <Space direction="vertical" size="middle">
+                            <div
+                              className={`choice-option ${answers[questionId] === "true"
+                                  ? "choice-selected"
+                                  : ""
                                 }`}
+                            >
+                              <Radio
+                                value="true"
+                                className="choice-radio-new"
                               >
-                                <Radio
-                                  value="true"
-                                  className="choice-radio-new"
-                                >
-                                  <span className="choice-label">A:</span>
-                                  {t("takeExam.true")}
-                                </Radio>
-                              </div>
-                              <div
-                                className={`choice-option ${
-                                  answers[questionId] === "false"
-                                    ? "choice-selected"
-                                    : ""
+                                <span className="choice-label">A:</span>
+                                {t("takeExam.true")}
+                              </Radio>
+                            </div>
+                            <div
+                              className={`choice-option ${answers[questionId] === "false"
+                                  ? "choice-selected"
+                                  : ""
                                 }`}
+                            >
+                              <Radio
+                                value="false"
+                                className="choice-radio-new"
                               >
-                                <Radio
-                                  value="false"
-                                  className="choice-radio-new"
-                                >
-                                  <span className="choice-label">B:</span>
-                                  {t("takeExam.false")}
-                                </Radio>
-                              </div>
-                            </Space>
-                          </Radio.Group>
-                        )}
+                                <span className="choice-label">B:</span>
+                                {t("takeExam.false")}
+                              </Radio>
+                            </div>
+                          </Space>
+                        </Radio.Group>
+                      )}
 
-                        {(question.type === "short" ||
-                          question.type === "essay") && (
+                      {(question.type === "short" ||
+                        question.type === "essay") && (
                           <Input.TextArea
                             rows={question.type === "essay" ? 8 : 4}
                             value={answers[questionId] || ""}
@@ -1510,37 +1575,37 @@ const TakeExam = () => {
                           />
                         )}
 
-                        {(question.type === "mcq" || question.type === "tf") &&
-                          !isAnswered && (
-                            <div className="question-placeholder">
-                              <Text type="secondary">
-                                {t("takeExam.selectCorrectAnswer")}
-                              </Text>
-                            </div>
-                          )}
-                      </div>
+                      {(question.type === "mcq" || question.type === "tf") &&
+                        !isAnswered && (
+                          <div className="question-placeholder">
+                            <Text type="secondary">
+                              {t("takeExam.selectCorrectAnswer")}
+                            </Text>
+                          </div>
+                        )}
+                    </div>
 
-                      {/* Navigation buttons for single view */}
-                      <div className="question-navigation">
-                        <Button
-                          onClick={goToPrevious}
-                          disabled={currentQuestionIndex === 0}
-                        >
-                          {t("takeExam.previous")}
-                        </Button>
-                        <Button
-                          type="primary"
-                          onClick={goToNext}
-                          disabled={
-                            currentQuestionIndex === exam.questions.length - 1
-                          }
-                        >
-                          {t("takeExam.next")}
-                        </Button>
-                      </div>
-                    </Card>
-                  );
-                })()}
+                    {/* Navigation buttons for single view */}
+                    <div className="question-navigation">
+                      <Button
+                        onClick={goToPrevious}
+                        disabled={currentQuestionIndex === 0}
+                      >
+                        {t("takeExam.previous")}
+                      </Button>
+                      <Button
+                        type="primary"
+                        onClick={goToNext}
+                        disabled={
+                          currentQuestionIndex === exam.questions.length - 1
+                        }
+                      >
+                        {t("takeExam.next")}
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })()}
           </div>
 
           {/* Question List Sidebar */}
@@ -1622,22 +1687,136 @@ const TakeExam = () => {
 
         {/* Confirm Submit Modal */}
         <Modal
-          title={t("takeExam.confirmSubmit")}
+          title={null}
           open={showConfirmSubmit}
-          onOk={handleSubmit}
           onCancel={() => setShowConfirmSubmit(false)}
-          confirmLoading={submitting}
-          okText={t("common.yes") + ", " + t("takeExam.submit")}
-          cancelText={t("common.cancel")}
+          footer={null}
+          centered
+          width={480}
+          className="submit-confirm-modal"
         >
-          <p>{t("takeExam.confirmSubmitMessage")}</p>
-          <p>
-            {t("takeExam.answeredQuestions")} {answeredCount}{" "}
-            {t("takeExam.outOf")} {totalQuestions} {t("takeExam.questions")}.
-          </p>
-          <p>
-            <strong>{t("takeExam.cannotUndo")}</strong>
-          </p>
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            {/* Icon */}
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                margin: '0 auto 24px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(82, 196, 26, 0.35)',
+              }}
+            >
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Title */}
+            <Title level={3} style={{ marginBottom: 8, color: '#1f2937' }}>
+              {t("takeExam.confirmSubmit")}
+            </Title>
+
+            {/* Message */}
+            <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 24 }}>
+              {t("takeExam.confirmSubmitMessage")}
+            </Text>
+
+            {/* Progress Card */}
+            <div
+              style={{
+                background: answeredCount === totalQuestions 
+                  ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)' 
+                  : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
+                borderRadius: 16,
+                padding: '20px 24px',
+                marginBottom: 24,
+                border: answeredCount === totalQuestions 
+                  ? '1px solid #28a745' 
+                  : '1px solid #ffc107',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Text strong style={{ fontSize: 14, color: '#495057' }}>
+                  {t("takeExam.answeredQuestions")}
+                </Text>
+                <Text strong style={{ fontSize: 18, color: answeredCount === totalQuestions ? '#28a745' : '#856404' }}>
+                  {answeredCount} / {totalQuestions}
+                </Text>
+              </div>
+              <div
+                style={{
+                  height: 8,
+                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${(answeredCount / totalQuestions) * 100}%`,
+                    height: '100%',
+                    backgroundColor: answeredCount === totalQuestions ? '#28a745' : '#ffc107',
+                    borderRadius: 4,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+              {answeredCount < totalQuestions && (
+                <Text type="warning" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
+                  ⚠️ {totalQuestions - answeredCount} {t("takeExam.questions")} {t("takeExam.unanswered") || "chưa trả lời"}
+                </Text>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <Space size={16}>
+              <Button
+                size="large"
+                onClick={() => setShowConfirmSubmit(false)}
+                style={{
+                  minWidth: 140,
+                  height: 48,
+                  borderRadius: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                onClick={handleSubmit}
+                loading={submitting}
+                style={{
+                  minWidth: 140,
+                  height: 48,
+                  borderRadius: 12,
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)',
+                }}
+              >
+                {t("takeExam.submit")}
+              </Button>
+            </Space>
+          </div>
         </Modal>
       </div>
     </MathJaxContext>

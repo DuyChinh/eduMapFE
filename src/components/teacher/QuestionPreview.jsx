@@ -234,8 +234,8 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
             overflowWrap: 'break-word',
             whiteSpace: 'pre-wrap'
           }}>
-            {questionData.answer === true || questionData.answer === 'true' 
-              ? t('questions.true') 
+            {questionData.answer === true || questionData.answer === 'true'
+              ? t('questions.true')
               : t('questions.false')}
           </Paragraph>
         </div>
@@ -337,7 +337,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           <Text strong>{t('questions.choices')}:</Text>
           <Radio.Group style={{ marginTop: '8px', width: '100%' }}>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Radio value={true} style={{
+              <Radio value={true} checked={questionData.answer === true || questionData.answer === 'true'} style={{
                 width: '100%',
                 wordWrap: 'break-word',
                 overflowWrap: 'break-word',
@@ -351,7 +351,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
                   <span>{t('questions.true')}</span>
                 </span>
               </Radio>
-              <Radio value={false} style={{
+              <Radio value={false} checked={questionData.answer === false || questionData.answer === 'false'} style={{
                 width: '100%',
                 wordWrap: 'break-word',
                 overflowWrap: 'break-word',

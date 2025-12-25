@@ -149,10 +149,12 @@
 }
 
 @keyframes pulse-warning {
+
   0%,
   100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.02);
   }
@@ -420,6 +422,22 @@
   display: inline-block !important;
 }
 
+/* Hide raw LaTeX content before MathJax processes it */
+mjx-container[jax="CHTML"][display="true"] {
+  display: block !important;
+}
+
+/* Hide unprocessed MathJax elements - prevent flash of raw LaTeX */
+.MJX-tex-span {
+  visibility: visible !important;
+}
+
+/* Smooth transition when MathJax content appears */
+mjx-container {
+  opacity: 1;
+  transition: opacity 0.1s ease-in;
+}
+
 .question-navigation {
   display: flex;
   justify-content: space-between;
@@ -452,7 +470,7 @@
 
 /* Question List Sidebar */
 .question-list-sidebar {
-  width: 400px;
+  width: 420px;
   flex-shrink: 0;
   position: sticky;
   top: 80px;
@@ -781,34 +799,34 @@
   .back-button span {
     display: inline !important;
   }
-  
+
   .candidate-info {
     display: flex !important;
     padding: 2px;
     background: transparent;
   }
-  
+
   .candidate-details {
     display: none !important;
   }
-  
+
   .take-exam-header-new {
     justify-content: space-between;
     gap: 4px;
     padding: 8px;
   }
-  
+
   .header-left {
     flex: 0 0 auto;
     margin-right: 0;
   }
-  
+
   .header-center {
     display: flex;
     flex: 0 0 auto;
     justify-content: center;
   }
-  
+
   .header-right {
     flex: 0 0 auto;
     width: auto;
@@ -822,21 +840,21 @@
     min-width: unset;
     font-size: 12px;
   }
-  
+
   .timer-box {
-     margin-right: 2px;
-     padding: 2px 4px;
+    margin-right: 2px;
+    padding: 2px 4px;
   }
-  
+
   .timer-box .timer-text {
     font-size: 12px;
     letter-spacing: 0;
   }
-  
+
   .header-controls {
     gap: 4px !important;
   }
-  
+
   .submit-button {
     padding: 0 8px;
     height: 30px;
@@ -874,11 +892,11 @@
   .timer-box .timer-icon {
     font-size: 11px;
   }
-  
+
   .timer-box .timer-text {
     font-size: 11px;
   }
-  
+
   .submit-button {
     padding: 0 6px;
     height: 28px;
@@ -989,7 +1007,7 @@
     min-width: 28px;
     font-size: 10px;
   }
-  
+
   .candidate-info {
     display: none !important;
   }

@@ -64,9 +64,10 @@ const CreateExam = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  // Fetch subjects on mount
+  // Fetch subjects and classes on mount
   useEffect(() => {
     fetchSubjects();
+    fetchClasses(); // Fetch classes on mount
     // Set default values
     const now = dayjs();
     form.setFieldsValue({
@@ -80,7 +81,7 @@ const CreateExam = () => {
       timezone: 'Asia/Ho_Chi_Minh',
       startTime: now,
       endTime: now.add(3, 'days'),
-      autoMonitoring: 'off',
+      autoMonitoring: 'fullMonitoring',
       studentVerification: false,
       eduMapOnly: false,
       hideGroupTitles: true,
@@ -93,38 +94,38 @@ const CreateExam = () => {
       fee: 0,
       settings: {
         allowReview: true,
-        showCorrectAnswer: false,
-        shuffleQuestions: false,
-        shuffleChoices: false,
+        showCorrectAnswer: true,
+        shuffleQuestions: true,
+        shuffleChoices: true,
         timeLimit: true,
         teacherCanStart: true,
         teacherCanPause: true,
         teacherCanStop: true,
         showProgress: true,
         showTimer: true,
-        allowSkip: false,
+        allowSkip: true,
         allowBack: true,
-        autoSubmit: false,
+        autoSubmit: true,
         confirmSubmit: true,
-        allowLateSubmission: false,
-        preventCopy: false,
-        preventRightClick: false,
-        fullscreenMode: false,
+        allowLateSubmission: true,
+        preventCopy: true,
+        preventRightClick: true,
+        fullscreenMode: true,
         notifyOnStart: true,
         notifyOnSubmit: true,
         notifyOnTimeWarning: true,
         questionPerPage: 1,
         saveProgress: true,
-        allowReviewAfterSubmit: false,
+        allowReviewAfterSubmit: true,
         showQuestionNumbers: true,
         allowMarkForReview: true,
-        showAnswerExplanation: false,
-        allowQuestionFeedback: false,
-        randomizeQuestionOrder: false,
-        randomizeChoiceOrder: false,
-        allowPartialCredit: false,
-        showScoreImmediately: false,
-        allowRetake: false,
+        showAnswerExplanation: true,
+        allowQuestionFeedback: true,
+        randomizeQuestionOrder: true,
+        randomizeChoiceOrder: true,
+        allowPartialCredit: true,
+        showScoreImmediately: true,
+        allowRetake: true,
         maxRetakeAttempts: 0,
         retakeDelay: 0,
         timeWarningThreshold: 5,
@@ -193,7 +194,16 @@ const CreateExam = () => {
     try {
       const response = await classService.getMyClasses();
       const classesData = response.items || response.data || [];
-      setClasses(classesData);
+      // Convert Mongoose documents to plain objects if needed
+      const normalizedClasses = classesData.map(cls => {
+        // Handle Mongoose document structure
+        if (cls._doc) {
+          return cls._doc;
+        }
+        // Handle plain object
+        return cls;
+      });
+      setClasses(normalizedClasses);
     } catch (error) {
       console.error('Error fetching classes:', error);
       message.error(t('classes.fetchFailed'));
@@ -455,7 +465,7 @@ const CreateExam = () => {
           onFinish={(values) => handleSubmit(values, 'draft')}
           autoComplete="off"
         >
-          <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings']} ghost>
+          <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings', 'security', 'advanced']} ghost>
             {/* Basic Information */}
             <Collapse.Panel header={t('exams.basicInfo')} key="basic">
               <Form.Item
@@ -924,24 +934,8 @@ const CreateExam = () => {
                   <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
                 </Form.Item>
 
-                <Form.Item name={['settings', 'timeLimit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.timeLimit')} unCheckedChildren={t('exams.noTimeLimit')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'autoSubmit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.autoSubmit')} unCheckedChildren={t('exams.noAutoSubmit')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'confirmSubmit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.confirmSubmit')} unCheckedChildren={t('exams.noConfirmSubmit')} />
-                </Form.Item>
-
                 <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'preventRightClick']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.preventRightClick')} unCheckedChildren={t('exams.noPreventRightClick')} />
                 </Form.Item>
 
                 <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">
@@ -1023,7 +1017,7 @@ const CreateExam = () => {
           setPreviewModalVisible(false);
           setPreviewExamData(null);
         }}
-        examData={previewExamData || form.getFieldsValue()}
+        examData={previewExamData || (previewModalVisible ? form.getFieldsValue() : {})}
         questions={selectedQuestions}
         subjects={subjects}
       />

@@ -57,7 +57,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
         timezone: 'Asia/Ho_Chi_Minh',
         startTime: now,
         endTime: now.add(3, 'days'),
-        autoMonitoring: 'off',
+        autoMonitoring: 'fullMonitoring',
         studentVerification: false,
         eduMapOnly: false,
         hideGroupTitles: true,
@@ -68,38 +68,38 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
         fee: 0,
         settings: {
           allowReview: true,
-          showCorrectAnswer: false,
-          shuffleQuestions: false,
-          shuffleChoices: false,
+          showCorrectAnswer: true,
+          shuffleQuestions: true,
+          shuffleChoices: true,
           timeLimit: true,
           teacherCanStart: true,
           teacherCanPause: true,
           teacherCanStop: true,
           showProgress: true,
           showTimer: true,
-          allowSkip: false,
+          allowSkip: true,
           allowBack: true,
-          autoSubmit: false,
+          autoSubmit: true,
           confirmSubmit: true,
-          allowLateSubmission: false,
-          preventCopy: false,
-          preventRightClick: false,
-          fullscreenMode: false,
+          allowLateSubmission: true,
+          preventCopy: true,
+          preventRightClick: true,
+          fullscreenMode: true,
           notifyOnStart: true,
           notifyOnSubmit: true,
           notifyOnTimeWarning: true,
           questionPerPage: 1,
           saveProgress: true,
-          allowReviewAfterSubmit: false,
+          allowReviewAfterSubmit: true,
           showQuestionNumbers: true,
           allowMarkForReview: true,
-          showAnswerExplanation: false,
-          allowQuestionFeedback: false,
-          randomizeQuestionOrder: false,
-          randomizeChoiceOrder: false,
-          allowPartialCredit: false,
-          showScoreImmediately: false,
-          allowRetake: false,
+          showAnswerExplanation: true,
+          allowQuestionFeedback: true,
+          randomizeQuestionOrder: true,
+          randomizeChoiceOrder: true,
+          allowPartialCredit: true,
+          showScoreImmediately: true,
+          allowRetake: true,
           maxRetakeAttempts: 0,
           retakeDelay: 0,
           timeWarningThreshold: 5,
@@ -233,7 +233,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
         gradeId: values.gradeId,
         fee: values.fee || 0,
         timezone: values.timezone || 'Asia/Ho_Chi_Minh',
-        autoMonitoring: values.autoMonitoring || 'off',
+        autoMonitoring: values.autoMonitoring || 'fullMonitoring',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
         hideGroupTitles: !values.hideGroupTitles,
@@ -334,7 +334,7 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
         onFinish={handleSubmit}
         autoComplete="off"
       >
-        <Collapse defaultActiveKey={['basic', 'questions']} ghost>
+        <Collapse defaultActiveKey={['basic', 'questions', 'scheduling', 'viewSettings', 'security', 'advanced']} ghost>
           {/* Basic Information */}
           <Panel header={t('exams.basicInfo')} key="basic">
             <Form.Item
@@ -753,24 +753,8 @@ const CreateExamModal = ({ visible, onCancel, onSuccess }) => {
                 <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
               </Form.Item>
 
-              <Form.Item name={['settings', 'timeLimit']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.timeLimit')} unCheckedChildren={t('exams.noTimeLimit')} />
-              </Form.Item>
-
-              <Form.Item name={['settings', 'autoSubmit']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.autoSubmit')} unCheckedChildren={t('exams.noAutoSubmit')} />
-              </Form.Item>
-
-              <Form.Item name={['settings', 'confirmSubmit']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.confirmSubmit')} unCheckedChildren={t('exams.noConfirmSubmit')} />
-              </Form.Item>
-
               <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
                 <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-              </Form.Item>
-
-              <Form.Item name={['settings', 'preventRightClick']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.preventRightClick')} unCheckedChildren={t('exams.noPreventRightClick')} />
               </Form.Item>
 
               <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">

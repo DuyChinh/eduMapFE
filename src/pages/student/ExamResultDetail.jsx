@@ -150,6 +150,8 @@ const ExamResultDetail = () => {
   const questions = examData?.questions || [];
   const answers = submission.answers || [];
   const canViewAnswers = examData?.viewExamAndAnswer !== undefined && examData?.viewExamAndAnswer !== 0;
+  // Check if score can be viewed based on viewMark setting (0 = never, 1 = after completion, 2 = after all finish)
+  const canViewScore = examData?.viewMark !== 0;
 
   // Create answer map for easy lookup
   const answerMap = {};
@@ -390,7 +392,38 @@ const ExamResultDetail = () => {
             />
           );
         }
-        return <Text strong>#{rank}</Text>;
+        // Color palette for ranks 4+
+        const colors = [
+          { bg: '#e6f7ff', border: '#91d5ff', text: '#1890ff' }, // blue
+          { bg: '#f6ffed', border: '#b7eb8f', text: '#52c41a' }, // green
+          { bg: '#fff7e6', border: '#ffd591', text: '#fa8c16' }, // orange
+          { bg: '#f9f0ff', border: '#d3adf7', text: '#722ed1' }, // purple
+          { bg: '#fff0f6', border: '#ffadd2', text: '#eb2f96' }, // pink
+          { bg: '#e6fffb', border: '#87e8de', text: '#13c2c2' }, // cyan
+          { bg: '#fcffe6', border: '#eaff8f', text: '#a0d911' }, // lime
+          { bg: '#fff1f0', border: '#ffa39e', text: '#f5222d' }, // red
+        ];
+        const colorIndex = (rank - 4) % colors.length;
+        const color = colors[colorIndex];
+        return (
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              backgroundColor: color.bg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 600,
+              fontSize: 14,
+              color: color.text,
+              border: `2px solid ${color.border}`,
+            }}
+          >
+            {rank}
+          </div>
+        );
       }
     },
     {
@@ -403,6 +436,7 @@ const ExamResultDetail = () => {
       dataIndex: 'score',
       key: 'score',
       render: (score, record) => {
+        if (!canViewScore) return '--';
         const formattedScore = formatNumber(score);
         const formattedTotal = formatNumber(record.totalMarks);
         return `${formattedScore}/${formattedTotal}`;
@@ -412,7 +446,7 @@ const ExamResultDetail = () => {
       title: t('takeExam.percentage') || 'Percentage',
       dataIndex: 'percentage',
       key: 'percentage',
-      render: (percentage) => `${percentage}%`
+      render: (percentage) => canViewScore ? `${percentage}%` : '--'
     }
   ];
 
@@ -554,6 +588,28 @@ const ExamResultDetail = () => {
               {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer}</Text>
             </Text>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -657,6 +713,28 @@ const ExamResultDetail = () => {
               {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer === true || correctAnswer === 'true' ? (t('questions.true') || 'True') : (t('questions.false') || 'False')}</Text>
             </Text>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -746,6 +824,28 @@ const ExamResultDetail = () => {
               <Text>{correctAnswer}</Text>
             </div>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -851,6 +951,28 @@ const ExamResultDetail = () => {
               </Paragraph>
             </div>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -900,25 +1022,38 @@ const ExamResultDetail = () => {
         {/* Score Summary */}
         <Card className="result-summary-card" style={{ marginBottom: '24px' }}>
           <Row gutter={24}>
-            <Col xs={24} sm={12} md={6}>
-              <Statistic
-                title={t('takeExam.yourScore') || 'Your Score'}
-                value={formatNumber(submission.score)}
-                suffix={`/ ${formatNumber(submission.maxScore)}`}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Statistic
-                title={t('takeExam.percentage') || 'Percentage'}
-                value={submission.percentage || 0}
-                suffix="%"
-                valueStyle={{
-                  color: submission.percentage >= 80 ? '#52c41a' :
-                    submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
-                }}
-              />
-            </Col>
+            {canViewScore ? (
+              <>
+                <Col xs={24} sm={12} md={6}>
+                  <Statistic
+                    title={t('takeExam.yourScore') || 'Your Score'}
+                    value={formatNumber(submission.score)}
+                    suffix={`/ ${formatNumber(submission.maxScore)}`}
+                    valueStyle={{ color: '#1890ff' }}
+                  />
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Statistic
+                    title={t('takeExam.percentage') || 'Percentage'}
+                    value={submission.percentage || 0}
+                    suffix="%"
+                    valueStyle={{
+                      color: submission.percentage >= 80 ? '#52c41a' :
+                        submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
+                    }}
+                  />
+                </Col>
+              </>
+            ) : (
+              <Col xs={24} sm={12} md={12}>
+                <Alert
+                  message={t('exams.viewMarkNever') || 'Điểm số không được hiển thị'}
+                  description={t('exams.viewMarkNeverDesc') || 'Giáo viên đã thiết lập không hiển thị điểm cho bài thi này.'}
+                  type="info"
+                  showIcon
+                />
+              </Col>
+            )}
             <Col xs={24} sm={12} md={6}>
               <Statistic
                 title={t('takeExam.status') || 'Status'}
@@ -1068,37 +1203,39 @@ const ExamResultDetail = () => {
               </Text>
 
               {/* Score highlight */}
-              <div style={{
-                marginTop: '40px',
-                padding: '32px',
-                background: 'rgba(255, 255, 255, 0.15)',
-                borderRadius: '12px',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-              }}>
-                <Row gutter={32} justify="center">
-                  <Col xs={12} sm={8}>
-                    <div>
-                      <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
-                        {formatNumber(submission.score)}
-                      </Text>
-                      <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                        {t('takeExam.totalScore') || 'Tổng điểm'}
-                      </Text>
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={8}>
-                    <div>
-                      <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
-                        {submission.percentage || 0}%
-                      </Text>
-                      <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                        {t('takeExam.percentage') || 'Phần trăm'}
-                      </Text>
-                    </div>
-                  </Col>
-                </Row>
-              </div>
+              {canViewScore && (
+                <div style={{
+                  marginTop: '40px',
+                  padding: '32px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <Row gutter={32} justify="center">
+                    <Col xs={12} sm={8}>
+                      <div>
+                        <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
+                          {formatNumber(submission.score)}
+                        </Text>
+                        <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                          {t('takeExam.totalScore') || 'Tổng điểm'}
+                        </Text>
+                      </div>
+                    </Col>
+                    <Col xs={12} sm={8}>
+                      <div>
+                        <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
+                          {submission.percentage || 0}%
+                        </Text>
+                        <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                          {t('takeExam.percentage') || 'Phần trăm'}
+                        </Text>
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
+              )}
 
               {/* Success icon */}
               <div style={{ marginTop: '32px' }}>

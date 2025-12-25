@@ -48,7 +48,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         gradeId: examData.gradeId,
         fee: examData.fee || 0,
         timezone: examData.timezone || 'Asia/Ho_Chi_Minh',
-        autoMonitoring: examData.autoMonitoring || 'off',
+        autoMonitoring: examData.autoMonitoring || 'fullMonitoring',
         studentVerification: examData.studentVerification || false,
         eduMapOnly: examData.eduMapOnly || false,
         hideGroupTitles: examData.hideGroupTitles !== undefined ? !examData.hideGroupTitles : true,
@@ -84,7 +84,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         gradeId: values.gradeId,
         fee: values.fee || 0,
         timezone: values.timezone || 'Asia/Ho_Chi_Minh',
-        autoMonitoring: values.autoMonitoring || 'off',
+        autoMonitoring: values.autoMonitoring || 'fullMonitoring',
         studentVerification: values.studentVerification || false,
         eduMapOnly: values.eduMapOnly || false,
         hideGroupTitles: !values.hideGroupTitles,
@@ -136,7 +136,7 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
         onFinish={handleSubmit}
         autoComplete="off"
       >
-        <Collapse defaultActiveKey={['basic']} ghost>
+        <Collapse defaultActiveKey={['basic', 'scheduling', 'viewSettings', 'security', 'advanced']} ghost>
           {/* Basic Information */}
           <Panel header={t('exams.basicInfo')} key="basic">
             <Form.Item
@@ -438,24 +438,8 @@ const EditExamModal = ({ visible, examData, onCancel, onSuccess }) => {
                 <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
               </Form.Item>
 
-              <Form.Item name={['settings', 'timeLimit']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.timeLimit')} unCheckedChildren={t('exams.noTimeLimit')} />
-              </Form.Item>
-
-              <Form.Item name={['settings', 'autoSubmit']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.autoSubmit')} unCheckedChildren={t('exams.noAutoSubmit')} />
-              </Form.Item>
-
-              <Form.Item name={['settings', 'confirmSubmit']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.confirmSubmit')} unCheckedChildren={t('exams.noConfirmSubmit')} />
-              </Form.Item>
-
               <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
                 <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-              </Form.Item>
-
-              <Form.Item name={['settings', 'preventRightClick']} valuePropName="checked">
-                <Switch checkedChildren={t('exams.preventRightClick')} unCheckedChildren={t('exams.noPreventRightClick')} />
               </Form.Item>
 
               <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">
