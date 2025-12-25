@@ -28,65 +28,127 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
     },
   };
 
+  // Helper to clean TEXT parts (OCR errors, Chemical formulas)
+  const cleanTextSegment = (text) => {
+    return text
+      // Specific phrases where 'đ' likely means 'độ'
+      .replace(/\bđ\s+lớn/g, 'độ lớn')
+      .replace(/\bđ\s+lệch/g, 'độ lệch')
+      .replace(/\bđ\s+cao/g, 'độ cao')
+      .replace(/\bđ\s+sâu/g, 'độ sâu')
+      .replace(/\bđ\s+cứng/g, 'độ cứng')
+      .replace(/biên\s+đ\b/g, 'biên độ')
+      .replace(/mật\s+đ\b/g, 'mật độ')
+      .replace(/tốc\s+đ\b/g, 'tốc độ')
+
+      // Fix broken words
+      .replace(/đi[\ufffd\?]{1,4}n/g, 'điện')
+      .replace(/ch[\ufffd\?]{1,5}t/g, 'chất')
+      .replace(/đi[^a-zA-Z\s0-9]{1,4}n/g, 'điện')
+      .replace(/\bv[\ufffd\?]{1,4}\b/g, 'và')
+
+      .replace(/\bđin\b/g, 'điện')
+      .replace(/ngun/g, 'nguồn')
+      .replace(/cưng/g, 'cường')
+      .replace(/trưng/g, 'trường')
+      .replace(/bưc/g, 'bước')
+      .replace(/thưng/g, 'thường')
+      .replace(/[\ufffd\?]{2,}/g, '')
+
+      // Auto-format Chemical Formulas (e.g., CO2, H2O)
+      // Only apply this to TEXT segments, avoiding latex interference
+      .replace(/(?<!\\)\b((?:[A-Z][a-z]?\d*|\((?:[A-Z][a-z]?\d*)+\)\d*){2,})\b/g, (match) => {
+        const formatted = match.replace(/(\d+)/g, '_$1');
+        return `$\\mathrm{${formatted}}$`;
+      })
+      .replace(/(?<!\\)\b([A-Z][a-z]?\d+)\b/g, (match) => {
+        const formatted = match.replace(/(\d+)/g, '_$1');
+        return `$\\mathrm{${formatted}}$`;
+      });
+  };
+
+  // Helper to clean MATH parts (fix minor LaTeX errors)
+  const cleanMathSegment = (text) => {
+    // Fix Latex concatenation errors (e.g. \pit -> \pi t)
+    return text.replace(/\\(pi|alpha|beta|gamma|delta|omega|sigma|theta|lambda|mu)([a-zA-Z0-9])/g, '\\$1 $2');
+  };
+
   const renderMathContent = (content) => {
     if (!content) return '';
-    
-    // Convert to string if not already
+
     const contentStr = typeof content === 'string' ? content : String(content);
-    
-    const lines = contentStr.split('\n');
+
+    // 1. Split by Math Delimiters to protect Math from Text Cleaning
+    // Regex matches $...$ OR \(...\)
+    const tokens = contentStr.split(/(\$[^$]+\$|\\\(.+?\\\))/g);
+
+    // 2. Process each token appropriately
+    const processedStr = tokens.map(token => {
+      const isDollar = token.startsWith('$') && token.endsWith('$');
+      const isParen = token.startsWith('\\(') && token.endsWith('\\)');
+
+      if (isDollar || isParen) {
+        return cleanMathSegment(token);
+      } else {
+        return cleanTextSegment(token);
+      }
+    }).join('');
+
+    // 3. Split by lines to preserve structure
+    const lines = processedStr.split('\n');
+
     return (
       <>
         {lines.map((line, index) => {
-          if (!line.trim()) {
-            return <br key={index} />;
-          }
-          
-          const hasLatex = line.includes('\\') || line.includes('^') || line.includes('_');
-          const hasDollarSigns = line.includes('$') || line.includes('\\(');
-          
-          if (hasLatex && !hasDollarSigns) {
-            const parts = line.split(/(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g);
-            return (
-              <div key={index} style={{ 
-                fontFamily: 'inherit',
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word'
-              }}>
-                {parts.map((part, partIndex) => {
-                  if (part.match(/^\\[a-zA-Z]+/)) {
-                    return (
-                      <MathJax key={partIndex} inline>
-                        {`$${part}$`}
-                      </MathJax>
-                    );
-                  } else {
-                    return <span key={partIndex}>{part}</span>;
-                  }
-                })}
-              </div>
-            );
-          } else if (hasDollarSigns) {
-            return (
-              <div key={index} style={{ 
-                fontFamily: 'inherit',
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word'
-              }}>
-                <MathJax>{line}</MathJax>
-              </div>
-            );
-          } else {
-            return (
-              <div key={index} style={{ 
-                fontFamily: 'inherit',
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word'
-              }}>
-                {line}
-              </div>
-            );
-          }
+          if (!line.trim()) return <br key={index} />;
+
+          // 4. Robust Mixed Content Parsing
+          const chunks = line.split(/(\$[^$]+\$|\\\(.+?\\\))/g);
+
+          return (
+            <div key={index} style={{
+              fontFamily: 'inherit',
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              marginBottom: 4
+            }}>
+              {chunks.map((chunk, i) => {
+                // Case 1: Existing LaTeX block ($...$) or (\(...\))
+                const isDollar = chunk.startsWith('$') && chunk.endsWith('$');
+                const isParen = chunk.startsWith('\\(') && chunk.endsWith('\\)');
+
+                if (isDollar || isParen) {
+                  let rawMath = chunk;
+                  if (isDollar) rawMath = chunk.slice(1, -1);
+                  if (isParen) rawMath = chunk.slice(2, -2);
+
+                  return (
+                    <MathJax key={i} inline>
+                      {`$${rawMath}$`}
+                    </MathJax>
+                  );
+                }
+
+                // Case 2: Mixed Text with loose LaTeX cmd
+                const subParts = chunk.split(/(\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*)/g);
+
+                return (
+                  <span key={i}>
+                    {subParts.map((sub, j) => {
+                      if (sub.match(/^\\[a-zA-Z]+/)) {
+                        return (
+                          <MathJax key={j} inline>
+                            {`$${sub}$`}
+                          </MathJax>
+                        );
+                      }
+                      return <span key={j}>{sub}</span>;
+                    })}
+                  </span>
+                );
+              })}
+            </div>
+          );
         })}
       </>
     );
@@ -94,7 +156,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
 
   const getSubjectName = (subjectId) => {
     if (!subjectId) return '-';
-    
+
     // If subjectId is already an object with name properties
     if (typeof subjectId === 'object' && subjectId !== null) {
       const currentLang = i18n.language || 'vi';
@@ -108,16 +170,16 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
           return subjectId.name || '-';
       }
     }
-    
+
     // If subjectId is a string/ID, try to find in subjects array
     if (!Array.isArray(subjects) || subjects.length === 0) {
       return String(subjectId);
     }
-    
+
     const subject = subjects.find(s => (s._id || s.id) === subjectId);
     if (!subject) return String(subjectId);
-    
-    const currentLang = i18n.language || 'vi';
+
+    const currentLang = localStorage.getItem('language') || 'vi';
     switch (currentLang) {
       case 'en':
         return subject.name_en || subject.name || String(subjectId);
@@ -138,14 +200,14 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
     if (!question || typeof question !== 'object') {
       return null;
     }
-    
+
     // Ensure choices have text as string
     const processedQuestion = {
       ...question,
       order: q.order || index + 1,
       marks: q.marks || 1,
     };
-    
+
     // Process choices if they exist
     if (processedQuestion.choices && Array.isArray(processedQuestion.choices)) {
       processedQuestion.choices = processedQuestion.choices.map(choice => ({
@@ -153,7 +215,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
         text: typeof choice.text === 'string' ? choice.text : (choice.text ? String(choice.text) : '')
       }));
     }
-    
+
     return processedQuestion;
   }).filter(q => q !== null);
 
@@ -175,7 +237,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
             <Title level={4} style={{ marginBottom: 16 }}>
               {examData.name || t('exams.examName')}
             </Title>
-            
+
             {examData.description && (
               <Paragraph style={{ marginBottom: 16 }}>
                 {renderMathContent(examData.description)}
@@ -187,8 +249,8 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
                 {examData.duration} {t('exams.minutes')}
               </Descriptions.Item>
               <Descriptions.Item label={t('exams.totalMarks')}>
-                {typeof (examData.totalMarks || totalMarks) === 'number' 
-                  ? truncateToDecimals(examData.totalMarks || totalMarks)
+                {typeof (examData.totalMarks || totalMarks) === 'number'
+                  ? Number((examData.totalMarks || totalMarks).toFixed(1))
                   : (examData.totalMarks || totalMarks)}
               </Descriptions.Item>
               {examData.subjectId && (
@@ -245,8 +307,8 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
                           {t('exams.question')} {question.order || index + 1}
                         </Text>
                         <Tag color="blue">
-                          {t('exams.marks')}: {typeof (question.marks || 1) === 'number' 
-                            ? truncateToDecimals(question.marks || 1)
+                          {t('exams.marks')}: {typeof (question.marks || 1) === 'number'
+                            ? Number((question.marks || 1).toFixed(1))
                             : (question.marks || 1)}
                         </Tag>
                       </div>
