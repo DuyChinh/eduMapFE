@@ -523,6 +523,28 @@ const ExamResultDetail = () => {
               {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer}</Text>
             </Text>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -626,6 +648,28 @@ const ExamResultDetail = () => {
               {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer === true || correctAnswer === 'true' ? (t('questions.true') || 'True') : (t('questions.false') || 'False')}</Text>
             </Text>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -715,6 +759,28 @@ const ExamResultDetail = () => {
               <Text>{correctAnswer}</Text>
             </div>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -820,6 +886,28 @@ const ExamResultDetail = () => {
               </Paragraph>
             </div>
           </div>
+
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 16px',
+              backgroundColor: '#f6ffed',
+              borderRadius: 8,
+              border: '1px solid #b7eb8f'
+            }}>
+              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+                {t('questions.explanation') || 'Giải thích'}:
+              </Text>
+              <div style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}>
+                {renderMathContent(question.explanation)}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );

@@ -934,24 +934,8 @@ const CreateExam = () => {
                   <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
                 </Form.Item>
 
-                <Form.Item name={['settings', 'timeLimit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.timeLimit')} unCheckedChildren={t('exams.noTimeLimit')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'autoSubmit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.autoSubmit')} unCheckedChildren={t('exams.noAutoSubmit')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'confirmSubmit']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.confirmSubmit')} unCheckedChildren={t('exams.noConfirmSubmit')} />
-                </Form.Item>
-
                 <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-                </Form.Item>
-
-                <Form.Item name={['settings', 'preventRightClick']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.preventRightClick')} unCheckedChildren={t('exams.noPreventRightClick')} />
                 </Form.Item>
 
                 <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">
@@ -1033,7 +1017,7 @@ const CreateExam = () => {
           setPreviewModalVisible(false);
           setPreviewExamData(null);
         }}
-        examData={previewExamData || form.getFieldsValue()}
+        examData={previewExamData || (previewModalVisible ? form.getFieldsValue() : {})}
         questions={selectedQuestions}
         subjects={subjects}
       />
