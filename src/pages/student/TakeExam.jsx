@@ -914,73 +914,33 @@ const TakeExam = () => {
                   if (isDollar) rawMath = chunk.slice(1, -1);
                   if (isParen) rawMath = chunk.slice(2, -2);
 
-          // Check if line contains LaTeX commands
-          const hasLatex =
-            line.includes("\\") || line.includes("^") || line.includes("_");
-          const hasDollarSigns = line.includes("$") || line.includes("\\(");
+                  return (
+                    <MathJax key={i} inline>
+                      {`$${rawMath}$`}
+                    </MathJax>
+                  );
+                }
 
-          if (hasLatex && !hasDollarSigns) {
-            // Mixed content - need to parse and render properly
-            // Split by LaTeX patterns and render each part
-            const parts = line.split(
-              /(\\[a-zA-Z]+(?:\{[^}]*\})*(?:\{[^}]*\})*)/g
-            );
-            return (
-              <span
-                key={index}
-                style={{
-                  fontFamily: "inherit",
-                  whiteSpace: "pre-wrap",
-                  wordWrap: "break-word",
-                  display: "inline",
-                }}
-              >
-                {parts.map((part, partIndex) => {
-                  if (part.match(/^\\[a-zA-Z]+/)) {
-                    // This is a LaTeX command, render with MathJax
-                    return (
-                      <MathJax key={partIndex} inline hideUntilTypeset="first">
-                        {`$${part}$`}
-                      </MathJax>
-                    );
-                  } else {
-                    // This is plain text, render as is
-                    return <span key={partIndex}>{part}</span>;
-                  }
-                })}
-              </span>
-            );
-          } else if (hasDollarSigns) {
-            // Already has dollar signs, render as is
-            return (
-              <span
-                key={index}
-                style={{
-                  fontFamily: "inherit",
-                  whiteSpace: "pre-wrap",
-                  wordWrap: "break-word",
-                  display: "inline",
-                }}
-              >
-                <MathJax inline hideUntilTypeset="first">{line}</MathJax>
-              </span>
-            );
-          } else {
-            // Plain text, render as is with preserved formatting
-            return (
-              <span
-                key={index}
-                style={{
-                  fontFamily: "inherit",
-                  whiteSpace: "pre-wrap",
-                  wordWrap: "break-word",
-                  display: "inline",
-                }}
-              >
-                {line}
-              </span>
-            );
-          }
+                // Case 2: Mixed Text with loose LaTeX cmd
+                const subParts = chunk.split(/(\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*)/g);
+
+                return (
+                  <span key={i}>
+                    {subParts.map((sub, j) => {
+                      if (sub.match(/^\\[a-zA-Z]+/)) {
+                        return (
+                          <MathJax key={j} inline>
+                            {`$${sub}$`}
+                          </MathJax>
+                        );
+                      }
+                      return <span key={j}>{sub}</span>;
+                    })}
+                  </span>
+                );
+              })}
+            </div>
+          );
         })}
       </>
     );
