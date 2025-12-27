@@ -530,9 +530,9 @@ const CreateExam = () => {
                   label={t('exams.examPurpose')}
                   name="examPurpose"
                   rules={[{ required: true, message: t('exams.examPurposeRequired') }]}
-                  style={{ flex: 1 }}
+                  style={{ flex: 1.3 }}
                 >
-                  <Select>
+                  <Select style={{ minWidth: 200 }}>
                     <Option value="exam">{t('exams.purposeExam')}</Option>
                     <Option value="practice">{t('exams.purposePractice')}</Option>
                     <Option value="quiz">{t('exams.purposeQuiz')}</Option>

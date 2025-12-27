@@ -887,6 +887,7 @@
       "items": "items"
     },
     "submissions": {
+      "title": "Submissions",
       "student": "Student",
       "status": "Status",
       "score": "Score",

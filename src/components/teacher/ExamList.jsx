@@ -287,16 +287,6 @@ const ExamList = () => {
       },
     },
     {
-      title: t('exams.examPurpose'),
-      dataIndex: 'examPurpose',
-      key: 'examPurpose',
-      render: (purpose) => (
-        <Tag color={getPurposeColor(purpose)}>
-          {getPurposeText(purpose)}
-        </Tag>
-      ),
-    },
-    {
       title: t('exams.duration'),
       dataIndex: 'duration',
       key: 'duration',
@@ -306,6 +296,18 @@ const ExamList = () => {
       title: t('exams.totalMarks'),
       dataIndex: 'totalMarks',
       key: 'totalMarks',
+      align: 'center',
+    },
+    {
+      title: t('exams.submissions.title') || 'Submissions',
+      dataIndex: 'submissionCount',
+      key: 'submissionCount',
+      align: 'center',
+      render: (count) => (
+        <Tag color={count > 0 ? 'green' : 'default'}>
+          {count || 0}
+        </Tag>
+      ),
     },
     {
       title: t('exams.questions'),

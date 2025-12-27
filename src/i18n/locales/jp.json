@@ -857,6 +857,7 @@
       "items": "項目"
     },
     "submissions": {
+      "title": "提出数",
       "student": "学生",
       "status": "ステータス",
       "score": "スコア",

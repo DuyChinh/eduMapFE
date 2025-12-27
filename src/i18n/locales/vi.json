@@ -881,6 +881,7 @@
       "items": "mục"
     },
     "submissions": {
+      "title": "Lượt nộp",
       "student": "Học sinh",
       "status": "Trạng thái",
       "score": "Điểm",
