@@ -7,6 +7,7 @@ import notificationService from '../../api/notificationService';
 import { useTranslation } from 'react-i18next';
 import formatTimeAgo from '../../utils/formatTimeAgo';
 import useAuthStore from '../../store/authStore';
+import { connectSocket, disconnectSocket, onNotification } from '../../services/socketService';
 
 const { Text } = Typography;
 
@@ -45,9 +46,23 @@ const NotificationDropdown = () => {
 
     useEffect(() => {
         initialLoad();
-        const interval = setInterval(() => fetchNotifications(), 5000);
-        return () => clearInterval(interval);
-    }, [limit]); // Re-create interval if limit changes
+        
+        // Connect to socket for real-time notifications
+        const token = useAuthStore.getState().token || localStorage.getItem('auth_token');
+        
+        if (token) {
+            connectSocket(token);
+            
+            // Subscribe to new notifications
+            const unsubscribe = onNotification(() => {
+                fetchNotifications();
+            });
+            
+            return () => {
+                unsubscribe();
+            };
+        }
+    }, []);
 
     const handleViewAll = () => {
         const newLimit = limit + 10;
