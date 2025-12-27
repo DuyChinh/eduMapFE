@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import notificationService from '../../api/notificationService';
 import { useTranslation } from 'react-i18next';
 import formatTimeAgo from '../../utils/formatTimeAgo';
+import useAuthStore from '../../store/authStore';
 
 const { Text } = Typography;
 
@@ -17,6 +18,7 @@ const NotificationDropdown = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { token } = theme.useToken();
+    const { user } = useAuthStore();
 
     const [total, setTotal] = useState(0);
     const [limit, setLimit] = useState(10);
@@ -64,33 +66,45 @@ const NotificationDropdown = () => {
         }
 
         if (item.classId) {
-            const cid = item.classId._id || item.classId;
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const basePath = user.role === 'teacher' ? '/teacher' : '/student';
+            // Ensure classId is a string
+            let cid = item.classId;
+            if (typeof cid === 'object') {
+                cid = cid._id || cid.id || String(cid);
+            }
+            cid = String(cid);
+            
+            const userRole = user?.role || 'teacher';
+            const basePath = userRole === 'teacher' ? '/teacher' : '/student';
 
             // Check if this is a feed-related notification (new post, comment)
-            const isFeedNotification = item.content === 'NOTIFICATION_NEW_POST' ||
+            // Check both type and content to handle all cases
+            const isFeedNotification = item.type === 'NEW_POST' ||
+                item.type === 'NEW_COMMENT' ||
+                item.content === 'NOTIFICATION_NEW_POST' ||
                 item.content === 'NOTIFICATION_NEW_COMMENT_OWN' ||
                 item.content === 'NOTIFICATION_NEW_COMMENT_OTHER' ||
                 item.content?.includes('đã đăng bài mới') ||
-                item.content?.includes('đã bình luận');
+                item.content?.includes('đã bình luận') ||
+                item.onModel === 'FeedPost';
 
             if (isFeedNotification) {
                 // Navigate to newsfeed tab with postId
-                if (item.relatedId) {
-                    navigate(`${basePath}/classes/${cid}?tab=newsfeed&postId=${item.relatedId}`);
+                const relatedId = item.relatedId ? (typeof item.relatedId === 'object' ? (item.relatedId._id || item.relatedId.id || String(item.relatedId)) : String(item.relatedId)) : null;
+                if (relatedId) {
+                    navigate(`${basePath}/classes/${cid}?tab=newsfeed&postId=${relatedId}`);
                 } else {
                     navigate(`${basePath}/classes/${cid}?tab=newsfeed`);
                 }
             } else if (item.relatedId) {
-                navigate(`${basePath}/classes/${cid}?postId=${item.relatedId}`);
+                const relatedId = typeof item.relatedId === 'object' ? (item.relatedId._id || item.relatedId.id || String(item.relatedId)) : String(item.relatedId);
+                navigate(`${basePath}/classes/${cid}?postId=${relatedId}`);
             } else {
                 navigate(`${basePath}/classes/${cid}`);
             }
         } else {
             // Handle notifications without classId (e.g. System, Mindmap, Exam)
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const basePath = user.role === 'teacher' ? '/teacher' : '/student';
+            const userRole = user?.role || 'teacher';
+            const basePath = userRole === 'teacher' ? '/teacher' : '/student';
 
             if (item.type === 'MINDMAP_SHARED' || item.onModel === 'Mindmap') {
                 navigate(`${basePath}/mindmaps/shared`);

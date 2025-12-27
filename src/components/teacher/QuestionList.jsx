@@ -171,8 +171,35 @@ const QuestionList = () => {
       fetchQuestions();
     } catch (error) {
       console.error('Delete question error:', error);
-      const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.deleteFailed'));
-      message.error(errorMessage);
+      
+      // Check if question is being used in exams
+      if (error?.response?.data?.code === 'QUESTION_IN_USE') {
+        const exams = error.response.data.data.exams || [];
+        setDeleteModalVisible(false);
+        
+        Modal.error({
+          title: t('questions.cannotDelete') || 'Cannot Delete Question',
+          content: (
+            <div>
+              <p>{t('questions.usedInExams') || 'This question is currently being used in the following exams:'}</p>
+              <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                {exams.map((exam, idx) => (
+                  <li key={idx}>
+                    <strong>{exam.name}</strong>
+                  </li>
+                ))}
+              </ul>
+              <p style={{ marginTop: 12, color: '#666' }}>
+                {t('questions.removeFromExamsFirst') || 'Please remove this question from these exams before deleting it.'}
+              </p>
+            </div>
+          ),
+          okText: t('common.ok') || 'OK'
+        });
+      } else {
+        const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.deleteFailed'));
+        message.error(errorMessage);
+      }
     }
   };
 

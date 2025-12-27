@@ -346,13 +346,22 @@ const ExamResults = () => {
       width: 200,
       render: (exam) => {
         const examData = typeof exam === 'object' ? exam : {};
+        const examName = examData?.name;
+        const isDeleted = !examData || !examName;
+        
         return (
           <div>
-            <Text strong>{examData?.name || '-'}</Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {getExamSubjectName(examData)}
+            <Text strong style={isDeleted ? { color: '#999', fontStyle: 'italic' } : {}}>
+              {isDeleted ? t('exams.examDeleted') || 'Exam Deleted' : examName}
             </Text>
+            {!isDeleted && (
+              <>
+                <br />
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {getExamSubjectName(examData)}
+                </Text>
+              </>
+            )}
           </div>
         );
       },

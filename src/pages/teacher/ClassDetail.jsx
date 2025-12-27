@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Card,
   Typography,
@@ -40,11 +40,12 @@ const { Title, Text } = Typography;
 const ClassDetail = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { user } = useAuthStore();
 
   // Parse query params to check for postId
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(location.search);
   const postId = searchParams.get('postId');
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(postId ? 'newsfeed' : (tabParam || 'overview'));
@@ -55,6 +56,19 @@ const ClassDetail = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addStudentsModalVisible, setAddStudentsModalVisible] = useState(false);
   const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
+
+  // Update activeTab when URL params change (e.g., when navigating from notification)
+  useEffect(() => {
+    const currentSearchParams = new URLSearchParams(location.search);
+    const currentPostId = currentSearchParams.get('postId');
+    const currentTabParam = currentSearchParams.get('tab');
+    
+    if (currentPostId) {
+      setActiveTab('newsfeed');
+    } else if (currentTabParam) {
+      setActiveTab(currentTabParam);
+    }
+  }, [location.search]);
 
   const fetchClassDetail = async () => {
     setLoading(true);
