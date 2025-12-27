@@ -1,0 +1,17 @@
+.vip-card {
+    height: 100%;
+    position: relative;
+    border-radius: 16px !important;
+    border-color: #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.vip-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    border-color: var(--hover-color, #1890ff) !important;
+}
+
+/* Specific hover colors based on package can be dynamic, 
+   but for now a generic nice hover is good, 
+   or we can use the pkg.color passing through style */

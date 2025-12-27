@@ -1481,5 +1481,50 @@
     "canEdit": "(Can Edit)",
     "login": "Login",
     "loginToEdit": "Login to Edit"
+  },
+  "vip": {
+    "title": "Choose Your Plan",
+    "subtitle": "Unlock the full power of EduMap AI with our premium packages.",
+    "bestValue": "Best Value",
+    "month": "/ month",
+    "currentPlan": "Current Plan",
+    "upgradeNow": "Upgrade Now",
+    "goPro": "Go Pro",
+    "plans": {
+      "free": {
+        "title": "Free",
+        "features": [
+          "1500 AI Requests / Day",
+          "Basic Mindmap Features",
+          "Community Support",
+          "Access to Public Library"
+        ]
+      },
+      "plus": {
+        "title": "Plus",
+        "features": [
+          "2000 AI Requests / Day",
+          "Advanced Mindmap Export",
+          "Priority Support",
+          "No Ads"
+        ]
+      },
+      "pro": {
+        "title": "Pro",
+        "features": [
+          "5000 AI Requests / Day",
+          "Unlimited Mindmaps",
+          "24/7 Dedicated Support",
+          "Early Access to Features"
+        ]
+      }
+    },
+    "messages": {
+      "redirecting": "Redirecting to VNPAY...",
+      "createError": "Failed to create payment URL",
+      "initError": "Error initiating payment. Please try again.",
+      "loading": "Creating payment request...",
+      "orderInfo": "Upgrade to {{plan}} - {{user}}"
+    }
   }
 }
