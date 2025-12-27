@@ -43,6 +43,7 @@ import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import feedService from '../../api/feedService';
 import uploadService from '../../api/uploadService';
+import { joinClassRoom, leaveClassRoom, onFeedUpdate, emitTyping, emitStopTyping, onTypingStatus } from '../../services/socketService';
 import { useTranslation } from 'react-i18next';
 import DeleteConfirmModal from '../common/DeleteConfirmModal';
 
@@ -149,12 +150,38 @@ const ClassFeed = ({ classId, highlightPostId }) => {
         }
     };
 
-    // Auto-poll posts every 5 seconds
+    // Real-time feed updates via Socket.IO
     useEffect(() => {
-        const interval = setInterval(() => {
-            fetchPosts({}, true);
-        }, 5000);
-        return () => clearInterval(interval);
+        if (classId) {
+            joinClassRoom(classId);
+
+            const unsubscribe = onFeedUpdate((data) => {
+                // Refresh posts when new post or comment is received
+                // We use the current page from state which is captured in the closure if we dependent on it,
+                // but fetchPosts uses { page: 1 } default.
+                // To support pagination persistence, we should probably pass current page,
+                // but to match previous behavior we'll just call fetchPosts({}, true).
+                // Actually, let's try to be smarter: if new post, refresh page 1.
+                // If new comment, refresh current page (or just the post).
+                
+                if (data.type === 'NEW_POST') {
+                    // New posts always appear on page 1
+                    // If we are on page 1, refresh.
+                    fetchPosts({ page: 1 }, true);
+                } else if (data.type === 'NEW_COMMENT') {
+                    // Refetch current page (or 1 if strict)
+                    // For now, simple refresh
+                    fetchPosts({}, true);
+                } else {
+                    fetchPosts({}, true);
+                }
+            });
+
+            return () => {
+                unsubscribe();
+                leaveClassRoom(classId);
+            };
+        }
     }, [classId]);
 
     const handleAddLink = () => {
@@ -491,6 +518,7 @@ const ClassFeed = ({ classId, highlightPostId }) => {
                             <PostItem
                                 key={post._id}
                                 post={post}
+                                classId={classId}
                                 currentUser={user}
                                 onDelete={handleDeletePost}
                                 onUpdate={handleUpdatePost}
@@ -506,7 +534,7 @@ const ClassFeed = ({ classId, highlightPostId }) => {
     );
 };
 
-const PostItem = ({ post, currentUser, onDelete, onUpdate, onToggleLock, onLike, onRefreshPost }) => {
+const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock, onLike, onRefreshPost }) => {
     const { t } = useTranslation();
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
@@ -538,6 +566,51 @@ const PostItem = ({ post, currentUser, onDelete, onUpdate, onToggleLock, onLike,
     
     // Delete modal state
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+    // Typing state
+    const [typingUsers, setTypingUsers] = useState([]);
+    const typingTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        const unsubscribe = onTypingStatus((data) => {
+            const currentUserId = currentUser?._id || currentUser?.id;
+            if (data.postId === post._id && data.user.id !== currentUserId) {
+                 if (data.isTyping) {
+                     setTypingUsers(prev => {
+                         if (!prev.find(u => u.id === data.user.id)) {
+                             return [...prev, data.user];
+                         }
+                         return prev;
+                     });
+                 } else {
+                     setTypingUsers(prev => prev.filter(u => u.id !== data.user.id));
+                 }
+            }
+        });
+        return () => unsubscribe();
+    }, [post._id, currentUser]);
+
+    const handleTyping = () => {
+        const userId = currentUser?._id || currentUser?.id;
+        if (!userId) return;
+        
+        // Use passed classId or fallback to post.classId
+        const targetClassId = classId || post.classId || post.class;
+        
+        emitTyping(targetClassId, post._id, { 
+            id: userId, 
+            name: currentUser.fullName || currentUser.name || currentUser.username, 
+            avatar: currentUser.avatar || currentUser.profile?.avatar
+        });
+        
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+        
+        typingTimeoutRef.current = setTimeout(() => {
+            emitStopTyping(targetClassId, post._id, { id: userId });
+        }, 2000);
+    };
 
     // Initial sync
     useEffect(() => {
@@ -827,6 +900,20 @@ const PostItem = ({ post, currentUser, onDelete, onUpdate, onToggleLock, onLike,
                     />
                 )}
 
+                {/* Typing Indicator */}
+                {typingUsers.length > 0 && (
+                    <div style={{ padding: '0 0 8px 44px', fontSize: 13, color: subTextColor, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Avatar.Group size="small" maxCount={3}>
+                            {typingUsers.map(u => (
+                                <Avatar key={u.id} src={u.avatar} size={20} style={{ backgroundColor: '#87d068' }}>{u.name?.charAt(0)}</Avatar>
+                            ))}
+                        </Avatar.Group>
+                        <span>
+                            {t('feed.isTyping', { name: typingUsers.map(u => u.name).join(', ') })}
+                        </span>
+                    </div>
+                )}
+
                 {/* New Comment Input Area */}
                 <div style={{ display: 'flex', gap: 12, marginTop: 16, alignItems: 'flex-start' }}>
                     <Avatar size={32} src={currentUser?.avatar || currentUser?.profile?.avatar}>{currentUser?.name?.charAt(0)}</Avatar>
@@ -842,7 +929,10 @@ const PostItem = ({ post, currentUser, onDelete, onUpdate, onToggleLock, onLike,
                         <TextArea
                             placeholder={post.isLocked ? t('feed.commentLockedPlaceholder') : t('feed.commentPlaceholder')}
                             value={commentContent}
-                            onChange={e => setCommentContent(e.target.value)}
+                            onChange={e => {
+                                setCommentContent(e.target.value);
+                                handleTyping();
+                            }}
                             onPressEnter={(e) => {
                                 if (!e.shiftKey) {
                                     e.preventDefault();

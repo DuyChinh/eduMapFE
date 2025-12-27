@@ -1337,7 +1337,8 @@
     "linkTitle": "Title (optional)",
     "add": "Add",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "isTyping": "{{name}} is typing..."
   },
   "mindmap": {
     "unsavedChanges": "You have unsaved changes like drawing, layout, or node properties. Do you really want to leave without saving?",

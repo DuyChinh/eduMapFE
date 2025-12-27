@@ -1,10 +1,13 @@
 /**
  * Socket.IO client service for real-time notifications
  */
+
 import { io } from 'socket.io-client';
 
 let socket = null;
 let notificationCallbacks = [];
+let feedUpdateCallbacks = [];
+let typingCallbacks = [];
 
 /**
  * Get the socket instance
@@ -56,6 +59,18 @@ export const connectSocket = (token) => {
     notificationCallbacks.forEach(callback => callback(notification));
   });
 
+  socket.on('FEED_UPDATE', (data) => {
+    feedUpdateCallbacks.forEach(callback => callback(data));
+  });
+
+  socket.on('typing', (data) => {
+    typingCallbacks.forEach(callback => callback({ ...data, isTyping: true }));
+  });
+
+  socket.on('stop_typing', (data) => {
+    typingCallbacks.forEach(callback => callback({ ...data, isTyping: false }));
+  });
+
   return socket;
 };
 
@@ -67,6 +82,8 @@ export const disconnectSocket = () => {
     socket.disconnect();
     socket = null;
     notificationCallbacks = [];
+    feedUpdateCallbacks = [];
+    typingCallbacks = [];
   }
 };
 
@@ -86,9 +103,92 @@ export const onNotification = (callback) => {
   };
 };
 
+/**
+ * Register a callback for feed updates (new posts/comments)
+ * @param {Function} callback - Function to call when feed update received
+ * @returns {Function} Unsubscribe function
+ */
+export const onFeedUpdate = (callback) => {
+  feedUpdateCallbacks.push(callback);
+  
+  return () => {
+    const index = feedUpdateCallbacks.indexOf(callback);
+    if (index > -1) {
+      feedUpdateCallbacks.splice(index, 1);
+    }
+  };
+};
+
+/**
+ * Join a class room to receive feed updates
+ * @param {string} classId - Class ID to join
+ */
+export const joinClassRoom = (classId) => {
+  if (socket && classId) {
+    socket.emit('join_class', { classId });
+  }
+};
+
+/**
+ * Leave a class room
+ * @param {string} classId - Class ID to leave
+ */
+export const leaveClassRoom = (classId) => {
+  if (socket && classId) {
+    socket.emit('leave_class', { classId });
+  }
+};
+
+/**
+ * Emit typing status
+ * @param {string} classId - Class ID
+ * @param {string} postId - Post ID
+ * @param {object} user - User info
+ */
+export const emitTyping = (classId, postId, user) => {
+  if (socket && classId) {
+    socket.emit('typing', { classId, postId, user });
+  }
+};
+
+/**
+ * Emit stop typing status
+ * @param {string} classId - Class ID
+ * @param {string} postId - Post ID
+ * @param {object} user - User info
+ */
+export const emitStopTyping = (classId, postId, user) => {
+  if (socket && classId) {
+    socket.emit('stop_typing', { classId, postId, user });
+  }
+};
+
+/**
+ * Register a callback for typing status
+ * @param {Function} callback - Function to call when typing status changes
+ * @returns {Function} Unsubscribe function
+ */
+export const onTypingStatus = (callback) => {
+  typingCallbacks.push(callback);
+  
+  return () => {
+    const index = typingCallbacks.indexOf(callback);
+    if (index > -1) {
+      typingCallbacks.splice(index, 1);
+    }
+  };
+};
+
 export default {
   getSocket,
   connectSocket,
   disconnectSocket,
   onNotification,
+  onFeedUpdate,
+  joinClassRoom,
+  leaveClassRoom,
+  emitTyping,
+  emitStopTyping,
+  onTypingStatus,
 };
+
