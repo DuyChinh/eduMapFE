@@ -17,6 +17,7 @@ import {
   ScanOutlined,
   DownOutlined,
   RightOutlined,
+  CrownOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -59,12 +60,10 @@ const StudentLayout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
-  // Initialize openKeys based on current path (only when sidebar is expanded)
   useEffect(() => {
     if (!collapsed && location.pathname.includes('/mindmaps')) {
       setOpenKeys(['mindmaps']);
     } else if (collapsed) {
-      // Clear openKeys when sidebar is collapsed to let hover/click handle popup
       setOpenKeys([]);
     }
   }, [location.pathname, collapsed]);
@@ -120,7 +119,6 @@ const StudentLayout = () => {
     message.success(`${t('language.languageChanged')} ${langName}`);
   };
 
-  // Function to determine selected menu key based on current path
   const getSelectedKey = () => {
     const pathname = location.pathname;
 
@@ -356,6 +354,14 @@ const StudentLayout = () => {
               onClick={toggleTheme}
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
               className="theme-toggle-btn"
+            />
+
+            <Button
+              type="text"
+              icon={<CrownOutlined style={{ color: '#f59e0b', fontSize: '20px' }} />}
+              onClick={() => navigate('/student/vip-packages')}
+              title="Upgrade to VIP"
+              className="vip-btn"
             />
 
             <Dropdown
