@@ -30,6 +30,7 @@ import QuestionDetail from '../pages/teacher/QuestionDetail';
 import Questions from '../pages/teacher/Questions';
 import Reports from '../pages/teacher/Reports';
 import TeacherDashboard from '../pages/teacher/TeacherDashboard';
+import VipPackages from '../pages/teacher/VipPackages';
 
 // Student Pages
 import StudentClassDetail from '../pages/student/ClassDetail';
@@ -50,6 +51,7 @@ import MindmapShared from '../pages/mindmap/MindmapShared';
 import PublicTakeExam from '../pages/public/PublicTakeExam';
 import PublicMindmapView from '../pages/public/PublicMindmapView';
 import Profile from '../pages/Profile';
+import PaymentResult from '../pages/payment/PaymentResult';
 
 // Components
 import ProtectedRoute from '../components/common/ProtectedRoute';
@@ -120,6 +122,7 @@ const router = createBrowserRouter(
         <Route path="mindmaps" element={<MindmapList />} />
         <Route path="mindmaps/shared" element={<MindmapShared />} />
         <Route path="mindmaps/trash" element={<MindmapTrash />} />
+        <Route path="vip-packages" element={<VipPackages />} />
       </Route>
 
       {/* Teacher Mindmap Editor - Full Screen (outside layout) */}
@@ -151,6 +154,7 @@ const router = createBrowserRouter(
         <Route path="mindmaps" element={<MindmapList />} />
         <Route path="mindmaps/shared" element={<MindmapShared />} />
         <Route path="mindmaps/trash" element={<MindmapTrash />} />
+        <Route path="vip-packages" element={<VipPackages />} />
       </Route>
 
       {/* Student Mindmap Editor - Full Screen (outside layout) */}
@@ -192,6 +196,7 @@ const router = createBrowserRouter(
       {/* Public Routes */}
       <Route path="/exam/:shareCode" element={<PublicTakeExam />} />
       <Route path="/mindmap/public/:shareLink" element={<PublicMindmapView />} />
+      <Route path="/payment/result" element={<PaymentResult />} />
 
       {/* 404 - Not Found */}
       <Route path="*" element={<Navigate to="/" replace />} />

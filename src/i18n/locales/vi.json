@@ -1434,5 +1434,50 @@
     "canEdit": "(Có thể chỉnh sửa)",
     "login": "Đăng nhập",
     "loginToEdit": "Đăng nhập để chỉnh sửa"
+  },
+  "vip": {
+    "title": "Chọn Gói Của Bạn",
+    "subtitle": "Mở khóa toàn bộ sức mạnh của EduMap AI với các gói cao cấp.",
+    "bestValue": "Tốt nhất",
+    "month": "/ tháng",
+    "currentPlan": "Gói hiện tại",
+    "upgradeNow": "Nâng cấp ngay",
+    "goPro": "Đăng ký Pro",
+    "plans": {
+      "free": {
+        "title": "Miễn phí",
+        "features": [
+          "1500 Yêu cầu AI / Ngày",
+          "Tính năng Sơ đồ tư duy cơ bản",
+          "Hỗ trợ cộng đồng",
+          "Truy cập thư viện công cộng"
+        ]
+      },
+      "plus": {
+        "title": "Plus",
+        "features": [
+          "2000 Yêu cầu AI / Ngày",
+          "Xuất Sơ đồ tư duy nâng cao",
+          "Hỗ trợ ưu tiên",
+          "Không quảng cáo"
+        ]
+      },
+      "pro": {
+        "title": "Pro",
+        "features": [
+          "5000 Yêu cầu AI / Ngày",
+          "Sơ đồ tư duy không giới hạn",
+          "Hỗ trợ chuyên dụng 24/7",
+          "Truy cập sớm các tính năng mới"
+        ]
+      }
+    },
+    "messages": {
+      "redirecting": "Đang chuyển hướng đến VNPAY...",
+      "createError": "Không thể tạo liên kết thanh toán",
+      "initError": "Lỗi khởi tạo thanh toán. Vui lòng thử lại.",
+      "loading": "Đang tạo yêu cầu thanh toán...",
+      "orderInfo": "Nâng cấp lên {{plan}} - {{user}}"
+    }
   }
 }

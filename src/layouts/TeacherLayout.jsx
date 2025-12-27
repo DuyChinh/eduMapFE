@@ -16,6 +16,7 @@ import {
   ScanOutlined,
   DownOutlined,
   RightOutlined,
+  CrownOutlined,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
@@ -367,6 +368,14 @@ const TeacherLayout = () => {
               onClick={toggleTheme}
               title={theme === 'dark' ? t('theme.switchToLight') : t('theme.switchToDark')}
               className="theme-toggle-btn"
+            />
+
+            <Button
+              type="text"
+              icon={<CrownOutlined style={{ color: '#f59e0b', fontSize: '20px' }} />}
+              onClick={() => navigate('/teacher/vip-packages')}
+              title="Upgrade to VIP"
+              className="vip-btn"
             />
 
             <Dropdown

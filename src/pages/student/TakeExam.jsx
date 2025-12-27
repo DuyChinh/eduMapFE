@@ -202,7 +202,7 @@ const TakeExam = () => {
 
     // Get autoMonitoring setting from exam
     const autoMonitoring = exam.autoMonitoring || 'off';
-    
+
     // If monitoring is off, don't add any proctoring event listeners
     if (autoMonitoring === 'off') {
       return;
@@ -1302,8 +1302,8 @@ const TakeExam = () => {
                           <Space direction="vertical" size="middle">
                             <div
                               className={`choice-option ${answers[questionId] === "true"
-                                  ? "choice-selected"
-                                  : ""
+                                ? "choice-selected"
+                                : ""
                                 }`}
                             >
                               <Radio
@@ -1316,8 +1316,8 @@ const TakeExam = () => {
                             </div>
                             <div
                               className={`choice-option ${answers[questionId] === "false"
-                                  ? "choice-selected"
-                                  : ""
+                                ? "choice-selected"
+                                : ""
                                 }`}
                             >
                               <Radio
@@ -1378,8 +1378,8 @@ const TakeExam = () => {
                         icon={<FlagOutlined />}
                         onClick={(e) => toggleFlag(currentQuestionIndex, e)}
                         className={`flag-button ${flaggedQuestions.has(currentQuestionIndex)
-                            ? "flagged"
-                            : ""
+                          ? "flagged"
+                          : ""
                           }`}
                         title={
                           flaggedQuestions.has(currentQuestionIndex)
@@ -1543,8 +1543,8 @@ const TakeExam = () => {
                           <Space direction="vertical" size="middle">
                             <div
                               className={`choice-option ${answers[questionId] === "true"
-                                  ? "choice-selected"
-                                  : ""
+                                ? "choice-selected"
+                                : ""
                                 }`}
                             >
                               <Radio
@@ -1557,8 +1557,8 @@ const TakeExam = () => {
                             </div>
                             <div
                               className={`choice-option ${answers[questionId] === "false"
-                                  ? "choice-selected"
-                                  : ""
+                                ? "choice-selected"
+                                : ""
                                 }`}
                             >
                               <Radio
@@ -1751,14 +1751,14 @@ const TakeExam = () => {
             {/* Progress Card */}
             <div
               style={{
-                background: answeredCount === totalQuestions 
-                  ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)' 
+                background: answeredCount === totalQuestions
+                  ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)'
                   : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
                 borderRadius: 16,
                 padding: '20px 24px',
                 marginBottom: 24,
-                border: answeredCount === totalQuestions 
-                  ? '1px solid #28a745' 
+                border: answeredCount === totalQuestions
+                  ? '1px solid #28a745'
                   : '1px solid #ffc107',
               }}
             >
