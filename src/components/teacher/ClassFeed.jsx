@@ -9,7 +9,6 @@ import {
     Tooltip,
     Image,
     message,
-    Popconfirm,
     Upload,
     Typography,
     Divider,
@@ -45,6 +44,7 @@ import useThemeStore from '../../store/themeStore';
 import feedService from '../../api/feedService';
 import uploadService from '../../api/uploadService';
 import { useTranslation } from 'react-i18next';
+import DeleteConfirmModal from '../common/DeleteConfirmModal';
 
 const { TextArea } = Input;
 const { Paragraph, Text } = Typography;
@@ -535,6 +535,9 @@ const PostItem = ({ post, currentUser, onDelete, onUpdate, onToggleLock, onLike,
     // Edit state
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
+    
+    // Delete modal state
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
     // Initial sync
     useEffect(() => {
@@ -652,11 +655,8 @@ const PostItem = ({ post, currentUser, onDelete, onUpdate, onToggleLock, onLike,
             key: 'delete',
             icon: <DeleteOutlined />,
             danger: true,
-            label: (
-                <Popconfirm title={t('feed.deleteConfirmTitle')} onConfirm={() => onDelete(post._id)}>
-                    <div style={{ display: 'inline-block', width: '100%' }}>{t('feed.delete')}</div>
-                </Popconfirm>
-            )
+            label: t('feed.delete'),
+            onClick: () => setDeleteModalVisible(true)
         },
         { type: 'divider' },
         {
@@ -1002,6 +1002,18 @@ const PostItem = ({ post, currentUser, onDelete, onUpdate, onToggleLock, onLike,
                     </Space>
                 </Modal>
             </div>
+            
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+                open={deleteModalVisible}
+                onCancel={() => setDeleteModalVisible(false)}
+                onConfirm={() => {
+                    onDelete(post._id);
+                    setDeleteModalVisible(false);
+                }}
+                title={t('common.deletePost')}
+                description={t('common.deletePostMessage')}
+            />
         </Card>
     );
 };

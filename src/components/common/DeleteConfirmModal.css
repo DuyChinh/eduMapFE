@@ -1,0 +1,462 @@
+/* Delete Modal Styles */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.delete-modal-content {
+  background: white;
+  padding: 18px 30px;
+  border-radius: 20px;
+  width: 98%;
+  max-width: 480px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Illustration Section - Person Throwing File to Trash */
+.delete-illustration {
+  margin-bottom: 1.5rem;
+  position: relative;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background Squares */
+.delete-bg-squares {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.bg-square {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+.bg-square:nth-child(1) {
+  top: 10%;
+  left: 5%;
+  width: 40px;
+  height: 40px;
+}
+
+.bg-square:nth-child(2) {
+  top: 15%;
+  right: 10%;
+  width: 35px;
+  height: 35px;
+}
+
+.bg-square:nth-child(3) {
+  bottom: 20%;
+  left: 8%;
+  width: 30px;
+  height: 30px;
+}
+
+.bg-square:nth-child(4) {
+  bottom: 15%;
+  right: 5%;
+  width: 45px;
+  height: 45px;
+}
+
+/* Person */
+.delete-person {
+  position: absolute;
+  left: 30%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.person-head {
+  width: 28px;
+  height: 28px;
+  background: #ffd4a3;
+  border-radius: 50%;
+  position: relative;
+  margin-left: 8px;
+}
+
+.person-body {
+  width: 18px;
+  height: 35px;
+  background: #ff6b6b;
+  border-radius: 8px 8px 2px 2px;
+  margin-top: 2px;
+  margin-left: 13px;
+}
+
+.person-arm {
+  position: absolute;
+  top: 30px;
+  left: 28px;
+  width: 32px;
+  height: 5px;
+  background: #ffd4a3;
+  border-radius: 10px;
+  transform-origin: left center;
+  transform: rotate(-25deg);
+  animation: throwingArm 1.5s ease-in-out infinite;
+}
+
+@keyframes throwingArm {
+  0%, 100% {
+    transform: rotate(-25deg);
+  }
+  50% {
+    transform: rotate(-45deg);
+  }
+}
+
+/* File Being Thrown */
+.delete-file-throw {
+  position: absolute;
+  left: 48%;
+  top: 28%;
+  z-index: 3;
+  animation: throwFile 1.5s ease-in-out infinite;
+}
+
+.file-icon {
+  width: 24px;
+  height: 28px;
+  background: #ff6b6b;
+  border-radius: 2px;
+  position: relative;
+}
+
+.file-icon::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-bottom: 10px solid #ff6b6b;
+}
+
+@keyframes throwFile {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(15px, 8px) rotate(25deg);
+    opacity: 0.8;
+  }
+}
+
+/* Trash Bin */
+.delete-trash-bin {
+  position: absolute;
+  right: 25%;
+  bottom: 25%;
+  z-index: 1;
+}
+
+.delete-trash-bin img {
+  width: 40px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Modal Header */
+.delete-modal-header {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.delete-modal-header h2 {
+  margin: 0;
+  color: #1a1a2e;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Modal Body */
+.delete-modal-body {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.delete-modal-body p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.delete-modal-body strong {
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.delete-item-name {
+  margin-top: 4px !important;
+}
+
+/* Modal Footer */
+.delete-modal-footer {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.5;
+}
+
+.delete-btn-cancel {
+  background: white;
+  color: #6366f1;
+  border: 2px solid #6366f1;
+}
+
+.delete-btn-cancel:hover:not(:disabled) {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.delete-btn-confirm {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+.delete-btn-confirm:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.delete-btn-confirm:active {
+  transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Dark Mode Support */
+body.dark-mode .delete-modal-content {
+  background: #1f2937;
+}
+
+body.dark-mode .delete-modal-header h2 {
+  color: #f3f4f6;
+}
+
+body.dark-mode .delete-modal-body p {
+  color: #9ca3af;
+}
+
+body.dark-mode .delete-modal-body strong {
+  color: #f3f4f6;
+}
+
+body.dark-mode .delete-btn-cancel {
+  background: #374151;
+  color: #a78bfa;
+  border-color: #a78bfa;
+}
+
+body.dark-mode .delete-btn-cancel:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .delete-modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+
+  .delete-modal-footer {
+    flex-direction: column;
+  }
+
+  .delete-btn {
+    width: 100%;
+  }
+  
+  /* Illustration adjustments */
+  .delete-illustration {
+    height: 120px;
+  }
+  
+  .bg-square {
+    width: 35px !important;
+    height: 35px !important;
+  }
+  
+  .person-head {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .person-body {
+    width: 16px;
+    height: 30px;
+    margin-left: 11px;
+  }
+  
+  .person-arm {
+    width: 28px;
+  }
+  
+  .file-icon {
+    width: 20px;
+    height: 24px;
+  }
+  
+  .delete-trash-bin img {
+    width: 35px;
+  }
+}
+
+@media (max-width: 480px) {
+  .delete-modal-content {
+    padding: 1.2rem 1rem;
+    max-width: 340px;
+  }
+  
+  .delete-modal-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  .delete-modal-body p {
+    font-size: 0.875rem;
+  }
+  
+  .delete-btn {
+    padding: 0.65rem 1.2rem;
+    font-size: 0.875rem;
+    min-width: auto;
+  }
+  
+  .delete-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* Smaller illustration */
+  .delete-illustration {
+    height: 100px;
+  }
+  
+  .bg-square {
+    width: 25px !important;
+    height: 25px !important;
+  }
+  
+  .delete-person {
+    left: 28%;
+  }
+  
+  .person-head {
+    width: 20px;
+    height: 20px;
+    margin-left: 6px;
+  }
+  
+  .person-body {
+    width: 14px;
+    height: 26px;
+    margin-left: 9px;
+  }
+  
+  .person-arm {
+    top: 25px;
+    left: 23px;
+    width: 24px;
+    height: 4px;
+  }
+  
+  .delete-file-throw {
+    left: 46%;
+    top: 25%;
+  }
+  
+  .file-icon {
+    width: 18px;
+    height: 20px;
+  }
+  
+  .file-icon::before {
+    border-left: 8px solid transparent;
+    border-bottom: 8px solid #ff6b6b;
+  }
+  
+  .delete-trash-bin {
+    right: 22%;
+  }
+  
+  .delete-trash-bin img {
+    width: 32px;
+  }
+}

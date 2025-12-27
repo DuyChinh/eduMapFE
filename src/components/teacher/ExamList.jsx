@@ -4,7 +4,6 @@ import {
   Button, 
   Space, 
   Tag, 
-  Popconfirm, 
   Card, 
   Input, 
   Select,
@@ -29,6 +28,7 @@ import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import QRCodeModal from '../common/QRCodeModal';
 import UploadPdfModal from './UploadPdfModal';
+import DeleteConfirmModal from '../common/DeleteConfirmModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -60,6 +60,11 @@ const ExamList = () => {
   
   // Upload PDF modal state
   const [uploadPdfModalVisible, setUploadPdfModalVisible] = useState(false);
+  
+  // Delete modal state
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [examToDelete, setExamToDelete] = useState(null);
+  const [bulkDeleteModalVisible, setBulkDeleteModalVisible] = useState(false);
 
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -128,10 +133,20 @@ const ExamList = () => {
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleDelete = async (examId) => {
+  const handleDeleteClick = (exam) => {
+    setExamToDelete(exam);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!examToDelete) return;
+    
     try {
+      const examId = examToDelete._id || examToDelete.id;
       await examService.deleteExam(examId);
       message.success(t('exams.deleteSuccess'));
+      setDeleteModalVisible(false);
+      setExamToDelete(null);
       fetchExams();
     } catch (error) {
       console.error('Delete exam error:', error);
@@ -392,20 +407,14 @@ const ExamList = () => {
             />
           </Tooltip>
           
-          <Popconfirm
-            title={t('exams.confirmDelete')}
-            onConfirm={() => handleDelete(record._id || record.id)}
-            okText={t('common.yes')}
-            cancelText={t('common.no')}
-          >
-            <Tooltip title={t('exams.delete')}>
-              <Button 
-                type="text" 
-                danger 
-                icon={<DeleteOutlined />}
-              />
-            </Tooltip>
-          </Popconfirm>
+          <Tooltip title={t('exams.delete')}>
+            <Button 
+              type="text" 
+              danger 
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteClick(record)}
+            />
+          </Tooltip>
         </Space>
       ),
     },
@@ -488,21 +497,14 @@ const ExamList = () => {
         }}>
           <Space wrap size="small">
             {selectedRowKeys.length > 0 && (
-              <Popconfirm
-                title={t('exams.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected exam(s)?`}
-                onConfirm={handleBulkDelete}
-                okText={t('common.yes')}
-                cancelText={t('common.no')}
-                okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+              <Button 
+                danger
+                icon={<DeleteOutlined />}
+                loading={bulkDeleteLoading}
+                onClick={() => setBulkDeleteModalVisible(true)}
               >
-                <Button 
-                  danger
-                  icon={<DeleteOutlined />}
-                  loading={bulkDeleteLoading}
-                >
-                  {t('exams.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
-                </Button>
-              </Popconfirm>
+                {t('exams.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+              </Button>
             )}
             
             <Button 
@@ -585,6 +587,29 @@ const ExamList = () => {
         }}
         subjects={subjects}
         grades={[]} // Can be fetched if needed
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        open={deleteModalVisible}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setExamToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={t('common.deleteExam')}
+        description={t('common.deleteExamMessage')}
+        itemName={examToDelete?.name}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        open={bulkDeleteModalVisible}
+        onCancel={() => setBulkDeleteModalVisible(false)}
+        onConfirm={handleBulkDelete}
+        title={t('exams.confirmBulkDelete')}
+        description={t('exams.bulkDeleteConfirmMessage') || `Are you sure you want to delete ${selectedRowKeys.length} selected exam(s)?`}
+        loading={bulkDeleteLoading}
       />
     </Card>
   );

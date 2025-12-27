@@ -131,7 +131,19 @@
     "more": "Xem thêm",
     "zoomIn": "Phóng to",
     "zoomOut": "Thu nhỏ",
-    "clearFilters": "Xóa bộ lọc"
+    "clearFilters": "Xóa bộ lọc",
+    "confirmDelete": "Xác nhận xóa",
+    "deleteConfirmMessage": "Bạn có chắc chắn muốn xóa mục này",
+    "yesDelete": "Có, Xóa",
+    "noCancel": "Không, Hủy",
+    "deleteQuestion": "Xóa Câu Hỏi?",
+    "deleteQuestionMessage": "Bạn có chắc chắn muốn xóa câu hỏi",
+    "deleteExam": "Xóa đề thi?",
+    "deleteExamMessage": "Bạn có chắc chắn muốn xóa đề thi này",
+    "deleteClass": "Xóa lớp học?",
+    "deleteClassMessage": "Bạn có chắc chắn muốn xóa lớp học này",
+    "deletePost": "Xóa bài đăng?",
+    "deletePostMessage": "Bạn có chắc chắn muốn xóa bài đăng này"
   },
   "qrScanner": {
     "title": "Quét mã QR",

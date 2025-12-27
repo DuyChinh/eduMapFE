@@ -4,7 +4,6 @@ import {
   Button,
   Space,
   Tag,
-  Popconfirm,
   message,
   Card,
   Input,
@@ -32,6 +31,7 @@ import CreateClassModal from './CreateClassModal';
 import EditClassModal from './EditClassModal';
 import AddStudentsModal from './AddStudentsModal';
 import QRCodeModal from '../common/QRCodeModal';
+import DeleteConfirmModal from '../common/DeleteConfirmModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -60,6 +60,11 @@ const ClassList = () => {
   // Bulk delete states
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  
+  // Delete modal state
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [classToDelete, setClassToDelete] = useState(null);
+  const [bulkDeleteModalVisible, setBulkDeleteModalVisible] = useState(false);
 
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -128,10 +133,19 @@ const ClassList = () => {
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleDelete = async (classId) => {
+  const handleDeleteClick = (classData) => {
+    setClassToDelete(classData);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!classToDelete) return;
+    
     try {
-      await classService.deleteClass(classId);
+      await classService.deleteClass(classToDelete._id);
       message.success(t('classes.deleteSuccess'));
+      setDeleteModalVisible(false);
+      setClassToDelete(null);
       fetchClasses();
     } catch (error) {
       console.error('Delete class error:', error);
@@ -343,20 +357,14 @@ const ClassList = () => {
             />
           </Tooltip>
 
-          <Popconfirm
-            title={t('classes.confirmDelete')}
-            onConfirm={() => handleDelete(record._id)}
-            okText={t('common.yes')}
-            cancelText={t('common.no')}
-          >
-            <Tooltip title={t('classes.delete')}>
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-              />
-            </Tooltip>
-          </Popconfirm>
+          <Tooltip title={t('classes.delete')}>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteClick(record)}
+            />
+          </Tooltip>
         </Space>
       ),
     },
@@ -386,21 +394,14 @@ const ClassList = () => {
 
           <Space wrap size="small">
             {selectedRowKeys.length > 0 && (
-              <Popconfirm
-                title={t('classes.confirmBulkDelete') || `Are you sure you want to delete ${selectedRowKeys.length} selected class(es)?`}
-                onConfirm={handleBulkDelete}
-                okText={t('common.yes')}
-                cancelText={t('common.no')}
-                okButtonProps={{ danger: true, loading: bulkDeleteLoading }}
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                loading={bulkDeleteLoading}
+                onClick={() => setBulkDeleteModalVisible(true)}
               >
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                  loading={bulkDeleteLoading}
-                >
-                  {t('classes.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
-                </Button>
-              </Popconfirm>
+                {t('classes.deleteSelected') || `Delete Selected (${selectedRowKeys.length})`}
+              </Button>
             )}
 
             <Button
@@ -484,6 +485,29 @@ const ClassList = () => {
         title={selectedClassForQR?.name || t('classes.classCodeQR')}
         description={t('classes.qrDescription') || 'Students can scan this QR code to join the class'}
         filename={selectedClassForQR?.name ? `qr_class_${selectedClassForQR.name.replace(/[^a-zA-Z0-9]/g, '_')}` : `qr_class_${selectedClassForQR?.code || 'class'}`}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        open={deleteModalVisible}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setClassToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={t('common.deleteClass')}
+        description={t('common.deleteClassMessage')}
+        itemName={classToDelete?.name}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        open={bulkDeleteModalVisible}
+        onCancel={() => setBulkDeleteModalVisible(false)}
+        onConfirm={handleBulkDelete}
+        title={t('classes.confirmBulkDelete')}
+        description={t('classes.bulkDeleteConfirmMessage') || `Are you sure you want to delete ${selectedRowKeys.length} selected class(es)?`}
+        loading={bulkDeleteLoading}
       />
     </Card>
   );

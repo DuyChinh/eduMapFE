@@ -8,7 +8,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Popconfirm,
   Select,
   Space,
   Spin,
@@ -29,6 +28,7 @@ import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import PreviewExamModal from '../../components/teacher/PreviewExamModal';
 import SelectQuestionsModal from '../../components/teacher/SelectQuestionsModal';
+import DeleteConfirmModal from '../../components/common/DeleteConfirmModal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -62,6 +62,10 @@ const EditExam = () => {
   const [selectQuestionsModalVisible, setSelectQuestionsModalVisible] = useState(false);
   const [currentSubjectId, setCurrentSubjectId] = useState(null);
   const classesFetchedRef = useRef(false); // Track if classes have been fetched
+  
+  // Delete modal state
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [questionToRemove, setQuestionToRemove] = useState(null);
   const { examId } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -350,12 +354,22 @@ const EditExam = () => {
     setSelectedQuestions([...selectedQuestions, newQuestion]);
   };
 
-  const handleRemoveQuestion = (questionId) => {
+  const handleRemoveQuestionClick = (question) => {
+    setQuestionToRemove(question);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmRemoveQuestion = () => {
+    if (!questionToRemove) return;
+    
+    const questionId = questionToRemove._id || questionToRemove.id;
     const updated = selectedQuestions
       .filter(q => (q._id || q.id) !== questionId)
       .map((q, index) => ({ ...q, order: index + 1 }));
 
     setSelectedQuestions(updated);
+    setDeleteModalVisible(false);
+    setQuestionToRemove(null);
   };
 
   const handleUpdateQuestionMarks = (questionId, marks) => {
@@ -448,14 +462,13 @@ const EditExam = () => {
       key: 'actions',
       width: 80,
       render: (_, record) => (
-        <Popconfirm
-          title={t('exams.removeQuestionConfirm')}
-          onConfirm={() => handleRemoveQuestion(record._id || record.id)}
-          okText={t('common.yes')}
-          cancelText={t('common.no')}
-        >
-          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
+        <Button 
+          type="text" 
+          danger 
+          icon={<DeleteOutlined />} 
+          size="small"
+          onClick={() => handleRemoveQuestionClick(record)}
+        />
       ),
     },
   ];
@@ -1160,6 +1173,19 @@ const EditExam = () => {
         onConfirm={handleQuestionsSelected}
         subjectId={currentSubjectId}
         alreadySelectedIds={selectedQuestions.map(q => q._id || q.id)}
+      />
+
+      {/* Delete Question Confirmation Modal */}
+      <DeleteConfirmModal
+        open={deleteModalVisible}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setQuestionToRemove(null);
+        }}
+        onConfirm={handleConfirmRemoveQuestion}
+        title={t('exams.removeQuestionConfirm')}
+        description={t('common.deleteQuestionMessage')}
+        itemName={questionToRemove?.name}
       />
     </div>
   );

@@ -32,6 +32,7 @@ import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import CreateQuestionModal from './CreateQuestionModal';
 import UploadQuestionsPdfModal from './UploadQuestionsPdfModal';
+import './QuestionList.css';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -71,6 +72,10 @@ const QuestionList = () => {
   const [renameLoading, setRenameLoading] = useState(false);
   // Track selection order
   const [orderedSelectedIds, setOrderedSelectedIds] = useState([]);
+
+  // Delete modal states
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
 
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -161,12 +166,24 @@ const QuestionList = () => {
     try {
       await questionService.deleteQuestion(questionId);
       message.success(t('questions.deleteSuccess'));
+      setDeleteModalVisible(false);
+      setQuestionToDelete(null);
       fetchQuestions();
     } catch (error) {
       console.error('Delete question error:', error);
       const errorMessage = typeof error === 'string' ? error : (error?.message || t('questions.deleteFailed'));
       message.error(errorMessage);
     }
+  };
+
+  const openDeleteModal = (record) => {
+    setQuestionToDelete(record);
+    setDeleteModalVisible(true);
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalVisible(false);
+    setQuestionToDelete(null);
   };
 
   const handleBulkDelete = async () => {
@@ -573,20 +590,14 @@ const QuestionList = () => {
             />
           </Tooltip>
 
-          <Popconfirm
-            title={t('questions.confirmDelete')}
-            onConfirm={() => handleDelete(record.id || record._id)}
-            okText={t('common.yes')}
-            cancelText={t('common.no')}
-          >
-            <Tooltip title={t('questions.delete')}>
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-              />
-            </Tooltip>
-          </Popconfirm>
+          <Tooltip title={t('questions.delete')}>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => openDeleteModal(record)}
+            />
+          </Tooltip>
         </Space>
       ),
     },
@@ -940,6 +951,76 @@ const QuestionList = () => {
           )}
         </Space>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalVisible && questionToDelete && (
+        <div className="question-delete-modal-overlay" onClick={closeDeleteModal}>
+          <div className="question-delete-modal-content" onClick={e => e.stopPropagation()}>
+            {/* Illustration - Person throwing file to trash */}
+            <div className="question-delete-illustration">
+              {/* Background squares */}
+              <div className="delete-bg-squares">
+                <div className="bg-square"></div>
+                <div className="bg-square"></div>
+                <div className="bg-square"></div>
+                <div className="bg-square"></div>
+              </div>
+              
+              {/* Person */}
+              <div className="delete-person">
+                <div className="person-head"></div>
+                <div className="person-body"></div>
+                <div className="person-arm"></div>
+              </div>
+              
+              {/* File being thrown */}
+              <div className="delete-file-throw">
+                <div className="file-icon"></div>
+              </div>
+              
+              {/* Trash bin */}
+              <div className="delete-trash-bin">
+                <img src="/bin.png" alt="Trash bin" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="question-delete-modal-header">
+              <h2>{t('questions.deleteQuestion') || 'Delete The Question?'}</h2>
+            </div>
+
+            {/* Message */}
+            <div className="question-delete-modal-body">
+              <p>
+                {t('questions.deleteQuestionMessage') || 'Are you sure you want to delete the question'}
+              </p>
+              <p className="question-delete-name">
+                <strong>{questionToDelete.name || questionToDelete.text || 'this question'}</strong>?
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="question-delete-modal-footer">
+              <button 
+                className="question-delete-btn question-delete-btn-confirm" 
+                onClick={() => handleDelete(questionToDelete.id || questionToDelete._id)}
+              >
+                <span>{t('common.delete') || 'Delete'}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+              <button className="question-delete-btn question-delete-btn-cancel" onClick={closeDeleteModal}>
+                <span>{t('common.cancel') || 'Cancel'}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
