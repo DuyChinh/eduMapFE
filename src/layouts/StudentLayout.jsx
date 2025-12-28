@@ -330,7 +330,7 @@ const StudentLayout = () => {
         />
       </Sider>
 
-      <Layout>
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'all 0.2s' }}>
         <Header className="dashboard-header">
           <Button
             type="text"

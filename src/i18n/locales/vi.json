@@ -144,7 +144,8 @@
     "deleteClass": "Xóa lớp học?",
     "deleteClassMessage": "Bạn có chắc chắn muốn xóa lớp học này",
     "deletePost": "Xóa bài đăng?",
-    "deletePostMessage": "Bạn có chắc chắn muốn xóa bài đăng này"
+    "deletePostMessage": "Bạn có chắc chắn muốn xóa bài đăng này",
+    "close": "Đóng"
   },
   "qrScanner": {
     "title": "Quét mã QR",
@@ -663,6 +664,9 @@
   "exams": {
     "title": "Quản lý đề thi",
     "createNew": "Tạo đề thi mới",
+    "creator": "Người tạo",
+    "duration": "Thời lượng",
+    "minutes": "phút",
     "editExam": "Sửa đề thi",
     "viewDetails": "Xem chi tiết",
     "edit": "Sửa",
@@ -702,10 +706,8 @@
     "namePlaceholder": "Nhập tên đề thi...",
     "description": "Mô tả",
     "descriptionPlaceholder": "Nhập mô tả đề thi...",
-    "duration": "Thời lượng",
     "durationRequired": "Vui lòng nhập thời lượng!",
     "durationMin": "Thời lượng phải lớn hơn 0!",
-    "minutes": "phút",
     "totalMarks": "Tổng điểm",
     "totalMarksRequired": "Vui lòng nhập tổng điểm!",
     "totalMarksMin": "Tổng điểm phải lớn hơn hoặc bằng 0!",
@@ -1260,7 +1262,16 @@
     "commentDeleteOk": "Xóa",
     "commentDeleteCancel": "Hủy",
     "save": "Lưu",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "reply": "Trả lời",
+    "replyTo": "trả lời",
+    "replyingTo": "Đang trả lời",
+    "someone": "ai đó",
+    "hasReplied": "đã trả lời",
+    "replies": "phản hồi",
+    "hideReplies": "Ẩn phản hồi",
+    "like": "Thích",
+    "everyone": "mọi người"
   },
   "mindmap": {
     "unsavedChanges": "Bạn có những thay đổi chưa được lưu như bản vẽ, bố cục hoặc thuộc tính nút. Bạn có thực sự muốn rời đi mà không lưu không?",
@@ -1401,7 +1412,8 @@
     "NOTIFICATION_NEW_COMMENT_OWN": "đã bình luận về bài viết của bạn trong lớp {{className}}",
     "NOTIFICATION_NEW_COMMENT_OTHER": "đã bình luận về một bài viết trong lớp {{className}}",
     "NOTIFICATION_CLASS_REMOVAL": "đã xóa bạn khỏi lớp {{className}}",
-    "NOTIFICATION_CLASS_ADDITION": "đã thêm bạn vào lớp {{className}}"
+    "NOTIFICATION_CLASS_ADDITION": "đã thêm bạn vào lớp {{className}}",
+    "examInfo": "Thông tin bài thi"
   },
   "publicMindmap": {
     "notAvailable": "Mindmap không khả dụng",

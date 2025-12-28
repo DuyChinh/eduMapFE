@@ -79,6 +79,7 @@ const QuestionList = () => {
 
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [modal, contextHolder] = Modal.useModal();
 
   const fetchQuestions = async (params = {}) => {
     setLoading(true);
@@ -177,7 +178,7 @@ const QuestionList = () => {
         const exams = error.response.data.data.exams || [];
         setDeleteModalVisible(false);
         
-        Modal.error({
+        modal.error({
           title: t('questions.cannotDelete') || 'Cannot Delete Question',
           content: (
             <div>
@@ -269,7 +270,7 @@ const QuestionList = () => {
           fetchQuestions();
         } else if (results) {
           // Partial
-          Modal.warning({
+          modal.warning({
             title: t('questions.renamePartialSuccess'),
             content: (
               <div>
@@ -548,6 +549,7 @@ const QuestionList = () => {
       title: t('questions.level'),
       dataIndex: 'level',
       key: 'level',
+      align: 'center',
       render: (level) => (
         <Tag color={level <= 2 ? 'green' : level <= 4 ? 'orange' : 'red'}>
           {level}/5
@@ -632,6 +634,7 @@ const QuestionList = () => {
 
   return (
     <Card>
+      {contextHolder}
       <div style={{ marginBottom: 16 }}>
         {/* Filters Row */}
         <div style={{
@@ -684,11 +687,11 @@ const QuestionList = () => {
               allowClear
               onChange={(value) => handleFilterChange('level', value)}
             >
-              <Option value="1">1 - {t('questions.levelEasy')}</Option>
-              <Option value="2">2 - {t('questions.levelEasy')}</Option>
-              <Option value="3">3 - {t('questions.levelMedium')}</Option>
-              <Option value="4">4 - {t('questions.levelHard')}</Option>
-              <Option value="5">5 - {t('questions.levelHard')}</Option>
+              <Option value="1">1 - {t('questions.level1')}</Option>
+              <Option value="2">2 - {t('questions.level2')}</Option>
+              <Option value="3">3 - {t('questions.level3')}</Option>
+              <Option value="4">4 - {t('questions.level4')}</Option>
+              <Option value="5">5 - {t('questions.level5')}</Option>
             </Select>
 
             <Select

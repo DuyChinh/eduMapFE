@@ -1007,9 +1007,7 @@ const EditExam = () => {
             {/* Advanced Settings */}
             <Collapse.Panel header={t('exams.advancedSettings')} key="advanced">
               <div>
-                <Form.Item name={['settings', 'allowReview']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.allowReview')} unCheckedChildren={t('exams.noAllowReview')} />
-                </Form.Item>
+
 
                 <Form.Item name={['settings', 'showCorrectAnswer']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.showCorrectAnswer')} unCheckedChildren={t('exams.noShowCorrectAnswer')} />
@@ -1023,9 +1021,7 @@ const EditExam = () => {
                   <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
                 </Form.Item>
 
-                <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-                </Form.Item>
+
 
                 <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.fullscreenMode')} unCheckedChildren={t('exams.noFullscreenMode')} />

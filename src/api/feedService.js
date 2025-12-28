@@ -25,8 +25,8 @@ const feedService = {
         return axiosClient.patch(`/feed/posts/${postId}/lock`);
     },
 
-    toggleLike: (postId) => {
-        return axiosClient.post(`/feed/posts/${postId}/like`);
+    toggleReaction: (postId, type = 'like') => {
+        return axiosClient.post(`/feed/posts/${postId}/reaction`, { type });
     },
 
     addComment: (postId, data) => {
@@ -39,6 +39,16 @@ const feedService = {
 
     updateComment: (postId, commentId, data) => {
         return axiosClient.put(`/feed/posts/${postId}/comments/${commentId}`, data);
+    },
+
+    // React to a comment
+    reactComment: (postId, commentId, type = 'like') => {
+        return axiosClient.post(`/feed/posts/${postId}/comments/${commentId}/reaction`, { type });
+    },
+
+    // Get class members for @mention autocomplete
+    getClassMembers: (classId, query = '') => {
+        return axiosClient.get(`/feed/${classId}/members`, { params: { q: query } });
     }
 };
 

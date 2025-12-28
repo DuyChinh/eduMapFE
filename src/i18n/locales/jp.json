@@ -144,7 +144,8 @@
     "deleteClass": "クラスを削除しますか？",
     "deleteClassMessage": "このクラスを削除してもよろしいですか",
     "deletePost": "投稿を削除しますか？",
-    "deletePostMessage": "この投稿を削除してもよろしいですか"
+    "deletePostMessage": "この投稿を削除してもよろしいですか",
+    "close": "閉じる"
   },
   "qrScanner": {
     "title": "QRコードをスキャン",
@@ -476,7 +477,6 @@
     "answer": "答え",
     "images": "画像",
     "choices": "選択肢",
-    "images": "画像",
     "createdAt": "作成日",
     "viewDetails": "詳細を見る",
     "edit": "編集",
@@ -647,6 +647,9 @@
   "exams": {
     "title": "試験管理",
     "createNew": "新しい試験を作成",
+    "creator": "作成者",
+    "duration": "試験時間",
+    "minutes": "分",
     "editExam": "試験を編集",
     "viewDetails": "詳細を見る",
     "edit": "編集",
@@ -686,10 +689,8 @@
     "namePlaceholder": "試験名を入力...",
     "description": "説明",
     "descriptionPlaceholder": "試験の説明を入力...",
-    "duration": "時間",
     "durationRequired": "時間を入力してください！",
     "durationMin": "時間は0より大きい必要があります！",
-    "minutes": "分",
     "totalMarks": "合計点",
     "totalMarksRequired": "合計点を入力してください！",
     "totalMarksMin": "合計点は0以上である必要があります！",
@@ -1175,7 +1176,16 @@
     "add": "追加",
     "save": "保存",
     "cancel": "キャンセル",
-    "isTyping": "{{name}} が入力中..."
+    "isTyping": "{{name}} が入力中...",
+    "reply": "返信",
+    "replyTo": "返信先",
+    "replyingTo": "返信中",
+    "someone": "誰か",
+    "hasReplied": "が返信しました",
+    "replies": "件の返信",
+    "hideReplies": "返信を隠す",
+    "like": "いいね",
+    "everyone": "みんな"
   },
   "mindmap": {
     "unsavedChanges": "描画、レイアウト、またはノードプロパティなどの保存されていない変更があります。保存せずに終了してもよろしいですか？",
@@ -1316,7 +1326,8 @@
     "NOTIFICATION_NEW_COMMENT_OWN": "がクラス「{{className}}」のあなたの投稿にコメントしました",
     "NOTIFICATION_NEW_COMMENT_OTHER": "がクラス「{{className}}」の投稿にコメントしました",
     "NOTIFICATION_CLASS_REMOVAL": "がクラス「{{className}}」からあなたを削除しました",
-    "NOTIFICATION_CLASS_ADDITION": "がクラス「{{className}}」にあなたを追加しました"
+    "NOTIFICATION_CLASS_ADDITION": "がクラス「{{className}}」にあなたを追加しました",
+    "examInfo": "試験情報"
   },
   "publicMindmap": {
     "notAvailable": "マインドマップは利用できません",

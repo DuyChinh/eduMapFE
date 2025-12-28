@@ -97,7 +97,7 @@ const CreateExam = () => {
       lateEntryGracePeriod: -1,
       fee: 0,
       settings: {
-        allowReview: true,
+
         showCorrectAnswer: true,
         shuffleQuestions: true,
         shuffleChoices: true,
@@ -112,7 +112,7 @@ const CreateExam = () => {
         autoSubmit: true,
         confirmSubmit: true,
         allowLateSubmission: true,
-        preventCopy: true,
+
         preventRightClick: true,
         fullscreenMode: true,
         notifyOnStart: true,
@@ -931,9 +931,7 @@ const CreateExam = () => {
             {/* Advanced Settings */}
             <Collapse.Panel header={t('exams.advancedSettings')} key="advanced">
               <div>
-                <Form.Item name={['settings', 'allowReview']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.allowReview')} unCheckedChildren={t('exams.noAllowReview')} />
-                </Form.Item>
+
 
                 <Form.Item name={['settings', 'showCorrectAnswer']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.showCorrectAnswer')} unCheckedChildren={t('exams.noShowCorrectAnswer')} />
@@ -947,9 +945,7 @@ const CreateExam = () => {
                   <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
                 </Form.Item>
 
-                <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-                </Form.Item>
+
 
                 <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.fullscreenMode')} unCheckedChildren={t('exams.noFullscreenMode')} />

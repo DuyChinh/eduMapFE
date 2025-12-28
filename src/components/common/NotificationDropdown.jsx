@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Badge, Button, List, Avatar, Typography, Space, Spin, Empty, theme } from 'antd';
+import { Dropdown, Badge, Button, List, Avatar, Typography, Space, Spin, Empty, theme, Modal } from 'antd';
 import { BellOutlined, UserOutlined } from '@ant-design/icons';
 import { FaRegBell } from "react-icons/fa6";
 import { useNavigate } from 'react-router-dom';
@@ -80,9 +80,12 @@ const NotificationDropdown = () => {
             } catch (error) { console.error(error); }
         }
 
-        if (item.classId) {
+        // Check for classId directly or in relatedId (fallback)
+        const rawClassId = item.classId || item.relatedId?.classId;
+        
+        if (rawClassId) {
             // Ensure classId is a string
-            let cid = item.classId;
+            let cid = rawClassId;
             if (typeof cid === 'object') {
                 cid = cid._id || cid.id || String(cid);
             }
@@ -95,6 +98,7 @@ const NotificationDropdown = () => {
             // Check both type and content to handle all cases
             const isFeedNotification = item.type === 'NEW_POST' ||
                 item.type === 'NEW_COMMENT' ||
+                item.type === 'COMMENT_REACTION' ||
                 item.content === 'NOTIFICATION_NEW_POST' ||
                 item.content === 'NOTIFICATION_NEW_COMMENT_OWN' ||
                 item.content === 'NOTIFICATION_NEW_COMMENT_OTHER' ||
@@ -124,10 +128,29 @@ const NotificationDropdown = () => {
             if (item.type === 'MINDMAP_SHARED' || item.onModel === 'Mindmap') {
                 navigate(`${basePath}/mindmaps/shared`);
             } else if (item.type === 'EXAM_PUBLISHED') {
-                navigate(`${basePath}/classes`); 
+               handleExamNotificationClick(item.relatedId);
+            } else if (item.type === 'LATE_SUBMISSION') {
+                // Teacher: go to exams or dashboard
             } else if (item.type === 'LATE_SUBMISSION') {
                 // Teacher: go to exams or dashboard
                 navigate(`${basePath}/exams`);
+            } else if (item.type === 'COMMENT_REACTION') {
+                // Fallback for reactions without classId (old notifications)
+                // We don't have classId easily without fetching, but if we can't navigate to class, 
+                // we might try to navigate to home or show an error?
+                // Actually, backend fix ensures NEW ones have classId.
+                // For old ones, we can't reliably navigate to the specific class feed without fetching the post first.
+                // But let's assume the user has the course in their list.
+                // We can't guess the classId. So this might be a dead end for old notifications.
+                // However, user said "tham khảo noti comment". Comment noti has classId.
+                // If this is a new notification but accidentally 'classId' property is not at top level but inside 'relatedId' (post)?
+                // No, relatedId is FeedPost, which has classId.
+                
+                // Let's try to extract classId from relatedId if it was populated deeper?
+                // Probably not populated.
+                
+                // Just log valid attempt or hint user
+                console.warn('Notification missing classId:', item);
             }
         }
     };
@@ -240,23 +263,65 @@ const NotificationDropdown = () => {
         </div>
     );
 
+
+
+    const [modal, contextHolder] = Modal.useModal();
+
+    const handleExamNotificationClick = async (examId) => {
+        try {
+            const { default: examService } = await import('../../api/examService');
+            const res = await examService.getExamById(examId);
+            const exam = res.data || res;
+            
+            modal.info({
+                title: t('notifications.examInfo') || 'Thông tin bài thi',
+                content: (
+                    <div style={{ marginTop: 16 }}>
+                        <div style={{ marginBottom: 8 }}>
+                            <Text strong>{t('exams.name') || 'Tên bài thi'}: </Text>
+                            <Text>{exam.name}</Text>
+                        </div>
+                        <div style={{ marginBottom: 8 }}>
+                            <Text strong>{t('exams.creator') || 'Người tạo'}: </Text>
+                            <Text>{t('teacher.role')} {exam.owner?.name || exam.ownerId?.name || '-'}</Text>
+                        </div>
+                        <div style={{ marginBottom: 8 }}>
+                            <Text strong>{t('exams.startTime') || 'Thời gian bắt đầu'}: </Text>
+                            <Text>{exam.startTime ? new Date(exam.startTime).toLocaleString() : '-'}</Text>
+                        </div>
+
+                    </div>
+                ),
+                width: 500,
+                closable: true,
+                maskClosable: true,
+                okText: t('common.close') || 'Đóng',
+            });
+        } catch (error) {
+            console.error('Failed to fetch exam info', error);
+        }
+    };
+
     return (
-        <Dropdown
-            popupRender={(menu) => notificationMenu}
-            trigger={['click']}
-            open={open}
-            onOpenChange={setOpen}
-            placement="bottomRight"
-            arrow={{ pointAtCenter: true }}
-        >
-            <Badge count={unreadCount} overflowCount={99} size="small" offset={[-7, 9]}>
-                <Button
-                    type="text"
-                    icon={<FaRegBell style={{ fontSize: 20 }} />}
-                    className="notification-btn"
-                />
-            </Badge>
-        </Dropdown>
+        <>
+            {contextHolder}
+            <Dropdown
+                popupRender={(menu) => notificationMenu}
+                trigger={['click']}
+                open={open}
+                onOpenChange={setOpen}
+                placement="bottomRight"
+                arrow={{ pointAtCenter: true }}
+            >
+                <Badge count={unreadCount} overflowCount={99} size="small" offset={[-7, 9]}>
+                    <Button
+                        type="text"
+                        icon={<FaRegBell style={{ fontSize: 20 }} />}
+                        className="notification-btn"
+                    />
+                </Badge>
+            </Dropdown>
+        </>
     );
 };
 
