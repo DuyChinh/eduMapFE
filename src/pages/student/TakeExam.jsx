@@ -413,6 +413,8 @@ const TakeExam = () => {
                 errorMessage.includes("attempts")
                 ? "maxAttempts"
                 : "error",
+            examId: examId, // Pass examId for auto-start when countdown reaches 0
+            shareCode: sessionStorage.getItem("shareCode"), // Pass shareCode if exists
           },
           replace: true,
         });

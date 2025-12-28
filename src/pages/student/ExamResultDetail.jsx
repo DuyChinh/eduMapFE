@@ -363,7 +363,7 @@ const ExamResultDetail = () => {
       title: t('takeExam.rank') || 'Rank',
       dataIndex: 'rank',
       key: 'rank',
-      width: 80,
+      width: 60,
       render: (rank) => {
         if (rank === 1) {
           return (
@@ -429,24 +429,19 @@ const ExamResultDetail = () => {
     {
       title: t('takeExam.studentName') || 'Student',
       key: 'student',
+      width: 80,
+      ellipsis: true,
       render: (_, record) => record.student?.name || '-'
     },
     {
       title: t('takeExam.score') || 'Score',
       dataIndex: 'score',
       key: 'score',
+      width: 60,
       render: (score, record) => {
         if (!canViewScore) return '--';
-        const formattedScore = formatNumber(score);
-        const formattedTotal = formatNumber(record.totalMarks);
-        return `${formattedScore}/${formattedTotal}`;
+        return formatNumber(score);
       }
-    },
-    {
-      title: t('takeExam.percentage') || 'Percentage',
-      dataIndex: 'percentage',
-      key: 'percentage',
-      render: (percentage) => canViewScore ? `${percentage}%` : '--'
     }
   ];
 
@@ -1019,75 +1014,83 @@ const ExamResultDetail = () => {
           </div>
         </div>
 
-        {/* Score Summary */}
-        <Card className="result-summary-card" style={{ marginBottom: '24px' }}>
-          <Row gutter={24}>
-            {canViewScore ? (
-              <>
-                <Col xs={24} sm={12} md={6}>
+        {/* Score and Leaderboard Section */}
+        <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+          <Col xs={24} lg={showLeaderboard && leaderboard.length > 0 ? 12 : 24}>
+            {/* Score Summary */}
+            <Card className="result-summary-card" style={{ height: '100%' }}>
+              <Row gutter={24}>
+                {canViewScore ? (
+                  <>
+                    <Col xs={24} sm={12} md={12}>
+                      <Statistic
+                        title={t('takeExam.yourScore') || 'Your Score'}
+                        value={formatNumber(submission.score)}
+                        suffix={`/ ${formatNumber(submission.maxScore)}`}
+                        valueStyle={{ color: '#1890ff' }}
+                      />
+                    </Col>
+                    <Col xs={24} sm={12} md={12}>
+                      <Statistic
+                        title={t('takeExam.percentage') || 'Percentage'}
+                        value={submission.percentage || 0}
+                        suffix="%"
+                        valueStyle={{
+                          color: submission.percentage >= 80 ? '#52c41a' :
+                            submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
+                        }}
+                      />
+                    </Col>
+                  </>
+                ) : (
+                  <Col xs={24} sm={12} md={12}>
+                    <Alert
+                      message={t('exams.viewMarkNever') || 'Điểm số không được hiển thị'}
+                      description={t('exams.viewMarkNeverDesc') || 'Giáo viên đã thiết lập không hiển thị điểm cho bài thi này.'}
+                      type="info"
+                      showIcon
+                    />
+                  </Col>
+                )}
+                <Col xs={24} sm={12} md={12}>
                   <Statistic
-                    title={t('takeExam.yourScore') || 'Your Score'}
-                    value={formatNumber(submission.score)}
-                    suffix={`/ ${formatNumber(submission.maxScore)}`}
-                    valueStyle={{ color: '#1890ff' }}
+                    title={t('takeExam.status') || 'Status'}
+                    value={
+                      submission.status || 'Submitted'
+                    }
                   />
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={12}>
                   <Statistic
-                    title={t('takeExam.percentage') || 'Percentage'}
-                    value={submission.percentage || 0}
-                    suffix="%"
-                    valueStyle={{
-                      color: submission.percentage >= 80 ? '#52c41a' :
-                        submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
-                    }}
+                    title={t('takeExam.timeSpent') || 'Time Spent'}
+                    value={Math.floor((submission.timeSpent || 0) / 60)}
+                    suffix={t('takeExam.minutes') || 'minutes'}
                   />
                 </Col>
-              </>
-            ) : (
-              <Col xs={24} sm={12} md={12}>
-                <Alert
-                  message={t('exams.viewMarkNever') || 'Điểm số không được hiển thị'}
-                  description={t('exams.viewMarkNeverDesc') || 'Giáo viên đã thiết lập không hiển thị điểm cho bài thi này.'}
-                  type="info"
-                  showIcon
-                />
-              </Col>
-            )}
-            <Col xs={24} sm={12} md={6}>
-              <Statistic
-                title={t('takeExam.status') || 'Status'}
-                value={
-                  submission.status || 'Submitted'
-                }
-              />
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Statistic
-                title={t('takeExam.timeSpent') || 'Time Spent'}
-                value={Math.floor((submission.timeSpent || 0) / 60)}
-                suffix={t('takeExam.minutes') || 'minutes'}
-              />
-            </Col>
-          </Row>
-        </Card>
+              </Row>
+            </Card>
+          </Col>
 
-        {/* Leaderboard */}
-        {showLeaderboard && leaderboard.length > 0 && (
-          <Card
-            title={<><TrophyOutlined /> {t('takeExam.leaderboard') || 'Leaderboard'}</>}
-            style={{ marginBottom: '24px' }}
-          >
-            <Table
-              columns={leaderboardColumns}
-              dataSource={leaderboard}
-              rowKey="rank"
-              pagination={false}
-              size="small"
-              scroll={{ x: 'max-content' }}
-            />
-          </Card>
-        )}
+          {/* Leaderboard */}
+          {showLeaderboard && leaderboard.length > 0 && (
+            <Col xs={24} lg={12}>
+              <Card
+                title={<><TrophyOutlined /> {t('takeExam.leaderboard') || 'Leaderboard'}</>}
+                style={{ height: '100%' }}
+                bodyStyle={{ padding: '12px' }}
+              >
+                <Table
+                  columns={leaderboardColumns}
+                  dataSource={leaderboard}
+                  rowKey="rank"
+                  pagination={{ pageSize: 5, size: 'small' }}
+                  size="small"
+                  scroll={false}
+                />
+              </Card>
+            </Col>
+          )}
+        </Row>
 
         {/* Questions and Answers */}
         {canViewAnswers ? (

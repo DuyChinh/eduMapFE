@@ -100,6 +100,120 @@
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
 }
 
+/* Highlight button - more prominent */
+.back-button.highlight-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.back-button.highlight-button:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  transform: translateY(-2px);
+}
+
+.back-button.highlight-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+}
+
+/* Countdown styles */
+.countdown-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 12px;
+  border: 2px solid #0ea5e9;
+  flex-direction: column;
+}
+
+.countdown-icon {
+  font-size: 40px;
+  color: #0ea5e9;
+  animation: tick 1s ease-in-out infinite;
+}
+
+.countdown-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.countdown-label {
+  font-size: 14px;
+  color: #0369a1;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.countdown-text {
+  font-size: 36px;
+  font-weight: 700;
+  color: #0369a1;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  line-height: 1.2;
+}
+
+.countdown-detail {
+  font-size: 14px;
+  color: #0284c7;
+  font-weight: 400;
+  margin-top: 4px;
+}
+
+@keyframes tick {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Dark mode countdown */
+body.dark-mode .countdown-container {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+  border-color: #3b82f6;
+}
+
+body.dark-mode .countdown-icon {
+  color: #60a5fa;
+}
+
+body.dark-mode .countdown-text {
+  color: #93c5fd;
+}
+
+/* Auto-starting styles */
+.auto-starting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.auto-starting-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0369a1;
+  text-align: center;
+}
+
+body.dark-mode .auto-starting-text {
+  color: #60a5fa;
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
