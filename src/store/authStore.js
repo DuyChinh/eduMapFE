@@ -13,7 +13,9 @@ const useAuthStore = create(
     (set) => ({
       // State
       user: null,
-      token: null,
+      token: null, // Giữ để backward compatibility
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
       loading: false,
       error: null,
@@ -28,12 +30,14 @@ const useAuthStore = create(
         try {
           const response = await authService.login(credentials);
           
-          const token = response.data?.token;
+          // Hỗ trợ cả format mới (accessToken + refreshToken) và cũ (token)
+          const accessToken = response.data?.accessToken || response.data?.token;
+          const refreshToken = response.data?.refreshToken;
           const userData = response.data?.user;
           
-          if (!token) {
-            console.error('❌ Token not found in response:', response);
-            throw new Error('Token not found in response');
+          if (!accessToken) {
+            console.error('❌ Access token not found in response:', response);
+            throw new Error('Access token not found in response');
           }
           
           if (!userData) {
@@ -41,12 +45,18 @@ const useAuthStore = create(
             throw new Error('User data not found in response');
           }
           
-          // Store token
-          localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+          // Store tokens
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+          localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken); // Backward compatibility
+          if (refreshToken) {
+            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+          }
 
           set({
             user: userData,
-            token: token,
+            token: accessToken, // Backward compatibility
+            accessToken: accessToken,
+            refreshToken: refreshToken,
             isAuthenticated: true,
             loading: false,
             error: null,
@@ -82,15 +92,54 @@ const useAuthStore = create(
        */
       logout: () => {
         localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
         localStorage.removeItem('auth-storage'); // Clear persist storage
         set({
           user: null,
           token: null,
+          accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
           loading: false,
           error: null,
         });
+      },
+
+      /**
+       * Refresh access token using refresh token
+       */
+      refreshAccessToken: async () => {
+        try {
+          const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+          if (!refreshToken) {
+            throw new Error('No refresh token available');
+          }
+          
+          const response = await authService.refreshToken(refreshToken);
+          const newAccessToken = response.data?.accessToken;
+          
+          if (!newAccessToken) {
+            throw new Error('Failed to refresh token');
+          }
+          
+          // Update tokens
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+          localStorage.setItem(STORAGE_KEYS.TOKEN, newAccessToken); // Backward compatibility
+          
+          set({
+            accessToken: newAccessToken,
+            token: newAccessToken, // Backward compatibility
+          });
+          
+          return newAccessToken;
+        } catch (error) {
+          // Refresh token hết hạn hoặc invalid → logout
+          console.error('❌ Refresh token failed:', error);
+          useAuthStore.getState().logout();
+          throw error;
+        }
       },
 
       /**
@@ -167,19 +216,25 @@ const useAuthStore = create(
         try {
           const response = await authService.switchRole(role);
 
-          const token = response.data?.token;
+          // Hỗ trợ cả format mới (accessToken + refreshToken) và cũ (token)
+          const accessToken = response.data?.accessToken || response.data?.token;
+          const refreshToken = response.data?.refreshToken;
           const userData = response.data?.user;
 
-          if (!token || !userData) {
+          if (!accessToken || !userData) {
             throw new Error('Missing token or user in switchRole response');
           }
 
-          // Set token to localStorage first
-          localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+          // Set tokens to localStorage
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+          localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken); // Backward compatibility
+          if (refreshToken) {
+            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+          }
           
           // Verify token was set
-          const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
-          if (savedToken !== token) {
+          const savedToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+          if (savedToken !== accessToken) {
             console.error('❌ Token not saved correctly to localStorage');
             throw new Error('Failed to save token to localStorage');
           }
@@ -187,7 +242,9 @@ const useAuthStore = create(
           // Update state (persist middleware will also save to 'auth-storage')
           set({
             user: userData,
-            token,
+            token: accessToken, // Backward compatibility
+            accessToken: accessToken,
+            refreshToken: refreshToken,
             isAuthenticated: true,
             loading: false,
             error: null,
@@ -210,7 +267,9 @@ const useAuthStore = create(
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
+        token: state.token, // Backward compatibility
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

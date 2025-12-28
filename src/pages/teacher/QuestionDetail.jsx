@@ -482,8 +482,8 @@ const QuestionDetail = () => {
                   <Paragraph style={{
                     marginTop: '8px',
                     padding: '12px',
-                    background: '#f6ffed',
-                    border: '1px solid #b7eb8f',
+                    background: 'var(--success-bg)',
+                    border: '1px solid var(--success-border)',
                     borderRadius: '4px',
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',

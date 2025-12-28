@@ -30,7 +30,9 @@ export const ROUTES = {
 
 // Local Storage Keys
 export const STORAGE_KEYS = {
-  TOKEN: 'auth_token',
+  TOKEN: 'auth_token', // Giữ để backward compatibility
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
   USER: 'user_info',
 };
 

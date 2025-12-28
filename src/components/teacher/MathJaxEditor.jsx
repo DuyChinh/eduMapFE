@@ -161,9 +161,9 @@ const MathJaxEditor = ({
             <div style={{
               minHeight: '60px',
               padding: '8px',
-              border: '1px solid #d9d9d9',
+              border: '1px solid var(--border-color)',
               borderRadius: '6px',
-              backgroundColor: '#fafafa',
+              backgroundColor: 'var(--component-background)',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
               whiteSpace: 'pre-wrap'

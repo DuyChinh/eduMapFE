@@ -15,8 +15,9 @@ const axiosInstance = axios.create({
 // Request interceptor - Add token to requests
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Try to get token from multiple sources
-    let token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    // Ưu tiên dùng ACCESS_TOKEN, fallback về TOKEN (backward compatibility)
+    let token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || 
+               localStorage.getItem(STORAGE_KEYS.TOKEN);
 
     // If not found, try to get from persist storage
     if (!token) {
@@ -24,11 +25,11 @@ axiosInstance.interceptors.request.use(
         const persistData = localStorage.getItem('auth-storage');
         if (persistData) {
           const parsed = JSON.parse(persistData);
-          token = parsed.state?.token;
+          token = parsed.state?.accessToken || parsed.state?.token;
         }
-    } catch (error) {
+      } catch (error) {
         // Ignore invalid persisted storage in production
-    }
+      }
     }
 
     if (token) {
@@ -41,22 +42,71 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors globally
+// Response interceptor - Handle errors globally and auto-refresh token
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 axiosInstance.interceptors.response.use(
   (response) => {
     return response.data;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     // Handle different error scenarios
     if (error.response) {
       // Server responded with error status
       const { status, data } = error.response;
 
+      // Nếu là 401 và chưa retry, thử refresh token
+      if (status === 401 && !originalRequest._retry) {
+        // Nếu đang refresh, đợi
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then(token => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return axiosInstance(originalRequest);
+            })
+            .catch(err => Promise.reject(err));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          // Gọi refresh token
+          const newAccessToken = await useAuthStore.getState().refreshAccessToken();
+          
+          // Retry request ban đầu với token mới
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          processQueue(null, newAccessToken);
+          
+          return axiosInstance(originalRequest);
+        } catch (refreshError) {
+          // Refresh thất bại → logout
+          processQueue(refreshError, null);
+          useAuthStore.getState().logout();
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+
+      // Nếu là 401 nhưng đã retry hoặc không có refresh token → logout
       if (status === 401) {
-        // Let the component handle the error
-        // localStorage.removeItem(STORAGE_KEYS.TOKEN);
-        // localStorage.removeItem(STORAGE_KEYS.USER);
-        // localStorage.removeItem('auth-storage'); // Clear persist storage
         useAuthStore.getState().logout();
       }
 

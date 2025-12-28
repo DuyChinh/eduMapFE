@@ -32,12 +32,34 @@ body.dark-mode {
   color: rgba(255, 255, 255, 0.85);
 }
 
-[data-theme='dark'] {
-  color-scheme: dark;
-}
-
 [data-theme='light'] {
   color-scheme: light;
+  --component-background: #ffffff;
+  --border-color: #f0f0f0;
+  --text-color: #262626;
+  --text-secondary: #666;
+  --success-bg: #f6ffed;
+  --success-border: #b7eb8f;
+  --highlight-bg-gold: #fffbe6;
+  --highlight-bg-silver: #fafafa;
+  --highlight-bg-bronze: #fff2e8;
+  --auth-right-bg: #f5f5f5;
+  --auth-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --component-background: #1f1f1f;
+  --border-color: #434343;
+  --text-color: rgba(255, 255, 255, 0.85);
+  --text-secondary: rgba(255, 255, 255, 0.45);
+  --success-bg: #162312;
+  --success-border: #274916;
+  --highlight-bg-gold: #2b2111;
+  --highlight-bg-silver: #1f1f1f;
+  --highlight-bg-bronze: #2b1d11;
+  --auth-right-bg: #141414;
+  --auth-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 #root {

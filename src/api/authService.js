@@ -94,6 +94,15 @@ const authService = {
   switchRole: async (role) => {
     return await axiosInstance.post('/users/switch-role', { role });
   },
+
+  /**
+   * Refresh access token using refresh token
+   * @param {string} refreshToken - Refresh token
+   * @returns {Promise} Response with new access token
+   */
+  refreshToken: async (refreshToken) => {
+    return await axiosInstance.post('/auth/refresh', { refreshToken });
+  },
   
 };
 

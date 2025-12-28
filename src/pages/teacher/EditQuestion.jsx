@@ -412,7 +412,7 @@ const EditQuestion = () => {
   }
 
   return (
-    <div style={{ padding: '24px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', minHeight: '100vh' }}>
       {/* Header */}
       <Card style={{ marginBottom: '24px' }}>
         <Space>
@@ -510,7 +510,7 @@ const EditQuestion = () => {
                             position: 'absolute',
                             top: -5,
                             right: -5,
-                            background: '#fff',
+                            background: 'var(--component-background)',
                             borderRadius: '50%',
                             cursor: 'pointer',
                             zIndex: 1,
@@ -644,7 +644,7 @@ const EditQuestion = () => {
                                       position: 'absolute',
                                       top: -4,
                                       right: -4,
-                                      background: '#fff',
+                                      background: 'var(--component-background)',
                                       borderRadius: '50%',
                                       cursor: 'pointer',
                                       zIndex: 1,

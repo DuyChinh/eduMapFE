@@ -247,8 +247,8 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
           <Paragraph style={{
             marginTop: '8px',
             padding: '12px',
-            background: '#f6ffed',
-            border: '1px solid #b7eb8f',
+            background: 'var(--success-bg)',
+            border: '1px solid var(--success-border)',
             borderRadius: '4px',
             wordWrap: 'break-word',
             overflowWrap: 'break-word',
@@ -314,7 +314,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
                               maxHeight: '200px',
                               objectFit: 'contain',
                               borderRadius: '4px',
-                              border: '1px solid #f0f0f0'
+                              border: '1px solid var(--border-color)'
                             }}
                           />
                         </div>
@@ -428,7 +428,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
                   maxHeight: '400px',
                   objectFit: 'contain',
                   borderRadius: '8px',
-                  border: '1px solid #f0f0f0'
+                  border: '1px solid var(--border-color)'
                 }}
               />
             ))}
@@ -446,7 +446,7 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
                 maxHeight: '400px',
                 objectFit: 'contain',
                 borderRadius: '8px',
-                border: '1px solid #f0f0f0'
+                border: '1px solid var(--border-color)'
               }}
             />
           </div>
