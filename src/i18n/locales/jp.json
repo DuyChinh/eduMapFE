@@ -468,6 +468,12 @@
     "qrDescription": "学生はこのQRコードをスキャンしてクラスに参加できます"
   },
   "questions": {
+    "types": {
+      "mcq": "多肢選択",
+      "tf": "正誤問題",
+      "short": "短い答え",
+      "essay": "エッセイ"
+    },
     "title": "問題管理",
     "text": "問題文",
     "type": "問題タイプ",
@@ -920,6 +926,9 @@
     "incorrectAnswers": "不正解"
   },
   "takeExam": {
+    "fullscreenRequired": "フルスクリーンが必要です",
+    "fullscreenRequiredDesc": "この試験にはフルスクリーンモードが必要です。「フルスクリーンに入る」をクリックして続行してください。",
+    "enterFullscreen": "フルスクリーンに入る",
     "loading": "試験を読み込み中...",
     "examNotFound": "試験が見つかりません",
     "examStarted": "試験を開始しました。頑張ってください！",

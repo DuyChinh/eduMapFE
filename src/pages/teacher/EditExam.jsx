@@ -751,13 +751,7 @@ const EditExam = () => {
                   <InputNumber min={1} style={{ width: '100%' }} />
                 </Form.Item>
 
-                <Form.Item
-                  label={t('exams.fee')}
-                  name="fee"
-                  style={{ flex: 1 }}
-                >
-                  <InputNumber min={0} style={{ width: '100%' }} addonAfter="VND" />
-                </Form.Item>
+
 
                 <Form.Item
                   label={t('exams.status')}
@@ -1016,9 +1010,7 @@ const EditExam = () => {
                   <Switch checkedChildren={t('exams.showGroupTitles')} unCheckedChildren={t('exams.hideGroupTitles')} />
                 </Form.Item>
 
-                <Form.Item name="sectionsStartFromQ1" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.sectionsStartFromQ1')} unCheckedChildren={t('exams.sectionsNotStartFromQ1')} />
-                </Form.Item>
+
 
                 <Form.Item name="hideLeaderboard" valuePropName="checked">
                   <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
@@ -1063,15 +1055,7 @@ const EditExam = () => {
                 </Select>
               </Form.Item>
 
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Form.Item name="studentVerification" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.studentVerification')} unCheckedChildren={t('exams.noStudentVerification')} />
-                </Form.Item>
 
-                <Form.Item name="eduMapOnly" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.eduMapOnly')} unCheckedChildren={t('exams.notEduMapOnly')} />
-                </Form.Item>
-              </Space>
             </Collapse.Panel>
 
             {/* Advanced Settings */}

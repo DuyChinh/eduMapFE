@@ -97,12 +97,12 @@ const CreateExam = () => {
       preExamNotification: false,
       blockLateEntry: true,
       lateEntryGracePeriod: -1,
-      fee: 0,
+
       settings: {
 
-        showCorrectAnswer: true,
-        shuffleQuestions: true,
-        shuffleChoices: true,
+        showCorrectAnswer: false,
+        shuffleQuestions: false,
+        shuffleChoices: false,
         timeLimit: true,
         teacherCanStart: true,
         teacherCanPause: true,
@@ -116,7 +116,7 @@ const CreateExam = () => {
         allowLateSubmission: true,
 
         preventRightClick: true,
-        fullscreenMode: true,
+        fullscreenMode: false,
         notifyOnStart: true,
         notifyOnSubmit: true,
         notifyOnTimeWarning: true,
@@ -127,8 +127,8 @@ const CreateExam = () => {
         allowMarkForReview: true,
         showAnswerExplanation: true,
         allowQuestionFeedback: true,
-        randomizeQuestionOrder: true,
-        randomizeChoiceOrder: true,
+        randomizeQuestionOrder: false,
+        randomizeChoiceOrder: false,
         allowPartialCredit: true,
         showScoreImmediately: true,
         allowRetake: true,
@@ -141,7 +141,7 @@ const CreateExam = () => {
         fontSize: 'medium',
         showNavigation: true,
         showQuestionList: true,
-        allowFullscreen: true,
+        allowFullscreen: false,
         showInstructions: true,
         instructions: ''
       }
@@ -675,13 +675,7 @@ const CreateExam = () => {
                   <InputNumber min={1} style={{ width: '100%' }} />
                 </Form.Item>
 
-                <Form.Item
-                  label={t('exams.fee')}
-                  name="fee"
-                  style={{ flex: 1 }}
-                >
-                  <InputNumber min={0} style={{ width: '100%' }} addonAfter={t('exams.currency')} />
-                </Form.Item>
+
               </Space>
             </Collapse.Panel>
 
@@ -945,9 +939,7 @@ const CreateExam = () => {
                   <Switch checkedChildren={t('exams.showGroupTitles')} unCheckedChildren={t('exams.hideGroupTitles')} />
                 </Form.Item>
 
-                <Form.Item name="sectionsStartFromQ1" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.sectionsStartFromQ1')} unCheckedChildren={t('exams.sectionsNotStartFromQ1')} />
-                </Form.Item>
+
 
                 <Form.Item name="hideLeaderboard" valuePropName="checked">
                   <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
@@ -992,15 +984,7 @@ const CreateExam = () => {
                 </Select>
               </Form.Item>
 
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Form.Item name="studentVerification" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.studentVerification')} unCheckedChildren={t('exams.noStudentVerification')} />
-                </Form.Item>
 
-                <Form.Item name="eduMapOnly" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.eduMapOnly')} unCheckedChildren={t('exams.notEduMapOnly')} />
-                </Form.Item>
-              </Space>
             </Collapse.Panel>
 
             {/* Advanced Settings */}

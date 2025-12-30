@@ -484,7 +484,7 @@ const ExamResultDetail = () => {
               whiteSpace: 'pre-wrap',
               fontFamily: 'inherit'
             }}>
-              {renderMathContent(question.text || question.name)}
+              {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
             </Paragraph>
 
             {question.images && question.images.length > 0 ? (
@@ -642,7 +642,7 @@ const ExamResultDetail = () => {
             whiteSpace: 'pre-wrap',
             fontFamily: 'inherit'
           }}>
-            {renderMathContent(question.text || question.name)}
+            {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
           </Paragraph>
 
           {question.images && question.images.length > 0 && (
@@ -772,7 +772,7 @@ const ExamResultDetail = () => {
             whiteSpace: 'pre-wrap',
             fontFamily: 'inherit'
           }}>
-            {renderMathContent(question.text || question.name)}
+            {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
           </Paragraph>
 
           {question.images && question.images.length > 0 && (
@@ -883,7 +883,7 @@ const ExamResultDetail = () => {
             whiteSpace: 'pre-wrap',
             fontFamily: 'inherit'
           }}>
-            {renderMathContent(question.text || question.name)}
+            {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
           </Paragraph>
 
           {question.images && question.images.length > 0 && (

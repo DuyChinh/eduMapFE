@@ -38,6 +38,7 @@ import {
   updateSubmissionAnswers,
 } from "../../api/submissionService";
 import useAuthStore from "../../store/authStore";
+import useThemeStore from "../../store/themeStore";
 import "./TakeExam.css";
 
 const { Title, Text, Paragraph } = Typography;
@@ -47,7 +48,9 @@ const TakeExam = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { theme } = useThemeStore();
   const { message } = App.useApp();
+  const isDarkMode = theme === 'dark';
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -123,6 +126,49 @@ const TakeExam = () => {
         if (!submissionResult || !examData) {
           console.error("Missing submission or exam in response:", result);
           throw new Error("Invalid response format from server");
+        }
+
+        // Re-order questions based on questionOrder (prefer top-level result, fallback to submission)
+        const questionOrder = result.questionOrder || submissionResult.questionOrder;
+        
+        if (questionOrder && questionOrder.length > 0) {
+          const orderedQuestions = [];
+          const questionMap = new Map();
+          
+          examData.questions.forEach(q => {
+             const qId = q.questionId._id || q.questionId;
+             questionMap.set(qId.toString(), q);
+          });
+
+          questionOrder.forEach(qId => {
+            if (questionMap.has(qId.toString())) {
+              orderedQuestions.push(questionMap.get(qId.toString()));
+            }
+          });
+          
+          // Add any remaining questions that might not be in the order list (fallback)
+          examData.questions.forEach(q => {
+             const qId = q.questionId._id || q.questionId;
+             if (!questionOrder.includes(qId.toString())) {
+               orderedQuestions.push(q);
+             }
+          });
+
+          // Only update if we successfully matched questions
+          if (orderedQuestions.length > 0) {
+             examData.questions = orderedQuestions;
+          }
+        }
+
+        // 3. If "Sections Start From Q1" is enabled, sort by type (MCQ -> TF -> Short -> Essay)
+        if (examData.sectionsStartFromQ1) {
+          const TYPE_ORDER = { mcq: 1, tf: 2, short: 3, essay: 4 };
+          // Sort a copy or in-place? examData.questions is already a copy from response basically
+          examData.questions.sort((a, b) => {
+            const typeA = a.questionId.type || 'mcq';
+            const typeB = b.questionId.type || 'mcq';
+            return (TYPE_ORDER[typeA] || 99) - (TYPE_ORDER[typeB] || 99);
+          });
         }
 
         setSubmission(submissionResult);
@@ -312,6 +358,55 @@ const TakeExam = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [submission, exam]);
+
+  // Enforce Fullscreen Mode
+  useEffect(() => {
+    if (!exam || !exam.settings?.fullscreenMode) return;
+
+    // Function to enter fullscreen
+    const enterFullscreen = async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+      } catch (err) {
+        console.error("Error attempting to enable fullscreen:", err);
+        // If automatic entry fails (likely), we ensure the modal shows
+        if (!document.fullscreenElement) {
+           handleFullscreenChangeEnforce();
+        }
+      }
+    };
+
+    const handleFullscreenChangeEnforce = () => {
+      if (!document.fullscreenElement) {
+        // Show blocking modal if user exits fullscreen or hasn't entered yet
+        Modal.warning({
+          title: t('takeExam.fullscreenRequired') || 'Fullscreen Required',
+          content: t('takeExam.fullscreenRequiredDesc') || 'This exam requires fullscreen mode. Please click "Enter Fullscreen" to continue.',
+          okText: t('takeExam.enterFullscreen') || 'Enter Fullscreen',
+          onOk: enterFullscreen,
+          keyboard: false,
+          maskClosable: false,
+          closable: false,
+          zIndex: 2000,
+          centered: true
+        });
+      }
+    };
+
+    // Check immediately on mount. If not in fullscreen, show the modal.
+    // We can't auto-request fullscreen without user interaction, so we show the modal.
+    if (!document.fullscreenElement) {
+       handleFullscreenChangeEnforce();
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChangeEnforce);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChangeEnforce);
+    };
+  }, [exam, t]);
 
   // Initialize exam
   useEffect(() => {
@@ -567,7 +662,6 @@ const TakeExam = () => {
       [questionId]: value,
     }));
   };
-
   // Navigation
   const goToQuestion = (index) => {
     setCurrentQuestionIndex(index);
@@ -995,6 +1089,40 @@ const TakeExam = () => {
     );
   };
 
+  const TYPE_LABELS = {
+    mcq: t('questions.types.mcq'),
+    tf: t('questions.types.tf'),
+    short: t('questions.types.short'),
+    essay: t('questions.types.essay')
+  };
+
+  // Helper to get local index and section info
+  const getQuestionSectionInfo = (globalIndex) => {
+    if (!exam.sectionsStartFromQ1) return { displayIndex: globalIndex + 1, sectionTitle: null, isFirstInSection: false };
+
+    const currentQ = exam.questions[globalIndex];
+    if (!currentQ) return { displayIndex: globalIndex + 1, sectionTitle: null };
+
+    const currentType = currentQ.questionId.type || 'mcq';
+    
+    // Find how many questions of the same type appear BEFORE this one
+    let localIndex = 0;
+    for (let i = 0; i <= globalIndex; i++) {
+      if ((exam.questions[i].questionId.type || 'mcq') === currentType) {
+        localIndex++;
+      }
+    }
+
+    // Check if it's the first one of this type
+    const isFirstInSection = globalIndex === 0 || (exam.questions[globalIndex - 1].questionId.type || 'mcq') !== currentType;
+    
+    return {
+      displayIndex: localIndex,
+      sectionTitle: TYPE_LABELS[currentType],
+      isFirstInSection
+    };
+  };
+
   return (
     <MathJaxContext config={mathJaxConfig}>
       <div
@@ -1117,11 +1245,28 @@ const TakeExam = () => {
                   answers[questionId] !== undefined &&
                   answers[questionId] !== "";
 
+                const { displayIndex, sectionTitle, isFirstInSection } = getQuestionSectionInfo(index);
+
                 return (
-                  <Card key={index} className="question-item-card">
+                  <div key={index}>
+                    {isFirstInSection && (
+                      <div className="section-header" style={{ 
+                        padding: '16px 24px', 
+                        background: isDarkMode ? '#1f2937' : '#e6f7ff', 
+                        borderBottom: `1px solid ${isDarkMode ? '#374151' : '#1890ff'}`,
+                        borderTop: index > 0 ? `1px solid ${isDarkMode ? '#374151' : '#f0f0f0'}` : 'none',
+                        marginBottom: 16,
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        color: isDarkMode ? '#e5e7eb' : '#0050b3'
+                      }}>
+                        {sectionTitle}
+                      </div>
+                    )}
+                  <Card className="question-item-card">
                     <div className="question-item-header">
                       <Text strong className="question-number">
-                        {t("takeExam.questionNumber")} {index + 1}
+                        {t("takeExam.questionNumber")} {displayIndex}
                       </Text>
                       <Button
                         type="text"
@@ -1147,7 +1292,12 @@ const TakeExam = () => {
                           fontFamily: "inherit",
                         }}
                       >
-                        {renderMathContent(question.text || question.name)}
+                        {renderMathContent(
+                          (question.text || question.name || "").replace(
+                            /^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i,
+                            ""
+                          )
+                        )}
                       </Paragraph>
 
                       {/* Render question images */}
@@ -1357,6 +1507,7 @@ const TakeExam = () => {
                         )}
                     </div>
                   </Card>
+                  </div>
                 );
               })
               : // Hiển thị từng câu hỏi một (single view)
@@ -1368,12 +1519,28 @@ const TakeExam = () => {
                   answers[questionId] !== undefined &&
                   answers[questionId] !== "";
 
+                const { displayIndex, sectionTitle } = getQuestionSectionInfo(currentQuestionIndex);
+
                 return (
-                  <Card key={questionId} className="question-item-card">
+                  <Card key={questionId} className="question-item-card single-view-card">
+                     {sectionTitle && (
+                      <div style={{
+                        marginBottom: 12,
+                        padding: '8px 12px',
+                        background: isDarkMode ? 'rgba(31, 41, 55, 0.5)' : '#e6f7ff',
+                        borderRadius: 6,
+                        display: 'inline-block',
+                        color: isDarkMode ? '#9ca3af' : '#0050b3',
+                        fontSize: '13px',
+                        fontWeight: 500
+                      }}>
+                        {sectionTitle}
+                      </div>
+                    )}
                     <div className="question-item-header">
                       <Text strong className="question-number">
                         {t("takeExam.questionNumber")}{" "}
-                        {currentQuestionIndex + 1}
+                        {displayIndex}
                       </Text>
                       <Button
                         type="text"
@@ -1401,7 +1568,12 @@ const TakeExam = () => {
                           fontFamily: "inherit",
                         }}
                       >
-                        {renderMathContent(question.text || question.name)}
+                        {renderMathContent(
+                          (question.text || question.name || "").replace(
+                            /^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i,
+                            ""
+                          )
+                        )}
                       </Paragraph>
 
                       {/* Render question images */}
@@ -1741,21 +1913,25 @@ const TakeExam = () => {
             </div>
 
             {/* Title */}
-            <Title level={3} style={{ marginBottom: 8, color: '#1f2937' }}>
+            <Title level={3} style={{ marginBottom: 8, color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : '#1f2937' }}>
               {t("takeExam.confirmSubmit")}
             </Title>
 
             {/* Message */}
-            <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 24 }}>
+            <Text type="secondary" style={{ fontSize: 15, display: 'block', marginBottom: 24, color: isDarkMode ? 'rgba(255, 255, 255, 0.65)' : undefined }}>
               {t("takeExam.confirmSubmitMessage")}
             </Text>
 
             {/* Progress Card */}
             <div
               style={{
-                background: answeredCount === totalQuestions
-                  ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)'
-                  : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
+                background: isDarkMode
+                  ? (answeredCount === totalQuestions
+                      ? 'linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(82, 196, 26, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.15) 100%)')
+                  : (answeredCount === totalQuestions
+                      ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)'
+                      : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)'),
                 borderRadius: 16,
                 padding: '20px 24px',
                 marginBottom: 24,
@@ -1765,17 +1941,17 @@ const TakeExam = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <Text strong style={{ fontSize: 14, color: '#495057' }}>
+                <Text strong style={{ fontSize: 14, color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : '#495057' }}>
                   {t("takeExam.answeredQuestions")}
                 </Text>
-                <Text strong style={{ fontSize: 18, color: answeredCount === totalQuestions ? '#28a745' : '#856404' }}>
+                <Text strong style={{ fontSize: 18, color: answeredCount === totalQuestions ? '#28a745' : (isDarkMode ? '#ffc107' : '#856404') }}>
                   {answeredCount} / {totalQuestions}
                 </Text>
               </div>
               <div
                 style={{
                   height: 8,
-                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255,255,255,0.6)',
                   borderRadius: 4,
                   overflow: 'hidden',
                 }}

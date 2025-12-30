@@ -266,7 +266,7 @@ header.dashboard-header {
 
 /* Content */
 .dashboard-content {
-  margin: 0 22px 24px 22px;
+  margin: 24px 22px 24px 22px;
   padding: 24px;
   background: white;
   border-radius: 12px;

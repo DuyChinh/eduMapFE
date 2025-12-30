@@ -474,6 +474,12 @@
     "qrDescription": "Students can scan this QR code to join the class"
   },
   "questions": {
+    "types": {
+      "mcq": "Multiple Choice",
+      "tf": "True/False",
+      "short": "Short Answer",
+      "essay": "Essay"
+    },
     "title": "Question Management",
     "text": "Question Text",
     "type": "Question Type",
@@ -1006,6 +1012,9 @@
     "incorrectAnswers": "Incorrect Answers"
   },
   "takeExam": {
+    "fullscreenRequired": "Fullscreen Required",
+    "fullscreenRequiredDesc": "This exam requires fullscreen mode. Please click \"Enter Fullscreen\" to continue.",
+    "enterFullscreen": "Enter Fullscreen",
     "loading": "Loading exam...",
     "examNotFound": "Exam not found",
     "examStarted": "Exam started. Good luck!",

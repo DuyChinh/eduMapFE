@@ -471,6 +471,12 @@
     "qrDescription": "Học sinh có thể quét mã QR này để tham gia lớp học"
   },
   "questions": {
+    "types": {
+      "mcq": "Trắc nghiệm",
+      "tf": "Đúng/Sai",
+      "short": "Trả lời ngắn",
+      "essay": "Tự luận"
+    },
     "title": "Quản lý câu hỏi",
     "text": "Nội dung câu hỏi",
     "type": "Loại câu hỏi",
@@ -998,6 +1004,9 @@
     "incorrectAnswers": "Câu sai"
   },
   "takeExam": {
+    "fullscreenRequired": "Yêu cầu toàn màn hình",
+    "fullscreenRequiredDesc": "Bài thi này yêu cầu chế độ toàn màn hình. Vui lòng nhấn \"Vào toàn màn hình\" để tiếp tục.",
+    "enterFullscreen": "Vào toàn màn hình",
     "loading": "Đang tải đề thi...",
     "examNotFound": "Không tìm thấy đề thi",
     "examStarted": "Bắt đầu làm bài. Chúc bạn may mắn!",
