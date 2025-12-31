@@ -9,23 +9,24 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   VERIFY_OTP: '/verify-otp',
   RESET_PASSWORD: '/reset-password',
-  
+
   // Dashboard routes
   TEACHER_DASHBOARD: '/teacher/dashboard',
   STUDENT_DASHBOARD: '/student/dashboard',
   PROFILE: '/profile',
-  
+
   // Teacher routes
-  TEACHER_QUESTIONS: '/teacher/questions',
+  TEACHER_TRANSACTIONS: '/teacher/history-transaction',
   TEACHER_QUESTIONS_CREATE: '/teacher/questions/create',
   TEACHER_QUESTIONS_EDIT: '/teacher/questions/edit/:questionId',
   TEACHER_QUESTIONS_DETAIL: '/teacher/questions/detail/:questionId',
   TEACHER_EXAMS: '/teacher/exams',
   TEACHER_CLASSES: '/teacher/classes',
-  
+
   // Student routes
   STUDENT_CLASSES: '/student/classes',
   STUDENT_RESULTS: '/student/results',
+  STUDENT_TRANSACTIONS: '/student/history-transaction',
 };
 
 // Local Storage Keys

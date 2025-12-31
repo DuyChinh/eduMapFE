@@ -2,20 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Result, Spin, App } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import paymentService from '../../services/paymentService'; // Import payment service
+import paymentService from '../../services/paymentService';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
 const PaymentResult = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    // Use App hook if available, otherwise fallback/skip. Assuming App is available in context based on previous files.
-    // Safeguard: Check if App context exists, else use console/alert logic? 
-    // Actually, Antd 5 App component usage: const { message } = App.useApp(); 
-    // If not sure, better to stick to basic state for "result page" which doesn't strictly need toast messages.
+    const { t } = useTranslation();
 
     const [status, setStatus] = useState('loading'); // loading, success, failed
-    const [message, setMessage] = useState('Đang xác thực giao dịch...');
+    const [message, setMessage] = useState(t('payment.verifyTransaction'));
     const [code, setCode] = useState(null);
 
     useEffect(() => {
@@ -23,9 +21,15 @@ const PaymentResult = () => {
             const queryParams = Object.fromEntries(new URLSearchParams(location.search));
 
             // Basic check if params exist
+            if (queryParams.status === 'success' && queryParams.method === 'sepay') {
+                setStatus('success');
+                setMessage(t('payment.result.successMessage'));
+                return;
+            }
+
             if (!queryParams.vnp_SecureHash) {
                 setStatus('failed');
-                setMessage('Không tìm thấy thông tin thanh toán hợp lệ.');
+                setMessage(t('payment.result.failedMessage'));
                 return;
             }
 
@@ -35,20 +39,20 @@ const PaymentResult = () => {
 
                 if (result.status === 'success') {
                     setStatus('success');
-                    setMessage('Giao dịch thành công!');
+                    setMessage(t('payment.result.successMessage'));
                 } else {
                     setStatus('failed');
-                    setMessage(result.message || 'Giao dịch thất bại');
+                    setMessage(result.message || t('payment.result.failedMessage'));
                     setCode(result.code);
                 }
             } catch (error) {
                 setStatus('failed');
-                setMessage('Lỗi kết nối đến server xác thực.');
+                setMessage(t('payment.result.failedMessage'));
             }
         };
 
         verifyPayment();
-    }, [location]);
+    }, [location, t]);
 
     return (
         <div style={{ padding: '50px', display: 'flex', justifyContent: 'center' }}>
@@ -56,26 +60,26 @@ const PaymentResult = () => {
                 {status === 'loading' ? (
                     <div style={{ padding: '40px 0' }}>
                         <Spin size="large" />
-                        <Title level={4} style={{ marginTop: 20 }}>Đang xử lý kết quả thanh toán...</Title>
-                        <Text type="secondary">Vui lòng không tắt trình duyệt.</Text>
+                        <Title level={4} style={{ marginTop: 20 }}>{t('payment.result.loadingTitle')}</Title>
+                        <Text type="secondary">{t('payment.result.loadingDesc')}</Text>
                     </div>
                 ) : (
                     <Result
                         status={status === 'success' ? 'success' : 'error'}
-                        title={status === 'success' ? 'Thanh toán thành công!' : 'Thanh toán thất bại!'}
+                        title={status === 'success' ? t('payment.result.successTitle') : t('payment.result.failedTitle')}
                         subTitle={
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <Text>{message}</Text>
-                                {code && <Text type="secondary">Mã lỗi: {code}</Text>}
+                                {code && <Text type="secondary">Code: {code}</Text>}
                             </div>
                         }
                         extra={[
                             <Button type="primary" key="home" onClick={() => navigate('/')}>
-                                Về trang chủ
+                                {t('payment.result.homeButton')}
                             </Button>,
                             status === 'failed' && (
                                 <Button key="retry" onClick={() => navigate('/vip-packages')}>
-                                    Thử lại
+                                    {t('payment.result.retryButton')}
                                 </Button>
                             )
                         ]}

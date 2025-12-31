@@ -31,6 +31,7 @@ import Questions from '../pages/teacher/Questions';
 import Reports from '../pages/teacher/Reports';
 import TeacherDashboard from '../pages/teacher/TeacherDashboard';
 import VipPackages from '../pages/teacher/VipPackages';
+import TransactionHistoryPage from '../pages/payment/TransactionHistoryPage';
 
 // Student Pages
 import StudentClassDetail from '../pages/student/ClassDetail';
@@ -123,6 +124,7 @@ const router = createBrowserRouter(
         <Route path="mindmaps/shared" element={<MindmapShared />} />
         <Route path="mindmaps/trash" element={<MindmapTrash />} />
         <Route path="vip-packages" element={<VipPackages />} />
+        <Route path="history-transaction" element={<TransactionHistoryPage />} />
       </Route>
 
       {/* Teacher Mindmap Editor - Full Screen (outside layout) */}
@@ -155,6 +157,7 @@ const router = createBrowserRouter(
         <Route path="mindmaps/shared" element={<MindmapShared />} />
         <Route path="mindmaps/trash" element={<MindmapTrash />} />
         <Route path="vip-packages" element={<VipPackages />} />
+        <Route path="history-transaction" element={<TransactionHistoryPage />} />
       </Route>
 
       {/* Student Mindmap Editor - Full Screen (outside layout) */}

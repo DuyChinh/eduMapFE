@@ -25,6 +25,7 @@
     "antd": "^5.27.4",
     "axios": "^1.12.2",
     "better-react-mathjax": "^2.3.0",
+    "dayjs": "^1.11.19",
     "framer-motion": "^12.23.24",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",

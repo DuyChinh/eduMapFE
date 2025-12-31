@@ -144,7 +144,11 @@
     "deleteClass": "Xóa lớp học?",
     "deleteClassMessage": "Bạn có chắc chắn muốn xóa lớp học này",
     "deletePost": "Xóa bài đăng?",
-    "deletePostMessage": "Bạn có chắc chắn muốn xóa bài đăng này"
+    "deletePostMessage": "Bạn có chắc chắn muốn xóa bài đăng này",
+    "all": "Tất cả",
+    "startDate": "Từ ngày",
+    "endDate": "Đến ngày",
+    "index": "STT"
   },
   "qrScanner": {
     "title": "Quét mã QR",
@@ -764,13 +768,10 @@
     "timezone": "Múi giờ",
     "availableFrom": "Có sẵn từ",
     "availableUntil": "Có sẵn đến",
-    "startTime": "Thời gian bắt đầu",
-    "endTime": "Thời gian kết thúc",
     "blockLateEntry": "Không cho phép vào muộn sau",
     "allowLateEntryAnytime": "Cho phép vào muộn bất cứ lúc nào",
     "lateEntryGracePeriod": "Thời gian cho phép (phút)",
     "lateEntryGracePeriodTooltip": "Số phút cho phép học sinh vào sau thời gian bắt đầu. 0 = chặn ngay sau thời gian bắt đầu",
-    "minutes": "phút",
     "lateEntryBlocked": "Không cho phép vào muộn. Bài thi này đã chặn vào sau thời gian cho phép.",
     "viewSettings": "Cài đặt hiển thị",
     "viewMark": "Hiển thị điểm",
@@ -1052,7 +1053,6 @@
     "autoStarting": "Đang tự động bắt đầu bài thi...",
     "days": "ngày",
     "hours": "giờ",
-    "minutes": "phút",
     "seconds": "giây",
     "submissionNotFound": "Không tìm thấy bài làm",
     "yourScore": "Điểm của bạn",
@@ -1170,7 +1170,6 @@
     "mcq": "Trắc nghiệm",
     "questions": "câu",
     "question": "Câu hỏi",
-    "correctAnswer": "Đáp án đúng",
     "gradedBy": "Giáo viên chấm",
     "viewActivityLog": "Xem chi tiết quá trình làm bài",
     "deleteAndRetake": "Xóa bài thi và cho thi lại",
@@ -1209,7 +1208,6 @@
       "copyAttempt": "Cố gắng sao chép",
       "pasteAttempt": "Cố gắng dán"
     },
-    "question": "Câu",
     "correctAnswer": "Đáp án đúng",
     "studentAnswer": "Đáp án học sinh chọn",
     "yourAnswer": "Câu trả lời của bạn",
@@ -1422,7 +1420,7 @@
       "free": {
         "title": "Miễn phí",
         "features": [
-          "1500 Yêu cầu AI / Ngày",
+          "5 Yêu cầu AI / Ngày",
           "Tính năng Sơ đồ tư duy cơ bản",
           "Hỗ trợ cộng đồng",
           "Truy cập thư viện công cộng"
@@ -1431,7 +1429,7 @@
       "plus": {
         "title": "Plus",
         "features": [
-          "2000 Yêu cầu AI / Ngày",
+          "10 Yêu cầu AI / Ngày",
           "Xuất Sơ đồ tư duy nâng cao",
           "Hỗ trợ ưu tiên",
           "Không quảng cáo"
@@ -1440,7 +1438,7 @@
       "pro": {
         "title": "Pro",
         "features": [
-          "5000 Yêu cầu AI / Ngày",
+          "15 Yêu cầu AI / Ngày",
           "Sơ đồ tư duy không giới hạn",
           "Hỗ trợ chuyên dụng 24/7",
           "Truy cập sớm các tính năng mới"
@@ -1453,6 +1451,57 @@
       "initError": "Lỗi khởi tạo thanh toán. Vui lòng thử lại.",
       "loading": "Đang tạo yêu cầu thanh toán...",
       "orderInfo": "Nâng cấp lên {{plan}} - {{user}}"
+    }
+  },
+  "payment": {
+    "title": "Thanh toán",
+    "history": "Lịch sử giao dịch",
+    "pending": "Đang chờ",
+    "success": "Thành công",
+    "failed": "Thất bại",
+    "loading": "Đang tải...",
+    "processing": "Đang xử lý...",
+    "verifyTransaction": "Đang xác thực giao dịch...",
+    "paymentSuccess": "Thanh toán thành công!",
+    "paymentFailed": "Thanh toán thất bại!",
+    "paymentPending": "Đang chờ thanh toán...",
+    "vipActivated": "Gói cước của bạn đã được kích hoạt ngay lập tức.",
+    "thankYou": "Cảm ơn bạn đã đăng ký gói VIP.",
+    "experienceNow": "Mời bạn trải nghiệm",
+    "close": "Đóng",
+    "bankConfig": {
+      "title": "Thanh toán qua chuyển khoản ngân hàng",
+      "instruction": "Vui lòng quét mã QR hoặc chuyển khoản theo thông tin bên dưới. Hệ thống sẽ tự động kích hoạt ngay sau khi nhận được tiền.",
+      "bank": "Ngân hàng",
+      "accountOwner": "Chủ tài khoản",
+      "accountNumber": "Số tài khoản",
+      "amount": "Số tiền",
+      "content": "Nội dung chuyển khoản (Bắt buộc)",
+      "copy": "Đã sao chép!"
+    },
+    "result": {
+      "successTitle": "Thanh toán thành công!",
+      "failedTitle": "Thanh toán thất bại!",
+      "successMessage": "Giao dịch thành công!",
+      "failedMessage": "Giao dịch thất bại",
+      "homeButton": "Về trang chủ",
+      "retryButton": "Thử lại",
+      "loadingTitle": "Đang xử lý kết quả thanh toán...",
+      "loadingDesc": "Vui lòng không tắt trình duyệt."
+    },
+    "historyModal": {
+      "txnRef": "Mã GD",
+      "amount": "Số tiền",
+      "content": "Nội dung",
+      "status": "Trạng thái",
+      "date": "Thời gian",
+      "loadError": "Không thể tải lịch sử giao dịch.",
+      "items": "giao dịch"
+    },
+    "selection": {
+      "title": "Chọn phương thức thanh toán",
+      "vnpay": "Thanh toán qua VNPay (Thẻ ATM/Visa)",
+      "sepay": "Thanh toán QR Code (Chuyển khoản 24/7)"
     }
   }
 }

@@ -480,9 +480,14 @@ const ChatWidget = () => {
                 console.log('Request was cancelled by user');
             } else {
                 console.error('Failed to send message:', error);
+
+                // Check if it's a limit reached error (from backend)
+                const backendErrorMsg = error.response?.data?.message;
+                const isLimitError = error.response?.status === 403 || error.response?.data?.error === 'LIMIT_REACHED';
+
                 const errorMessage = {
                     id: Date.now() + 1,
-                    text: t('chat.error'),
+                    text: isLimitError ? backendErrorMsg : t('chat.error'),
                     sender: 'bot',
                     isError: true
                 };
@@ -1016,7 +1021,7 @@ const ChatWidget = () => {
                                             )}
                                         </>
                                     )}
-                                    {msg.sender === 'bot' && msg.text && !editingMessageId && (
+                                    {msg.sender === 'bot' && msg.text && !editingMessageId && !msg.isError && (
                                         <button
                                             className="copy-message-btn"
                                             onClick={() => handleCopyMessage(msg.text, msg.id)}
