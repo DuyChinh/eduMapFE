@@ -17,6 +17,7 @@ export const ROUTES = {
 
   // Teacher routes
   TEACHER_TRANSACTIONS: '/teacher/history-transaction',
+  TEACHER_QUESTIONS: '/teacher/questions',
   TEACHER_QUESTIONS_CREATE: '/teacher/questions/create',
   TEACHER_QUESTIONS_EDIT: '/teacher/questions/edit/:questionId',
   TEACHER_QUESTIONS_DETAIL: '/teacher/questions/detail/:questionId',
