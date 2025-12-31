@@ -4,8 +4,8 @@ import { CrownOutlined, CheckOutlined, ThunderboltOutlined, SmileOutlined, BankO
 import paymentService from '../../services/paymentService';
 import useAuthStore from '../../store/authStore';
 import { useTranslation } from 'react-i18next';
-import SePayPaymentModal from '../../components/Payment/SePayPaymentModal';
-import TransactionHistoryModal from '../../components/Payment/TransactionHistoryModal';
+import SePayPaymentModal from '../../components/payment/SePayPaymentModal';
+import TransactionHistoryModal from '../../components/payment/TransactionHistoryModal';
 
 import './VipPackages.css';
 
