@@ -227,7 +227,7 @@ const QuestionEditorModal = ({ visible, questionData, onCancel, onSave, subjects
             width={1200}
             style={{ top: 20 }}
             maskClosable={false}
-            destroyOnClose
+            destroyOnHidden
         >
             <Row gutter={24}>
                 {/* Left Column - Form */}
