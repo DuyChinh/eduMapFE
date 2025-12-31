@@ -7,6 +7,13 @@
 .dashboard-sider {
   background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  overflow: auto;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
 }
 
 .logo-container {
@@ -130,6 +137,10 @@ header.dashboard-header {
 }
 
 .dashboard-header {
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  width: 100%;
   background: white;
   padding: 0 24px;
   display: flex;
@@ -138,6 +149,12 @@ header.dashboard-header {
   transition: background-color 0.3s ease;
   /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); */
   height: 64px;
+}
+
+/* Content wrapper - ensure it doesn't overlap header */
+.dashboard-content-wrapper {
+  position: relative;
+  z-index: 1;
 }
 
 .trigger-btn {
@@ -249,7 +266,7 @@ header.dashboard-header {
 
 /* Content */
 .dashboard-content {
-  margin: 0 22px 24px 22px;
+  margin: 24px 22px 24px 22px;
   padding: 24px;
   background: white;
   border-radius: 12px;

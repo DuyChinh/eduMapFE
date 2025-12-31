@@ -24,6 +24,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import examService from '../../api/examService';
+import gradeService from '../../api/gradeService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import QRCodeModal from '../common/QRCodeModal';
@@ -37,6 +38,7 @@ const ExamList = () => {
   const { message } = App.useApp();
   const [exams, setExams] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -47,6 +49,7 @@ const ExamList = () => {
     q: '',
     status: '',
     subjectId: '',
+    gradeId: '',
     sort: '-createdAt'
   });
   
@@ -122,6 +125,20 @@ const ExamList = () => {
 
     fetchSubjects();
   }, [i18n.language]);
+
+  // Fetch grades on component mount
+  useEffect(() => {
+    const fetchGrades = async () => {
+      try {
+        const gradesData = await gradeService.getGrades();
+        setGrades(gradesData || []);
+      } catch (error) {
+        console.error('Error fetching grades:', error);
+      }
+    };
+
+    fetchGrades();
+  }, []);
 
   const handleSearch = (value) => {
     setFilters(prev => ({ ...prev, q: value }));
@@ -251,6 +268,24 @@ const ExamList = () => {
     }
   };
 
+  // Get grade name based on current language
+  const getGradeName = (grade) => {
+    if (!grade) return '-';
+    if (typeof grade === 'string') return grade;
+    
+    const currentLang = i18n.language || 'vi';
+    switch (currentLang) {
+      case 'en':
+        return grade.name_en || grade.name || '-';
+      case 'jp':
+      case 'ja':
+        return grade.name_jp || grade.name || '-';
+      case 'vi':
+      default:
+        return grade.name || '-';
+    }
+  };
+
   const columns = [
     {
       title: t('exams.name'),
@@ -281,6 +316,19 @@ const ExamList = () => {
         const subjectName = getSubjectName(subject);
         return subjectName !== '-' ? (
           <Tag color="cyan">{subjectName}</Tag>
+        ) : (
+          <span>-</span>
+        );
+      },
+    },
+    {
+      title: t('exams.grade') || 'Grade',
+      dataIndex: 'gradeId',
+      key: 'grade',
+      render: (grade) => {
+        const gradeName = getGradeName(grade);
+        return gradeName !== '-' ? (
+          <Tag color="purple">{gradeName}</Tag>
         ) : (
           <span>-</span>
         );
@@ -483,6 +531,28 @@ const ExamList = () => {
               {subjects.map((subject) => (
                 <Option key={subject._id} value={subject._id} label={getSubjectName(subject)}>
                   {getSubjectName(subject)}
+                </Option>
+              ))}
+            </Select>
+
+            <Select
+              placeholder={t('exams.filterByGrade') || 'Filter by Grade'}
+              style={{ 
+                width: '100%',
+                maxWidth: 180,
+                minWidth: 130
+              }}
+              allowClear
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              onChange={(value) => handleFilterChange('gradeId', value)}
+            >
+              {grades.map((grade) => (
+                <Option key={grade._id} value={grade._id} label={getGradeName(grade)}>
+                  {getGradeName(grade)}
                 </Option>
               ))}
             </Select>

@@ -471,6 +471,12 @@
     "qrDescription": "学生はこのQRコードをスキャンしてクラスに参加できます"
   },
   "questions": {
+    "types": {
+      "mcq": "多肢選択",
+      "tf": "正誤問題",
+      "short": "短い答え",
+      "essay": "エッセイ"
+    },
     "title": "問題管理",
     "text": "問題文",
     "type": "問題タイプ",
@@ -480,7 +486,6 @@
     "answer": "答え",
     "images": "画像",
     "choices": "選択肢",
-    "images": "画像",
     "createdAt": "作成日",
     "viewDetails": "詳細を見る",
     "edit": "編集",
@@ -651,6 +656,9 @@
   "exams": {
     "title": "試験管理",
     "createNew": "新しい試験を作成",
+    "creator": "作成者",
+    "duration": "試験時間",
+    "minutes": "分",
     "editExam": "試験を編集",
     "viewDetails": "詳細を見る",
     "edit": "編集",
@@ -665,6 +673,7 @@
     "searchPlaceholder": "試験を検索...",
     "filterByStatus": "ステータスでフィルター",
     "filterBySubject": "科目でフィルター",
+    "filterByGrade": "学年でフィルター",
     "showGradeLetter": "成績文字で表示",
     "subject": "科目",
     "fetchFailed": "試験の読み込みに失敗しました",
@@ -690,14 +699,14 @@
     "namePlaceholder": "試験名を入力...",
     "description": "説明",
     "descriptionPlaceholder": "試験の説明を入力...",
-    "duration": "時間",
     "durationRequired": "時間を入力してください！",
     "durationMin": "時間は0より大きい必要があります！",
-    "minutes": "分",
     "totalMarks": "合計点",
     "totalMarksRequired": "合計点を入力してください！",
     "totalMarksMin": "合計点は0以上である必要があります！",
     "examPurpose": "目的",
+    "grade": "学年",
+    "selectGrade": "学年を選択",
     "examPurposeRequired": "目的を選択してください！",
     "purposeExam": "試験",
     "purposePractice": "練習",
@@ -771,6 +780,7 @@
     "endTime": "終了時刻",
     "endTimeRequired": "終了時刻を選択してください！",
     "selectEndTime": "終了時刻を選択",
+    "startTimeMustBeBeforeEndTime": "開始時刻は終了時刻より前である必要があります！",
     "endTimeMustBeAfterStartTime": "終了時刻は開始時刻より後である必要があります！",
     "hideGroupTitles": "グループタイトルを非表示",
     "showGroupTitles": "グループタイトルを表示",
@@ -919,6 +929,9 @@
     "incorrectAnswers": "不正解"
   },
   "takeExam": {
+    "fullscreenRequired": "フルスクリーンが必要です",
+    "fullscreenRequiredDesc": "この試験にはフルスクリーンモードが必要です。「フルスクリーンに入る」をクリックして続行してください。",
+    "enterFullscreen": "フルスクリーンに入る",
     "loading": "試験を読み込み中...",
     "examNotFound": "試験が見つかりません",
     "examStarted": "試験を開始しました。頑張ってください！",
@@ -1179,7 +1192,16 @@
     "add": "追加",
     "save": "保存",
     "cancel": "キャンセル",
-    "isTyping": "{{name}} が入力中..."
+    "isTyping": "{{name}} が入力中...",
+    "reply": "返信",
+    "replyTo": "返信先",
+    "replyingTo": "返信中",
+    "someone": "誰か",
+    "hasReplied": "が返信しました",
+    "replies": "件の返信",
+    "hideReplies": "返信を隠す",
+    "like": "いいね",
+    "everyone": "みんな"
   },
   "mindmap": {
     "unsavedChanges": "描画、レイアウト、またはノードプロパティなどの保存されていない変更があります。保存せずに終了してもよろしいですか？",
@@ -1320,7 +1342,8 @@
     "NOTIFICATION_NEW_COMMENT_OWN": "がクラス「{{className}}」のあなたの投稿にコメントしました",
     "NOTIFICATION_NEW_COMMENT_OTHER": "がクラス「{{className}}」の投稿にコメントしました",
     "NOTIFICATION_CLASS_REMOVAL": "がクラス「{{className}}」からあなたを削除しました",
-    "NOTIFICATION_CLASS_ADDITION": "がクラス「{{className}}」にあなたを追加しました"
+    "NOTIFICATION_CLASS_ADDITION": "がクラス「{{className}}」にあなたを追加しました",
+    "examInfo": "試験情報"
   },
   "publicMindmap": {
     "notAvailable": "マインドマップは利用できません",

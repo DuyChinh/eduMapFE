@@ -456,6 +456,12 @@
     "qrDescription": "Students can scan this QR code to join the class"
   },
   "questions": {
+    "types": {
+      "mcq": "Multiple Choice",
+      "tf": "True/False",
+      "short": "Short Answer",
+      "essay": "Essay"
+    },
     "title": "Question Management",
     "text": "Question Text",
     "type": "Question Type",
@@ -464,7 +470,6 @@
     "isPublic": "Public",
     "answer": "Answer",
     "choices": "Choices",
-    "images": "Images",
     "createdAt": "Created At",
     "viewDetails": "View Details",
     "edit": "Edit",
@@ -652,6 +657,9 @@
   "exams": {
     "title": "Exam Management",
     "createNew": "Create New Exam",
+    "creator": "Creator",
+    "duration": "Duration",
+    "minutes": "minutes",
     "editExam": "Edit Exam",
     "viewDetails": "View Details",
     "edit": "Edit",
@@ -666,6 +674,7 @@
     "searchPlaceholder": "Search exams...",
     "filterByStatus": "Filter by status",
     "filterBySubject": "Filter by subject",
+    "filterByGrade": "Filter by grade",
     "showGradeLetter": "Show grade letter",
     "subject": "Subject",
     "fetchFailed": "Failed to load exams",
@@ -698,6 +707,8 @@
     "totalMarksRequired": "Please enter total marks!",
     "totalMarksMin": "Total marks must be greater than or equal to 0!",
     "examPurpose": "Purpose",
+    "grade": "Grade",
+    "selectGrade": "Select grade",
     "examPurposeRequired": "Please select purpose!",
     "purposeExam": "Exam",
     "purposePractice": "Practice",
@@ -776,6 +787,7 @@
     "selectStartTime": "Select Start Time",
     "endTimeRequired": "Please select end time!",
     "selectEndTime": "Select End Time",
+    "startTimeMustBeBeforeEndTime": "Start time must be before end time!",
     "endTimeMustBeAfterStartTime": "End time must be after start time!",
     "hideGroupTitles": "Hide Group Titles",
     "showGroupTitles": "Show Group Titles",
@@ -978,6 +990,9 @@
     "incorrectAnswers": "Incorrect Answers"
   },
   "takeExam": {
+    "fullscreenRequired": "Fullscreen Required",
+    "fullscreenRequiredDesc": "This exam requires fullscreen mode. Please click \"Enter Fullscreen\" to continue.",
+    "enterFullscreen": "Enter Fullscreen",
     "loading": "Loading exam...",
     "examNotFound": "Exam not found",
     "examStarted": "Exam started. Good luck!",
@@ -1322,7 +1337,16 @@
     "add": "Add",
     "save": "Save",
     "cancel": "Cancel",
-    "isTyping": "{{name}} is typing..."
+    "isTyping": "{{name}} is typing...",
+    "reply": "Reply",
+    "replyTo": "replying to",
+    "replyingTo": "Replying to",
+    "someone": "someone",
+    "hasReplied": "replied",
+    "replies": "replies",
+    "hideReplies": "Hide replies",
+    "like": "Like",
+    "everyone": "everyone"
   },
   "mindmap": {
     "unsavedChanges": "You have unsaved changes like drawing, layout, or node properties. Do you really want to leave without saving?",
@@ -1462,6 +1486,7 @@
     "NOTIFICATION_NEW_COMMENT_OTHER": "commented on a post in class {{className}}",
     "NOTIFICATION_CLASS_REMOVAL": "removed you from class {{className}}",
     "NOTIFICATION_CLASS_ADDITION": "added you to class {{className}}",
+    "examInfo": "Exam Info",
     "deleting": "Deleting...",
     "processing": "Processing...",
     "timeout": "Request timeout. Please reload the page."

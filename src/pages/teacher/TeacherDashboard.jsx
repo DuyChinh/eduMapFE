@@ -127,7 +127,7 @@ const TeacherDashboard = () => {
   return (
     <div className="dashboard-container">
       {/* Header Section */}
-      <div className="dashboard-header">
+      <div className="dashboard-welcome-header">
         <div className="header-content">
           <div className="header-text">
             <Title level={2} className="welcome-title">

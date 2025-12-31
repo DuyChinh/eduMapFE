@@ -1295,3 +1295,48 @@ body.dark-mode .take-exam-container .ant-btn-default:hover {
   border-color: #40a9ff;
   color: #40a9ff;
 }
+
+/* Dark Mode - Submit Confirm Modal */
+body.dark-mode .submit-confirm-modal .ant-modal-content {
+  background-color: #1f1f1f;
+  border: 1px solid #434343;
+}
+
+body.dark-mode .submit-confirm-modal .ant-modal-close {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submit-confirm-modal .ant-modal-close:hover {
+  color: rgba(255, 255, 255, 1);
+  background-color: #303030;
+}
+
+body.dark-mode .submit-confirm-modal .ant-typography h3 {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+body.dark-mode .submit-confirm-modal .ant-typography {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+body.dark-mode .submit-confirm-modal .ant-btn-default {
+  background-color: #1f1f1f;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .submit-confirm-modal .ant-btn-default:hover {
+  background-color: #303030;
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+body.dark-mode .submit-confirm-modal .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+body.dark-mode .submit-confirm-modal .ant-btn-primary:hover {
+  background: linear-gradient(135deg, #7a8ef0 0%, #8a5fb8 100%);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+}

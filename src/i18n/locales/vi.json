@@ -474,6 +474,12 @@
     "qrDescription": "Học sinh có thể quét mã QR này để tham gia lớp học"
   },
   "questions": {
+    "types": {
+      "mcq": "Trắc nghiệm",
+      "tf": "Đúng/Sai",
+      "short": "Trả lời ngắn",
+      "essay": "Tự luận"
+    },
     "title": "Quản lý câu hỏi",
     "text": "Nội dung câu hỏi",
     "type": "Loại câu hỏi",
@@ -667,6 +673,9 @@
   "exams": {
     "title": "Quản lý đề thi",
     "createNew": "Tạo đề thi mới",
+    "creator": "Người tạo",
+    "duration": "Thời lượng",
+    "minutes": "phút",
     "editExam": "Sửa đề thi",
     "viewDetails": "Xem chi tiết",
     "edit": "Sửa",
@@ -681,6 +690,7 @@
     "searchPlaceholder": "Tìm kiếm đề thi...",
     "filterByStatus": "Lọc theo trạng thái",
     "filterBySubject": "Lọc theo môn học",
+    "filterByGrade": "Lọc theo khối lớp",
     "showGradeLetter": "Hiển thị điểm chữ",
     "subject": "Môn học",
     "fetchFailed": "Không thể tải danh sách đề thi",
@@ -706,14 +716,14 @@
     "namePlaceholder": "Nhập tên đề thi...",
     "description": "Mô tả",
     "descriptionPlaceholder": "Nhập mô tả đề thi...",
-    "duration": "Thời lượng",
     "durationRequired": "Vui lòng nhập thời lượng!",
     "durationMin": "Thời lượng phải lớn hơn 0!",
-    "minutes": "phút",
     "totalMarks": "Tổng điểm",
     "totalMarksRequired": "Vui lòng nhập tổng điểm!",
     "totalMarksMin": "Tổng điểm phải lớn hơn hoặc bằng 0!",
     "examPurpose": "Mục đích",
+    "grade": "Khối lớp",
+    "selectGrade": "Chọn khối lớp",
     "examPurposeRequired": "Vui lòng chọn mục đích!",
     "purposeExam": "Thi",
     "purposePractice": "Luyện tập",
@@ -791,6 +801,7 @@
     "endTime": "Thời gian kết thúc",
     "endTimeRequired": "Vui lòng chọn thời gian kết thúc!",
     "selectEndTime": "Chọn thời gian kết thúc",
+    "startTimeMustBeBeforeEndTime": "Thời gian bắt đầu phải trước thời gian kết thúc!",
     "endTimeMustBeAfterStartTime": "Thời gian kết thúc phải sau thời gian bắt đầu!",
     "hideGroupTitles": "Ẩn tiêu đề nhóm",
     "showGroupTitles": "Hiển thị tiêu đề nhóm",
@@ -993,6 +1004,9 @@
     "incorrectAnswers": "Câu sai"
   },
   "takeExam": {
+    "fullscreenRequired": "Yêu cầu toàn màn hình",
+    "fullscreenRequiredDesc": "Bài thi này yêu cầu chế độ toàn màn hình. Vui lòng nhấn \"Vào toàn màn hình\" để tiếp tục.",
+    "enterFullscreen": "Vào toàn màn hình",
     "loading": "Đang tải đề thi...",
     "examNotFound": "Không tìm thấy đề thi",
     "examStarted": "Bắt đầu làm bài. Chúc bạn may mắn!",
@@ -1258,7 +1272,16 @@
     "commentDeleteOk": "Xóa",
     "commentDeleteCancel": "Hủy",
     "save": "Lưu",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "reply": "Trả lời",
+    "replyTo": "trả lời",
+    "replyingTo": "Đang trả lời",
+    "someone": "ai đó",
+    "hasReplied": "đã trả lời",
+    "replies": "phản hồi",
+    "hideReplies": "Ẩn phản hồi",
+    "like": "Thích",
+    "everyone": "mọi người"
   },
   "mindmap": {
     "unsavedChanges": "Bạn có những thay đổi chưa được lưu như bản vẽ, bố cục hoặc thuộc tính nút. Bạn có thực sự muốn rời đi mà không lưu không?",
@@ -1399,7 +1422,8 @@
     "NOTIFICATION_NEW_COMMENT_OWN": "đã bình luận về bài viết của bạn trong lớp {{className}}",
     "NOTIFICATION_NEW_COMMENT_OTHER": "đã bình luận về một bài viết trong lớp {{className}}",
     "NOTIFICATION_CLASS_REMOVAL": "đã xóa bạn khỏi lớp {{className}}",
-    "NOTIFICATION_CLASS_ADDITION": "đã thêm bạn vào lớp {{className}}"
+    "NOTIFICATION_CLASS_ADDITION": "đã thêm bạn vào lớp {{className}}",
+    "examInfo": "Thông tin bài thi"
   },
   "publicMindmap": {
     "notAvailable": "Mindmap không khả dụng",

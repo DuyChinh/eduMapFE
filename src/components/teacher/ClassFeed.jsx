@@ -16,7 +16,8 @@ import {
     Dropdown,
     Menu,
     Switch,
-    Modal
+    Modal,
+    Popover
 } from 'antd';
 import {
     UserOutlined,
@@ -37,7 +38,8 @@ import {
     HeartFilled,
     LinkOutlined,
     FileTextOutlined,
-    PlusOutlined
+    PlusOutlined,
+    SmileOutlined
 } from '@ant-design/icons';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
@@ -46,6 +48,8 @@ import uploadService from '../../api/uploadService';
 import { joinClassRoom, leaveClassRoom, onFeedUpdate, emitTyping, emitStopTyping, onTypingStatus } from '../../services/socketService';
 import { useTranslation } from 'react-i18next';
 import DeleteConfirmModal from '../common/DeleteConfirmModal';
+import EmojiPicker from '../common/EmojiPicker';
+import MentionInput from '../common/MentionInput';
 
 const { TextArea } = Input;
 const { Paragraph, Text } = Typography;
@@ -169,9 +173,62 @@ const ClassFeed = ({ classId, highlightPostId }) => {
                     // If we are on page 1, refresh.
                     fetchPosts({ page: 1 }, true);
                 } else if (data.type === 'NEW_COMMENT') {
-                    // Refetch current page (or 1 if strict)
-                    // For now, simple refresh
-                    fetchPosts({}, true);
+                    // Update state directly to prevent re-fetch and UI reset (jumping/collapsing)
+                    if (data.comment && data.postId) {
+                        setPosts(prev => prev.map(post => {
+                            if (post._id === data.postId) {
+                                // Check if comment already exists (to avoid duplicates)
+                                const exists = post.comments.some(c => c._id === data.comment._id);
+                                if (exists) return post;
+                                
+                                return {
+                                    ...post,
+                                    comments: [...post.comments, data.comment]
+                                };
+                            }
+                            return post;
+                        }));
+                    } else {
+                        // Fallback if no comment data
+                        fetchPosts({}, true);
+                    }
+                } else if (data.type === 'comment_deleted') {
+                    // Remove deleted comment from local state for real-time sync
+                    setPosts(prev => prev.map(post => {
+                        if (post._id === data.postId) {
+                            return {
+                                ...post,
+                                comments: post.comments.filter(c => c._id !== data.commentId)
+                            };
+                        }
+                        return post;
+                    }));
+                } else if (data.type === 'comment_reaction_updated') {
+                    // Update comment reactions in real-time
+                    setPosts(prev => prev.map(post => {
+                        if (post._id === data.postId) {
+                            return {
+                                ...post,
+                                comments: post.comments.map(c => 
+                                    c._id === data.commentId 
+                                        ? { ...c, reactions: data.reactions }
+                                        : c
+                                )
+                            };
+                        }
+                        return post;
+                    }));
+                } else if (data.type === 'reaction_updated') {
+                    // Update post reactions in real-time
+                    setPosts(prev => prev.map(post => {
+                        if (post._id === data.postId) {
+                            return {
+                                ...post,
+                                reactions: data.reactions
+                            };
+                        }
+                        return post;
+                    }));
                 } else {
                     fetchPosts({}, true);
                 }
@@ -298,19 +355,19 @@ const ClassFeed = ({ classId, highlightPostId }) => {
         }
     };
 
-    const handleLike = async (postId) => {
+    const handleReaction = async (postId, type = 'like') => {
         try {
-            const res = await feedService.toggleLike(postId);
-            const updatedLikes = res.data || res;
+            const res = await feedService.toggleReaction(postId, type);
+            const updatedReactions = res.data || res;
 
             setPosts(prev => prev.map(p => {
                 if (p._id === postId) {
-                    return { ...p, likes: updatedLikes };
+                    return { ...p, reactions: updatedReactions };
                 }
                 return p;
             }));
         } catch (error) {
-            console.error('Like error:', error);
+            console.error('Reaction error:', error);
         }
     };
 
@@ -523,7 +580,7 @@ const ClassFeed = ({ classId, highlightPostId }) => {
                                 onDelete={handleDeletePost}
                                 onUpdate={handleUpdatePost}
                                 onToggleLock={handleToggleLock}
-                                onLike={handleLike}
+                                onReaction={handleReaction}
                                 onRefreshPost={handleRefreshPost}
                             />
                         )}
@@ -534,7 +591,7 @@ const ClassFeed = ({ classId, highlightPostId }) => {
     );
 };
 
-const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock, onLike, onRefreshPost }) => {
+const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock, onReaction, onRefreshPost }) => {
     const { t } = useTranslation();
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
@@ -552,6 +609,25 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
     const [commentContent, setCommentContent] = useState('');
     const [comments, setComments] = useState(post.comments || []);
     const [submittingComment, setSubmittingComment] = useState(false);
+
+    // Reply state
+    const [replyingTo, setReplyingTo] = useState(null); // { commentId, userName }
+
+    // Mention state
+    const [classMembers, setClassMembers] = useState([]);
+    const [loadingMembers, setLoadingMembers] = useState(false);
+
+    const fetchClassMembers = async (query = '') => {
+        try {
+            setLoadingMembers(true);
+            const res = await feedService.getClassMembers(classId, query);
+            setClassMembers(res.data || res || []);
+        } catch (error) {
+            console.error('Error fetching class members:', error);
+        } finally {
+            setLoadingMembers(false);
+        }
+    };
 
     // Comment attachments state
     const [commentFileList, setCommentFileList] = useState([]);
@@ -667,7 +743,9 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
                 content: commentContent,
                 images: imageUrls,
                 files: uploadedFiles,
-                links: commentLinkList
+                links: commentLinkList,
+                parentCommentId: replyingTo?.commentId || null,
+                replyToUserId: replyingTo?.userId || null
             });
             const newComment = res.data || res;
             setComments(prev => [...prev, newComment]);
@@ -677,6 +755,7 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
             setCommentFileList([]);
             setCommentAttachmentList([]);
             setCommentLinkList([]);
+            setReplyingTo(null);
         } catch (error) {
             console.error(error);
             if (error.response && error.response.status === 403) {
@@ -688,6 +767,52 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
             }
         } finally {
             setSubmittingComment(false);
+        }
+    };
+
+    // Handle inline reply from CommentItem
+    const handleAddReply = async (parentCommentId, content) => {
+        if (!content.trim()) return;
+        try {
+            const res = await feedService.addComment(post._id, {
+                content: content,
+                images: [],
+                files: [],
+                links: [],
+                parentCommentId: parentCommentId,
+                replyToUserId: null
+            });
+            const newComments = res.data?.data?.comments || res.data?.comments || [];
+            setComments(newComments);
+        } catch (error) {
+            console.error(error);
+            messageApi.error(t('feed.commentFailed'));
+        }
+    };
+
+    // Handle comment reaction
+    const handleReactComment = async (commentId, reactionType) => {
+        try {
+            const emojiToType = {
+                '👍': 'like',
+                '❤️': 'love',
+                '😆': 'haha',
+                '😮': 'wow',
+                '😢': 'sad',
+                '😠': 'angry'
+            };
+            const type = emojiToType[reactionType] || 'like';
+            const res = await feedService.reactComment(post._id, commentId, type);
+            
+            // Update comment reactions in state
+            setComments(prev => prev.map(c => 
+                c._id === commentId 
+                    ? { ...c, reactions: res.reactions || res.data?.reactions } 
+                    : c
+            ));
+        } catch (error) {
+            console.error('Error reacting to comment:', error);
+            messageApi.error(t('feed.reactionFailed') || 'Failed to react');
         }
     };
 
@@ -864,12 +989,13 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
                 </div>
             )}
 
-            {/* Like/Comment Counts & Actions */}
-            <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-                <Space style={{ cursor: 'pointer' }} onClick={() => onLike(post._id)}>
-                    {isLiked ? <HeartFilled style={{ color: '#ff4d4f', fontSize: 18 }} /> : <HeartOutlined style={{ fontSize: 18, color: subTextColor }} />}
-                    <span style={{ fontSize: 15, color: isLiked ? '#ff4d4f' : subTextColor }}>{post.likes?.length || 0}</span>
-                </Space>
+            {/* Reactions & Comment Counts */}
+            <div style={{ display: 'flex', gap: 16, marginBottom: 12, alignItems: 'center' }}>
+                <EmojiPicker
+                    reactions={post.reactions || []}
+                    currentUserId={currentUser?._id || currentUser?.id}
+                    onSelect={(type) => onReaction(post._id, type)}
+                />
                 <Space style={{ cursor: 'pointer' }} onClick={() => onRefreshPost && onRefreshPost(post._id)}>
                     <Tooltip title={t('feed.refreshCommentTooltip')}>
                         <MessageOutlined style={{ fontSize: 18, color: subTextColor }} />
@@ -882,23 +1008,39 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
 
             {/* Comments Section */}
             <div>
-                {/* Current Comments */}
-                {comments.length > 0 && (
-                    <List
-                        dataSource={comments}
-                        split={false}
-                        renderItem={item => (
-                            <CommentItem
-                                key={item._id}
-                                comment={item}
-                                currentUser={currentUser}
-                                postId={post._id}
-                                onDelete={handleDeleteComment}
-                                onUpdate={handleUpdateComment}
-                            />
-                        )}
-                    />
-                )}
+                {/* Current Comments - only show top-level comments */}
+                {comments.length > 0 && (() => {
+                    const topLevelComments = comments.filter(c => !c.parentCommentId);
+                    const getReplies = (commentId) => comments.filter(c => c.parentCommentId === commentId);
+                    
+                    return (
+                        <List
+                            dataSource={topLevelComments}
+                            split={false}
+                            renderItem={item => (
+                                <CommentItem
+                                    key={item._id}
+                                    comment={item}
+                                    currentUser={currentUser}
+                                    postId={post._id}
+                                    onDelete={handleDeleteComment}
+                                    onUpdate={handleUpdateComment}
+                                    onReply={(comment) => {
+                                        setReplyingTo({
+                                            commentId: comment._id,
+                                            userId: comment.author?._id,
+                                            userName: comment.author?.name
+                                        });
+                                    }}
+                                    onAddReply={handleAddReply}
+                                    onReact={handleReactComment}
+                                    allComments={comments}
+                                    replies={getReplies(item._id)}
+                                />
+                            )}
+                        />
+                    );
+                })()}
 
                 {/* Typing Indicator */}
                 {typingUsers.length > 0 && (
@@ -926,19 +1068,17 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
                         position: 'relative',
                         backgroundColor: post.isLocked ? lockBg : commentInputBg
                     }}>
-                        <TextArea
+                        <MentionInput
                             placeholder={post.isLocked ? t('feed.commentLockedPlaceholder') : t('feed.commentPlaceholder')}
                             value={commentContent}
-                            onChange={e => {
-                                setCommentContent(e.target.value);
+                            onChange={(val) => {
+                                setCommentContent(val);
                                 handleTyping();
                             }}
-                            onPressEnter={(e) => {
-                                if (!e.shiftKey) {
-                                    e.preventDefault();
-                                    handleComment();
-                                }
-                            }}
+                            onSubmit={handleComment}
+                            users={classMembers}
+                            loading={loadingMembers}
+                            onSearch={fetchClassMembers}
                             autoSize={{ minRows: 2, maxRows: 6 }}
                             disabled={submittingComment || post.isLocked}
                             style={{
@@ -1045,6 +1185,36 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
                                         size="small"
                                         onClick={() => setLinkModalOpen(true)}
                                     />
+                                    <Popover
+                                        content={
+                                            <div style={{ display: 'flex', gap: 4 }}>
+                                                {['👍', '❤️', '😂', '😮', '😢', '😠', '🎉', '🔥', '👏'].map(emoji => (
+                                                    <button
+                                                        key={emoji}
+                                                        onClick={() => setCommentContent(prev => prev + emoji)}
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            fontSize: 20,
+                                                            padding: 4,
+                                                            borderRadius: 4
+                                                        }}
+                                                    >
+                                                        {emoji}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        }
+                                        trigger="click"
+                                        placement="topRight"
+                                    >
+                                        <Button
+                                            type="text"
+                                            icon={<SmileOutlined style={{ fontSize: 16, color: '#faad14' }} />}
+                                            size="small"
+                                        />
+                                    </Popover>
                                 </>
                             )}
 
@@ -1109,7 +1279,7 @@ const PostItem = ({ post, classId, currentUser, onDelete, onUpdate, onToggleLock
 };
 
 // Define CommentItem Component
-const CommentItem = ({ comment, currentUser, postId, onDelete, onUpdate }) => {
+const CommentItem = ({ comment, currentUser, postId, onDelete, onUpdate, onReply, onAddReply, onReact, allComments = [], replies = [] }) => {
     const { t } = useTranslation();
     const { theme } = useThemeStore();
     const isDark = theme === 'dark';
@@ -1124,6 +1294,18 @@ const CommentItem = ({ comment, currentUser, postId, onDelete, onUpdate }) => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content);
+
+    // Replies expand/collapse state
+    const [showReplies, setShowReplies] = useState(false);
+
+    // Inline reply input state
+    const [replyText, setReplyText] = useState('');
+    const [submittingReply, setSubmittingReply] = useState(false);
+    const [showReplyInput, setShowReplyInput] = useState(false);
+
+    // Get nested replies for this comment (recursive)
+    const getNestedReplies = (commentId) => allComments.filter(c => c.parentCommentId === commentId);
+    const nestedReplies = replies.length > 0 ? replies : getNestedReplies(comment._id);
 
     // Edit states for attachments
     const [fileList, setFileList] = useState([]);
@@ -1378,7 +1560,25 @@ const CommentItem = ({ comment, currentUser, postId, onDelete, onUpdate }) => {
                                 position: 'relative'
                             }}>
                                 <div style={{ fontWeight: 600, fontSize: 13, color: textColor }}>{comment.author?.name}</div>
-                                <div style={{ fontSize: 14, whiteSpace: 'pre-wrap', color: textColor }}>{comment.content}</div>
+                                <div style={{ fontSize: 14, whiteSpace: 'pre-wrap', color: textColor }}>
+                                    {(() => {
+                                        if (comment.parentCommentId) {
+                                            const parentComment = allComments.find(c => c._id === comment.parentCommentId);
+                                            const parentAuthorName = parentComment?.author?.name;
+                                            
+                                            if (parentAuthorName && comment.content.startsWith(parentAuthorName)) {
+                                                const restContent = comment.content.substring(parentAuthorName.length);
+                                                return (
+                                                    <>
+                                                        <span style={{ fontWeight: 600 }}>{parentAuthorName}</span>
+                                                        {restContent}
+                                                    </>
+                                                );
+                                            }
+                                        }
+                                        return comment.content;
+                                    })()}
+                                </div>
                             </div>
 
                             {/* Attachments Display */}
@@ -1449,9 +1649,229 @@ const CommentItem = ({ comment, currentUser, postId, onDelete, onUpdate }) => {
                     </div>
                 )}
 
+                {/* Comment actions: time, like, reply button */}
                 {!isEditing && (
-                    <div style={{ fontSize: 12, color: subTextColor, marginTop: 2, marginLeft: 12 }}>
-                        {formatTimeAgo(comment.createdAt || new Date(), t)}
+                    <div style={{ fontSize: 12, color: subTextColor, marginTop: 2, marginLeft: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <span>{formatTimeAgo(comment.createdAt || new Date(), t)}</span>
+                        
+                        {/* Like button with reaction picker */}
+                        <Popover
+                            content={
+                                <div style={{ display: 'flex', gap: 2 }}>
+                                    {['👍', '❤️', '😆', '😮', '😢', '😠'].map(emoji => (
+                                        <button
+                                            key={emoji}
+                                            onClick={() => {
+                                                if (onReact) {
+                                                    onReact(comment._id, emoji);
+                                                }
+                                            }}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: 24,
+                                                padding: 4,
+                                                borderRadius: 8,
+                                                transition: 'transform 0.1s'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.transform = 'scale(1.3)'}
+                                            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                        >
+                                            {emoji}
+                                        </button>
+                                    ))}
+                                </div>
+                            }
+                            trigger="hover"
+                            placement="top"
+                            overlayStyle={{ padding: 4 }}
+                        >
+                            <Button
+                                type="text"
+                                size="small"
+                                style={{ fontSize: 12, color: subTextColor, padding: 0, height: 'auto', fontWeight: 500 }}
+                            >
+                                {t('feed.like') || 'Like'}
+                            </Button>
+                        </Popover>
+                        
+                        {/* Show reactions count */}
+                        {comment.reactions?.length > 0 && (
+                            <span style={{ fontSize: 12, color: subTextColor }}>
+                                {(() => {
+                                    const emojiMap = { like: '👍', love: '❤️', haha: '😆', wow: '😮', sad: '😢', angry: '😠' };
+                                    const uniqueTypes = [...new Set(comment.reactions.map(r => r.type))];
+                                    return uniqueTypes.map(t => emojiMap[t]).join('') + ' ' + comment.reactions.length;
+                                })()}
+                            </span>
+                        )}
+                        
+                        {onAddReply && (
+                            <Button
+                                type="text"
+                                size="small"
+                                onClick={() => {
+                                    if (!showReplyInput) {
+                                        setReplyText(comment.author?.name ? `${comment.author.name} ` : '');
+                                    }
+                                    setShowReplyInput(!showReplyInput);
+                                }}
+                                style={{ fontSize: 12, color: subTextColor, padding: 0, height: 'auto', fontWeight: 500 }}
+                            >
+                                {t('feed.reply')}
+                            </Button>
+                        )}
+                    </div>
+                )}
+
+                {/* Replies section - recursive with inline reply input */}
+                {nestedReplies.length > 0 && (
+                    <div style={{ marginTop: 8, marginLeft: 12 }}>
+                        {!showReplies ? (
+                            /* Collapsed state */
+                            <div 
+                                onClick={() => setShowReplies(true)}
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 6,
+                                    fontSize: 13,
+                                    color: subTextColor
+                                }}
+                            >
+                                <Avatar size={20} src={nestedReplies[0]?.author?.profile?.avatar || nestedReplies[0]?.author?.avatar}>
+                                    {nestedReplies[0]?.author?.name?.charAt(0)}
+                                </Avatar>
+                                <span style={{ color: '#1890ff', fontWeight: 500 }}>
+                                    {nestedReplies[0]?.author?.name}
+                                </span>
+                                <span>{t('feed.hasReplied')}</span>
+                                <span>·</span>
+                                <span>{nestedReplies.length} {t('feed.replies')}</span>
+                            </div>
+                        ) : (
+                            /* Expanded state: recursive CommentItem */
+                            <div style={{ marginLeft: 28, borderLeft: `2px solid ${borderColor}`, paddingLeft: 12 }}>
+                                {nestedReplies.map(reply => (
+                                    <CommentItem
+                                        key={reply._id}
+                                        comment={reply}
+                                        currentUser={currentUser}
+                                        postId={postId}
+                                        onDelete={onDelete}
+                                        onUpdate={onUpdate}
+                                        onReply={onReply}
+                                        onAddReply={onAddReply}
+                                        onReact={onReact}
+                                        allComments={allComments}
+                                        replies={allComments.filter(c => c.parentCommentId === reply._id)}
+                                    />
+                                ))}
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    onClick={() => setShowReplies(false)}
+                                    style={{ fontSize: 12, color: subTextColor, padding: 0, marginTop: 4 }}
+                                >
+                                    {t('feed.hideReplies')}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Inline reply input - only show when Reply is clicked */}
+                {showReplyInput && (
+                    <div style={{ marginTop: 8, marginLeft: 12, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <Avatar size={24} src={currentUser?.profile?.avatar || currentUser?.avatar}>
+                            {currentUser?.name?.charAt(0)}
+                        </Avatar>
+                        <div style={{ flex: 1, position: 'relative' }}>
+                            <Input
+                                placeholder={`${t('feed.replyingTo')} ${comment.author?.name}...`}
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                onPressEnter={async () => {
+                                    if (!replyText.trim() || submittingReply || !onAddReply) return;
+                                    setSubmittingReply(true);
+                                    try {
+                                        await onAddReply(comment._id, replyText.trim());
+                                        setReplyText('');
+                                        setShowReplyInput(false);
+                                    } finally {
+                                        setSubmittingReply(false);
+                                    }
+                                }}
+                                disabled={submittingReply}
+                                autoFocus
+                                style={{
+                                    borderRadius: 18,
+                                    backgroundColor: commentBubbleBg,
+                                    border: 'none',
+                                    paddingRight: 30,
+                                    color: textColor
+                                }}
+                                suffix={
+                                    <Space>
+                                        <Popover
+                                            content={
+                                                <div style={{ display: 'flex', gap: 4 }}>
+                                                    {['👍', '❤️', '😂', '😮', '😢', '😠'].map(emoji => (
+                                                        <button
+                                                            key={emoji}
+                                                            onClick={() => setReplyText(prev => prev + emoji)}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                cursor: 'pointer',
+                                                                fontSize: 20,
+                                                                padding: 4,
+                                                                borderRadius: 4
+                                                            }}
+                                                        >
+                                                            {emoji}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            }
+                                            trigger="click"
+                                            placement="topRight"
+                                        >
+                                            <Button
+                                                type="text"
+                                                size="small"
+                                                icon={<SmileOutlined />}
+                                                style={{ color: subTextColor }}
+                                            />
+                                        </Popover>
+                                        <Button
+                                            type="text"
+                                            size="small"
+                                            icon={<SendOutlined />}
+                                            loading={submittingReply}
+                                            disabled={!replyText.trim()}
+                                            onClick={async () => {
+                                                if (!replyText.trim() || submittingReply || !onAddReply) return;
+                                                setSubmittingReply(true);
+                                                try {
+                                                    await onAddReply(comment._id, replyText.trim());
+                                                    setReplyText('');
+                                                    // Don't close input as per user request
+                                                    // setShowReplyInput(false); 
+                                                    // Ensure replies are shown when I reply
+                                                    setShowReplies(true);
+                                                } finally {
+                                                    setSubmittingReply(false);
+                                                }
+                                            }}
+                                            style={{ color: replyText.trim() ? '#1890ff' : subTextColor }}
+                                        />
+                                    </Space>
+                                }
+                            />
+                        </div>
                     </div>
                 )}
             </div>

@@ -422,7 +422,7 @@ const ExamResult = () => {
             {t('common.backToHome')}
           </Button>
           
-          {examData.settings?.showAnswers && (
+          {examData.settings?.showCorrectAnswer && (
             <Button
               size="large"
               onClick={() => navigate(`/student/exams/${examId}/review`)}

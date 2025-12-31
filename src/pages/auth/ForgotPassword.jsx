@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, Button, App, Card } from 'antd';
+import { Form, Input, Button, App, Card, theme } from 'antd';
 import { MailOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import authService from '../../api/authService';
@@ -14,6 +14,7 @@ const ForgotPassword = () => {
   const location = useLocation();
   const { t } = useTranslation();
   const { message } = App.useApp();
+  const { token } = theme.useToken();
 
   useEffect(() => {
     // Get email from navigation state
@@ -95,8 +96,9 @@ const ForgotPassword = () => {
                 value={email}
                 readOnly
                 style={{ 
-                  backgroundColor: '#f5f5f5',
-                  cursor: 'not-allowed'
+                  backgroundColor: token.colorFillAlter,
+                  cursor: 'not-allowed',
+                  color: token.colorText
                 }}
               />
             </Form.Item>

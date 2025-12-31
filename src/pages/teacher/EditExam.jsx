@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import classService from '../../api/classService';
 import examService from '../../api/examService';
+import gradeService from '../../api/gradeService';
 import questionService from '../../api/questionService';
 import { ROUTES } from '../../constants/config';
 import PreviewExamModal from '../../components/teacher/PreviewExamModal';
@@ -61,6 +62,7 @@ const EditExam = () => {
   const [previewQuestions, setPreviewQuestions] = useState([]);
   const [selectQuestionsModalVisible, setSelectQuestionsModalVisible] = useState(false);
   const [currentSubjectId, setCurrentSubjectId] = useState(null);
+  const [grades, setGrades] = useState([]);
   const classesFetchedRef = useRef(false); // Track if classes have been fetched
   
   // Delete modal state
@@ -78,6 +80,7 @@ const EditExam = () => {
       fetchExamData();
       fetchSubjects();
       fetchClasses();
+      fetchGrades();
     }
   }, [examId]);
 
@@ -232,6 +235,15 @@ const EditExam = () => {
       classesFetchedRef.current = false; // Reset on error to allow retry
     } finally {
       setLoadingClasses(false);
+    }
+  };
+
+  const fetchGrades = async () => {
+    try {
+      const gradesData = await gradeService.getGrades();
+      setGrades(gradesData);
+    } catch (error) {
+      console.error('Error fetching grades:', error);
     }
   };
 
@@ -617,13 +629,47 @@ const EditExam = () => {
                   label={t('exams.examPurpose')}
                   name="examPurpose"
                   rules={[{ required: true, message: t('exams.examPurposeRequired') }]}
-                  style={{ flex: 1.3 }}
+                  style={{ flex: 1 }}
                 >
-                  <Select style={{ minWidth: 200 }}>
+                  <Select style={{ minWidth: 150 }}>
                     <Option value="exam">{t('exams.purposeExam')}</Option>
                     <Option value="practice">{t('exams.purposePractice')}</Option>
                     <Option value="quiz">{t('exams.purposeQuiz')}</Option>
                     <Option value="assignment">{t('exams.purposeAssignment')}</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label={t('exams.grade')}
+                  name="gradeId"
+                  style={{ flex: 1 }}
+                >
+                  <Select
+                    placeholder={t('exams.selectGrade')}
+                    showSearch
+                    filterOption={(input, option) =>
+                      (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {grades.map(grade => {
+                      const currentLang = localStorage.getItem('language') || 'vi';
+                      let gradeName = grade.name;
+                      
+                      switch (currentLang) {
+                        case 'en':
+                          gradeName = grade.name_en || grade.name;
+                          break;
+                        case 'jp':
+                          gradeName = grade.name_jp || grade.name;
+                          break;
+                      }
+                      
+                      return (
+                        <Option key={grade._id} value={grade._id}>
+                          {gradeName}
+                        </Option>
+                      );
+                    })}
                   </Select>
                 </Form.Item>
 
@@ -705,13 +751,7 @@ const EditExam = () => {
                   <InputNumber min={1} style={{ width: '100%' }} />
                 </Form.Item>
 
-                <Form.Item
-                  label={t('exams.fee')}
-                  name="fee"
-                  style={{ flex: 1 }}
-                >
-                  <InputNumber min={0} style={{ width: '100%' }} addonAfter="VND" />
-                </Form.Item>
+
 
                 <Form.Item
                   label={t('exams.status')}
@@ -838,6 +878,18 @@ const EditExam = () => {
                   label={t('exams.startTime')}
                   name="startTime"
                   style={{ flex: 1 }}
+                  dependencies={['endTime']}
+                  rules={[
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        const endTime = getFieldValue('endTime');
+                        if (value && endTime && value.isAfter(endTime)) {
+                          return Promise.reject(new Error(t('exams.startTimeMustBeBeforeEndTime')));
+                        }
+                        return Promise.resolve();
+                      },
+                    }),
+                  ]}
                 >
                   <DatePicker
                     showTime
@@ -850,6 +902,18 @@ const EditExam = () => {
                   label={t('exams.endTime')}
                   name="endTime"
                   style={{ flex: 1 }}
+                  dependencies={['startTime']}
+                  rules={[
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        const startTime = getFieldValue('startTime');
+                        if (value && startTime && value.isBefore(startTime)) {
+                          return Promise.reject(new Error(t('exams.endTimeMustBeAfterStartTime')));
+                        }
+                        return Promise.resolve();
+                      },
+                    }),
+                  ]}
                 >
                   <DatePicker
                     showTime
@@ -946,9 +1010,7 @@ const EditExam = () => {
                   <Switch checkedChildren={t('exams.showGroupTitles')} unCheckedChildren={t('exams.hideGroupTitles')} />
                 </Form.Item>
 
-                <Form.Item name="sectionsStartFromQ1" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.sectionsStartFromQ1')} unCheckedChildren={t('exams.sectionsNotStartFromQ1')} />
-                </Form.Item>
+
 
                 <Form.Item name="hideLeaderboard" valuePropName="checked">
                   <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
@@ -993,23 +1055,13 @@ const EditExam = () => {
                 </Select>
               </Form.Item>
 
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Form.Item name="studentVerification" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.studentVerification')} unCheckedChildren={t('exams.noStudentVerification')} />
-                </Form.Item>
 
-                <Form.Item name="eduMapOnly" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.eduMapOnly')} unCheckedChildren={t('exams.notEduMapOnly')} />
-                </Form.Item>
-              </Space>
             </Collapse.Panel>
 
             {/* Advanced Settings */}
             <Collapse.Panel header={t('exams.advancedSettings')} key="advanced">
               <div>
-                <Form.Item name={['settings', 'allowReview']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.allowReview')} unCheckedChildren={t('exams.noAllowReview')} />
-                </Form.Item>
+
 
                 <Form.Item name={['settings', 'showCorrectAnswer']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.showCorrectAnswer')} unCheckedChildren={t('exams.noShowCorrectAnswer')} />
@@ -1023,9 +1075,7 @@ const EditExam = () => {
                   <Switch checkedChildren={t('exams.shuffleChoices')} unCheckedChildren={t('exams.noShuffleChoices')} />
                 </Form.Item>
 
-                <Form.Item name={['settings', 'preventCopy']} valuePropName="checked">
-                  <Switch checkedChildren={t('exams.preventCopy')} unCheckedChildren={t('exams.noPreventCopy')} />
-                </Form.Item>
+
 
                 <Form.Item name={['settings', 'fullscreenMode']} valuePropName="checked">
                   <Switch checkedChildren={t('exams.fullscreenMode')} unCheckedChildren={t('exams.noFullscreenMode')} />
@@ -1039,8 +1089,10 @@ const EditExam = () => {
               {() => {
                 const totalMarks = form.getFieldValue('totalMarks');
                 const totalQuestionMarks = calculateTotalQuestionMarks();
+                const formErrors = form.getFieldsError().filter(({ errors }) => errors.length > 0);
+                const hasFormErrors = formErrors.length > 0;
                 // Allow small difference (0.01) due to floating point precision
-                const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01 && selectedQuestions.length > 0;
+                const isValid = totalMarks && Math.abs(totalQuestionMarks - totalMarks) < 0.01 && selectedQuestions.length > 0 && !hasFormErrors;
 
                 const handlePreview = async () => {
                   try {

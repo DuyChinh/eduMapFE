@@ -1,0 +1,59 @@
+.mention-dropdown {
+    max-height: 250px;
+    overflow-y: auto;
+    min-width: 200px;
+}
+
+.mention-loading {
+    padding: 16px;
+    text-align: center;
+}
+
+.mention-empty {
+    padding: 12px 16px;
+    color: #999;
+    text-align: center;
+}
+
+.mention-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px !important;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.mention-item:hover,
+.mention-item.selected {
+    background: rgba(24, 144, 255, 0.1);
+}
+
+.mention-name {
+    font-weight: 500;
+}
+
+.mention-popover .ant-popover-inner {
+    padding: 4px 0;
+}
+
+/* Dark mode */
+body.dark-mode .mention-item:hover,
+body.dark-mode .mention-item.selected {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .mention-empty {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Highlight mentions in text */
+.mention-highlight {
+    color: #1890ff;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.mention-highlight:hover {
+    text-decoration: underline;
+}
