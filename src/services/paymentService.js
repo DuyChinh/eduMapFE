@@ -25,6 +25,29 @@ const paymentService = {
             console.error("Error verifying payment:", error);
             throw error;
         }
+    },
+
+    createSePayTransaction: async (amount, orderInfo) => {
+        try {
+            const response = await axiosInstance.post('/payment/sepay/create', {
+                amount,
+                orderInfo
+            });
+            return response;
+        } catch (error) {
+            console.error("Error creating SePay transaction:", error);
+            throw error;
+        }
+    },
+
+    getHistory: async () => {
+        try {
+            const response = await axiosInstance.get('/payment/history');
+            return response;
+        } catch (error) {
+            console.error("Error getting payment history:", error);
+            throw error;
+        }
     }
 };
 

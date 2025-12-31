@@ -2,7 +2,7 @@
  * Socket.IO client service for real-time notifications
  */
 
-import { io } from 'socket.io-client';
+import io from 'socket.io-client';
 
 let socket = null;
 let notificationCallbacks = [];
@@ -25,7 +25,7 @@ export const connectSocket = (token) => {
 
   // Get socket URL - use dedicated VITE_SOCKET_URL or derive from API URL
   let socketUrl = import.meta.env.VITE_SOCKET_URL;
-  
+
   if (!socketUrl) {
     const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
     if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
@@ -41,7 +41,7 @@ export const connectSocket = (token) => {
       socketUrl = 'http://localhost:3000';
     }
   }
-  
+
   socket = io(socketUrl, {
     transports: ['websocket', 'polling'],
     reconnection: true,
@@ -94,7 +94,7 @@ export const disconnectSocket = () => {
  */
 export const onNotification = (callback) => {
   notificationCallbacks.push(callback);
-  
+
   return () => {
     const index = notificationCallbacks.indexOf(callback);
     if (index > -1) {
@@ -110,7 +110,7 @@ export const onNotification = (callback) => {
  */
 export const onFeedUpdate = (callback) => {
   feedUpdateCallbacks.push(callback);
-  
+
   return () => {
     const index = feedUpdateCallbacks.indexOf(callback);
     if (index > -1) {
@@ -170,7 +170,7 @@ export const emitStopTyping = (classId, postId, user) => {
  */
 export const onTypingStatus = (callback) => {
   typingCallbacks.push(callback);
-  
+
   return () => {
     const index = typingCallbacks.indexOf(callback);
     if (index > -1) {
