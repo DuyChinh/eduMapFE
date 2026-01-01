@@ -18,6 +18,8 @@ import {
   RightOutlined,
   CrownOutlined,
   HistoryOutlined,
+  StarFilled,
+  ThunderboltFilled,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
@@ -458,12 +460,21 @@ const TeacherLayout = () => {
               arrow
             >
               <div className="user-dropdown">
-                <Avatar
-                  src={avatarSrc}
-                  icon={!avatarSrc && <UserOutlined />}
-                />
+                <div className={`avatar-with-badge plan-${user?.subscription?.plan || 'free'}`}>
+                  <Avatar
+                    src={avatarSrc}
+                    icon={!avatarSrc && <UserOutlined />}
+                  />
+                </div>
                 <div className="user-info-header">
-                  <span className="user-name-header">{user?.name}</span>
+                  <div className="user-name-row">
+                    <span className="user-name-header">{user?.name}</span>
+                    <span className={`plan-tag plan-tag-${user?.subscription?.plan || 'free'}`}>
+                      {user?.subscription?.plan === 'pro' && <><CrownOutlined /> Pro</>}
+                      {user?.subscription?.plan === 'plus' && <><ThunderboltFilled /> Plus</>}
+                      {(!user?.subscription?.plan || user?.subscription?.plan === 'free') && 'Free'}
+                    </span>
+                  </div>
                   <span className="user-role-header">{roleLabel}</span>
                 </div>
               </div>

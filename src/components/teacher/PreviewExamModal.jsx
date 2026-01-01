@@ -244,7 +244,7 @@ const PreviewExamModal = ({ open, onCancel, examData, questions = [], subjects =
               </Paragraph>
             )}
 
-            <Descriptions column={2} bordered size="small">
+            <Descriptions column={2} variant="bordered" size="small">
               <Descriptions.Item label={t('exams.duration')}>
                 {examData.duration} {t('exams.minutes')}
               </Descriptions.Item>
