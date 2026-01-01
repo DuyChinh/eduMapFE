@@ -714,6 +714,19 @@ const EditExam = () => {
                             message: t('exams.allowedClassesRequired')
                           }
                         ]}
+                        normalize={(value) => {
+                          if (value && value.includes('all')) {
+                            const allClassIds = classes.map((c) => c._id || c.id);
+                            const realValues = value.filter((v) => v !== 'all');
+                            if (realValues.length === classes.length) {
+                              return [];
+                            } else {
+                              return allClassIds;
+                            }
+                          }
+                          return value;
+                        }}
+                        style={{ width: '50%' }}
                       >
                         <Select
                           mode="multiple"
@@ -725,6 +738,7 @@ const EditExam = () => {
                           }
                           notFoundContent={loadingClasses ? <Spin size="small" /> : t('exams.noClassesFound')}
                         >
+                          <Option value="all" style={{ fontWeight: 'bold' }}>{t('common.selectAll') || 'Select All'}</Option>
                           {classes.map(cls => (
                             <Option key={cls._id || cls.id} value={cls._id || cls.id}>
                               {cls.name}
