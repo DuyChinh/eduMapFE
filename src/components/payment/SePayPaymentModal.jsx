@@ -3,6 +3,7 @@ import { Modal, Typography, Space, Spin, Button, message, Steps, Tag } from 'ant
 import { CheckCircleOutlined, CopyOutlined, QrcodeOutlined } from '@ant-design/icons';
 import { getSocket } from '../../services/socketService';
 import { useTranslation } from 'react-i18next';
+import sepayConfig from '../../config/sepay';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -46,7 +47,8 @@ const SePayPaymentModal = ({ visible, onClose, transactionData, onSuccess }) => 
 
     const { amount, orderInfo, txnRef } = transactionData;
     // Bank config
-    const qrUrl = `https://qr.sepay.vn/img?acc=VQRQAGEDK0170&bank=MBBank&amount=${amount}&des=${encodeURIComponent(orderInfo)}`;
+    // const qrUrl = `https://qr.sepay.vn/img?acc=VQRQAGEDK0170&bank=MBBank&amount=${amount}&des=${encodeURIComponent(orderInfo)}`;
+    const qrUrl = `https://qr.sepay.vn/img?acc=${sepayConfig.bankAccount}&bank=${sepayConfig.bankName}&amount=${amount}&des=${encodeURIComponent(orderInfo)}`;
 
     const handleCopy = (text) => {
         navigator.clipboard.writeText(text);
@@ -61,6 +63,7 @@ const SePayPaymentModal = ({ visible, onClose, transactionData, onSuccess }) => 
             width={600}
             centered
             maskClosable={false}
+            zIndex={2000}
         >
             <div style={{ textAlign: 'center', padding: '20px' }}>
                 {status === 'success' ? (
@@ -101,14 +104,14 @@ const SePayPaymentModal = ({ visible, onClose, transactionData, onSuccess }) => 
 
                         <div style={{ textAlign: 'left', marginTop: '10px' }}>
                             <Paragraph>
-                                <Text strong>{t('payment.bankConfig.bank')}:</Text> MBBank
+                                <Text strong>{t('payment.bankConfig.bank')}:</Text> {sepayConfig.bankName}
                             </Paragraph>
                             <Paragraph>
-                                <Text strong>{t('payment.bankConfig.accountOwner')}:</Text> TRAN QUANG TUNG
+                                <Text strong>{t('payment.bankConfig.accountOwner')}:</Text> {sepayConfig.accountName}
                             </Paragraph>
                             <Paragraph>
                                 <Text strong>{t('payment.bankConfig.accountNumber')}:</Text> {' '}
-                                <Text copyable={{ text: 'VQRQAGEDK0170' }}>VQRQAGEDK0170</Text>
+                                <Text copyable={{ text: sepayConfig.bankAccount }}>{sepayConfig.bankAccount}</Text>
                             </Paragraph>
                             <Paragraph>
                                 <Text strong>{t('payment.bankConfig.amount')}:</Text> {' '}
