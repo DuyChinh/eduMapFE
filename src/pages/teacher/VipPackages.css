@@ -1,8 +1,10 @@
+/* Light Mode Defaults */
 .vip-card {
     height: 100%;
     position: relative;
     border-radius: 16px !important;
-    border-color: #f0f0f0;
+    border: 1px solid #f0f0f0;
+    background: #fff;
     transition: all 0.3s ease;
 }
 
@@ -10,6 +12,24 @@
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
     border-color: var(--hover-color, #1890ff) !important;
+}
+
+/* Dark Mode Overrides */
+body.dark-mode .vip-card:not(.vip-card-current) {
+    background: #1f1f1f;
+    border-color: #303030;
+}
+
+body.dark-mode .vip-card:not(.vip-card-current) .ant-typography {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .vip-card:not(.vip-card-current) .ant-typography-secondary {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .vip-card:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Specific hover colors based on package can be dynamic, 

@@ -1659,5 +1659,49 @@
       "vnpay": "Pay via VNPay (ATM/Visa)",
       "sepay": "Pay via QR Code (24/7 Transfer)"
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "uploadAvatar": "Change Avatar",
+    "uploading": "Uploading...",
+    "accountInfo": "Account Information",
+    "additionalInfo": "Additional Information",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "role": "Role",
+    "accountStatus": "Account Status",
+    "phone": "Phone Number",
+    "dob": "Date of Birth",
+    "address": "Address",
+    "studentId": "Student ID",
+    "memberSince": "Member Since",
+    "joined": "Joined",
+    "notProvided": "Not provided",
+    "enterName": "Enter your full name",
+    "enterPhone": "Phone number",
+    "enterAddress": "Enter your address",
+    "selectDate": "Select date",
+    "validation": {
+      "nameRequired": "Please enter your name!",
+      "nameMin": "Name must be at least 2 characters!",
+      "nameMax": "Name cannot exceed 50 characters!",
+      "phoneInvalid": "Please enter a valid phone number!",
+      "phoneMin": "Phone number must be at least 10 digits!",
+      "phoneMax": "Phone number cannot exceed 15 digits!"
+    },
+    "uploadHint": "Max size: 5MB • Supported: JPG, PNG, GIF, WEBP",
+    "uploadError": {
+      "type": "You can only upload image files!",
+      "size": "Image must be smaller than 5MB!",
+      "failed": "Failed to upload avatar. Please try again."
+    },
+    "updateSuccess": "Profile updated successfully!",
+    "subscriptionPlan": "Subscription Plan",
+    "expiresOn": "Expires On",
+    "daysLeft": "days left",
+    "expired": "Expired"
   }
 }
