@@ -1492,5 +1492,49 @@
       "vnpay": "VNPayで支払う (ATM/Visa)",
       "sepay": "QRコードで支払う (24時間転送)"
     }
+  },
+  "profile": {
+    "title": "プロフィール",
+    "editProfile": "プロフィール編集",
+    "saveChanges": "変更を保存",
+    "cancel": "キャンセル",
+    "uploadAvatar": "アバター変更",
+    "uploading": "アップロード中...",
+    "accountInfo": "アカウント情報",
+    "additionalInfo": "追加情報",
+    "fullName": "氏名",
+    "email": "メールアドレス",
+    "role": "役割",
+    "accountStatus": "アカウント状態",
+    "phone": "電話番号",
+    "dob": "生年月日",
+    "address": "住所",
+    "studentId": "学生ID",
+    "memberSince": "登録日",
+    "joined": "参加",
+    "notProvided": "未設定",
+    "enterName": "氏名を入力",
+    "enterPhone": "電話番号",
+    "enterAddress": "住所を入力",
+    "selectDate": "日付選択",
+    "validation": {
+      "nameRequired": "氏名を入力してください！",
+      "nameMin": "名前は2文字以上で入力してください！",
+      "nameMax": "名前は50文字以内で入力してください！",
+      "phoneInvalid": "有効な電話番号を入力してください！",
+      "phoneMin": "電話番号は10桁以上で入力してください！",
+      "phoneMax": "電話番号は15桁以内で入力してください！"
+    },
+    "uploadHint": "最大サイズ: 5MB • 対応形式: JPG, PNG, GIF, WEBP",
+    "uploadError": {
+      "type": "画像ファイルのみアップロード可能です！",
+      "size": "画像は5MB以下にしてください！",
+      "failed": "アバターのアップロードに失敗しました。再試行してください。"
+    },
+    "updateSuccess": "プロフィールを更新しました！",
+    "subscriptionPlan": "サブスクリプションプラン",
+    "expiresOn": "有効期限",
+    "daysLeft": "日残り",
+    "expired": "期限切れ"
   }
 }

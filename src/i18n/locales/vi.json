@@ -1574,5 +1574,49 @@
       "vnpay": "Thanh toán qua VNPay (Thẻ ATM/Visa)",
       "sepay": "Thanh toán QR Code (Chuyển khoản 24/7)"
     }
+  },
+  "profile": {
+    "title": "Hồ sơ cá nhân",
+    "editProfile": "Chỉnh sửa hồ sơ",
+    "saveChanges": "Lưu thay đổi",
+    "cancel": "Hủy",
+    "uploadAvatar": "Đổi ảnh đại diện",
+    "uploading": "Đang tải lên...",
+    "accountInfo": "Thông tin tài khoản",
+    "additionalInfo": "Thông tin bổ sung",
+    "fullName": "Họ và tên",
+    "email": "Địa chỉ Email",
+    "role": "Vai trò",
+    "accountStatus": "Trạng thái tài khoản",
+    "phone": "Số điện thoại",
+    "dob": "Ngày sinh",
+    "address": "Địa chỉ",
+    "studentId": "Mã sinh viên",
+    "memberSince": "Thành viên từ",
+    "joined": "Đã tham gia",
+    "notProvided": "Chưa cung cấp",
+    "enterName": "Nhập họ tên của bạn",
+    "enterPhone": "Số điện thoại",
+    "enterAddress": "Nhập địa chỉ của bạn",
+    "selectDate": "Chọn ngày",
+    "validation": {
+      "nameRequired": "Vui lòng nhập tên của bạn!",
+      "nameMin": "Tên phải có ít nhất 2 ký tự!",
+      "nameMax": "Tên không được vượt quá 50 ký tự!",
+      "phoneInvalid": "Vui lòng nhập số điện thoại hợp lệ!",
+      "phoneMin": "Số điện thoại phải có ít nhất 10 chữ số!",
+      "phoneMax": "Số điện thoại không được vượt quá 15 chữ số!"
+    },
+    "uploadHint": "Kích thước tối đa: 5MB • Hỗ trợ: JPG, PNG, GIF, WEBP",
+    "uploadError": {
+      "type": "Bạn chỉ có thể tải lên tệp hình ảnh!",
+      "size": "Hình ảnh phải nhỏ hơn 5MB!",
+      "failed": "Tải ảnh thất bại. Vui lòng thử lại."
+    },
+    "updateSuccess": "Cập nhật hồ sơ thành công!",
+    "subscriptionPlan": "Gói đăng ký",
+    "expiresOn": "Hết hạn vào",
+    "daysLeft": "ngày còn lại",
+    "expired": "Đã hết hạn"
   }
 }
