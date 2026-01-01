@@ -95,6 +95,7 @@
     "languageChanged": "Đã chuyển ngôn ngữ sang"
   },
   "common": {
+    "selectAll": "Chọn tất cả",
     "save": "Lưu",
     "cancel": "Hủy",
     "delete": "Xóa",

@@ -95,6 +95,7 @@
     "languageChanged": "Language changed to"
   },
   "common": {
+    "selectAll": "Select All",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
