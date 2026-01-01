@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { IoClose, IoSend, IoExpand, IoContract, IoAttach, IoImage, IoEllipsisHorizontal, IoPencil, IoTrashOutline, IoCopyOutline, IoCheckmark, IoStopCircleOutline, IoArrowUp, IoAddOutline, IoMic, IoMicOutline, IoLanguage, IoSearch } from 'react-icons/io5';
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from 'react-icons/tb';
@@ -9,10 +9,14 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import MathJaxContent from '../common/MathJaxContent';
 import chatApi from '../../api/chatApi';
 import './ChatWidget.css';
+import useAuthStore from '../../store/authStore';
+import { USER_ROLES } from '../../constants/config';
 
 const ChatWidget = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { t } = useTranslation();
+    const { user } = useAuthStore();
 
     // Speech Recognition Hook - MUST be called before any early returns
     const {
@@ -489,7 +493,8 @@ const ChatWidget = () => {
                     id: Date.now() + 1,
                     text: isLimitError ? backendErrorMsg : t('chat.error'),
                     sender: 'bot',
-                    isError: true
+                    isError: true,
+                    isLimitError: isLimitError
                 };
                 setMessages(prev => [...prev, errorMessage]);
             }
@@ -1007,6 +1012,45 @@ const ChatWidget = () => {
                                                     {msg.sender === 'bot' ? (
                                                         <>
                                                             <MathJaxContent content={msg.text} enableMarkdown={true} />
+                                                            {msg.isLimitError && (
+                                                                <div style={{ marginTop: '16px', marginBottom: '8px' }}>
+                                                                    <button 
+                                                                        className="upgrade-btn" 
+                                                                        onClick={() => {
+                                                                            setIsExpanded(false); // Exit fullscreen/expanded mode
+                                                                            // setIsOpen(false); // Optional: close chat to see page better, or keep open as reminder
+                                                                            const vipPath = user?.role === USER_ROLES.TEACHER ? '/teacher/vip-packages' : '/student/vip-packages';
+                                                                            navigate(vipPath);
+                                                                        }}
+                                                                        style={{
+                                                                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // Gold/Pro gradient
+                                                                            color: 'white',
+                                                                            border: 'none',
+                                                                            padding: '8px 20px',
+                                                                            borderRadius: '20px',
+                                                                            cursor: 'pointer',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: '600',
+                                                                            transition: 'all 0.3s',
+                                                                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px'
+                                                                        }}
+                                                                        onMouseOver={(e) => {
+                                                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                                                            e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.4)';
+                                                                        }}
+                                                                        onMouseOut={(e) => {
+                                                                            e.currentTarget.style.transform = 'translateY(0)';
+                                                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+                                                                        }}
+                                                                    >
+                                                                        <span style={{ fontSize: '16px' }}>👑</span>
+                                                                        {t('vip.upgradeNow') || "Upgrade to Pro"}
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                             {msg.isPending && (
                                                                 <div className="pending-indicator" style={{ marginTop: '8px', fontSize: '0.85em', color: '#888', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                                     <div className="spinner-small"></div>
