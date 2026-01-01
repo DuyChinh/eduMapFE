@@ -51,6 +51,8 @@ import MindmapShared from '../pages/mindmap/MindmapShared';
 // Public Pages
 import PublicTakeExam from '../pages/public/PublicTakeExam';
 import PublicMindmapView from '../pages/public/PublicMindmapView';
+import GuestTakeExam from '../pages/public/GuestTakeExam';
+import GuestExamResult from '../pages/public/GuestExamResult';
 import Profile from '../pages/Profile';
 import PaymentResult from '../pages/payment/PaymentResult';
 
@@ -200,6 +202,10 @@ const router = createBrowserRouter(
       <Route path="/exam/:shareCode" element={<PublicTakeExam />} />
       <Route path="/mindmap/public/:shareLink" element={<PublicMindmapView />} />
       <Route path="/payment/result" element={<PaymentResult />} />
+
+      {/* Guest Exam Routes - No authentication required */}
+      <Route path="/guest/exam/:submissionId/take" element={<GuestTakeExam />} />
+      <Route path="/guest/result/:submissionId" element={<GuestExamResult />} />
 
       {/* 404 - Not Found */}
       <Route path="*" element={<Navigate to="/" replace />} />

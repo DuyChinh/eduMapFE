@@ -131,7 +131,6 @@ const EditExam = () => {
         hideGroupTitles: examData.hideGroupTitles !== undefined ? !examData.hideGroupTitles : true,
         sectionsStartFromQ1: examData.sectionsStartFromQ1 || false,
         hideLeaderboard: examData.hideLeaderboard !== undefined ? !examData.hideLeaderboard : true,
-        addTitleInfo: examData.addTitleInfo || false,
         preExamNotification: examData.preExamNotification || false,
         preExamNotificationText: examData.preExamNotificationText || '',
         startTime: examData.startTime ? dayjs(examData.startTime) : undefined,
@@ -519,7 +518,6 @@ const EditExam = () => {
         hideGroupTitles: !values.hideGroupTitles,
         sectionsStartFromQ1: values.sectionsStartFromQ1 || false,
         hideLeaderboard: !values.hideLeaderboard,
-        addTitleInfo: values.addTitleInfo || false,
         preExamNotification: values.preExamNotification || false,
         preExamNotificationText: values.preExamNotificationText || '',
         startTime: values.startTime ? values.startTime.toISOString() : undefined,
@@ -642,11 +640,12 @@ const EditExam = () => {
                 <Form.Item
                   label={t('exams.grade')}
                   name="gradeId"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1.5, minWidth: 200 }}
                 >
                   <Select
                     placeholder={t('exams.selectGrade')}
                     showSearch
+                    style={{ minWidth: 180 }}
                     filterOption={(input, option) =>
                       (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                     }
@@ -684,6 +683,14 @@ const EditExam = () => {
                     <Option value="class">{t('exams.allowClass')}</Option>
                     <Option value="student">{t('exams.allowStudent')}</Option>
                   </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label={t('exams.examPassword')}
+                  name="examPassword"
+                  style={{ flex: 1.5, minWidth: 200 }}
+                >
+                  <Input.Password placeholder={t('exams.examPasswordPlaceholder')} style={{ minWidth: 180 }} />
                 </Form.Item>
               </Space>
 
@@ -729,13 +736,6 @@ const EditExam = () => {
                   }
                   return null;
                 }}
-              </Form.Item>
-
-              <Form.Item
-                label={t('exams.examPassword')}
-                name="examPassword"
-              >
-                <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
               </Form.Item>
 
               <Space style={{ width: '100%' }} size="large">
@@ -1016,10 +1016,6 @@ const EditExam = () => {
                   <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
                 </Form.Item>
 
-                <Form.Item name="addTitleInfo" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.addTitleInfo')} unCheckedChildren={t('exams.noTitleInfo')} />
-                </Form.Item>
-
                 <Form.Item name="preExamNotification" valuePropName="checked">
                   <Switch checkedChildren={t('exams.preExamNotification')} unCheckedChildren={t('exams.noPreExamNotification')} />
                 </Form.Item>
@@ -1206,7 +1202,7 @@ const EditExam = () => {
       </Card>
 
       {/* Preview Modal */}
-      {/* <PreviewExamModal
+      <PreviewExamModal
         open={previewModalVisible}
         onCancel={() => {
           setPreviewModalVisible(false);
@@ -1216,7 +1212,7 @@ const EditExam = () => {
         examData={previewExamData || form.getFieldsValue()}
         questions={previewQuestions.length > 0 ? previewQuestions : selectedQuestions}
         subjects={subjects}
-      /> */}
+      />
 
       {/* Select Questions Modal */}
       <SelectQuestionsModal

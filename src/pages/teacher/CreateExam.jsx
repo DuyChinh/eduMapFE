@@ -93,7 +93,6 @@ const CreateExam = () => {
       hideGroupTitles: true,
       sectionsStartFromQ1: false,
       hideLeaderboard: true,
-      addTitleInfo: false,
       preExamNotification: false,
       blockLateEntry: true,
       lateEntryGracePeriod: -1,
@@ -344,7 +343,6 @@ const CreateExam = () => {
         hideGroupTitles: !values.hideGroupTitles,
         sectionsStartFromQ1: values.sectionsStartFromQ1 || false,
         hideLeaderboard: !values.hideLeaderboard,
-        addTitleInfo: values.addTitleInfo || false,
         preExamNotification: values.preExamNotification || false,
         preExamNotificationText: values.preExamNotificationText || '',
         startTime: values.startTime ? values.startTime.toISOString() : undefined,
@@ -368,28 +366,43 @@ const CreateExam = () => {
         const shareLink = `${window.location.origin}/exam/${createdExam.shareCode}`;
         Modal.success({
           title: t('exams.publishSuccess'),
+          icon: null,
+          className: 'publish-success-modal',
           content: (
-            <div>
-              <p>{t('exams.shareLinkGenerated')}</p>
-              <Input.Group compact style={{ marginTop: 16 }}>
-                <Input
-                  readOnly
-                  value={shareLink}
-                  style={{ width: 'calc(100% - 100px)' }}
-                />
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    navigator.clipboard.writeText(shareLink);
-                    message.success(t('exams.linkCopied'));
-                  }}
-                >
-                  {t('exams.copyLink')}
-                </Button>
-              </Input.Group>
+            <div className="publish-success-content">
+              <div className="success-icon-wrapper">
+                <div className="success-icon-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <p className="share-link-label">{t('exams.shareLinkGenerated')}</p>
+              <div className="share-link-container">
+                <div className="share-link-input-wrapper">
+                  <Input
+                    readOnly
+                    value={shareLink}
+                    className="share-link-input"
+                  />
+                  <Button
+                    type="primary"
+                    className="copy-link-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(shareLink);
+                      message.success(t('exams.linkCopied'));
+                    }}
+                  >
+                    {t('exams.copyLink')}
+                  </Button>
+                </div>
+              </div>
             </div>
           ),
           onOk: () => navigate(ROUTES.TEACHER_EXAMS),
+          okButtonProps: {
+            className: 'publish-ok-btn'
+          }
         });
       } else {
         message.success(t('exams.createSuccess'));
@@ -560,11 +573,12 @@ const CreateExam = () => {
                 <Form.Item
                   label={t('exams.grade')}
                   name="gradeId"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1.5, minWidth: 200 }}
                 >
                   <Select
                     placeholder={t('exams.selectGrade')}
                     showSearch
+                    style={{ minWidth: 180 }}
                     filterOption={(input, option) =>
                       (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                     }
@@ -602,6 +616,14 @@ const CreateExam = () => {
                     <Option value="class">{t('exams.allowClass')}</Option>
                     <Option value="student">{t('exams.allowStudent')}</Option>
                   </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label={t('exams.examPassword')}
+                  name="examPassword"
+                  style={{ flex: 1.5, minWidth: 200 }}
+                >
+                  <Input.Password placeholder={t('exams.examPasswordPlaceholder')} style={{ minWidth: 180 }} />
                 </Form.Item>
               </Space>
 
@@ -654,13 +676,6 @@ const CreateExam = () => {
                   return null;
                 }}
               </Form.Item>
-
-                <Form.Item
-                  label={t('exams.examPassword')}
-                  name="examPassword"
-                >
-                  <Input.Password placeholder={t('exams.examPasswordPlaceholder')} />
-                </Form.Item>
 
               <Space style={{ width: '100%' }} size="large">
                 <Form.Item
@@ -943,10 +958,6 @@ const CreateExam = () => {
 
                 <Form.Item name="hideLeaderboard" valuePropName="checked">
                   <Switch checkedChildren={t('exams.showLeaderboard')} unCheckedChildren={t('exams.hideLeaderboard')} />
-                </Form.Item>
-
-                <Form.Item name="addTitleInfo" valuePropName="checked">
-                  <Switch checkedChildren={t('exams.addTitleInfo')} unCheckedChildren={t('exams.noTitleInfo')} />
                 </Form.Item>
 
                 <Form.Item name="preExamNotification" valuePropName="checked">

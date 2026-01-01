@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Button, Typography, Row, Col, Space, Tag, App, Modal } from 'antd';
 import { CrownOutlined, CheckOutlined, ThunderboltOutlined, SmileOutlined, BankOutlined, CreditCardOutlined, HistoryOutlined } from '@ant-design/icons';
 import paymentService from '../../services/paymentService';
@@ -14,51 +14,36 @@ const { Title, Text } = Typography;
 const VipPackages = () => {
     const { t } = useTranslation();
     const { message } = App.useApp();
-    const { user } = useAuthStore();
+    const { user, fetchProfile } = useAuthStore();
     const [sePayModalVisible, setSePayModalVisible] = useState(false);
     const [transactionData, setTransactionData] = useState(null);
     const [methodModalVisible, setMethodModalVisible] = useState(false);
     const [historyModalVisible, setHistoryModalVisible] = useState(false);
     const [selectedPackage, setSelectedPackage] = useState(null);
-    const [currentPlanTier, setCurrentPlanTier] = useState(0); // 0: Free, 1: Plus, 2: Pro
 
-    const fetchPlanStatus = async () => {
+    // Get current plan tier from user subscription
+    const getCurrentPlanTier = () => {
+        const plan = user?.subscription?.plan?.toLowerCase();
+        console.log('Current subscription plan:', plan); // Debug log
+        if (plan === 'pro') return 2;
+        if (plan === 'plus') return 1;
+        return 0; // free or undefined
+    };
+
+    const currentPlanTier = getCurrentPlanTier();
+
+    const handlePaymentSuccess = async () => {
+        // Refresh user profile to get updated subscription
         try {
-            const res = await paymentService.getHistory();
-            const payments = res.data || [];
-            const tier = calculateCurrentPlan(payments);
-            setCurrentPlanTier(tier);
+            await fetchProfile();
         } catch (error) {
-            console.error("Failed to fetch payment history", error);
+            console.error("Failed to refresh profile", error);
         }
-    };
-
-    useEffect(() => {
-        fetchPlanStatus();
-    }, []);
-
-    const handlePaymentSuccess = () => {
-        fetchPlanStatus();
-    };
-
-    const calculateCurrentPlan = (payments) => {
-        const now = new Date();
-        const activePayment = payments.find(p => {
-            const date = new Date(p.createdAt || p.gatewayPayDate);
-            const isValid = p.status === 'SUCCESS' && (now - date) < 30 * 24 * 60 * 60 * 1000;
-            return isValid;
-        });
-
-        if (!activePayment) return 0; // Free
-
-        if (activePayment.amount >= 20000) return 2; // Pro
-        if (activePayment.amount >= 10000) return 1; // Plus
-        return 0;
     };
 
     const getPackageStatus = (tier) => {
         const isCurrent = currentPlanTier === tier;
-        // Disable if isCurrent OR if currentTier > tier (prevent downgrade)
+        // Disable current plan and lower plans (prevent downgrade)
         const isDisabled = isCurrent || currentPlanTier > tier;
         return { isCurrent, isDisabled };
     };
@@ -70,8 +55,8 @@ const VipPackages = () => {
             period: t('vip.month'),
             icon: <SmileOutlined style={{ fontSize: '48px', color: '#6b7280' }} />,
             features: t('vip.plans.free.features', { returnObjects: true }),
-            buttonText: t('vip.currentPlan'),
-            ...getPackageStatus(0),
+            buttonText: t('vip.plans.free.title'),
+            tier: 0,
             color: '#6b7280'
         },
         {
@@ -84,20 +69,23 @@ const VipPackages = () => {
             recommend: true,
             color: '#3b82f6',
             orderType: 'billpayment',
-            ...getPackageStatus(1)
+            tier: 1
         },
         {
             title: t('vip.plans.pro.title'),
             price: 20000,
             period: t('vip.month'),
-            icon: <CrownOutlined style={{ fontSize: '48px', color: '#8b5cf6' }} />,
+            icon: <CrownOutlined style={{ fontSize: '48px', color: '#f59e0b' }} />,
             features: t('vip.plans.pro.features', { returnObjects: true }),
             buttonText: t('vip.goPro'),
-            color: '#8b5cf6',
+            color: '#f59e0b',
             orderType: 'billpayment',
-            ...getPackageStatus(2)
+            tier: 2
         }
-    ];
+    ].map(pkg => ({
+        ...pkg,
+        ...getPackageStatus(pkg.tier)
+    }));
 
     const handlePurchaseClick = (pkg) => {
         if (pkg.price === 0) return;
@@ -175,10 +163,15 @@ const VipPackages = () => {
                     <Col xs={24} md={8} lg={7} key={index}>
                         <Card
                             hoverable
-                            className="vip-card"
+                            className={`vip-card ${pkg.isCurrent ? 'vip-card-current' : ''}`}
                             style={{
                                 '--hover-color': pkg.color,
-                                borderColor: '#f0f0f0'
+                                borderColor: pkg.isCurrent ? pkg.color : '#f0f0f0',
+                                borderWidth: pkg.isCurrent ? '2px' : '1px',
+                                background: pkg.isCurrent 
+                                    ? `linear-gradient(135deg, ${pkg.color}15 0%, ${pkg.color}08 100%)`
+                                    : '#fff',
+                                boxShadow: pkg.isCurrent ? `0 4px 20px ${pkg.color}30` : undefined
                             }}
                         >
                             {pkg.recommend && (
@@ -207,13 +200,14 @@ const VipPackages = () => {
                                 size="large"
                                 block
                                 style={{
-                                    backgroundColor: pkg.isCurrent ? '#f3f4f6' : pkg.color,
-                                    color: pkg.isCurrent ? '#374151' : '#fff',
-                                    borderColor: pkg.isCurrent ? '#d1d5db' : pkg.color,
+                                    backgroundColor: pkg.isDisabled ? '#e5e7eb' : pkg.color,
+                                    color: pkg.isDisabled ? '#6b7280' : '#fff',
+                                    borderColor: pkg.isDisabled ? '#d1d5db' : pkg.color,
                                     height: '48px',
                                     borderRadius: '24px',
                                     marginBottom: '24px',
-                                    fontWeight: '600'
+                                    fontWeight: '600',
+                                    cursor: pkg.isDisabled ? 'not-allowed' : 'pointer'
                                 }}
                                 onClick={() => handlePurchaseClick(pkg)}
                                 disabled={pkg.isDisabled}
