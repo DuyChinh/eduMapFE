@@ -48,10 +48,23 @@ const VipPackages = () => {
         return { isCurrent, isDisabled };
     };
 
+    // Get config from env
+    const PLUS_PRICE = Number(import.meta.env.VITE_VIP_PLUS_PRICE || 10000);
+    const PLUS_DISCOUNT = Number(import.meta.env.VITE_VIP_PLUS_DISCOUNT || 70);
+    const PRO_PRICE = Number(import.meta.env.VITE_VIP_PRO_PRICE || 20000);
+    const PRO_DISCOUNT = Number(import.meta.env.VITE_VIP_PRO_DISCOUNT || 80);
+
+    const calculateOriginalPrice = (price, discountPercent) => {
+        if (!discountPercent) return null;
+        return Math.round(price / (1 - (discountPercent / 100)));
+    };
+
     const packages = [
         {
             title: t('vip.plans.free.title'),
             price: 0,
+            originalPrice: null,
+            discount: null,
             period: t('vip.month'),
             icon: <SmileOutlined style={{ fontSize: '48px', color: '#6b7280' }} />,
             features: t('vip.plans.free.features', { returnObjects: true }),
@@ -61,7 +74,9 @@ const VipPackages = () => {
         },
         {
             title: t('vip.plans.plus.title'),
-            price: 10000,
+            price: PLUS_PRICE,
+            originalPrice: calculateOriginalPrice(PLUS_PRICE, PLUS_DISCOUNT),
+            discount: `-${PLUS_DISCOUNT}%`,
             period: t('vip.month'),
             icon: <ThunderboltOutlined style={{ fontSize: '48px', color: '#3b82f6' }} />,
             features: t('vip.plans.plus.features', { returnObjects: true }),
@@ -73,7 +88,9 @@ const VipPackages = () => {
         },
         {
             title: t('vip.plans.pro.title'),
-            price: 20000,
+            price: PRO_PRICE,
+            originalPrice: calculateOriginalPrice(PRO_PRICE, PRO_DISCOUNT),
+            discount: `-${PRO_DISCOUNT}%`,
             period: t('vip.month'),
             icon: <CrownOutlined style={{ fontSize: '48px', color: '#f59e0b' }} />,
             features: t('vip.plans.pro.features', { returnObjects: true }),
@@ -182,6 +199,12 @@ const VipPackages = () => {
                                 </Tag>
                             )}
 
+                            {pkg.discount && (
+                                <div className="vip-discount-badge">
+                                    {pkg.discount}
+                                </div>
+                            )}
+
                             <div style={{ margin: '24px 0' }}>
                                 {pkg.icon}
                             </div>
@@ -189,10 +212,15 @@ const VipPackages = () => {
                             <Title level={3} style={{ marginBottom: 0 }}>{pkg.title}</Title>
 
                             <div style={{ margin: '16px 0' }}>
-                                <Text strong style={{ fontSize: '32px' }}>
+                                <Text strong style={{ fontSize: '32px', display: 'block', lineHeight: '1.2' }}>
                                     {pkg.price.toLocaleString('vi-VN')} VND
                                 </Text>
-                                <Text type="secondary">{pkg.period}</Text>
+                                {pkg.originalPrice && (
+                                    <Text delete type="secondary" style={{ fontSize: '18px', display: 'block', marginTop: '4px', color: '#9ca3af' }}>
+                                        {pkg.originalPrice.toLocaleString('vi-VN')} VND
+                                    </Text>
+                                )}
+                                <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>{pkg.period}</Text>
                             </div>
 
 
