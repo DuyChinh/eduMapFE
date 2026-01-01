@@ -429,7 +429,7 @@ const StudentDashboard = () => {
             {recentResults && recentResults.length > 0 ? (
               <Table
                 columns={recentResultsColumns}
-                dataSource={recentResults.map((item, idx) => ({ ...item, _key: item.examId || item.submissionId || `result-${idx}` }))}
+                dataSource={recentResults.map((item, idx) => ({ ...item, _key: item.submissionId || `${item.examId}-${idx}` }))}
                 rowKey="_key"
                 pagination={false}
                 size="middle"
@@ -467,7 +467,7 @@ const StudentDashboard = () => {
             {upcomingExams && upcomingExams.length > 0 ? (
               <Table
                 columns={upcomingExamsColumns}
-                dataSource={upcomingExams.map((item, idx) => ({ ...item, _key: item.examId || `exam-${idx}` }))}
+                dataSource={upcomingExams.map((item, idx) => ({ ...item, _key: `${item.examId || 'exam'}-${idx}` }))}
                 rowKey="_key"
                 pagination={false}
                 size="middle"

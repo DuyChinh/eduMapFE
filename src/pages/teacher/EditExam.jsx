@@ -642,11 +642,12 @@ const EditExam = () => {
                 <Form.Item
                   label={t('exams.grade')}
                   name="gradeId"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1.5, minWidth: 200 }}
                 >
                   <Select
                     placeholder={t('exams.selectGrade')}
                     showSearch
+                    style={{ minWidth: 180 }}
                     filterOption={(input, option) =>
                       (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                     }
