@@ -166,12 +166,14 @@ const VipPackages = () => {
                             className={`vip-card ${pkg.isCurrent ? 'vip-card-current' : ''}`}
                             style={{
                                 '--hover-color': pkg.color,
-                                borderColor: pkg.isCurrent ? pkg.color : '#f0f0f0',
-                                borderWidth: pkg.isCurrent ? '2px' : '1px',
-                                background: pkg.isCurrent 
-                                    ? `linear-gradient(135deg, ${pkg.color}15 0%, ${pkg.color}08 100%)`
-                                    : '#fff',
-                                boxShadow: pkg.isCurrent ? `0 4px 20px ${pkg.color}30` : undefined
+                                // Only set inline styles if it IS the current plan (to keep the gradient/highlight)
+                                // Otherwise, let CSS handle it (for dark mode support)
+                                ...(pkg.isCurrent ? {
+                                    borderColor: pkg.color,
+                                    borderWidth: '2px',
+                                    background: `linear-gradient(135deg, ${pkg.color}15 0%, ${pkg.color}08 100%)`,
+                                    boxShadow: `0 4px 20px ${pkg.color}30`
+                                } : {})
                             }}
                         >
                             {pkg.recommend && (

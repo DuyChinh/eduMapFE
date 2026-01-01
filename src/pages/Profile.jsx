@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   Descriptions,
@@ -30,6 +31,9 @@ import {
   CheckCircleOutlined,
   SafetyOutlined,
   EnvironmentOutlined,
+  CrownOutlined,
+  ThunderboltOutlined,
+  SketchOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import useAuthStore from '../store/authStore';
@@ -51,7 +55,14 @@ const roleIconMap = {
   [USER_ROLES.ADMIN]: '👑',
 };
 
+const planConfig = {
+  free: { color: 'default', icon: <SketchOutlined />, label: 'Free', bg: '#8c8c8c' },
+  plus: { color: 'blue', icon: <ThunderboltOutlined />, label: 'Plus', bg: '#1890ff' },
+  pro: { color: 'gold', icon: <CrownOutlined />, label: 'Pro', bg: '#faad14' }
+};
+
 const Profile = () => {
+  const { t } = useTranslation();
   const { user, updateProfile } = useAuthStore();
   const [form] = Form.useForm();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -66,14 +77,7 @@ const Profile = () => {
 
   const currentAvatarSrc = avatarUrl || user.profile?.avatar || user.avatar;
 
-  const roleLabel =
-    user.role === USER_ROLES.TEACHER
-      ? 'Teacher'
-      : user.role === USER_ROLES.STUDENT
-        ? 'Student'
-        : user.role === USER_ROLES.ADMIN
-          ? 'Admin'
-          : user.role;
+  const roleLabel = t(`role.${user.role}`);
 
   const showEditModal = () => {
     form.setFieldsValue({
@@ -109,14 +113,14 @@ const Profile = () => {
     // Validate file type
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
-      message.error('You can only upload image files!');
+      message.error(t('profile.uploadError.type'));
       return false;
     }
 
     // Validate file size (max 5MB)
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
-      message.error('Image must be smaller than 5MB!');
+      message.error(t('profile.uploadError.size'));
       return false;
     }
 
@@ -137,14 +141,14 @@ const Profile = () => {
       if (response.success && response.data?.url) {
         setAvatarUrl(response.data.url);
         setAvatarPublicId(response.data.public_id);
-        message.success('Avatar uploaded successfully!');
+        message.success(t('profile.uploadSuccess', 'Avatar uploaded successfully!'));
       } else {
         console.error('Unexpected response structure:', response);
         throw new Error('Upload failed - no URL returned');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      message.error('Failed to upload avatar. Please try again.');
+      message.error(t('profile.uploadError.failed'));
     } finally {
       setUploading(false);
     }
@@ -171,7 +175,7 @@ const Profile = () => {
       }
 
       await updateProfile(user._id || user.id, updateData);
-      message.success('Profile updated successfully!');
+      message.success(t('profile.updateSuccess'));
       setEditModalVisible(false);
       setAvatarUrl(null);
       setAvatarPublicId(null); // Clear public_id after successful save
@@ -198,10 +202,22 @@ const Profile = () => {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  }) : 'Not provided';
+  }) : t('profile.notProvided');
 
   // Get display phone
   const displayPhone = user.phone || user.profile?.phone;
+
+  // Subscription Details
+  const subscription = user.subscription || { plan: 'free' };
+  const { plan, expiresAt } = subscription;
+  const planInfo = planConfig[plan] || planConfig.free;
+  
+  const daysRemaining = expiresAt ? dayjs(expiresAt).diff(dayjs(), 'day') : null;
+  const expirationDate = expiresAt ? new Date(expiresAt).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }) : null;
 
   return (
     <div className="profile-page-container">
@@ -209,17 +225,40 @@ const Profile = () => {
       <Card className="profile-hero-card" variant="borderless">
         <div className="profile-hero-content">
           <div className="profile-avatar-section">
-            <div className="avatar-wrapper">
-              <Avatar
-                size={140}
-                src={currentAvatarSrc}
-                icon={!currentAvatarSrc && <UserOutlined />}
-                className="profile-main-avatar"
-              />
-              <div className="avatar-badge">
-                <span className="role-emoji">{roleIconMap[user.role]}</span>
+              <div className="avatar-wrapper">
+                <Avatar
+                  size={140}
+                  src={currentAvatarSrc}
+                  icon={!currentAvatarSrc && <UserOutlined />}
+                  className="profile-main-avatar"
+                />
+                <div className="avatar-badge">
+                  <span className="role-emoji">{roleIconMap[user.role]}</span>
+                </div>
+                {/* Subscription Tier Badge */}
+                <div 
+                  className="tier-badge"
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: -15,
+                    background: planInfo.bg,
+                    color: '#fff',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    zIndex: 2,
+                    border: '2px solid white'
+                  }}
+                >
+                  {planInfo.icon} {planInfo.label}
+                </div>
               </div>
-            </div>
           </div>
 
           <div className="profile-info-section">
@@ -245,7 +284,7 @@ const Profile = () => {
                   color={user.status === 'active' ? 'success' : 'default'}
                   className="status-tag"
                 >
-                  {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                  {t(`status.${user.status}`, user.status.charAt(0).toUpperCase() + user.status.slice(1))}
                 </Tag>
               )}
             </Space>
@@ -265,7 +304,7 @@ const Profile = () => {
                 <div className="contact-item">
                   <CalendarOutlined className="contact-icon" />
                   <Text className="contact-text" type="secondary">
-                    Joined {createdDate}
+                    {t('profile.joined')} {createdDate}
                   </Text>
                 </div>
               </Space>
@@ -280,7 +319,7 @@ const Profile = () => {
               onClick={showEditModal}
               className="edit-profile-btn"
             >
-              Edit Profile
+              {t('profile.editProfile')}
             </Button>
           </div>
         </div>
@@ -293,19 +332,19 @@ const Profile = () => {
             title={
               <Space>
                 <IdcardOutlined />
-                <span>Account Information</span>
+                <span>{t('profile.accountInfo')}</span>
               </Space>
             }
             variant="borderless"
             className="info-card"
           >
             <Descriptions column={1} styles={{ label: { fontWeight: 600 } }}>
-              <Descriptions.Item label="Full Name">{user.name}</Descriptions.Item>
-              <Descriptions.Item label="Email Address">{user.email}</Descriptions.Item>
-              <Descriptions.Item label="Role">{roleLabel}</Descriptions.Item>
-              <Descriptions.Item label="Account Status">
+              <Descriptions.Item label={t('profile.fullName')}>{user.name}</Descriptions.Item>
+              <Descriptions.Item label={t('profile.email')}>{user.email}</Descriptions.Item>
+              <Descriptions.Item label={t('profile.role')}>{roleLabel}</Descriptions.Item>
+              <Descriptions.Item label={t('profile.accountStatus')}>
                 <Tag color={user.status === 'active' ? 'success' : 'default'}>
-                  {user.status}
+                  {t(`status.${user.status}`, user.status)}
                 </Tag>
               </Descriptions.Item>
             </Descriptions>
@@ -317,28 +356,45 @@ const Profile = () => {
             title={
               <Space>
                 <UserOutlined />
-                <span>Additional Information</span>
+                <span>{t('profile.additionalInfo')}</span>
               </Space>
             }
             variant="borderless"
             className="info-card"
           >
             <Descriptions column={1} styles={{ label: { fontWeight: 600 } }}>
-              <Descriptions.Item label="Phone">
-                {displayPhone || <Text type="secondary">Not provided</Text>}
+              <Descriptions.Item label={t('profile.phone')}>
+                {displayPhone || <Text type="secondary">{t('profile.notProvided')}</Text>}
               </Descriptions.Item>
-              <Descriptions.Item label="Date of Birth">
+              <Descriptions.Item label={t('profile.dob')}>
                 {formattedDOB}
               </Descriptions.Item>
-              <Descriptions.Item label="Address">
-                {user.address || <Text type="secondary">Not provided</Text>}
+              <Descriptions.Item label={t('profile.address')}>
+                {user.address || <Text type="secondary">{t('profile.notProvided')}</Text>}
               </Descriptions.Item>
               {user.profile?.studentId ? (
-                <Descriptions.Item label="Student ID">{user.profile.studentId}</Descriptions.Item>
+                <Descriptions.Item label={t('profile.studentId')}>{user.profile.studentId}</Descriptions.Item>
               ) : null}
-              <Descriptions.Item label="Member Since">
+              <Descriptions.Item label={t('profile.memberSince')}>
                 {createdDate}
               </Descriptions.Item>
+              <Descriptions.Item label={t('profile.subscriptionPlan')}>
+                <Space>
+                  <Tag color={planInfo.color} icon={planInfo.icon}>
+                    {planInfo.label.toUpperCase()}
+                  </Tag>
+                  {daysRemaining !== null && (
+                    <Tag color={daysRemaining < 0 ? 'error' : (daysRemaining <= 7 ? 'warning' : 'success')}>
+                      {daysRemaining < 0 ? t('profile.expired') : `${daysRemaining} ${t('profile.daysLeft')}`}
+                    </Tag>
+                  )}
+                </Space>
+              </Descriptions.Item>
+              {expirationDate && (
+                <Descriptions.Item label={t('profile.expiresOn')}>
+                  {expirationDate}
+                </Descriptions.Item>
+              )}
             </Descriptions>
           </Card>
         </Col>
@@ -349,7 +405,7 @@ const Profile = () => {
         title={
           <Space>
             <EditOutlined />
-            <span>Edit Profile</span>
+            <span>{t('profile.editProfile')}</span>
           </Space>
         }
         open={editModalVisible}
@@ -357,8 +413,8 @@ const Profile = () => {
         onOk={handleSave}
         confirmLoading={loading}
         width={600}
-        okText="Save Changes"
-        cancelText="Cancel"
+        okText={t('profile.saveChanges')}
+        cancelText={t('profile.cancel')}
         className="edit-profile-modal"
       >
         <Divider />
@@ -393,11 +449,11 @@ const Profile = () => {
                   type="dashed"
                   block
                 >
-                  {uploading ? 'Uploading...' : 'Change Avatar'}
+                  {uploading ? t('profile.uploading') : t('profile.uploadAvatar')}
                 </Button>
               </Upload>
               <Text type="secondary" className="upload-hint">
-                Max size: 5MB • Supported: JPG, PNG, GIF, WEBP
+                {t('profile.uploadHint')}
               </Text>
             </div>
           </div>
@@ -405,17 +461,17 @@ const Profile = () => {
           <Divider />
 
           <Form.Item
-            label="Full Name"
+            label={t('profile.fullName')}
             name="name"
             rules={[
-              { required: true, message: 'Please enter your name!' },
-              { min: 2, message: 'Name must be at least 2 characters!' },
-              { max: 50, message: 'Name cannot exceed 50 characters!' },
+              { required: true, message: t('profile.validation.nameRequired') },
+              { min: 2, message: t('profile.validation.nameMin') },
+              { max: 50, message: t('profile.validation.nameMax') },
             ]}
           >
             <Input
               size="large"
-              placeholder="Enter your full name"
+              placeholder={t('profile.enterName')}
               prefix={<UserOutlined />}
             />
           </Form.Item>
@@ -423,26 +479,26 @@ const Profile = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                label="Phone Number"
+                label={t('profile.phone')}
                 name="phone"
                 rules={[
                   {
                     pattern: /^[0-9+\-\s()]*$/,
-                    message: 'Please enter a valid phone number!'
+                    message: t('profile.validation.phoneInvalid')
                   },
                   {
                     min: 10,
-                    message: 'Phone number must be at least 10 digits!'
+                    message: t('profile.validation.phoneMin')
                   },
                   {
                     max: 15,
-                    message: 'Phone number cannot exceed 15 digits!'
+                    message: t('profile.validation.phoneMax')
                   },
                 ]}
               >
                 <Input
                   size="large"
-                  placeholder="Phone number"
+                  placeholder={t('profile.enterPhone')}
                   prefix={<PhoneOutlined />}
                   allowClear
                 />
@@ -450,26 +506,26 @@ const Profile = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                label="Date of Birth"
+                label={t('profile.dob')}
                 name="dob"
               >
                 <DatePicker
                   size="large"
                   style={{ width: '100%' }}
                   format="DD/MM/YYYY"
-                  placeholder="Select date"
+                  placeholder={t('profile.selectDate')}
                 />
               </Form.Item>
             </Col>
           </Row>
 
           <Form.Item
-            label="Address"
+            label={t('profile.address')}
             name="address"
           >
             <Input
               size="large"
-              placeholder="Enter your address"
+              placeholder={t('profile.enterAddress')}
               prefix={<EnvironmentOutlined />}
               allowClear
             />
