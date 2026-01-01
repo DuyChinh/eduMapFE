@@ -452,7 +452,7 @@ const TakeExamNew = () => {
 
         {/* Exam Details */}
         <Card title={t('exams.examDetails')} style={{ marginBottom: 24 }}>
-          <Descriptions bordered column={{ xs: 1, sm: 2 }}>
+          <Descriptions variant="bordered" column={{ xs: 1, sm: 2 }}>
             {examData.examPurpose && (
               <Descriptions.Item label={t('exams.examPurpose')}>
                 <Tag color="blue">{examData.examPurpose}</Tag>

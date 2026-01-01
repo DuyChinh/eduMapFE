@@ -206,7 +206,7 @@ const Profile = () => {
   return (
     <div className="profile-page-container">
       {/* Profile Header Card */}
-      <Card className="profile-hero-card" bordered={false}>
+      <Card className="profile-hero-card" variant="borderless">
         <div className="profile-hero-content">
           <div className="profile-avatar-section">
             <div className="avatar-wrapper">
@@ -296,10 +296,10 @@ const Profile = () => {
                 <span>Account Information</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             className="info-card"
           >
-            <Descriptions column={1} labelStyle={{ fontWeight: 600 }}>
+            <Descriptions column={1} styles={{ label: { fontWeight: 600 } }}>
               <Descriptions.Item label="Full Name">{user.name}</Descriptions.Item>
               <Descriptions.Item label="Email Address">{user.email}</Descriptions.Item>
               <Descriptions.Item label="Role">{roleLabel}</Descriptions.Item>
@@ -320,10 +320,10 @@ const Profile = () => {
                 <span>Additional Information</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             className="info-card"
           >
-            <Descriptions column={1} labelStyle={{ fontWeight: 600 }}>
+            <Descriptions column={1} styles={{ label: { fontWeight: 600 } }}>
               <Descriptions.Item label="Phone">
                 {displayPhone || <Text type="secondary">Not provided</Text>}
               </Descriptions.Item>
