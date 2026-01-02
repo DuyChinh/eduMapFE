@@ -666,3 +666,180 @@ body.dark-mode .score-distribution-card .ant-card-head-title {
   color: rgba(255, 255, 255, 0.85);
 }
 
+/* ========================================
+   Publish Success Modal - Professional Design
+   ======================================== */
+
+.publish-success-modal .ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.publish-success-modal .ant-modal-confirm-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.publish-success-modal .ant-modal-confirm-title {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.publish-success-modal .ant-modal-confirm-content {
+  width: 100%;
+  margin-top: 0 !important;
+}
+
+.publish-success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.success-icon-wrapper {
+  margin-bottom: 20px;
+}
+
+.success-icon-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+  animation: success-pop 0.5s ease-out;
+}
+
+.success-icon-circle svg {
+  width: 36px;
+  height: 36px;
+  color: #fff;
+}
+
+@keyframes success-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.share-link-label {
+  font-size: 15px;
+  color: #6b7280;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.share-link-container {
+  width: 100%;
+  padding: 0 8px;
+}
+
+.share-link-input-wrapper {
+  display: flex;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 6px;
+  transition: all 0.2s ease;
+}
+
+.share-link-input-wrapper:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.share-link-input.ant-input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  font-size: 14px;
+  color: #475569;
+  padding: 8px 12px;
+  box-shadow: none !important;
+}
+
+.share-link-input.ant-input:focus {
+  box-shadow: none !important;
+}
+
+.copy-link-btn.ant-btn {
+  border-radius: 8px;
+  height: 40px;
+  padding: 0 20px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+  transition: all 0.2s ease;
+}
+
+.copy-link-btn.ant-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45);
+}
+
+.publish-success-modal .ant-modal-confirm-btns {
+  margin-top: 24px;
+  padding-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.publish-ok-btn.ant-btn {
+  min-width: 120px;
+  height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.publish-ok-btn.ant-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+/* Dark Mode */
+body.dark-mode .publish-success-modal .ant-modal-content {
+  background: #1f1f1f;
+}
+
+body.dark-mode .publish-success-modal .ant-modal-confirm-title {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+body.dark-mode .share-link-label {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .share-link-input-wrapper {
+  background: #2a2a2a;
+  border-color: #404040;
+}
+
+body.dark-mode .share-link-input-wrapper:hover {
+  border-color: #525252;
+}
+
+body.dark-mode .share-link-input.ant-input {
+  color: rgba(255, 255, 255, 0.85);
+}

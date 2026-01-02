@@ -95,6 +95,7 @@
     "languageChanged": "Đã chuyển ngôn ngữ sang"
   },
   "common": {
+    "selectAll": "Chọn tất cả",
     "save": "Lưu",
     "cancel": "Hủy",
     "delete": "Xóa",
@@ -120,6 +121,7 @@
     "public": "Công khai",
     "private": "Riêng tư",
     "back": "Quay lại",
+    "goHome": "Về trang chủ",
     "backToDashboard": "Về trang chủ",
     "student": "Học sinh",
     "add": "Thêm",
@@ -145,7 +147,10 @@
     "deleteClassMessage": "Bạn có chắc chắn muốn xóa lớp học này",
     "deletePost": "Xóa bài đăng?",
     "deletePostMessage": "Bạn có chắc chắn muốn xóa bài đăng này",
-    "close": "Đóng"
+    "all": "Tất cả",
+    "startDate": "Từ ngày",
+    "endDate": "Đến ngày",
+    "index": "STT"
   },
   "qrScanner": {
     "title": "Quét mã QR",
@@ -192,6 +197,7 @@
     "loginNow": "Đăng nhập ngay",
     "nameRequired": "Vui lòng nhập họ tên!",
     "nameMinLength": "Họ tên phải có ít nhất 2 ký tự!",
+    "nameMaxLength": "Họ tên không được quá 128 ký tự!",
     "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu!",
     "passwordMismatch": "Mật khẩu xác nhận không khớp!",
     "registerSuccess": "Đăng ký thành công! Vui lòng đăng nhập.",
@@ -208,6 +214,7 @@
     "emailPlaceholder": "example@gmail.com",
     "emailRequired": "Vui lòng nhập email!",
     "emailInvalid": "Email không hợp lệ!",
+    "emailRequiredForForgotPassword": "Vui lòng nhập email từ trang đăng nhập!",
     "sendButton": "Gửi mã OTP",
     "backToLogin": "Quay lại",
     "rememberPassword": "Nhớ mật khẩu?",
@@ -1017,6 +1024,9 @@
     "failedToStart": "Không thể bắt đầu làm bài",
     "timeRemaining": "Thời gian còn lại",
     "timeUp": "Hết giờ! Đang nộp bài...",
+    "timeExpiredAutoSubmit": "Đã hết thời gian làm bài. Bài thi đang được nộp tự động...",
+    "examAutoSubmitted": "Bài thi của bạn đã được nộp tự động!",
+    "autoSubmitFailed": "Không thể tự động nộp bài. Vui lòng liên hệ giáo viên.",
     "timeWarning": "Cảnh báo thời gian",
     "onlyTimeRemaining": "Chỉ còn",
     "question": "Câu hỏi",
@@ -1065,7 +1075,6 @@
     "autoStarting": "Đang tự động bắt đầu bài thi...",
     "days": "ngày",
     "hours": "giờ",
-    "minutes": "phút",
     "seconds": "giây",
     "submissionNotFound": "Không tìm thấy bài làm",
     "yourScore": "Điểm của bạn",
@@ -1108,7 +1117,47 @@
     "passwordPlaceholder": "Nhập mật khẩu đề thi",
     "invalidPassword": "Mật khẩu không đúng",
     "startExam": "Bắt đầu làm bài",
-    "failedToStart": "Không thể bắt đầu làm bài"
+    "failedToStart": "Không thể bắt đầu làm bài",
+    "loginRequired": "Vui lòng đăng nhập để làm bài thi này",
+    "enterYourName": "Nhập họ tên của bạn",
+    "guestNamePlaceholder": "Họ và tên",
+    "guestNameRequired": "Vui lòng nhập họ tên",
+    "guestNameTooLong": "Họ tên không được quá 128 ký tự",
+    "examPassword": "Mật khẩu đề thi",
+    "or": "hoặc",
+    "loginToTakeExam": "Đăng nhập để làm bài"
+  },
+  "guestExam": {
+    "sessionExpired": "Phiên làm bài đã hết hạn",
+    "failedToLoad": "Không thể tải đề thi",
+    "question": "Câu",
+    "marks": "điểm",
+    "guestMode": "Khách",
+    "submit": "Nộp bài",
+    "previous": "Câu trước",
+    "next": "Câu sau",
+    "true": "Đúng",
+    "false": "Sai",
+    "enterAnswer": "Nhập câu trả lời",
+    "confirmSubmit": "Xác nhận nộp bài",
+    "submitWarning": "Bạn có chắc chắn muốn nộp bài? Sau khi nộp, bạn không thể sửa đổi câu trả lời.",
+    "answered": "Đã trả lời",
+    "unanswered": "Chưa trả lời",
+    "flagged": "Đã đánh dấu",
+    "submitNow": "Nộp bài ngay",
+    "submitFailed": "Không thể nộp bài",
+    "noQuestions": "Không có câu hỏi"
+  },
+  "guestResult": {
+    "examCompleted": "Hoàn thành bài thi!",
+    "timeSpent": "Thời gian",
+    "score": "Điểm",
+    "lateSubmission": "Nộp muộn",
+    "thankYouMessage": "Cảm ơn bạn đã hoàn thành bài thi. Kết quả của bạn đã được ghi nhận.",
+    "failedToLoad": "Không thể tải kết quả",
+    "errorTitle": "Lỗi",
+    "notFound": "Không tìm thấy kết quả",
+    "registerCTA": "Đăng ký EduMap để xem đáp án chi tiết và nhiều tiện ích khác"
   },
   "reports": {
     "title": "Báo cáo lớp học",
@@ -1171,6 +1220,66 @@
     "createImprovementMindmap": "Tạo lộ trình cải thiện (Mindmap)",
     "mindmapCreated": "Đã tạo lộ trình cải thiện!",
     "viewImprovementMindmap": "Xem lộ trình cải thiện"
+    "fetchFailed": "Không thể tải chi tiết bài nộp",
+    "noData": "Không tìm thấy dữ liệu bài nộp",
+    "examName": "Tên đề thi",
+    "unknownStudent": "Học sinh không xác định",
+    "unknownTeacher": "Giáo viên không xác định",
+    "detailedInfo": "Thông tin chi tiết",
+    "score": "Điểm",
+    "comment": "Nhận xét",
+    "noComment": "Chưa có nhận xét",
+    "commentPlaceholder": "Nhập nhận xét...",
+    "commentSaved": "Đã lưu nhận xét",
+    "commentSaveFailed": "Không thể lưu nhận xét",
+    "timeSpent": "Thời gian làm bài",
+    "submittedAt": "Thời gian nộp bài",
+    "mcq": "Trắc nghiệm",
+    "questions": "câu",
+    "question": "Câu hỏi",
+    "gradedBy": "Giáo viên chấm",
+    "viewActivityLog": "Xem chi tiết quá trình làm bài",
+    "deleteAndRetake": "Xóa bài thi và cho thi lại",
+    "deleteAndRetakeConfirm": "Bạn có chắc chắn muốn xóa bài thi và cho phép học sinh thi lại?",
+    "deleteAndRetakeSuccess": "Đã xóa bài thi và cho phép thi lại",
+    "deleteAndBan": "Xóa bài thi và cấm học sinh thi",
+    "deleteAndBanConfirm": "Bạn có chắc chắn muốn xóa bài thi và cấm học sinh thi?",
+    "deleteAndBanSuccess": "Đã xóa bài thi và cấm học sinh thi",
+    "deleteFailed": "Không thể xóa bài thi",
+    "resetAttempt": "Cho phép làm lại (Giảm 1 lần thi)",
+    "resetAttemptConfirm": "Bạn có chắc chắn muốn cho phép học sinh này làm lại? Điều này sẽ giảm số lần thi của bài nộp mới nhất đi 1.",
+    "resetAttemptSuccess": "Đã giảm số lần thi thành công. Học sinh có thể làm lại bài thi (số lần thi giảm đi 1).",
+    "resetAttemptFailed": "Không thể đặt lại lần thi của học sinh",
+    "viewAllAttempts": "Xem các lần Thi",
+    "mcqTab": "Trắc nghiệm",
+    "activityTab": "Hoạt động",
+    "noQuestions": "Không có câu hỏi nào",
+    "noActivityLog": "Không có nhật ký hoạt động",
+    "activitySummary": "Tổng kết hoạt động",
+    "tabVisible": "Tab hiển thị",
+    "tabHidden": "Tab bị ẩn",
+    "suspicious": "Đáng ngờ",
+    "severity": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao"
+    },
+    "activityTypes": {
+      "rightClick": "Nhấp chuột phải",
+      "pageUnload": "Cố gắng rời trang",
+      "tabSwitch": "Chuyển tab",
+      "start": "Bắt đầu",
+      "answer": "Trả lời",
+      "change": "Thay đổi",
+      "submit": "Nộp bài",
+      "copyAttempt": "Cố gắng sao chép",
+      "pasteAttempt": "Cố gắng dán"
+    },
+    "correctAnswer": "Đáp án đúng",
+    "studentAnswer": "Đáp án học sinh chọn",
+    "yourAnswer": "Câu trả lời của bạn",
+    "noAnswer": "Chưa trả lời",
+    "sampleAnswer": "Câu trả lời mẫu"
   },
   "feed": {
     "fetchFailed": "Không thể tải bảng tin",
@@ -1388,7 +1497,7 @@
       "free": {
         "title": "Miễn phí",
         "features": [
-          "1500 Yêu cầu AI / Ngày",
+          "5 Yêu cầu AI / Ngày",
           "Tính năng Sơ đồ tư duy cơ bản",
           "Hỗ trợ cộng đồng",
           "Truy cập thư viện công cộng"
@@ -1397,7 +1506,7 @@
       "plus": {
         "title": "Plus",
         "features": [
-          "2000 Yêu cầu AI / Ngày",
+          "10 Yêu cầu AI / Ngày",
           "Xuất Sơ đồ tư duy nâng cao",
           "Hỗ trợ ưu tiên",
           "Không quảng cáo"
@@ -1406,7 +1515,7 @@
       "pro": {
         "title": "Pro",
         "features": [
-          "5000 Yêu cầu AI / Ngày",
+          "15 Yêu cầu AI / Ngày",
           "Sơ đồ tư duy không giới hạn",
           "Hỗ trợ chuyên dụng 24/7",
           "Truy cập sớm các tính năng mới"
@@ -1420,5 +1529,100 @@
       "loading": "Đang tạo yêu cầu thanh toán...",
       "orderInfo": "Nâng cấp lên {{plan}} - {{user}}"
     }
+  },
+  "payment": {
+    "title": "Thanh toán",
+    "history": "Lịch sử giao dịch",
+    "pending": "Đang chờ",
+    "success": "Thành công",
+    "failed": "Thất bại",
+    "loading": "Đang tải...",
+    "processing": "Đang xử lý...",
+    "verifyTransaction": "Đang xác thực giao dịch...",
+    "paymentSuccess": "Thanh toán thành công!",
+    "paymentFailed": "Thanh toán thất bại!",
+    "paymentPending": "Đang chờ thanh toán...",
+    "vipActivated": "Gói cước của bạn đã được kích hoạt ngay lập tức.",
+    "thankYou": "Cảm ơn bạn đã đăng ký gói VIP.",
+    "experienceNow": "Mời bạn trải nghiệm",
+    "close": "Đóng",
+    "bankConfig": {
+      "title": "Thanh toán qua chuyển khoản ngân hàng",
+      "instruction": "Vui lòng quét mã QR hoặc chuyển khoản theo thông tin bên dưới. Hệ thống sẽ tự động kích hoạt ngay sau khi nhận được tiền.",
+      "bank": "Ngân hàng",
+      "accountOwner": "Chủ tài khoản",
+      "accountNumber": "Số tài khoản",
+      "amount": "Số tiền",
+      "content": "Nội dung chuyển khoản (Bắt buộc)",
+      "copy": "Đã sao chép!"
+    },
+    "result": {
+      "successTitle": "Thanh toán thành công!",
+      "failedTitle": "Thanh toán thất bại!",
+      "successMessage": "Giao dịch thành công!",
+      "failedMessage": "Giao dịch thất bại",
+      "homeButton": "Về trang chủ",
+      "retryButton": "Thử lại",
+      "loadingTitle": "Đang xử lý kết quả thanh toán...",
+      "loadingDesc": "Vui lòng không tắt trình duyệt."
+    },
+    "historyModal": {
+      "txnRef": "Mã GD",
+      "amount": "Số tiền",
+      "content": "Nội dung",
+      "status": "Trạng thái",
+      "date": "Thời gian",
+      "loadError": "Không thể tải lịch sử giao dịch.",
+      "items": "giao dịch"
+    },
+    "selection": {
+      "title": "Chọn phương thức thanh toán",
+      "vnpay": "Thanh toán qua VNPay (Thẻ ATM/Visa)",
+      "sepay": "Thanh toán QR Code (Chuyển khoản 24/7)"
+    }
+  },
+  "profile": {
+    "title": "Hồ sơ cá nhân",
+    "editProfile": "Chỉnh sửa hồ sơ",
+    "saveChanges": "Lưu thay đổi",
+    "cancel": "Hủy",
+    "uploadAvatar": "Đổi ảnh đại diện",
+    "uploading": "Đang tải lên...",
+    "accountInfo": "Thông tin tài khoản",
+    "additionalInfo": "Thông tin bổ sung",
+    "fullName": "Họ và tên",
+    "email": "Địa chỉ Email",
+    "role": "Vai trò",
+    "accountStatus": "Trạng thái tài khoản",
+    "phone": "Số điện thoại",
+    "dob": "Ngày sinh",
+    "address": "Địa chỉ",
+    "studentId": "Mã sinh viên",
+    "memberSince": "Thành viên từ",
+    "joined": "Đã tham gia",
+    "notProvided": "Chưa cung cấp",
+    "enterName": "Nhập họ tên của bạn",
+    "enterPhone": "Số điện thoại",
+    "enterAddress": "Nhập địa chỉ của bạn",
+    "selectDate": "Chọn ngày",
+    "validation": {
+      "nameRequired": "Vui lòng nhập tên của bạn!",
+      "nameMin": "Tên phải có ít nhất 2 ký tự!",
+      "nameMax": "Tên không được vượt quá 50 ký tự!",
+      "phoneInvalid": "Vui lòng nhập số điện thoại hợp lệ!",
+      "phoneMin": "Số điện thoại phải có ít nhất 10 chữ số!",
+      "phoneMax": "Số điện thoại không được vượt quá 15 chữ số!"
+    },
+    "uploadHint": "Kích thước tối đa: 5MB • Hỗ trợ: JPG, PNG, GIF, WEBP",
+    "uploadError": {
+      "type": "Bạn chỉ có thể tải lên tệp hình ảnh!",
+      "size": "Hình ảnh phải nhỏ hơn 5MB!",
+      "failed": "Tải ảnh thất bại. Vui lòng thử lại."
+    },
+    "updateSuccess": "Cập nhật hồ sơ thành công!",
+    "subscriptionPlan": "Gói đăng ký",
+    "expiresOn": "Hết hạn vào",
+    "daysLeft": "ngày còn lại",
+    "expired": "Đã hết hạn"
   }
 }

@@ -1,4 +1,31 @@
 import axiosInstance from './axios';
+import axios from 'axios';
+import { API_BASE_URL } from '../constants/config';
+
+// Create a public axios instance for unauthenticated requests
+const publicAxios = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+publicAxios.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    let errorMessage = 'An error occurred';
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    const errorObj = new Error(errorMessage);
+    errorObj.status = error.response?.status;
+    errorObj.data = error.response?.data;
+    return Promise.reject(errorObj);
+  }
+);
 
 /**
  * Exam Service
@@ -73,11 +100,12 @@ const examService = {
 
   /**
    * Get exam by share code (public access)
+   * Uses publicAxios to allow unauthenticated access
    * @param {string} shareCode - Share code
    * @returns {Promise} Response with exam data
    */
   getExamByShareCode: async (shareCode) => {
-    return await axiosInstance.get(`/exams/share/${shareCode}`);
+    return await publicAxios.get(`/exams/share/${shareCode}`);
   },
 };
 

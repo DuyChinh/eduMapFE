@@ -18,11 +18,14 @@ import {
   DownOutlined,
   RightOutlined,
   CrownOutlined,
+  HistoryOutlined,
+  ThunderboltFilled,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
+import userService from '../api/userService';
 import { ROUTES, USER_ROLES } from '../constants/config';
 import QRScanner from '../components/common/QRScanner';
 import NotificationDropdown from '../components/common/NotificationDropdown';
@@ -112,11 +115,41 @@ const StudentLayout = () => {
     }
   };
 
-  const handleLanguageChange = (lang) => {
+  useEffect(() => {
+    const storedLang = localStorage.getItem('language');
+    if (storedLang) {
+      i18n.changeLanguage(storedLang);
+    }
+  }, []);
+
+  // Auto-sync language to DB when user loads
+  useEffect(() => {
+    const syncLanguage = async () => {
+      const storedLang = localStorage.getItem('language');
+      if (user && user._id && storedLang) {
+        try {
+          await userService.updateProfile(user._id, { language: storedLang });
+        } catch (error) {
+          console.error('Auto-sync language error:', error);
+        }
+      }
+    };
+    syncLanguage();
+  }, [user]);
+
+  const handleLanguageChange = async (lang) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('language', lang);
     const langName = t(`language.${lang}`);
     message.success(`${t('language.languageChanged')} ${langName}`);
+
+    if (user && user._id) {
+      try {
+        await userService.updateProfile(user._id, { language: lang });
+      } catch (err) {
+        console.error('Failed to sync language preference', err);
+      }
+    }
   };
 
   const getSelectedKey = () => {
@@ -145,6 +178,11 @@ const StudentLayout = () => {
     // Check results routes (detail)
     if (pathname.startsWith('/student/results')) {
       return ROUTES.STUDENT_RESULTS;
+    }
+
+    // Check transaction route
+    if (pathname.startsWith('/student/history-transaction')) {
+      return ROUTES.STUDENT_TRANSACTIONS;
     }
 
     // Check dashboard route
@@ -221,6 +259,12 @@ const StudentLayout = () => {
           onClick: () => navigate('/student/mindmaps/trash'),
         },
       ],
+    },
+    {
+      key: ROUTES.STUDENT_TRANSACTIONS,
+      icon: <img src="/transaction_history.png" alt="Transaction History" className="menu-icon-image" />,
+      label: t('payment.history'),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.STUDENT_TRANSACTIONS); },
     },
   ];
 
@@ -386,12 +430,21 @@ const StudentLayout = () => {
               arrow
             >
               <div className="user-dropdown">
-                <Avatar
-                  src={avatarSrc}
-                  icon={!avatarSrc && <UserOutlined />}
-                />
+                <div className={`avatar-with-badge plan-${user?.subscription?.plan || 'free'}`}>
+                  <Avatar
+                    src={avatarSrc}
+                    icon={!avatarSrc && <UserOutlined />}
+                  />
+                </div>
                 <div className="user-info-header">
-                  <span className="user-name-header">{user?.name}</span>
+                  <div className="user-name-row">
+                    <span className="user-name-header">{user?.name}</span>
+                    <span className={`plan-tag plan-tag-${user?.subscription?.plan || 'free'}`}>
+                      {user?.subscription?.plan === 'pro' && <><CrownOutlined /> Pro</>}
+                      {user?.subscription?.plan === 'plus' && <><ThunderboltFilled /> Plus</>}
+                      {(!user?.subscription?.plan || user?.subscription?.plan === 'free') && 'Free'}
+                    </span>
+                  </div>
                   <span className="user-role-header">{roleLabel}</span>
                 </div>
               </div>

@@ -1,9 +1,13 @@
+/* Light Mode Defaults */
 .vip-card {
     height: 100%;
     position: relative;
     border-radius: 16px !important;
-    border-color: #f0f0f0;
+    border: 1px solid #f0f0f0;
+    background: #fff;
     transition: all 0.3s ease;
+    /* Ensure content doesn't overlap with badge */
+    margin-top: 15px; 
 }
 
 .vip-card:hover {
@@ -12,6 +16,48 @@
     border-color: var(--hover-color, #1890ff) !important;
 }
 
-/* Specific hover colors based on package can be dynamic, 
-   but for now a generic nice hover is good, 
-   or we can use the pkg.color passing through style */
+/* Dark Mode Overrides */
+body.dark-mode .vip-card:not(.vip-card-current) {
+    background: #1f1f1f;
+    border-color: #303030;
+}
+
+body.dark-mode .vip-card:not(.vip-card-current) .ant-typography {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .vip-card:not(.vip-card-current) .ant-typography-secondary {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .vip-card:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Discount Badge Styles */
+.vip-discount-badge {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); /* Material Orange/Amber */
+    color: #fff;
+    padding: 6px 20px;
+    border-radius: 50px; /* Pill shape */
+    font-weight: 800;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+    z-index: 10;
+    border: 3px solid #fff; /* White border for separation */
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+/* Animation for visibility */
+/* Animation removed as per request */
+
+/* Adjust badge border for dark mode */
+body.dark-mode .vip-discount-badge {
+    border-color: #141414; /* Match dark card background or body bg */
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}

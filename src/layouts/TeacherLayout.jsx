@@ -17,6 +17,9 @@ import {
   DownOutlined,
   RightOutlined,
   CrownOutlined,
+  HistoryOutlined,
+  StarFilled,
+  ThunderboltFilled,
 } from '@ant-design/icons';
 import { App, Avatar, Button, Dropdown, Layout, Menu, Modal, Select, Space, Spin } from 'antd';
 import { useEffect, useState } from 'react';
@@ -25,8 +28,10 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, STORAGE_KEYS, USER_ROLES } from '../constants/config';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
+import userService from '../api/userService';
 import QRScanner from '../components/common/QRScanner';
 import NotificationDropdown from '../components/common/NotificationDropdown';
+import { connectSocket, disconnectSocket } from '../services/socketService';
 import './DashboardLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -44,13 +49,27 @@ const TeacherLayout = () => {
   const { theme, toggleTheme } = useThemeStore();
   const { t, i18n } = useTranslation();
 
+  // Socket connection management
+  useEffect(() => {
+    if (user && user._id) {
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+      if (token) {
+        console.log('TeacherLayout: Initializing Socket Connection for user', user._id);
+        connectSocket(token);
+      }
+    }
+    return () => {
+      console.log('TeacherLayout: Disconnecting Socket');
+      disconnectSocket();
+    };
+  }, [user]);
+
   useEffect(() => {
     const refreshProfile = async () => {
       // Only skip when we already have profile (with avatar)
       if (user && user._id && user.profile && user.profile.avatar) {
         return;
       }
-
       try {
         await fetchProfile();
       } catch (error) {
@@ -100,6 +119,28 @@ const TeacherLayout = () => {
     }
   };
 
+  useEffect(() => {
+    const storedLang = localStorage.getItem('language');
+    if (storedLang) {
+      i18n.changeLanguage(storedLang);
+    }
+  }, []);
+
+  // Auto-sync language to DB when user loads
+  useEffect(() => {
+    const syncLanguage = async () => {
+      const storedLang = localStorage.getItem('language');
+      if (user && user._id && storedLang) {
+        try {
+          await userService.updateProfile(user._id, { language: storedLang });
+        } catch (error) {
+          console.error('Auto-sync language error:', error);
+        }
+      }
+    };
+    syncLanguage();
+  }, [user]);
+
   const showRoleModal = () => {
     setSelectedRole(user?.role || '');
     setIsRoleModalVisible(true);
@@ -114,11 +155,19 @@ const TeacherLayout = () => {
     }
   };
 
-  const handleLanguageChange = (lang) => {
+  const handleLanguageChange = async (lang) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('language', lang);
     const langName = t(`language.${lang}`);
     message.success(`${t('language.languageChanged')} ${langName}`);
+
+    if (user && user._id) {
+      try {
+        await userService.updateProfile(user._id, { language: lang });
+      } catch (err) {
+        console.error('Failed to sync language preference', err);
+      }
+    }
   };
 
   // Function to determine selected menu key based on current path
@@ -153,6 +202,11 @@ const TeacherLayout = () => {
     // Check class routes (detail, reports)
     if (pathname.startsWith('/teacher/classes')) {
       return ROUTES.TEACHER_CLASSES;
+    }
+
+    // Check transaction route
+    if (pathname.startsWith('/teacher/transactions')) {
+      return ROUTES.TEACHER_TRANSACTIONS;
     }
 
     // Check dashboard route
@@ -235,6 +289,12 @@ const TeacherLayout = () => {
           onClick: () => navigate('/teacher/mindmaps/trash'),
         },
       ],
+    },
+    {
+      key: ROUTES.TEACHER_TRANSACTIONS,
+      icon: <img src="/transaction_history.png" alt="Transaction History" className="menu-icon-image" />,
+      label: t('payment.history'),
+      onClick: () => { setOpenKeys([]); navigate(ROUTES.TEACHER_TRANSACTIONS); },
     },
   ];
 
@@ -400,12 +460,21 @@ const TeacherLayout = () => {
               arrow
             >
               <div className="user-dropdown">
-                <Avatar
-                  src={avatarSrc}
-                  icon={!avatarSrc && <UserOutlined />}
-                />
+                <div className={`avatar-with-badge plan-${user?.subscription?.plan || 'free'}`}>
+                  <Avatar
+                    src={avatarSrc}
+                    icon={!avatarSrc && <UserOutlined />}
+                  />
+                </div>
                 <div className="user-info-header">
-                  <span className="user-name-header">{user?.name}</span>
+                  <div className="user-name-row">
+                    <span className="user-name-header">{user?.name}</span>
+                    <span className={`plan-tag plan-tag-${user?.subscription?.plan || 'free'}`}>
+                      {user?.subscription?.plan === 'pro' && <><CrownOutlined /> Pro</>}
+                      {user?.subscription?.plan === 'plus' && <><ThunderboltFilled /> Plus</>}
+                      {(!user?.subscription?.plan || user?.subscription?.plan === 'free') && 'Free'}
+                    </span>
+                  </div>
                   <span className="user-role-header">{roleLabel}</span>
                 </div>
               </div>
