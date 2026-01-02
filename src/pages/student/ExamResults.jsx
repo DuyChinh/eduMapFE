@@ -23,10 +23,12 @@ import {
   ClockCircleOutlined,
   EyeOutlined,
   CopyOutlined,
+  DeploymentUnitOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { getMySubmissions } from '../../api/submissionService';
 import questionService from '../../api/questionService';
+import mindmapService from '../../api/mindmapService';
 import {
   BarChart,
   Bar,
@@ -57,6 +59,7 @@ const ExamResults = () => {
   const [loading, setLoading] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
+  const [generatingMindmap, setGeneratingMindmap] = useState(false);
   const [overallStats, setOverallStats] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [showGradeLetter, setShowGradeLetter] = useState(false);
@@ -64,7 +67,7 @@ const ExamResults = () => {
     subject: null,
     dateRange: null,
   });
-  
+
   // Chart filters
   const [chartFilters, setChartFilters] = useState({
     subject: null,
@@ -156,6 +159,29 @@ const ExamResults = () => {
     }
   };
 
+  const handleGenerateMindmap = async (submissionId) => {
+    if (!submissionId) return;
+
+    setGeneratingMindmap(true);
+    try {
+      const response = await mindmapService.generateFromExamReview({
+        submissionId: submissionId,
+        type: 'student_review'
+      });
+
+      if (response && response.data && (response.data.data?._id || response.data._id)) {
+        const mindmapId = response.data.data?._id || response.data._id;
+        message.success(t('submissionDetail.mindmapGenerated') || 'Improvement roadmap created successfully!');
+        navigate(`/mindmap/${mindmapId}`);
+      }
+    } catch (error) {
+      console.error('Mindmap generation failed', error);
+      message.error(t('submissionDetail.mindmapFailed') || 'Failed to generate mindmap');
+    } finally {
+      setGeneratingMindmap(false);
+    }
+  };
+
   const getScoreColor = (percentage) => {
     if (percentage >= 80) return '#52c41a';
     if (percentage >= 60) return '#1890ff';
@@ -205,7 +231,7 @@ const ExamResults = () => {
   // Get chart data - latest score for each exam, filtered by chartFilters
   const chartData = useMemo(() => {
     let dataToFilter = [...submissions];
-    
+
     // Apply chart filters
     if (chartFilters.subject) {
       dataToFilter = dataToFilter.filter(sub => {
@@ -213,7 +239,7 @@ const ExamResults = () => {
         return examSubject.toLowerCase().includes(chartFilters.subject.toLowerCase());
       });
     }
-    
+
     if (chartFilters.dateRange && chartFilters.dateRange[0] && chartFilters.dateRange[1]) {
       const startDate = chartFilters.dateRange[0].startOf('day').toDate();
       const endDate = chartFilters.dateRange[1].endOf('day').toDate();
@@ -222,14 +248,14 @@ const ExamResults = () => {
         return submittedAt >= startDate && submittedAt <= endDate;
       });
     }
-    
+
     // Group by examId and get latest submission for each exam
     const examMap = new Map();
     dataToFilter.forEach(sub => {
       const examId = sub.examId || sub.exam?._id;
       const examName = sub.exam?.name || 'Unknown';
       if (!examId) return;
-      
+
       const existing = examMap.get(examId);
       if (!existing || new Date(sub.submittedAt) > new Date(existing.submittedAt)) {
         examMap.set(examId, {
@@ -239,7 +265,7 @@ const ExamResults = () => {
         });
       }
     });
-    
+
     // Convert to array and calculate percentage
     const latestSubmissions = Array.from(examMap.values()).map(sub => {
       const totalMarks = sub.totalMarks || 100;
@@ -254,7 +280,7 @@ const ExamResults = () => {
         submittedAt: sub.submittedAt,
       };
     });
-    
+
     // Sort by submittedAt
     return latestSubmissions.sort((a, b) => new Date(a.submittedAt) - new Date(b.submittedAt));
   }, [submissions, chartFilters, i18n.language]);
@@ -269,7 +295,7 @@ const ExamResults = () => {
       'D (50-59)': 0,
       'F (<50)': 0,
     };
-    
+
     chartData.forEach(item => {
       const score = item.score;
       if (score >= 90) distribution['A+ (90-100)']++;
@@ -279,7 +305,7 @@ const ExamResults = () => {
       else if (score >= 50) distribution['D (50-59)']++;
       else distribution['F (<50)']++;
     });
-    
+
     return Object.entries(distribution)
       .filter(([_, value]) => value > 0)
       .map(([name, value]) => ({ name, value }));
@@ -288,7 +314,7 @@ const ExamResults = () => {
   // Get subject performance data
   const subjectPerformance = useMemo(() => {
     const subjectMap = new Map();
-    
+
     chartData.forEach(item => {
       const subject = item.subject || 'Other';
       if (!subjectMap.has(subject)) {
@@ -298,7 +324,7 @@ const ExamResults = () => {
       data.total += item.score;
       data.count++;
     });
-    
+
     return Array.from(subjectMap.entries()).map(([subject, data]) => ({
       name: subject,
       fullName: subject,
@@ -311,9 +337,9 @@ const ExamResults = () => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{ 
-          backgroundColor: 'white', 
-          padding: '10px', 
+        <div style={{
+          backgroundColor: 'white',
+          padding: '10px',
           border: '1px solid #ccc',
           borderRadius: '4px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
@@ -348,7 +374,7 @@ const ExamResults = () => {
         const examData = typeof exam === 'object' ? exam : {};
         const examName = examData?.name;
         const isDeleted = !examData || !examName;
-        
+
         return (
           <div>
             <Text strong style={isDeleted ? { color: '#999', fontStyle: 'italic' } : {}}>
@@ -438,9 +464,9 @@ const ExamResults = () => {
             type="text"
             icon={<EyeOutlined />}
             onClick={() => navigate(`/student/results/${record._id}`)}
-          >
-            {t('exams.viewDetail')}
-          </Button>
+            title={t('exams.viewDetail')}
+          />
+
         </Space>
       ),
     },
@@ -519,7 +545,7 @@ const ExamResults = () => {
             <Col xs={24} sm={12} md={6}>
               <Card>
                 <Statistic
-                  title={t('exams.stats.totalSubmissions')}
+                  title={t('exams.examStats.totalSubmissions')}
                   value={overallStats?.totalExams || 0}
                   prefix={<img src="/exam-results.png" alt="Submissions" style={{ width: 20, height: 20 }} />}
                   valueStyle={{ color: '#1890ff' }}
@@ -529,7 +555,7 @@ const ExamResults = () => {
             <Col xs={24} sm={12} md={6}>
               <Card>
                 <Statistic
-                  title={t('exams.stats.averageScore')}
+                  title={t('exams.examStats.averageScore')}
                   value={overallStats?.averageScore || 0}
                   precision={1}
                   suffix="%"
@@ -551,7 +577,7 @@ const ExamResults = () => {
             <Col xs={24} sm={12} md={6}>
               <Card>
                 <Statistic
-                  title={t('exams.stats.passRate')}
+                  title={t('exams.examStats.passRate')}
                   value={overallStats?.passRate || 0}
                   precision={1}
                   suffix="%"
@@ -586,8 +612,8 @@ const ExamResults = () => {
                 onChange={(dates) => setChartFilters({ ...chartFilters, dateRange: dates })}
                 style={{ width: 300 }}
               />
-              <Button 
-                type="link" 
+              <Button
+                type="link"
                 onClick={() => setChartFilters({ subject: null, dateRange: null })}
               >
                 {t('common.clearFilters') || 'Clear Filters'}
@@ -598,28 +624,28 @@ const ExamResults = () => {
           {/* Score Chart - Bar Chart */}
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={16}>
-              <Card title={t('exams.stats.examScores') || 'Exam Scores (Latest Attempt)'}>
+              <Card title={t('exams.examStats.examScores') || 'Exam Scores (Latest Attempt)'}>
                 {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={350}>
                     <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45} 
-                        textAnchor="end" 
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
                         height={80}
                         interval={0}
                         tick={{ fontSize: 12 }}
                       />
-                      <YAxis 
-                        domain={[0, 100]} 
+                      <YAxis
+                        domain={[0, 100]}
                         label={{ value: '%', angle: -90, position: 'insideLeft' }}
                       />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Bar 
-                        dataKey="score" 
-                        name={t('exams.submissions.score') || 'Score'} 
+                      <Bar
+                        dataKey="score"
+                        name={t('exams.submissions.score') || 'Score'}
                         fill="#1890ff"
                         radius={[4, 4, 0, 0]}
                       >
@@ -637,7 +663,7 @@ const ExamResults = () => {
 
             {/* Score Distribution - Pie Chart */}
             <Col xs={24} lg={8}>
-              <Card title={t('exams.stats.scoreDistribution') || 'Score Distribution'}>
+              <Card title={t('exams.examStats.scoreDistribution') || 'Score Distribution'}>
                 {scoreDistribution.length > 0 ? (
                   <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
@@ -669,36 +695,36 @@ const ExamResults = () => {
           {/* Subject Performance - Bar Chart */}
           <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
             <Col xs={24}>
-              <Card title={t('exams.stats.subjectPerformance') || 'Performance by Subject'}>
+              <Card title={t('exams.examStats.subjectPerformance') || 'Performance by Subject'}>
                 {subjectPerformance.length > 0 ? (
                   <ResponsiveContainer width="100%" height={380}>
                     <BarChart data={subjectPerformance} margin={{ top: 5, right: 30, left: 20, bottom: 80 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45} 
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
                         textAnchor="end"
                         height={80}
                         tick={{ fontSize: 12 }}
                       />
-                      <YAxis 
-                        domain={[0, 100]} 
+                      <YAxis
+                        domain={[0, 100]}
                         label={{ value: '%', angle: -90, position: 'insideLeft' }}
                       />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value, name, props) => [
                           `${value}% (${props.payload.count} ${t('exams.items') || 'exams'})`,
-                          t('exams.stats.averageScore') || 'Average Score'
+                          t('exams.examStats.averageScore') || 'Average Score'
                         ]}
                         labelFormatter={(label) => subjectPerformance.find(s => s.name === label)?.fullName || label}
                       />
-                      <Legend 
-                        verticalAlign="bottom" 
-                        wrapperStyle={{ paddingTop: '30px', bottom: 0 }} 
+                      <Legend
+                        verticalAlign="bottom"
+                        wrapperStyle={{ paddingTop: '30px', bottom: 0 }}
                       />
-                      <Bar 
-                        dataKey="averageScore" 
-                        name={t('exams.stats.averageScore') || 'Average Score'} 
+                      <Bar
+                        dataKey="averageScore"
+                        name={t('exams.examStats.averageScore') || 'Average Score'}
                         fill="#52c41a"
                         radius={[4, 4, 0, 0]}
                       >
@@ -718,29 +744,29 @@ const ExamResults = () => {
           {/* Score Trend - Line Chart */}
           <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
             <Col xs={24}>
-              <Card title={t('exams.stats.scoreTrend') || 'Score Trend Over Time'}>
+              <Card title={t('exams.examStats.scoreTrend') || 'Score Trend Over Time'}>
                 {chartData.length > 1 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45} 
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
                         textAnchor="end"
                         height={80}
                         tick={{ fontSize: 12 }}
                       />
-                      <YAxis 
-                        domain={[0, 100]} 
+                      <YAxis
+                        domain={[0, 100]}
                         label={{ value: '%', angle: -90, position: 'insideLeft' }}
                       />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="score" 
-                        name={t('exams.submissions.score') || 'Score'} 
-                        stroke="#1890ff" 
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        name={t('exams.submissions.score') || 'Score'}
+                        stroke="#1890ff"
                         strokeWidth={2}
                         dot={{ fill: '#1890ff', strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6 }}
@@ -748,7 +774,7 @@ const ExamResults = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <Empty description={t('exams.stats.needMoreData') || 'Need at least 2 exams to show trend'} />
+                  <Empty description={t('exams.examStats.needMoreData') || 'Need at least 2 exams to show trend'} />
                 )}
               </Card>
             </Col>
@@ -763,7 +789,10 @@ const ExamResults = () => {
       <Row gutter={[24, 24]}>
         {/* Main Content */}
         <Col xs={24} lg={24}>
-          <Card>
+          <Card
+            title={t('student.examResults')}
+
+          >
             <Tabs items={tabItems} />
           </Card>
         </Col>

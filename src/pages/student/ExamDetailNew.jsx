@@ -79,7 +79,7 @@ const ExamDetailNew = () => {
       setStatistics(response.data || response);
     } catch (error) {
       console.error('Error fetching statistics:', error);
-      message.error(t('exams.stats.fetchFailed'));
+      message.error(t('exams.examStats.fetchFailed'));
     } finally {
       setStatsLoading(false);
     }
@@ -160,28 +160,28 @@ const ExamDetailNew = () => {
       render: (rank) => {
         if (rank === 1) {
           return (
-            <img 
-              src="/1st-medal.png" 
-              alt="1st Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/1st-medal.png"
+              alt="1st Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 2) {
           return (
-            <img 
-              src="/2nd-medal.png" 
-              alt="2nd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/2nd-medal.png"
+              alt="2nd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 3) {
           return (
-            <img 
-              src="/3rd-medal.png" 
-              alt="3rd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/3rd-medal.png"
+              alt="3rd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
@@ -216,9 +216,9 @@ const ExamDetailNew = () => {
           <Text strong style={{ fontSize: 16, color: '#1890ff' }}>
             {score}/{record.totalMarks}
           </Text>
-          <Progress 
-            percent={Math.round((score / record.totalMarks) * 100)} 
-            size="small" 
+          <Progress
+            percent={Math.round((score / record.totalMarks) * 100)}
+            size="small"
             showInfo={false}
           />
         </div>
@@ -247,8 +247,8 @@ const ExamDetailNew = () => {
       key: 'actions',
       width: 100,
       render: (_, record) => (
-        <Button 
-          type="link" 
+        <Button
+          type="link"
           icon={<EyeOutlined />}
           onClick={() => navigate(`/teacher/exams/${examId}/submissions/${record.student?._id}`)}
         >
@@ -299,9 +299,9 @@ const ExamDetailNew = () => {
             <Text strong style={{ fontSize: 14 }}>
               {score || 0}/{record.totalMarks}
             </Text>
-            <Progress 
-              percent={Math.round(((score || 0) / record.totalMarks) * 100)} 
-              size="small" 
+            <Progress
+              percent={Math.round(((score || 0) / record.totalMarks) * 100)}
+              size="small"
               showInfo={false}
               status={score >= record.totalMarks * 0.8 ? 'success' : score >= record.totalMarks * 0.5 ? 'normal' : 'exception'}
             />
@@ -334,8 +334,8 @@ const ExamDetailNew = () => {
       width: 100,
       fixed: 'right',
       render: (_, record) => (
-        <Button 
-          type="link" 
+        <Button
+          type="link"
           icon={<EyeOutlined />}
           onClick={() => navigate(`/teacher/exams/${examId}/submissions/${record.student?._id}`)}
           disabled={record.status === 'not_started'}
@@ -372,8 +372,8 @@ const ExamDetailNew = () => {
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate(ROUTES.TEACHER_EXAMS)}
           >
             {t('common.back')}
@@ -403,8 +403,8 @@ const ExamDetailNew = () => {
 
       {/* Tabs */}
       <Tabs activeKey={activeTab} onChange={handleTabChange} size="large">
-        <TabPane 
-          tab={<span><InfoCircleOutlined /> {t('exams.tabs.overview')}</span>} 
+        <TabPane
+          tab={<span><InfoCircleOutlined /> {t('exams.tabs.overview')}</span>}
           key="overview"
         >
           <Row gutter={[16, 16]}>
@@ -478,22 +478,22 @@ const ExamDetailNew = () => {
             <Col xs={24} lg={8}>
               <Space direction="vertical" style={{ width: '100%' }} size="large">
                 <Card>
-                  <Statistic 
-                    title={t('exams.stats.totalQuestions')} 
+                  <Statistic
+                    title={t('exams.examStats.totalQuestions')}
                     value={examData.questions?.length || 0}
                     prefix={<FileTextOutlined />}
                   />
                 </Card>
                 <Card>
-                  <Statistic 
-                    title={t('exams.stats.totalSubmissions')} 
+                  <Statistic
+                    title={t('exams.examStats.totalSubmissions')}
                     value={statistics?.totalSubmissions || 0}
                     prefix={<CheckCircleOutlined />}
                   />
                 </Card>
                 <Card>
-                  <Statistic 
-                    title={t('exams.stats.averageScore')} 
+                  <Statistic
+                    title={t('exams.examStats.averageScore')}
                     value={statistics?.averageScore || 0}
                     suffix={`/ ${examData.totalMarks}`}
                     precision={1}
@@ -505,8 +505,8 @@ const ExamDetailNew = () => {
           </Row>
         </TabPane>
 
-        <TabPane 
-          tab={<span><BarChartOutlined /> {t('exams.tabs.statistics')}</span>} 
+        <TabPane
+          tab={<span><BarChartOutlined /> {t('exams.tabs.statistics')}</span>}
           key="statistics"
         >
           {statsLoading ? (
@@ -517,16 +517,16 @@ const ExamDetailNew = () => {
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12} md={6}>
                 <Card>
-                  <Statistic 
-                    title={t('exams.stats.totalSubmissions')} 
+                  <Statistic
+                    title={t('exams.examStats.totalSubmissions')}
                     value={statistics.totalSubmissions || 0}
                   />
                 </Card>
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <Card>
-                  <Statistic 
-                    title={t('exams.stats.averageScore')} 
+                  <Statistic
+                    title={t('exams.examStats.averageScore')}
                     value={statistics.averageScore || 0}
                     suffix={`/ ${examData.totalMarks}`}
                     precision={1}
@@ -535,8 +535,8 @@ const ExamDetailNew = () => {
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <Card>
-                  <Statistic 
-                    title={t('exams.stats.highestScore')} 
+                  <Statistic
+                    title={t('exams.examStats.highestScore')}
                     value={statistics.highestScore || 0}
                     suffix={`/ ${examData.totalMarks}`}
                   />
@@ -544,8 +544,8 @@ const ExamDetailNew = () => {
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <Card>
-                  <Statistic 
-                    title={t('exams.stats.passRate')} 
+                  <Statistic
+                    title={t('exams.examStats.passRate')}
                     value={statistics.passRate || 0}
                     suffix="%"
                     precision={1}
@@ -554,12 +554,12 @@ const ExamDetailNew = () => {
               </Col>
             </Row>
           ) : (
-            <Empty description={t('exams.stats.noData')} />
+            <Empty description={t('exams.examStats.noData')} />
           )}
         </TabPane>
 
-        <TabPane 
-          tab={<span><TrophyOutlined /> {t('exams.tabs.leaderboard')}</span>} 
+        <TabPane
+          tab={<span><TrophyOutlined /> {t('exams.tabs.leaderboard')}</span>}
           key="leaderboard"
         >
           <Card>
@@ -580,8 +580,8 @@ const ExamDetailNew = () => {
           </Card>
         </TabPane>
 
-        <TabPane 
-          tab={<span><TeamOutlined /> {t('exams.tabs.students')}</span>} 
+        <TabPane
+          tab={<span><TeamOutlined /> {t('exams.tabs.students')}</span>}
           key="students"
         >
           <Card>
