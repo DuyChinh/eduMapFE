@@ -410,7 +410,7 @@ const ExamDetailNew = () => {
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={16}>
               <Card>
-                <Descriptions title={t('exams.basicInfo')} bordered column={{ xs: 1, sm: 2 }}>
+                <Descriptions title={t('exams.basicInfo')} variant="bordered" column={{ xs: 1, sm: 2 }}>
                   <Descriptions.Item label={t('exams.description')} span={2}>
                     {examData.description || '-'}
                   </Descriptions.Item>

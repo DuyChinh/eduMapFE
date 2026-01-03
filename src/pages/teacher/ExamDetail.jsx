@@ -239,7 +239,7 @@ const ExamDetail = () => {
       </div>
 
       <Card style={{ marginBottom: 24 }}>
-        <Descriptions title={t('exams.basicInfo')} bordered column={2}>
+        <Descriptions title={t('exams.basicInfo')} variant="bordered" column={2}>
           <Descriptions.Item label={t('exams.name')}>
             {examData.name}
           </Descriptions.Item>
@@ -302,7 +302,7 @@ const ExamDetail = () => {
       </Card>
 
       <Card title={t('exams.viewSettings')}>
-        <Descriptions bordered column={2}>
+        <Descriptions variant="bordered" column={2}>
           <Descriptions.Item label={t('exams.viewMark')}>
             {examData.viewMark === 0 ? t('exams.viewMarkNever') :
              examData.viewMark === 1 ? t('exams.viewMarkAfterCompletion') :
