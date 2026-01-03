@@ -12,7 +12,10 @@ import {
   RightOutlined,
   UserOutlined,
   WarningOutlined,
-  DeploymentUnitOutlined
+  DeploymentUnitOutlined,
+  VideoCameraOutlined,
+  UserDeleteOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import {
   Alert,
@@ -150,6 +153,9 @@ const StudentExamDetail = () => {
       paste_attempt: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
       right_click: <CloseCircleOutlined style={{ color: '#faad14' }} />,
       beforeunload: <WarningOutlined style={{ color: '#ff4d4f' }} />,
+      no_face: <UserDeleteOutlined style={{ color: '#ff4d4f' }} />,
+      multiple_faces: <TeamOutlined style={{ color: '#ff4d4f' }} />,
+      camera_denied: <VideoCameraOutlined style={{ color: '#ff4d4f' }} />,
     };
     return icons[type] || <ClockCircleOutlined />;
   };
@@ -166,16 +172,20 @@ const StudentExamDetail = () => {
       right_click: 'orange',
       beforeunload: 'red',
       visibility: 'orange',
+      no_face: 'red',
+      multiple_faces: 'red',
+      camera_denied: 'red',
     };
     return colors[type] || 'default';
   };
 
   const getActivityDisplayText = (activity) => {
-    // Priority: meta.reason > action > type
+    // Priority: meta.reason > formatActivityType(type/event)
     if (activity.meta?.reason) {
       return activity.meta.reason;
     }
-    return activity.action || activity.type || activity.event || '-';
+    const type = activity.type || activity.event || '-';
+    return formatActivityType(type);
   };
 
   const getActivitySummary = () => {
@@ -202,6 +212,9 @@ const StudentExamDetail = () => {
       submit: t('submissionDetail.activityTypes.submit'),
       copy_attempt: t('submissionDetail.activityTypes.copyAttempt'),
       paste_attempt: t('submissionDetail.activityTypes.pasteAttempt'),
+      no_face: t('submissionDetail.activityTypes.noFace'),
+      multiple_faces: t('submissionDetail.activityTypes.multipleFaces'),
+      camera_denied: t('submissionDetail.activityTypes.cameraDenied'),
     };
     return typeMap[type] || type;
   };

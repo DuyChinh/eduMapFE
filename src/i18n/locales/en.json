@@ -841,10 +841,10 @@
     "preExamNotificationTextRequired": "Please enter notification text!",
     "preExamNotificationTextPlaceholder": "Enter pre-exam notification text...",
     "securitySettings": "Security Settings",
-    "autoMonitoring": "Auto Monitoring",
-    "monitoringOff": "Off",
-    "monitoringScreenExit": "Screen Exit Monitoring",
-    "monitoringFull": "Full Monitoring",
+    "autoMonitoring": "Monitoring Mode",
+    "monitoringOff": "Monitoring Off",
+    "monitoringScreenExit": "Screen Exit Warning",
+    "monitoringFull": "Full Monitoring (Camera & Screen Exit)",
     "studentVerification": "Student Verification",
     "noStudentVerification": "No Student Verification",
     "eduMapOnly": "EduMap Only",
@@ -934,8 +934,24 @@
       "totalMarks": "Total Marks",
       "percentage": "Percentage",
       "timeSpent": "Time Spent",
+      "copyAttempt": "Copy attempt",
+      "proctor": {
+        "noFaceWarning": "Warning: No face detected! Please stay in frame.",
+        "multipleFacesWarning": "Warning: Multiple faces detected! Please take exam alone.",
+        "cameraDeniedWarning": "Warning: Camera access denied! Exam may be voided."
+      },
+      "pasteAttempt": "Paste attempt",
+      "noFace": "No face detected",
+      "multipleFaces": "Multiple faces detected",
+      "cameraDenied": "Camera denied",
       "startedAt": "Started At",
-      "submittedAt": "Submitted At"
+      "submittedAt": "Submitted At",
+      "severity": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "suspicious": "Suspicious"
     },
     "viewDetail": "View Detail",
     "subjectsLoadFailed": "Failed to load subjects",
@@ -1174,7 +1190,62 @@
     "aiAnalysisPrompt": "Get personalized AI feedback",
     "createImprovementMindmap": "Create Improvement Roadmap (Mindmap)",
     "mindmapCreated": "Improvement roadmap created!",
-    "viewImprovementMindmap": "View Improvement Roadmap"
+    "viewImprovementMindmap": "View Improvement Roadmap",
+    "fetchFailed": "Failed to fetch submission",
+    "commentSaved": "Comment saved successfully!",
+    "commentSaveFailed": "Failed to save comment",
+    "resetAttemptFailed": "Failed to reset attempt",
+    "resetAttemptSuccess": "Attempt reset successfully. Student can retake now.",
+    "mindmapGenerated": "Mindmap generated successfully!",
+    "mindmapFailed": "Failed to generate mindmap",
+    "noData": "No data found",
+    "examName": "Exam",
+    "unknownStudent": "Unknown Student",
+    "detailedInfo": "Detailed Info",
+    "score": "Score",
+    "comment": "Comment",
+    "commentPlaceholder": "Enter your comment...",
+    "noComment": "No comment",
+    "timeSpent": "Time Spent",
+    "submittedAt": "Submitted At",
+    "mcq": "MCQ",
+    "questions": "questions",
+    "gradedBy": "Graded By",
+    "unknownTeacher": "Unknown Teacher",
+    "viewActivityLog": "View Activity Log",
+    "resetAttemptConfirm": "Are you sure you want to reset this student's attempt? This will delete all submissions and allow the student to retake the exam from attempt 1.",
+    "resetAttempt": "Reset Attempt (Allow Retake)",
+    "viewAllAttempts": "View All Attempts",
+    "mcqTab": "Multiple Choice",
+    "noQuestions": "No questions",
+    "question": "Question",
+    "activityTypes": {
+      "rightClick": "Right Click",
+      "pageUnload": "Page Unload",
+      "tabSwitch": "Tab Switch",
+      "start": "Start Exam",
+      "answer": "Answer Question",
+      "change": "Change Answer",
+      "submit": "Submit Exam",
+      "copyAttempt": "Copy Attempt",
+      "pasteAttempt": "Paste Attempt",
+      "noFace": "No Face Detected",
+      "multipleFaces": "Multiple Faces Detected",
+      "cameraDenied": "Camera Off"
+    },
+    "severity": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "suspicious": "Suspicious",
+    "correctAnswer": "Correct Answer",
+    "studentAnswer": "Your Answer",
+    "activityTab": "Activity Log",
+    "noActivityLog": "No activity history",
+    "activitySummary": "Violation Summary",
+    "tabVisible": "Tab Visible",
+    "tabHidden": "Tab Hidden"
   },
   "feed": {
     "fetchFailed": "Failed to load feed",
@@ -1429,5 +1500,10 @@
       "loading": "Creating payment request...",
       "orderInfo": "Upgrade to {{plan}} - {{user}}"
     }
+  },
+  "proctor": {
+    "noFaceWarning": "Warning: No face detected! Please return to the screen.",
+    "multipleFacesWarning": "Warning: Multiple people detected! Please take the exam alone.",
+    "cameraDeniedWarning": "Warning: Camera access denied! The exam may be cancelled."
   }
 }

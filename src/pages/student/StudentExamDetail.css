@@ -81,7 +81,28 @@
 }
 
 .activity-container {
-  padding: 16px 0;
+  padding: 16px 16px 16px 0;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for activity container */
+.activity-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.activity-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.activity-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.activity-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .activity-container .ant-timeline {
@@ -343,4 +364,3 @@ body.dark-mode .submission-detail-container .ant-divider {
 body.dark-mode .submission-detail-container .ant-empty-description {
   color: rgba(255, 255, 255, 0.45);
 }
-
