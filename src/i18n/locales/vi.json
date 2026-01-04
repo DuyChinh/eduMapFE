@@ -1477,8 +1477,16 @@
     }
   },
   "proctor": {
+    "verifyIdentity": "Xác minh danh tính",
+    "verifyDesc": "Vui lòng nhìn vào camera để xác minh danh tính trước khi bắt đầu bài thi.",
+    "captureFace": "Xác nhận danh tính",
+    "identityVerified": "Xác minh danh tính thành công",
+    "captureError": "Không thể chụp ảnh. Vui lòng thử lại",
+    "faceMismatchWarning": "Cảnh báo: Dữ liệu hiện tại không khớp hoàn toàn với khuôn mặt ban đầu!",
+    "multipleFacesWarning": "Cảnh báo: Phát hiện nhiều người trong khung hình!",
+    "multiple_faces": "Cảnh báo: Phát hiện nhiều khuôn mặt",
     "noFaceWarning": "Cảnh báo: Không phát hiện khuôn mặt! Vui lòng quay lại màn hình.",
-    "multipleFacesWarning": "Cảnh báo: Phát hiện nhiều người! Vui lòng làm bài một mình.",
+    "no_face": "Cảnh báo: Không tìm thấy khuôn mặt",
     "cameraDeniedWarning": "Cảnh báo: Không thể truy cập Camera! Quá trình làm bài có thể bị hủy."
   }
 }

@@ -642,6 +642,24 @@ const TakeExam = () => {
     }
   }, [submission, answers, navigate]);
 
+  // --- FACE VERIFICATION LOGIC ---
+  const [referenceLandmarks, setReferenceLandmarks] = useState(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+
+  // Trigger Verification if AutoMonitoring is ON
+  useEffect(() => {
+    if (submission && exam?.autoMonitoring === 'fullMonitoring' && !referenceLandmarks && !loading) {
+      setShowVerificationModal(true);
+    }
+  }, [submission, exam, referenceLandmarks, loading]);
+
+  const handleFaceCaptured = (landmarks) => {
+    setReferenceLandmarks(landmarks);
+    setShowVerificationModal(false);
+    message.success(t('proctor.identityVerified') || 'Identity Verified Successfully');
+  };
+  // -------------------------------
+
   // Handle time up
   const handleTimeUp = useCallback(async () => {
     if (timerIntervalRef.current) {
@@ -2028,10 +2046,38 @@ const TakeExam = () => {
         </Modal>
 
         {/* Face Proctoring Monitor */}
+        {/* Identity Verification Modal */}
+        <Modal
+          open={showVerificationModal}
+          title={t('proctor.verifyIdentity') || "Identity Verification"}
+          footer={null}
+          closable={false}
+          maskClosable={false}
+          centered
+          width={360}
+          zIndex={2001}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <Paragraph style={{ marginBottom: 20 }}>
+              {t('proctor.verifyDesc') || "Please align your face to verify identity before starting."}
+            </Paragraph>
+            {showVerificationModal && (
+              <div style={{ height: 350 }}>
+                <CameraMonitor
+                  active={true}
+                  captureMode={true}
+                  onCapture={handleFaceCaptured}
+                />
+              </div>
+            )}
+          </div>
+        </Modal>
+
         {submission && (
           <CameraMonitor
-            active={!submitting && exam?.autoMonitoring === 'fullMonitoring'}
+            active={!submitting && exam?.autoMonitoring === 'fullMonitoring' && !!referenceLandmarks}
             onViolation={handleProctorViolation}
+            referenceLandmarks={referenceLandmarks}
           />
         )}
       </div>

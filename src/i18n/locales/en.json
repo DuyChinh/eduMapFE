@@ -1502,8 +1502,16 @@
     }
   },
   "proctor": {
-    "noFaceWarning": "Warning: No face detected! Please return to the screen.",
+    "verifyIdentity": "Identity Verification",
+    "verifyDesc": "Please look at the camera to verify your identity before starting.",
+    "captureFace": "Confirm Identity",
+    "identityVerified": "Identity Verified Successfully",
+    "captureError": "Failed to capture. Please try again.",
+    "faceMismatchWarning": "Warning: Face Mismatch! Please align your face.",
     "multipleFacesWarning": "Warning: Multiple people detected! Please take the exam alone.",
+    "multiple_faces": "Multiple Faces Detected",
+    "noFaceWarning": "Warning: No face detected! Please return to the screen.",
+    "no_face": "No Face Detected",
     "cameraDeniedWarning": "Warning: Camera access denied! The exam may be cancelled."
   }
 }
