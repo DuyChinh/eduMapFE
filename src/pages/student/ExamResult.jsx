@@ -31,6 +31,8 @@ import { useTranslation } from 'react-i18next';
 import examService from '../../api/examService';
 import examStatsService from '../../api/examStatsService';
 import confetti from 'canvas-confetti';
+import aiService from '../../api/aiService';
+import ReactMarkdown from 'react-markdown';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -49,6 +51,69 @@ const ExamResult = () => {
     fetchExamResult();
     fetchLeaderboard();
   }, [examId]);
+
+  // AI Analysis State
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  // Inject styles for AI Feedback Card
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      .ai-feedback-card {
+        background-color: #f6ffed !important;
+        border: 1px solid #b7eb8f !important;
+      }
+      body.dark-mode .ai-feedback-card {
+        background-color: #162312 !important;
+        border: 1px solid #274916 !important;
+      }
+      body.dark-mode .ai-feedback-card .ant-card-head {
+        border-bottom: 1px solid #274916 !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      body.dark-mode .ai-feedback-card .ant-card-body {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      /* Ensure text inside ReactMarkdown is white in dark mode */
+      body.dark-mode .ai-feedback-card .ant-card-body p,
+      body.dark-mode .ai-feedback-card .ant-card-body div,
+      body.dark-mode .ai-feedback-card .ant-card-body li,
+      body.dark-mode .ai-feedback-card .ant-card-body strong {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (submissionData && examData && !aiAnalysis && !analyzing) {
+      fetchAIAnalysis();
+    }
+  }, [submissionData, examData]);
+
+  const fetchAIAnalysis = async () => {
+    setAnalyzing(true);
+    try {
+      const response = await aiService.analyzeStudentWeakness({
+        submissionData: submissionData,
+        examData: {
+          name: examData.name,
+          subject: examData.subject?.name || examData.subject
+        }
+      });
+      if (response && response.data && response.data.analysis) {
+        setAiAnalysis(response.data.analysis);
+      }
+    } catch (err) {
+      console.error("AI Analysis failed", err);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const fetchExamResult = async () => {
     setLoading(true);
@@ -116,17 +181,17 @@ const ExamResult = () => {
   };
 
   const getRankMedal = (rank) => {
-    if (rank === 1) return { 
-      icon: <img src="/1st-medal.png" alt="1st Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />, 
-      color: '#FFD700' 
+    if (rank === 1) return {
+      icon: <img src="/1st-medal.png" alt="1st Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />,
+      color: '#FFD700'
     };
-    if (rank === 2) return { 
-      icon: <img src="/2nd-medal.png" alt="2nd Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />, 
-      color: '#C0C0C0' 
+    if (rank === 2) return {
+      icon: <img src="/2nd-medal.png" alt="2nd Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />,
+      color: '#C0C0C0'
     };
-    if (rank === 3) return { 
-      icon: <img src="/3rd-medal.png" alt="3rd Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />, 
-      color: '#CD7F32' 
+    if (rank === 3) return {
+      icon: <img src="/3rd-medal.png" alt="3rd Place" style={{ width: 64, height: 64, objectFit: 'contain' }} />,
+      color: '#CD7F32'
     };
     return null;
   };
@@ -140,28 +205,28 @@ const ExamResult = () => {
       render: (rank) => {
         if (rank === 1) {
           return (
-            <img 
-              src="/1st-medal.png" 
-              alt="1st Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/1st-medal.png"
+              alt="1st Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 2) {
           return (
-            <img 
-              src="/2nd-medal.png" 
-              alt="2nd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/2nd-medal.png"
+              alt="2nd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
         if (rank === 3) {
           return (
-            <img 
-              src="/3rd-medal.png" 
-              alt="3rd Place" 
-              style={{ width: 32, height: 32, objectFit: 'contain' }} 
+            <img
+              src="/3rd-medal.png"
+              alt="3rd Place"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
           );
         }
@@ -341,7 +406,7 @@ const ExamResult = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title={t('exams.stats.totalQuestions')}
+              title={t('exams.examStats.totalQuestions')}
               value={submissionData.totalQuestions}
               prefix={<CheckCircleOutlined />}
             />
@@ -374,16 +439,33 @@ const ExamResult = () => {
               title={t('takeExam.percentage')}
               value={Math.round(percentage)}
               suffix="%"
-              valueStyle={{ color: scoreColor }}
+              valueStyle={{ color: '#3f8600' }}
               prefix={<StarFilled />}
             />
           </Card>
         </Col>
       </Row>
 
+      {/* AI Analysis Section */}
+      <Card
+        className="ai-feedback-card"
+        style={{ marginTop: 24 }}
+        title={<span><StarFilled style={{ color: '#faad14' }} /> AI Personal Feedback</span>}
+      >
+        {analyzing ? (
+          <div style={{ textAlign: 'center', padding: 20 }}><Spin tip="AI is analyzing your result..." /></div>
+        ) : aiAnalysis ? (
+          <div style={{ lineHeight: '1.6' }}>
+            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+          </div>
+        ) : (
+          <Empty description="Analysis unavailable" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+      </Card>
+
       {/* Leaderboard Section */}
       {examData.settings?.showLeaderboard && leaderboardData.length > 0 && (
-        <Card 
+        <Card
           title={
             <Space>
               <TrophyOutlined />
@@ -392,8 +474,8 @@ const ExamResult = () => {
           }
           style={{ marginBottom: 24 }}
           extra={
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               onClick={() => setShowLeaderboard(true)}
             >
               {t('exams.viewDetail')}
@@ -421,7 +503,7 @@ const ExamResult = () => {
           >
             {t('common.backToHome')}
           </Button>
-          
+
           {examData.settings?.showCorrectAnswer && (
             <Button
               size="large"

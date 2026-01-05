@@ -11,7 +11,7 @@ const mindmapService = {
     getShared: () => axiosInstance.get('/mindmaps/shared'),
     restore: (id) => axiosInstance.put(`/mindmaps/${id}/restore`),
     permanentDelete: (id) => axiosInstance.delete(`/mindmaps/${id}/permanent`),
-    
+
     // Share APIs
     getShareInfo: (id) => axiosInstance.get(`/mindmaps/${id}/share`),
     share: (id, data) => axiosInstance.post(`/mindmaps/${id}/share`, data),
@@ -19,6 +19,7 @@ const mindmapService = {
     togglePublic: (id, data) => axiosInstance.post(`/mindmaps/${id}/toggle-public`, data),
     getByShareLink: (shareLink) => axiosInstance.get(`/mindmaps/public/${shareLink}`),
     updateByShareLink: (shareLink, data) => axiosInstance.put(`/mindmaps/public/${shareLink}`, data),
+    generateFromExamReview: (data) => axiosInstance.post('/mindmaps/generate-review', data, { timeout: 120000 }),
 };
 
 export default mindmapService;

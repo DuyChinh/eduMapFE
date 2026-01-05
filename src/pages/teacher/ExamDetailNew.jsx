@@ -23,6 +23,8 @@ import {
   TrophyOutlined,
   DownloadOutlined,
   SortAscendingOutlined,
+  DeploymentUnitOutlined,
+  ThunderboltFilled,
 } from "@ant-design/icons";
 import * as XLSX from 'xlsx';
 import {
@@ -33,6 +35,7 @@ import {
   Col,
   Empty,
   Input,
+  Modal,
   Progress,
   Row,
   Select,
@@ -50,10 +53,15 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import examService from "../../api/examService";
 import examStatsService from "../../api/examStatsService.js";
+import mindmapService from "../../api/mindmapService";
 import { ROUTES } from "../../constants/config";
 import PreviewExamModal from "../../components/teacher/PreviewExamModal";
+import QuestionPreview from "../../components/teacher/QuestionPreview";
 import QRCodeModal from "../../components/common/QRCodeModal";
 import LeaderboardView from "../../components/teacher/LeaderboardView";
+import { MathJaxContext } from 'better-react-mathjax';
+import aiService from "../../api/aiService";
+import ReactMarkdown from 'react-markdown';
 
 const { Title, Text } = Typography;
 
@@ -86,6 +94,38 @@ const ExamDetailNew = () => {
       body.dark-mode .late-submission-row td [data-column="submittedAt"] {
         color: #ff7875 !important;
       }
+
+      /* AI Analysis Card Styles */
+      .ai-analysis-card {
+        background-color: #f0faff !important;
+        border: 1px solid #bae7ff !important;
+      }
+      body.dark-mode .ai-analysis-card {
+        background-color: #111d2c !important;
+        border: 1px solid #163c5e !important;
+      }
+      body.dark-mode .ai-analysis-card .ant-card-head {
+        border-bottom: 1px solid #163c5e !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      body.dark-mode .ai-analysis-card .ant-card-body {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      body.dark-mode .ai-analysis-card .ant-card-body p,
+      body.dark-mode .ai-analysis-card .ant-card-body div,
+      body.dark-mode .ai-analysis-card .ant-card-body li,
+      body.dark-mode .ai-analysis-card .ant-card-body strong {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      /* Improve list formatting */
+      .ai-analysis-card ul, .ai-analysis-card ol {
+        padding-left: 24px !important;
+        margin-bottom: 16px !important;
+      }
+      .ai-analysis-card li {
+        margin-bottom: 8px !important;
+        padding-left: 4px !important;
+      }
     `;
     document.head.appendChild(style);
     return () => {
@@ -105,6 +145,7 @@ const ExamDetailNew = () => {
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [scoreDistributionLoading, setScoreDistributionLoading] =
     useState(false);
+  const [generatingMindmap, setGeneratingMindmap] = useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
   const [showAllAttempts, setShowAllAttempts] = useState(false);
@@ -123,9 +164,63 @@ const ExamDetailNew = () => {
     total: 0,
   });
 
+  const [viewQuestionModalOpen, setViewQuestionModalOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
+
+
+
+  // AI Analysis State
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
+  const [createdMindmapId, setCreatedMindmapId] = useState(null); // Store created mindmap ID
+
   useEffect(() => {
     fetchExamDetail();
   }, [examId]);
+
+  // Auto-fetch AI Analysis when statistics are loaded
+  useEffect(() => {
+    const currentLang = i18n.language || 'vi';
+    const storedLang = examData?.analysisLanguage || 'vi';
+
+    if (examData && examData.aiAnalysis && storedLang === currentLang) {
+      if (aiAnalysis !== examData.aiAnalysis) {
+        setAiAnalysis(examData.aiAnalysis);
+      }
+    } else if (statistics && examData && !aiAnalysisLoading) {
+      if (aiAnalysis) {
+        setAiAnalysis(null);
+      }
+    }
+  }, [statistics, examData, i18n.language]);
+
+  const fetchAIAnalysis = async () => {
+    setAiAnalysisLoading(true);
+    try {
+      const response = await aiService.analyzeClassWeakness({
+        examId: examData._id || examData.id,
+        statistics: statistics,
+        examData: {
+          name: examData.name,
+          subject: getSubjectName(examData.subjectId)
+        },
+        language: i18n.language || 'vi' // Pass current language
+      });
+      if (response && response.data && response.data.analysis) {
+        setAiAnalysis(response.data.analysis);
+        // Optimistically update examData to prevent re-fetching loop
+        setExamData(prev => ({
+          ...prev,
+          aiAnalysis: response.data.analysis,
+          analysisLanguage: i18n.language || 'vi'
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch AI analysis", error);
+    } finally {
+      setAiAnalysisLoading(false);
+    }
+  };
 
   const fetchExamDetail = async () => {
     setLoading(true);
@@ -147,7 +242,7 @@ const ExamDetailNew = () => {
       setStatistics(response.data || response);
     } catch (error) {
       console.error("Error fetching statistics:", error);
-      message.error(t("exams.stats.fetchFailed"));
+      message.error(t("exams.examStats.fetchFailed"));
     } finally {
       setStatsLoading(false);
     }
@@ -209,7 +304,7 @@ const ExamDetailNew = () => {
       setScoreDistribution(response.data || response || []);
     } catch (error) {
       console.error("Error fetching score distribution:", error);
-      message.error(t("exams.stats.fetchFailed"));
+      message.error(t("exams.examStats.fetchFailed"));
     } finally {
       setScoreDistributionLoading(false);
     }
@@ -334,9 +429,9 @@ const ExamDetailNew = () => {
   // Sort submissions based on sortOrder
   const getSortedSubmissions = (data) => {
     if (!data || data.length === 0) return data;
-    
+
     const sorted = [...data];
-    
+
     switch (sortOrder) {
       case 'name-asc':
         return sorted.sort((a, b) => {
@@ -348,19 +443,19 @@ const ExamDetailNew = () => {
         return sorted.sort((a, b) => {
           const scoreA = a.score || 0;
           const scoreB = b.score || 0;
-          
+
           // Primary sort: by score ascending
           if (scoreA !== scoreB) {
             return scoreA - scoreB;
           }
-          
+
           // Secondary sort: by time spent (faster = better, so ascending)
           const timeA = a.timeSpent || Infinity;
           const timeB = b.timeSpent || Infinity;
           if (timeA !== timeB) {
             return timeA - timeB;
           }
-          
+
           // Tertiary sort: by name A-Z
           const nameA = (a.student?.name || a.student?.email || '').toLowerCase();
           const nameB = (b.student?.name || b.student?.email || '').toLowerCase();
@@ -370,19 +465,19 @@ const ExamDetailNew = () => {
         return sorted.sort((a, b) => {
           const scoreA = a.score || 0;
           const scoreB = b.score || 0;
-          
+
           // Primary sort: by score descending
           if (scoreA !== scoreB) {
             return scoreB - scoreA;
           }
-          
+
           // Secondary sort: by time spent (faster = better, so ascending)
           const timeA = a.timeSpent || Infinity;
           const timeB = b.timeSpent || Infinity;
           if (timeA !== timeB) {
             return timeA - timeB;
           }
-          
+
           // Tertiary sort: by name A-Z
           const nameA = (a.student?.name || a.student?.email || '').toLowerCase();
           const nameB = (b.student?.name || b.student?.email || '').toLowerCase();
@@ -398,7 +493,7 @@ const ExamDetailNew = () => {
     try {
       // Get sorted data
       const sortedData = getSortedSubmissions(submissions);
-      
+
       // Prepare data for Excel
       const excelData = sortedData.map((record, index) => ({
         [t('exams.export.no')]: index + 1,
@@ -414,8 +509,8 @@ const ExamDetailNew = () => {
         })(),
         [t('exams.export.score')]: record.score != null ? record.score : '-',
         [t('exams.export.totalMarks')]: record.totalMarks || examData?.totalMarks || '-',
-        [t('exams.export.percentage')]: record.score != null && record.totalMarks 
-          ? `${Math.round((record.score / record.totalMarks) * 100)}%` 
+        [t('exams.export.percentage')]: record.score != null && record.totalMarks
+          ? `${Math.round((record.score / record.totalMarks) * 100)}%`
           : '-',
         [t('exams.export.timeSpent')]: (() => {
           if (!record.timeSpent) return '-';
@@ -423,10 +518,10 @@ const ExamDetailNew = () => {
           const mins = record.timeSpent % 60;
           return `${hours}h ${mins}m`;
         })(),
-        [t('exams.export.startedAt')]: record.startedAt 
+        [t('exams.export.startedAt')]: record.startedAt
           ? new Date(record.startedAt).toLocaleString('vi-VN')
           : '-',
-        [t('exams.export.submittedAt')]: record.submittedAt 
+        [t('exams.export.submittedAt')]: record.submittedAt
           ? new Date(record.submittedAt).toLocaleString('vi-VN')
           : '-',
       }));
@@ -453,13 +548,13 @@ const ExamDetailNew = () => {
       XLSX.utils.book_append_sheet(wb, ws, t('exams.tabs.students'));
 
       // Generate filename
-      const sortLabel = sortOrder === 'name-asc' ? 'A-Z' : 
-                       sortOrder === 'score-asc' ? 'score-asc' : 'score-desc';
+      const sortLabel = sortOrder === 'name-asc' ? 'A-Z' :
+        sortOrder === 'score-asc' ? 'score-asc' : 'score-desc';
       const filename = `${examData?.name || 'Exam'}_Students_${sortLabel}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
       // Save file
       XLSX.writeFile(wb, filename);
-      
+
       message.success(t('exams.export.success'));
     } catch (error) {
       console.error('Error exporting Excel:', error);
@@ -467,303 +562,344 @@ const ExamDetailNew = () => {
     }
   };
 
-  const submissionsColumns = [
-    {
-      title: t("exams.submissions.student"),
-      key: "student",
-      render: (_, record) => (
-        <Space>
-          <Avatar
-            src={record.student?.avatar}
-            icon={!record.student?.avatar && <TeamOutlined />}
-          />
-          <div>
-            <div style={{ fontWeight: 500 }}>
-              {record.student?.name || record.student?.email}
-            </div>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.student?.studentCode}
-            </Text>
+  const handleGenerateClassMindmap = async () => {
+    setGeneratingMindmap(true);
+    try {
+      const response = await mindmapService.generateFromExamReview({
+        examId: examId,
+        type: 'class_review',
+        language: i18n.language || 'vi'
+      });
+
+    if (response && response.data && response.data.data?._id) {
+      message.success(t('exams.mindmapGenerated') || 'Class Strategy Mindmap generated!');
+      setCreatedMindmapId(response.data.data._id); // Set ID instead of navigating
+    } else if (response && response.data && response.data._id) {
+      message.success(t('exams.mindmapGenerated') || 'Class Strategy Mindmap generated!');
+      setCreatedMindmapId(response.data._id); // Set ID instead of navigating
+    }
+  } catch (error) {
+    console.error('Mindmap generation failed', error);
+    message.error(t('exams.mindmapFailed') || 'Failed to generate mindmap: ' + (error.response?.data?.message || error.message));
+  } finally {
+    setGeneratingMindmap(false);
+  }
+};
+
+const handleViewQuestion = (record) => {
+  // Find full question details from examData
+  if (examData && examData.questions) {
+    const fullQuestion = examData.questions.find(
+      (q) => q.questionId && (q.questionId._id === record.id || q.questionId === record.id)
+    );
+
+    if (fullQuestion && fullQuestion.questionId) {
+      setSelectedQuestion(fullQuestion.questionId);
+      setViewQuestionModalOpen(true);
+    } else {
+      // Fallback if not found in examData (should not happen if consistent)
+      message.warning("Question details not found locally.");
+    }
+  }
+};
+
+const submissionsColumns = [
+  {
+    title: t("exams.submissions.student"),
+    key: "student",
+    render: (_, record) => (
+      <Space>
+        <Avatar
+          src={record.student?.avatar}
+          icon={!record.student?.avatar && <TeamOutlined />}
+        />
+        <div>
+          <div style={{ fontWeight: 500 }}>
+            {record.student?.name || record.student?.email}
           </div>
-        </Space>
-      ),
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {record.student?.studentCode}
+          </Text>
+        </div>
+      </Space>
+    ),
+  },
+  {
+    title: t("exams.submissions.status"),
+    dataIndex: "status",
+    key: "status",
+    width: 120,
+    render: (status) => {
+      const statusConfig = {
+        in_progress: {
+          color: "blue",
+          text: t("exams.submissions.inProgress"),
+        },
+        submitted: { color: "green", text: t("exams.submissions.submitted") },
+        graded: { color: "green", text: t("exams.submissions.graded") },
+        late: { color: "orange", text: t("exams.submissions.late") },
+      };
+      const config = statusConfig[status] || {
+        color: "default",
+        text: status,
+      };
+      return <Tag color={config.color}>{config.text}</Tag>;
     },
-    {
-      title: t("exams.submissions.status"),
-      dataIndex: "status",
-      key: "status",
-      width: 120,
-      render: (status) => {
-        const statusConfig = {
-          in_progress: {
-            color: "blue",
-            text: t("exams.submissions.inProgress"),
-          },
-          submitted: { color: "green", text: t("exams.submissions.submitted") },
-          graded: { color: "green", text: t("exams.submissions.graded") },
-          late: { color: "orange", text: t("exams.submissions.late") },
-        };
-        const config = statusConfig[status] || {
-          color: "default",
-          text: status,
-        };
-        return <Tag color={config.color}>{config.text}</Tag>;
-      },
-    },
-    {
-      title: t("exams.submissions.score"),
-      dataIndex: "score",
-      key: "score",
-      width: 150,
-      render: (score, record) => {
-        // Show score for submitted, graded, and late submissions
-        if (
-          record.status !== "submitted" &&
-          record.status !== "graded" &&
-          record.status !== "late"
-        )
-          return "-";
-        const formattedScore =
-          typeof score === "number" ? Number(score.toFixed(2)) : score || 0;
-        return (
-          <div>
-            <Text strong style={{ fontSize: 14 }}>
-              {formattedScore}/{record.totalMarks}
-            </Text>
-            <Progress
-              percent={Math.round(((score || 0) / record.totalMarks) * 100)}
-              size="small"
-              showInfo={false}
-              status={
-                score >= record.totalMarks * 0.8
-                  ? "success"
-                  : score >= record.totalMarks * 0.5
+  },
+  {
+    title: t("exams.submissions.score"),
+    dataIndex: "score",
+    key: "score",
+    width: 150,
+    render: (score, record) => {
+      // Show score for submitted, graded, and late submissions
+      if (
+        record.status !== "submitted" &&
+        record.status !== "graded" &&
+        record.status !== "late"
+      )
+        return "-";
+      const formattedScore =
+        typeof score === "number" ? Number(score.toFixed(2)) : score || 0;
+      return (
+        <div>
+          <Text strong style={{ fontSize: 14 }}>
+            {formattedScore}/{record.totalMarks}
+          </Text>
+          <Progress
+            percent={Math.round(((score || 0) / record.totalMarks) * 100)}
+            size="small"
+            showInfo={false}
+            status={
+              score >= record.totalMarks * 0.8
+                ? "success"
+                : score >= record.totalMarks * 0.5
                   ? "normal"
                   : "exception"
-              }
-            />
-          </div>
-        );
-      },
+            }
+          />
+        </div>
+      );
     },
-    {
-      title: t("exams.submissions.timeSpent"),
-      dataIndex: "timeSpent",
-      key: "timeSpent",
-      width: 120,
-      render: (minutes) => {
-        if (!minutes) return "-";
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours}h ${mins}m`;
-      },
+  },
+  {
+    title: t("exams.submissions.timeSpent"),
+    dataIndex: "timeSpent",
+    key: "timeSpent",
+    width: 120,
+    render: (minutes) => {
+      if (!minutes) return "-";
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${hours}h ${mins}m`;
     },
-    {
-      title: t("exams.submissions.startedAt"),
-      dataIndex: "startedAt",
-      key: "startedAt",
-      width: 170,
-      render: (date) => (date ? new Date(date).toLocaleString("vi-VN") : "-"),
-    },
-    {
-      title: t("exams.submissions.submittedAt"),
-      dataIndex: "submittedAt",
-      key: "submittedAt",
-      width: 170,
-      render: (date) => (
-        <span data-column="submittedAt">
-          {date ? new Date(date).toLocaleString("vi-VN") : "-"}
-        </span>
-      ),
-    },
-    {
-      title: t("common.actions"),
-      key: "actions",
-      width: 100,
-      render: (_, record) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() =>
-            navigate(
-              `/teacher/exams/${examId}/submissions/detail/${record._id}`
-            )
-          }
-          disabled={record.status === "in_progress"}
-        >
-          {t("exams.viewDetail")}
-        </Button>
-      ),
-    },
-  ];
-
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", padding: "50px" }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!examData) {
-    return (
-      <Empty
-        description={t("exams.examNotFound")}
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
+  },
+  {
+    title: t("exams.submissions.startedAt"),
+    dataIndex: "startedAt",
+    key: "startedAt",
+    width: 170,
+    render: (date) => (date ? new Date(date).toLocaleString("vi-VN") : "-"),
+  },
+  {
+    title: t("exams.submissions.submittedAt"),
+    dataIndex: "submittedAt",
+    key: "submittedAt",
+    width: 170,
+    render: (date) => (
+      <span data-column="submittedAt">
+        {date ? new Date(date).toLocaleString("vi-VN") : "-"}
+      </span>
+    ),
+  },
+  {
+    title: t("common.actions"),
+    key: "actions",
+    width: 100,
+    render: (_, record) => (
+      <Button
+        type="link"
+        icon={<EyeOutlined />}
+        onClick={() =>
+          navigate(
+            `/teacher/exams/${examId}/submissions/detail/${record._id}`
+          )
+        }
+        disabled={record.status === "in_progress"}
       >
-        <Button type="primary" onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
+        {t("exams.viewDetail")}
+      </Button>
+    ),
+  },
+];
+
+if (loading) {
+  return (
+    <div style={{ textAlign: "center", padding: "50px" }}>
+      <Spin size="large" />
+    </div>
+  );
+}
+
+if (!examData) {
+  return (
+    <Empty
+      description={t("exams.examNotFound")}
+      image={Empty.PRESENTED_IMAGE_SIMPLE}
+    >
+      <Button type="primary" onClick={() => navigate(ROUTES.TEACHER_EXAMS)}>
+        {t("common.back")}
+      </Button>
+    </Empty>
+  );
+}
+
+return (
+  <div>
+    {/* Header */}
+    <div
+      style={{
+        marginBottom: 24,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 16,
+      }}
+    >
+      <Space>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(ROUTES.TEACHER_EXAMS)}
+        >
           {t("common.back")}
         </Button>
-      </Empty>
-    );
-  }
-
-  return (
-    <div>
-      {/* Header */}
-      <div
-        style={{
-          marginBottom: 24,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 16,
-        }}
-      >
-        <Space>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(ROUTES.TEACHER_EXAMS)}
-          >
-            {t("common.back")}
-          </Button>
-          <Title level={2} style={{ margin: 0 }}>
-            {examData.name}
-          </Title>
-          {/* <Tag color={getStatusColor(examData.status)}>
+        <Title level={2} style={{ margin: 0 }}>
+          {examData.name}
+        </Title>
+        {/* <Tag color={getStatusColor(examData.status)}>
             {getStatusText(examData.status)}
           </Tag> */}
-        </Space>
+      </Space>
 
-        <Space>
-          <Button
-            icon={<EyeOutlined />}
-            onClick={() => setPreviewModalVisible(true)}
-          >
-            {t("exams.preview") || "Preview"}
-          </Button>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/teacher/exams/${examId}/edit`)}
-          >
-            {t("exams.edit")}
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
-            {t("exams.delete")}
-          </Button>
-        </Space>
-      </div>
+      <Space>
+        <Button
+          icon={<EyeOutlined />}
+          onClick={() => setPreviewModalVisible(true)}
+        >
+          {t("exams.preview") || "Preview"}
+        </Button>
+        <Button
+          icon={<EditOutlined />}
+          onClick={() => navigate(`/teacher/exams/${examId}/edit`)}
+        >
+          {t("exams.edit")}
+        </Button>
+        <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+          {t("exams.delete")}
+        </Button>
+      </Space>
+    </div>
 
-      {/* Tabs */}
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        size="large"
-        items={[
-          {
-            key: "overview",
-            label: (
-              <span>
-                <img src="/overview.png" alt="Overview" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
-                {t("exams.tabs.overview")}
-              </span>
-            ),
-            children: (
-              <Row gutter={[16, 16]}>
-                <Col xs={24} lg={16}>
-                  <Card>
-                    <Title level={4} style={{ marginBottom: 16 }}>
-                      {t("exams.basicInfo")}
-                    </Title>
-                    <Table
-                      dataSource={[
-                        {
-                          key: "description",
-                          label: t("exams.description"),
-                          value: examData.description || "-",
-                        },
-                        {
-                          key: "purpose",
-                          label: t("exams.examPurpose"),
-                          value: examData.examPurpose,
-                          isTag: true,
-                        },
-                        {
-                          key: "subject",
-                          label: t("exams.subject") || "Subject",
-                          value: examData.subjectId,
-                          isSubject: true,
-                        },
-                        {
-                          key: "duration",
-                          label: t("exams.duration"),
-                          value: `${examData.duration} ${t("exams.minutes")}`,
-                        },
-                        {
-                          key: "totalMarks",
-                          label: t("exams.totalMarks"),
-                          value: examData.totalMarks != null 
-                            ? (Number.isInteger(examData.totalMarks) 
-                              ? examData.totalMarks 
-                              : examData.totalMarks.toFixed(2))
-                            : "-",
-                        },
-                        {
-                          key: "maxAttempts",
-                          label: t("exams.maxAttempts"),
-                          value: examData.maxAttempts,
-                        },
-                        {
-                          key: "startTime",
-                          label: t("exams.startTime"),
-                          value: examData.startTime
-                            ? new Date(examData.startTime).toLocaleString(
-                                "vi-VN"
-                              )
-                            : "-",
-                        },
-                        {
-                          key: "endTime",
-                          label: t("exams.endTime"),
-                          value: examData.endTime
-                            ? new Date(examData.endTime).toLocaleString("vi-VN")
-                            : "-",
-                        },
-                        {
-                          key: "shareLink",
-                          label: t("exams.shareLink"),
-                          value: examData.shareCode,
-                          isShareLink: true,
-                        },
-                      ]}
-                      rowKey="key"
-                      pagination={false}
-                      showHeader={false}
-                      columns={[
-                        {
-                          key: "label",
-                          width: 150,
-                          render: (_, record) => (
-                            <Text strong>{record.label}:</Text>
-                          ),
-                        },
-                        {
-                          key: "value",
-                          render: (_, record) => {
-                            if (record.isShareLink) {
-                              return record.value ? (
-                                <Space>
+    {/* Tabs */}
+    <Tabs
+      activeKey={activeTab}
+      onChange={handleTabChange}
+      size="large"
+      items={[
+        {
+          key: "overview",
+          label: (
+            <span>
+              <img src="/overview.png" alt="Overview" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+              {t("exams.tabs.overview")}
+            </span>
+          ),
+          children: (
+            <Row gutter={[16, 16]}>
+              <Col xs={24} lg={16}>
+                <Card>
+                  <Title level={4} style={{ marginBottom: 16 }}>
+                    {t("exams.basicInfo")}
+                  </Title>
+                  <Table
+                    dataSource={[
+                      {
+                        key: "description",
+                        label: t("exams.description"),
+                        value: examData.description || "-",
+                      },
+                      {
+                        key: "purpose",
+                        label: t("exams.examPurpose"),
+                        value: examData.examPurpose,
+                        isTag: true,
+                      },
+                      {
+                        key: "subject",
+                        label: t("exams.subject") || "Subject",
+                        value: examData.subjectId,
+                        isSubject: true,
+                      },
+                      {
+                        key: "duration",
+                        label: t("exams.duration"),
+                        value: `${examData.duration} ${t("exams.minutes")}`,
+                      },
+                      {
+                        key: "totalMarks",
+                        label: t("exams.totalMarks"),
+                        value: examData.totalMarks != null
+                          ? (Number.isInteger(examData.totalMarks)
+                            ? examData.totalMarks
+                            : examData.totalMarks.toFixed(2))
+                          : "-",
+                      },
+                      {
+                        key: "maxAttempts",
+                        label: t("exams.maxAttempts"),
+                        value: examData.maxAttempts,
+                      },
+                      {
+                        key: "startTime",
+                        label: t("exams.startTime"),
+                        value: examData.startTime
+                          ? new Date(examData.startTime).toLocaleString(
+                            "vi-VN"
+                          )
+                          : "-",
+                      },
+                      {
+                        key: "endTime",
+                        label: t("exams.endTime"),
+                        value: examData.endTime
+                          ? new Date(examData.endTime).toLocaleString("vi-VN")
+                          : "-",
+                      },
+                      {
+                        key: "shareLink",
+                        label: t("exams.shareLink"),
+                        value: examData.shareCode,
+                        isShareLink: true,
+                      },
+                    ]}
+                    rowKey="key"
+                    pagination={false}
+                    showHeader={false}
+                    columns={[
+                      {
+                        key: "label",
+                        width: 150,
+                        render: (_, record) => (
+                          <Text strong>{record.label}:</Text>
+                        ),
+                      },
+                      {
+                        key: "value",
+                        render: (_, record) => {
+                          if (record.isShareLink) {
+                            return record.value ? (
+                              <Space>
                                 <Tooltip
                                   title={
                                     t("exams.clickToCopy") ||
@@ -785,149 +921,153 @@ const ExamDetailNew = () => {
                                     {record.value}
                                   </Tag>
                                 </Tooltip>
-                                  <Tooltip title={t('exams.showQRCode') || 'Show QR Code'}>
-                                    <Button
-                                      type="text"
-                                      icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
-                                      onClick={() => setQrCodeModalVisible(true)}
-                                      size="small"
-                                    />
-                                  </Tooltip>
-                                </Space>
-                              ) : (
-                                <Tag color="default">-</Tag>
-                              );
-                            }
-                            if (record.isSubject) {
-                              const subjectName = getSubjectName(record.value);
-                              return subjectName !== "-" ? (
-                                <Tag color="cyan">{subjectName}</Tag>
-                              ) : (
-                                <span>-</span>
-                              );
-                            }
-                            if (record.isTag) {
-                              return <Tag>{record.value}</Tag>;
-                            }
-                            return record.value;
-                          },
+                                <Tooltip title={t('exams.showQRCode') || 'Show QR Code'}>
+                                  <Button
+                                    type="text"
+                                    icon={<QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+                                    onClick={() => setQrCodeModalVisible(true)}
+                                    size="small"
+                                  />
+                                </Tooltip>
+                              </Space>
+                            ) : (
+                              <Tag color="default">-</Tag>
+                            );
+                          }
+                          if (record.isSubject) {
+                            const subjectName = getSubjectName(record.value);
+                            return subjectName !== "-" ? (
+                              <Tag color="cyan">{subjectName}</Tag>
+                            ) : (
+                              <span>-</span>
+                            );
+                          }
+                          if (record.isTag) {
+                            return <Tag>{record.value}</Tag>;
+                          }
+                          return record.value;
                         },
-                      ]}
-                      scroll={{ x: true }}
+                      },
+                    ]}
+                    scroll={{ x: true }}
+                  />
+
+                  {examData.questions && examData.questions.length > 0 && (
+                    <div style={{ marginTop: 24 }}>
+                      <Title level={4}>{t("exams.questions")}</Title>
+                      <Table
+                        dataSource={examData.questions}
+                        rowKey={(record) => {
+                          const questionId =
+                            record.questionId?._id || record.questionId;
+                          const order = record.order;
+                          return questionId
+                            ? `${questionId}-${order || ""}`
+                            : `question-${record._id || Math.random()}`;
+                        }}
+                        pagination={false}
+                        size="small"
+                        columns={[
+                          {
+                            title: t("exams.order"),
+                            dataIndex: "order",
+                            key: "order",
+                            width: 80,
+                          },
+                          {
+                            title: t("questions.name"),
+                            key: "name",
+                            render: (_, record) =>
+                              record.questionId?.name || "-",
+                          },
+                          {
+                            title: t("questions.type"),
+                            key: "type",
+                            width: 120,
+                            render: (_, record) => (
+                              <Tag>{record.questionId?.type}</Tag>
+                            ),
+                          },
+                          {
+                            title: t("exams.marks"),
+                            dataIndex: "marks",
+                            key: "marks",
+                            width: 80,
+                            render: (marks) => {
+                              if (marks == null) return "-";
+                              // If it's an integer, show as is. Otherwise, truncate to 2 decimal places
+                              if (Number.isInteger(marks)) return marks;
+                              return Math.floor(marks * 100) / 100;
+                            },
+                          },
+                        ]}
+                      />
+                    </div>
+                  )}
+                </Card>
+              </Col>
+
+              <Col xs={24} lg={8}>
+                <Space
+                  direction="vertical"
+                  style={{ width: "100%" }}
+                  size="large"
+                >
+                  <Card>
+                    <Statistic
+                      title={t("exams.examStats.totalQuestions")}
+                      value={examData.questions?.length || 0}
+                      prefix={<img src="/question.png" alt="Questions" style={{ width: 24, height: 24 }} />}
                     />
-
-                    {examData.questions && examData.questions.length > 0 && (
-                      <div style={{ marginTop: 24 }}>
-                        <Title level={4}>{t("exams.questions")}</Title>
-                        <Table
-                          dataSource={examData.questions}
-                          rowKey={(record) => {
-                            const questionId =
-                              record.questionId?._id || record.questionId;
-                            const order = record.order;
-                            return questionId
-                              ? `${questionId}-${order || ""}`
-                              : `question-${record._id || Math.random()}`;
-                          }}
-                          pagination={false}
-                          size="small"
-                          columns={[
-                            {
-                              title: t("exams.order"),
-                              dataIndex: "order",
-                              key: "order",
-                              width: 80,
-                            },
-                            {
-                              title: t("questions.name"),
-                              key: "name",
-                              render: (_, record) =>
-                                record.questionId?.name || "-",
-                            },
-                            {
-                              title: t("questions.type"),
-                              key: "type",
-                              width: 120,
-                              render: (_, record) => (
-                                <Tag>{record.questionId?.type}</Tag>
-                              ),
-                            },
-                            {
-                              title: t("exams.marks"),
-                              dataIndex: "marks",
-                              key: "marks",
-                              width: 80,
-                              render: (marks) => {
-                                if (marks == null) return "-";
-                                // If it's an integer, show as is. Otherwise, truncate to 2 decimal places
-                                if (Number.isInteger(marks)) return marks;
-                                return Math.floor(marks * 100) / 100;
-                              },
-                            },
-                          ]}
-                        />
-                      </div>
-                    )}
                   </Card>
-                </Col>
-
-                <Col xs={24} lg={8}>
-                  <Space
-                    direction="vertical"
-                    style={{ width: "100%" }}
-                    size="large"
-                  >
-                    <Card>
-                      <Statistic
-                        title={t("exams.stats.totalQuestions")}
-                        value={examData.questions?.length || 0}
-                        prefix={<img src="/question.png" alt="Questions" style={{ width: 24, height: 24 }} />}
-                      />
-                    </Card>
-                    <Card>
-                      <Statistic
-                        title={t("exams.stats.totalSubmissions")}
-                        value={statistics?.totalSubmissions || 0}
-                        prefix={<CheckCircleOutlined />}
-                      />
-                    </Card>
-                    <Card>
-                      <Statistic
-                        title={t("exams.stats.averageScore")}
-                        value={
-                          statistics?.averageScore
-                            ? Number(statistics.averageScore.toFixed(2))
-                            : 0
-                        }
-                        suffix={`/ ${examData.totalMarks}`}
-                        prefix={<img src="/leaderboard.png" alt="Trophy" style={{ width: 20, height: 20 }} />}
-                      />
-                    </Card>
-                  </Space>
-                </Col>
-              </Row>
-            ),
-          },
-          {
-            key: "statistics",
-            label: (
-              <span>
-                <img src="/statistic.png" alt="Statistics" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
-                {t("exams.tabs.statistics")}
-              </span>
-            ),
-            children: (
-              <>
-                {statsLoading ? (
-                  <div style={{ textAlign: "center", padding: "50px" }}>
-                    <Spin />
-                  </div>
-                ) : statistics ? (
+                  <Card>
+                    <Statistic
+                      title={t("exams.examStats.totalSubmissions")}
+                      value={statistics?.totalSubmissions || 0}
+                      prefix={<CheckCircleOutlined />}
+                    />
+                  </Card>
+                  <Card>
+                    <Statistic
+                      title={t("exams.examStats.averageScore")}
+                      value={
+                        statistics?.averageScore
+                          ? Number(statistics.averageScore.toFixed(2))
+                          : 0
+                      }
+                      suffix={`/ ${examData.totalMarks}`}
+                      prefix={<img src="/leaderboard.png" alt="Trophy" style={{ width: 20, height: 20 }} />}
+                    />
+                  </Card>
+                </Space>
+              </Col>
+            </Row>
+          ),
+        },
+        {
+          key: "statistics",
+          label: (
+            <span>
+              <img src="/statistic.png" alt="Statistics" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+              {t("exams.tabs.statistics")}
+            </span>
+          ),
+          children: (
+            <>
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                {/* Button moved to AI Analysis Card */}
+              </div>
+              {statsLoading ? (
+                <div style={{ textAlign: "center", padding: "50px" }}>
+                  <Spin />
+                </div>
+              ) : statistics ? (
+                <>
                   <Row gutter={[16, 16]}>
                     <Col xs={24} sm={12} md={6}>
                       <Card>
                         <Statistic
-                          title={t("exams.stats.totalSubmissions")}
+                          title={t("exams.examStats.totalSubmissions")}
                           value={statistics.totalSubmissions || 0}
                         />
                       </Card>
@@ -935,7 +1075,7 @@ const ExamDetailNew = () => {
                     <Col xs={24} sm={12} md={6}>
                       <Card>
                         <Statistic
-                          title={t("exams.stats.averageScore")}
+                          title={t("exams.examStats.averageScore")}
                           value={
                             statistics.averageScore
                               ? Number(statistics.averageScore.toFixed(2))
@@ -948,7 +1088,7 @@ const ExamDetailNew = () => {
                     <Col xs={24} sm={12} md={6}>
                       <Card>
                         <Statistic
-                          title={t("exams.stats.highestScore")}
+                          title={t("exams.examStats.highestScore")}
                           value={
                             statistics.highestScore
                               ? Number(statistics.highestScore.toFixed(2))
@@ -961,7 +1101,7 @@ const ExamDetailNew = () => {
                     <Col xs={24} sm={12} md={6}>
                       <Card>
                         <Statistic
-                          title={t("exams.stats.lowestScore")}
+                          title={t("exams.examStats.lowestScore")}
                           value={
                             statistics.lowestScore
                               ? Number(statistics.lowestScore.toFixed(2))
@@ -972,277 +1112,405 @@ const ExamDetailNew = () => {
                       </Card>
                     </Col>
                   </Row>
-                ) : (
-                  <Empty description={t("exams.stats.noData")} />
-                )}
-                {/* Score Distribution Chart */}
-                {scoreDistributionLoading ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "50px",
-                      marginTop: 16,
-                    }}
-                  >
-                    <Spin />
-                  </div>
-                ) : scoreDistribution.length > 0 ? (
+
+                  {/* AI Analysis Section */}
                   <Card
-                    title={
-                      t("exams.stats.scoreDistribution") || "Phân bố điểm số"
-                    }
+                    className="ai-analysis-card"
                     style={{ marginTop: 16 }}
-                    className="score-distribution-card"
+                    title={<span><InfoCircleOutlined style={{ color: '#1890ff' }} /> AI Analysis & Recommendations</span>}
                   >
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart 
-                        data={scoreDistribution} 
-                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                      >
-                        <defs>
-                          <linearGradient id="colorScoreBar" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#667eea" stopOpacity={0.9}/>
-                            <stop offset="95%" stopColor="#764ba2" stopOpacity={0.9}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-color, #f0f0f0)" />
-                        <XAxis 
-                          dataKey="range" 
-                          tick={{ fill: 'var(--chart-text-color, #666)', fontSize: 12 }}
-                          axisLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
-                          tickLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                          label={{ 
-                            value: t("exams.stats.scoreRange") || "Khoảng điểm", 
-                            position: 'insideBottom', 
-                            offset: -10,
-                            fill: 'var(--chart-text-color, #666)'
-                          }}
-                        />
-                        <YAxis 
-                          tick={{ fill: 'var(--chart-text-color, #666)', fontSize: 12 }}
-                          axisLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
-                          tickLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
-                          label={{ 
-                            value: t("exams.stats.studentCount") || "Số học sinh", 
-                            angle: -90, 
-                            position: 'insideLeft',
-                            fill: 'var(--chart-text-color, #666)'
-                          }}
-                        />
-                        <RechartsTooltip 
-                          contentStyle={{
-                            background: 'var(--tooltip-bg, rgba(255, 255, 255, 0.98))',
-                            border: '1px solid var(--tooltip-border, #f0f0f0)',
-                            borderRadius: 8,
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                          }}
-                          labelStyle={{ color: 'var(--tooltip-label-color, #666)', fontWeight: 600, marginBottom: 4 }}
-                          itemStyle={{ color: 'var(--tooltip-value-color, #333)' }}
-                          formatter={(value, name) => [value, t("exams.stats.studentCount") || "Số học sinh"]}
-                          labelFormatter={(label) => `${t("exams.stats.scoreRange") || "Khoảng điểm"}: ${label}`}
-                        />
-                        <Bar 
-                          dataKey="count" 
-                          fill="url(#colorScoreBar)" 
-                          radius={[8, 8, 0, 0]}
-                          maxBarSize={80}
-                          label={{
-                            position: 'top',
-                            fill: 'var(--chart-label-color, #333)',
-                            fontSize: 14,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {aiAnalysisLoading ? (
+                      <div style={{ textAlign: 'center', padding: 20 }}><Spin tip="AI is analyzing class performance..." /></div>
+                    ) : aiAnalysis ? (
+                      <div style={{ lineHeight: '1.6' }}>
+                        <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                        <Button
+                          type="primary"
+                          icon={<ThunderboltFilled />}
+                          onClick={fetchAIAnalysis}
+                          size="large"
+                          shape="round"
+                          style={{ background: 'linear-gradient(90deg, #1890ff, #722ed1)', border: 'none' }}
+                        >
+                          {t('exams.examStats.analyzeWithAI') || "Analyze Class Weaknesses"}
+                        </Button>
+                      </div>
+                    )}
+
+                    {aiAnalysis && !aiAnalysisLoading && (
+                      <div style={{ marginTop: 16, textAlign: 'center', borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
+                        {createdMindmapId ? (
+                          <Button
+                            icon={<EyeOutlined />}
+                            type="default"
+                            onClick={() => navigate(`/teacher/mindmaps/${createdMindmapId}`)}
+                            size="large"
+                            className="view-mindmap-btn"
+                            style={{ borderColor: '#52c41a', color: '#52c41a' }}
+                          >
+                            {t('exams.viewClassMindmap') || 'View Class Roadmap'}
+                          </Button>
+                        ) : (
+                          <Button
+                            icon={<DeploymentUnitOutlined />}
+                            type="primary"
+                            onClick={handleGenerateClassMindmap}
+                            loading={generatingMindmap}
+                            size="large"
+                          >
+                            {t('exams.createClassRoadmap') || 'Create Class Roadmap'}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </Card>
-                ) : statistics ? (
-                  <Card style={{ marginTop: 16 }}>
-                    <Empty
-                      description={
-                        t("exams.stats.noScoreData") ||
-                        "Chưa có dữ liệu điểm số"
+
+                  {/* Most Wrong & Most Correct Questions */}
+                  {(statistics.mostWrongQuestions?.length > 0 || statistics.mostCorrectQuestions?.length > 0) && (
+                    <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+                      <Col xs={24} md={12}>
+                        <Card title={t('exams.examStats.mostWrong') || 'Most Incorrect Questions'}>
+                          <Table
+                            dataSource={statistics.mostWrongQuestions}
+                            columns={[
+                              {
+                                title: t('exams.examStats.questionText') || 'Question',
+                                dataIndex: 'text',
+                                key: 'text',
+                                render: (text, record) => (
+                                  <a onClick={() => handleViewQuestion(record)} style={{ cursor: 'pointer' }}>
+                                    {text}
+                                  </a>
+                                )
+                              },
+                              { title: t('exams.examStats.wrongCount') || 'Wrong Count', dataIndex: 'count', key: 'count', width: 120, render: (val, rec) => <span style={{ color: 'red' }}>{val} / {rec.total}</span> }
+                            ]}
+                            pagination={false}
+                            rowKey="id"
+                            size="small"
+                          />
+                        </Card>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Card title={t('exams.examStats.mostCorrect') || 'Most Correct Questions'}>
+                          <Table
+                            dataSource={statistics.mostCorrectQuestions}
+                            columns={[
+                              {
+                                title: t('exams.examStats.questionText') || 'Question',
+                                dataIndex: 'text',
+                                key: 'text',
+                                render: (text, record) => (
+                                  <a onClick={() => handleViewQuestion(record)} style={{ cursor: 'pointer' }}>
+                                    {text}
+                                  </a>
+                                )
+                              },
+                              { title: t('exams.examStats.correctCount') || 'Correct Count', dataIndex: 'count', key: 'count', width: 120, render: (val, rec) => <span style={{ color: 'green' }}>{val} / {rec.total}</span> }
+                            ]}
+                            pagination={false}
+                            rowKey="id"
+                            size="small"
+                          />
+                        </Card>
+                      </Col>
+                    </Row>
+                  )}
+                </>
+              ) : (
+                <Empty description={t("exams.examStats.noData")} />
+              )}
+              {/* Score Distribution Chart */}
+              {scoreDistributionLoading ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "50px",
+                    marginTop: 16,
+                  }}
+                >
+                  <Spin />
+                </div>
+              ) : scoreDistribution.length > 0 ? (
+                <Card
+                  title={
+                    t("exams.examStats.scoreDistribution") || "Phân bố điểm số"
+                  }
+                  style={{ marginTop: 16 }}
+                  className="score-distribution-card"
+                >
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart
+                      data={scoreDistribution}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorScoreBar" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#667eea" stopOpacity={0.9} />
+                          <stop offset="95%" stopColor="#764ba2" stopOpacity={0.9} />
+                        </linearGradient>
+                      </defs>
+
+
+
+                      <XAxis
+                        dataKey="range"
+                        tick={{ fill: 'var(--chart-text-color, #666)', fontSize: 12 }}
+                        axisLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                        tickLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                        label={{
+                          value: t("exams.examStats.scoreRange") || "Khoảng điểm",
+                          position: 'insideBottom',
+                          offset: -10,
+                          fill: 'var(--chart-text-color, #666)'
+                        }}
+                      />
+                      <YAxis
+                        tick={{ fill: 'var(--chart-text-color, #666)', fontSize: 12 }}
+                        axisLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                        tickLine={{ stroke: 'var(--chart-axis-color, #d9d9d9)' }}
+                        label={{
+                          value: t("exams.examStats.studentCount") || "Số học sinh",
+                          angle: -90,
+                          position: 'insideLeft',
+                          fill: 'var(--chart-text-color, #666)'
+                        }}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          background: 'var(--tooltip-bg, rgba(255, 255, 255, 0.98))',
+                          border: '1px solid var(--tooltip-border, #f0f0f0)',
+                          borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        }}
+                        labelStyle={{ color: 'var(--tooltip-label-color, #666)', fontWeight: 600, marginBottom: 4 }}
+                        itemStyle={{ color: 'var(--tooltip-value-color, #333)' }}
+                        formatter={(value, name) => [value, t("exams.examStats.studentCount") || "Số học sinh"]}
+                        labelFormatter={(label) => `${t("exams.examStats.scoreRange") || "Khoảng điểm"}: ${label}`}
+                      />
+                      <Bar
+                        dataKey="count"
+                        fill="url(#colorScoreBar)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={80}
+                        label={{
+                          position: 'top',
+                          fill: 'var(--chart-label-color, #333)',
+                          fontSize: 14,
+                          fontWeight: 600,
+                        }}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+              ) : statistics ? (
+                <Card style={{ marginTop: 16 }}>
+                  <Empty
+                    description={
+                      t("exams.examStats.noScoreData") ||
+                      "Chưa có dữ liệu điểm số"
+                    }
+                  />
+                </Card>
+              ) : null}
+            </>
+          ),
+        },
+        {
+          key: "leaderboard",
+          label: (
+            <span>
+              <img src="/leaderboard.png" alt="Leaderboard" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+              {t("exams.tabs.leaderboard")}
+            </span>
+          ),
+          children: (
+            <Card bodyStyle={{ padding: 0, overflow: 'hidden' }}>
+              <LeaderboardView
+                data={leaderboard}
+                loading={leaderboardLoading}
+                pagination={{
+                  current: leaderboardPagination.current,
+                  pageSize: leaderboardPagination.pageSize,
+                  total: leaderboardPagination.total,
+                  showSizeChanger: true,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.leaderboard.items") || "items"
+                    }`,
+                  pageSizeOptions: ["10", "20", "50", "100"],
+                  defaultPageSize: 20,
+                }}
+                onChange={handleLeaderboardPaginationChange}
+              />
+            </Card>
+          ),
+        },
+        {
+          key: "students",
+          label: (
+            <span>
+              <img src="/students.png" alt="Students" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
+              {t("exams.tabs.students")}
+            </span>
+          ),
+          children: (
+            <Card>
+              <Space direction="vertical" size="middle" style={{ width: "100%", marginBottom: 16 }}>
+                <Space wrap>
+                  <Button
+                    type={showAllAttempts ? "default" : "primary"}
+                    onClick={handleShowAllAttemptsToggle}
+                  >
+                    {showAllAttempts
+                      ? t("exams.submissions.showLatestOnly")
+                      : t("exams.submissions.showAllAttempts")}
+                  </Button>
+                  <Select
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    style={{ width: 200 }}
+                    placeholder={t("exams.submissions.filterByStatus")}
+                  >
+                    <Select.Option value="all">{t("exams.submissions.allStatuses")}</Select.Option>
+                    <Select.Option value="graded">{t("exams.submissions.graded")}</Select.Option>
+                    <Select.Option value="in_progress">{t("exams.submissions.inProgress")}</Select.Option>
+                    <Select.Option value="late">{t("exams.submissions.late")}</Select.Option>
+                    <Select.Option value="submitted">{t("exams.submissions.submitted")}</Select.Option>
+                  </Select>
+                  <Input
+                    placeholder={t("exams.submissions.searchPlaceholder")}
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    allowClear
+                    style={{ width: 250 }}
+                  />
+                </Space>
+                <Space wrap>
+                  <Select
+                    value={sortOrder}
+                    onChange={setSortOrder}
+                    style={{ width: 200 }}
+                    suffixIcon={<SortAscendingOutlined />}
+                    placeholder={t("exams.submissions.sortBy")}
+                  >
+                    <Select.Option value="name-asc">
+                      {t("exams.submissions.sortByNameAZ")}
+                    </Select.Option>
+                    <Select.Option value="score-asc">
+                      {t("exams.submissions.sortByScoreAsc")}
+                    </Select.Option>
+                    <Select.Option value="score-desc">
+                      {t("exams.submissions.sortByScoreDesc")}
+                    </Select.Option>
+                  </Select>
+                  <Button
+                    type="primary"
+                    icon={<DownloadOutlined />}
+                    onClick={handleExportExcel}
+                    disabled={!submissions || submissions.length === 0}
+                  >
+                    {t("exams.export.exportExcel")}
+                  </Button>
+                </Space>
+              </Space>
+              {submissionsLoading ? (
+                <div style={{ textAlign: "center", padding: "50px" }}>
+                  <Spin />
+                </div>
+              ) : (
+                <Table
+                  columns={submissionsColumns}
+                  dataSource={getSortedSubmissions(submissions)}
+                  rowKey={(record) => {
+                    // Always use submission _id as primary key to avoid duplicates
+                    if (record._id) return record._id;
+                    // Fallback: combine student ID with submission timestamp or random
+                    const studentId = record.student?._id;
+                    const submittedAt = record.submittedAt;
+                    return studentId && submittedAt
+                      ? `submission-${studentId}-${submittedAt}`
+                      : `submission-${studentId || "unknown"
+                      }-${Math.random()}`;
+                  }}
+                  rowClassName={(record) => {
+                    // Highlight if submitted after exam end time
+                    if (examData?.endTime && record.submittedAt) {
+                      const submittedAt = new Date(record.submittedAt);
+                      const examEndTime = new Date(examData.endTime);
+                      if (submittedAt > examEndTime) {
+                        return "late-submission-row";
                       }
-                    />
-                  </Card>
-                ) : null}
-              </>
-            ),
-          },
-          {
-            key: "leaderboard",
-            label: (
-              <span>
-                <img src="/leaderboard.png" alt="Leaderboard" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
-                {t("exams.tabs.leaderboard")}
-              </span>
-            ),
-            children: (
-              <Card bodyStyle={{ padding: 0, overflow: 'hidden' }}>
-                <LeaderboardView
-                  data={leaderboard}
-                  loading={leaderboardLoading}
+                    }
+                    return "";
+                  }}
                   pagination={{
-                    current: leaderboardPagination.current,
-                    pageSize: leaderboardPagination.pageSize,
-                    total: leaderboardPagination.total,
+                    current: submissionsPagination.current,
+                    pageSize: submissionsPagination.pageSize,
+                    total: submissionsPagination.total,
                     showSizeChanger: true,
                     showTotal: (total, range) =>
-                      `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${
-                        t("exams.leaderboard.items") || "items"
-                      }`,
+                      `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.submissions.items") || "items"}`,
                     pageSizeOptions: ["10", "20", "50", "100"],
                     defaultPageSize: 20,
+                    onChange: handleSubmissionsPaginationChange,
+                    onShowSizeChange: handleSubmissionsPaginationChange,
                   }}
-                  onChange={handleLeaderboardPaginationChange}
+                  scroll={{ x: 1000 }}
+                  locale={{ emptyText: t("exams.submissions.noData") }}
                 />
-              </Card>
-            ),
-          },
-          {
-            key: "students",
-            label: (
-              <span>
-                <img src="/students.png" alt="Students" style={{ width: 16, height: 16, marginRight: 8, verticalAlign: 'middle' }} />
-                {t("exams.tabs.students")}
-              </span>
-            ),
-            children: (
-              <Card>
-                <Space direction="vertical" size="middle" style={{ width: "100%", marginBottom: 16 }}>
-                  <Space wrap>
-                    <Button
-                      type={showAllAttempts ? "default" : "primary"}
-                      onClick={handleShowAllAttemptsToggle}
-                    >
-                      {showAllAttempts
-                        ? t("exams.submissions.showLatestOnly")
-                        : t("exams.submissions.showAllAttempts")}
-                    </Button>
-                    <Select
-                      value={statusFilter}
-                      onChange={setStatusFilter}
-                      style={{ width: 200 }}
-                      placeholder={t("exams.submissions.filterByStatus")}
-                    >
-                      <Select.Option value="all">{t("exams.submissions.allStatuses")}</Select.Option>
-                      <Select.Option value="graded">{t("exams.submissions.graded")}</Select.Option>
-                      <Select.Option value="in_progress">{t("exams.submissions.inProgress")}</Select.Option>
-                      <Select.Option value="late">{t("exams.submissions.late")}</Select.Option>
-                      <Select.Option value="submitted">{t("exams.submissions.submitted")}</Select.Option>
-                    </Select>
-                    <Input
-                      placeholder={t("exams.submissions.searchPlaceholder")}
-                      value={searchName}
-                      onChange={(e) => setSearchName(e.target.value)}
-                      allowClear
-                      style={{ width: 250 }}
-                    />
-                  </Space>
-                  <Space wrap>
-                    <Select
-                      value={sortOrder}
-                      onChange={setSortOrder}
-                      style={{ width: 200 }}
-                      suffixIcon={<SortAscendingOutlined />}
-                      placeholder={t("exams.submissions.sortBy")}
-                    >
-                      <Select.Option value="name-asc">
-                        {t("exams.submissions.sortByNameAZ")}
-                      </Select.Option>
-                      <Select.Option value="score-asc">
-                        {t("exams.submissions.sortByScoreAsc")}
-                      </Select.Option>
-                      <Select.Option value="score-desc">
-                        {t("exams.submissions.sortByScoreDesc")}
-                      </Select.Option>
-                    </Select>
-                    <Button
-                      type="primary"
-                      icon={<DownloadOutlined />}
-                      onClick={handleExportExcel}
-                      disabled={!submissions || submissions.length === 0}
-                    >
-                      {t("exams.export.exportExcel")}
-                    </Button>
-                  </Space>
-                </Space>
-                {submissionsLoading ? (
-                  <div style={{ textAlign: "center", padding: "50px" }}>
-                    <Spin />
-                  </div>
-                ) : (
-                  <Table
-                    columns={submissionsColumns}
-                    dataSource={getSortedSubmissions(submissions)}
-                    rowKey={(record) => {
-                      // Always use submission _id as primary key to avoid duplicates
-                      if (record._id) return record._id;
-                      // Fallback: combine student ID with submission timestamp or random
-                      const studentId = record.student?._id;
-                      const submittedAt = record.submittedAt;
-                      return studentId && submittedAt
-                        ? `submission-${studentId}-${submittedAt}`
-                        : `submission-${
-                            studentId || "unknown"
-                          }-${Math.random()}`;
-                    }}
-                    rowClassName={(record) => {
-                      // Highlight if submitted after exam end time
-                      if (examData?.endTime && record.submittedAt) {
-                        const submittedAt = new Date(record.submittedAt);
-                        const examEndTime = new Date(examData.endTime);
-                        if (submittedAt > examEndTime) {
-                          return "late-submission-row";
-                        }
-                      }
-                      return "";
-                    }}
-                    pagination={{
-                      current: submissionsPagination.current,
-                      pageSize: submissionsPagination.pageSize,
-                      total: submissionsPagination.total,
-                      showSizeChanger: true,
-                      showTotal: (total, range) =>
-                        `${range[0]}-${range[1]} ${t("common.of") || "of"} ${total} ${t("exams.submissions.items") || "items"}`,
-                      pageSizeOptions: ["10", "20", "50", "100"],
-                      defaultPageSize: 20,
-                      onChange: handleSubmissionsPaginationChange,
-                      onShowSizeChange: handleSubmissionsPaginationChange,
-                    }}
-                    scroll={{ x: 1000 }}
-                    locale={{ emptyText: t("exams.submissions.noData") }}
-                  />
-                )}
-              </Card>
-            ),
-          },
-        ]}
-      />
+              )}
+            </Card>
+          ),
+        },
+      ]}
+    />
 
-      {/* Preview Modal */}
-      <PreviewExamModal
-        open={previewModalVisible}
-        onCancel={() => setPreviewModalVisible(false)}
-        examData={examData}
-        questions={examData?.questions || []}
-        subjects={[]}
-      />
+    <Modal
+      title={t('questions.viewDetails') || "Chi tiết câu hỏi"}
+      open={viewQuestionModalOpen}
+      onCancel={() => setViewQuestionModalOpen(false)}
+      footer={[
+        <Button key="close" onClick={() => setViewQuestionModalOpen(false)}>
+          {t('common.close') || "Đóng"}
+        </Button>
+      ]}
+      width={800}
+    >
+      {selectedQuestion && (
+        <QuestionPreview
+          questionData={selectedQuestion}
+          showCorrectAnswer={true}
+          hideChoices={true}
+        />
+      )}
+    </Modal>
 
-      {/* QR Code Modal */}
-      <QRCodeModal
-        open={qrCodeModalVisible}
-        onCancel={() => setQrCodeModalVisible(false)}
-        value={examData?.shareCode ? `${window.location.origin}/exam/${examData.shareCode}` : ''}
-        title={t('exams.shareLinkQR') || 'Exam Share Link QR'}
-        description={t('exams.qrDescription') || 'Students can scan this QR code to access the exam'}
-        filename={examData?.name ? `qr_exam_${examData.name.replace(/[^a-zA-Z0-9]/g, '_')}` : 'qr_exam'}
-      />
-    </div>
-  );
+    {/* Preview Modal */}
+    <PreviewExamModal
+      open={previewModalVisible}
+      onCancel={() => setPreviewModalVisible(false)}
+      examData={examData}
+      questions={examData?.questions || []}
+      subjects={[]}
+    />
+
+    {/* QR Code Modal */}
+    <QRCodeModal
+      open={qrCodeModalVisible}
+      onCancel={() => setQrCodeModalVisible(false)}
+      value={examData?.shareCode ? `${window.location.origin}/exam/${examData.shareCode}` : ''}
+      title={t('exams.shareLinkQR') || 'Exam Share Link QR'}
+      description={t('exams.qrDescription') || 'Students can scan this QR code to access the exam'}
+      filename={examData?.name ? `qr_exam_${examData.name.replace(/[^a-zA-Z0-9]/g, '_')}` : 'qr_exam'}
+    />
+  </div >
+);
 };
 
 export default ExamDetailNew;
