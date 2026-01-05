@@ -1219,7 +1219,7 @@
     "aiAnalysisPrompt": "Bấm nút để AI phân tích bài làm của bạn",
     "createImprovementMindmap": "Tạo lộ trình cải thiện (Mindmap)",
     "mindmapCreated": "Đã tạo lộ trình cải thiện!",
-    "viewImprovementMindmap": "Xem lộ trình cải thiện"
+    "viewImprovementMindmap": "Xem lộ trình cải thiện",
     "fetchFailed": "Không thể tải chi tiết bài nộp",
     "noData": "Không tìm thấy dữ liệu bài nộp",
     "examName": "Tên đề thi",
