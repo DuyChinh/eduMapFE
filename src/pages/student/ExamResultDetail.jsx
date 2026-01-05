@@ -16,6 +16,7 @@ import {
   Spin,
   Tabs,
   Empty,
+  message,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -23,9 +24,17 @@ import {
   CloseCircleOutlined,
   TrophyOutlined,
   EditOutlined,
+  DeploymentUnitOutlined,
+  StarFilled,
+  InfoCircleOutlined,
+  ThunderboltFilled,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { getSubmissionById } from '../../api/submissionService';
 import examStatsService from '../../api/examStatsService';
+import mindmapService from '../../api/mindmapService';
+import aiService from '../../api/aiService';
+import ReactMarkdown from 'react-markdown';
 import './ExamResultDetail.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -33,7 +42,7 @@ const { Title, Text, Paragraph } = Typography;
 const ExamResultDetail = () => {
   const { submissionId } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [submission, setSubmission] = useState(null);
@@ -42,6 +51,67 @@ const ExamResultDetail = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [filterType, setFilterType] = useState('all'); // 'all', 'correct', 'incorrect'
   const [activeTab, setActiveTab] = useState('mcq');
+  const [generatingMindmap, setGeneratingMindmap] = useState(false);
+
+  // AI Analysis State
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [createdMindmapId, setCreatedMindmapId] = useState(null); // Store created mindmap ID
+
+  // Inject styles for AI Feedback Card
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      .ai-feedback-card {
+        background-color: #f6ffed !important;
+        border: 1px solid #b7eb8f !important;
+      }
+      body.dark-mode .ai-feedback-card {
+        background-color: #162312 !important;
+        border: 1px solid #274916 !important;
+      }
+      body.dark-mode .ai-feedback-card .ant-card-head {
+        border-bottom: 1px solid #274916 !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      body.dark-mode .ai-feedback-card .ant-card-body {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      /* Ensure text inside ReactMarkdown is white in dark mode */
+      body.dark-mode .ai-feedback-card .ant-card-body p,
+      body.dark-mode .ai-feedback-card .ant-card-body div,
+      body.dark-mode .ai-feedback-card .ant-card-body li,
+      body.dark-mode .ai-feedback-card .ant-card-body strong {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      body.dark-mode .ai-feedback-card .ant-card-body li,
+      body.dark-mode .ai-feedback-card .ant-card-body strong {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+      
+      /* Improve list formatting */
+      .ai-feedback-card ul, .ai-feedback-card ol {
+        padding-left: 20px !important;
+        margin-bottom: 16px !important;
+      }
+      .ai-feedback-card li {
+        margin-bottom: 8px !important;
+      }
+      /* Improve list formatting */
+      .ai-feedback-card ul, .ai-feedback-card ol {
+        padding-left: 24px !important;
+        margin-bottom: 16px !important;
+      }
+      .ai-feedback-card li {
+        margin-bottom: 8px !important;
+        padding-left: 4px !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   useEffect(() => {
     const loadSubmission = async () => {
@@ -85,6 +155,57 @@ const ExamResultDetail = () => {
     loadSubmission();
   }, [submissionId]);
 
+  // Fetch AI Analysis when submission is loaded
+  useEffect(() => {
+    if (submission && exam && !analyzing) {
+      const currentLang = i18n.language || 'vi';
+      const storedLang = submission.analysisLanguage || 'vi';
+
+      // 1. If cache exists and matches language, use it
+      if (submission.aiAnalysis && storedLang === currentLang) {
+        if (aiAnalysis !== submission.aiAnalysis) {
+          setAiAnalysis(submission.aiAnalysis);
+        }
+      }
+      // 2. Otherwise (cache missing or mismatch), CLEAR analysis to show the button
+      else {
+        // Do NOT auto-fetch. Just ensure local state is null so UI shows the "Analyze" button.
+        if (aiAnalysis) {
+          setAiAnalysis(null);
+        }
+      }
+    }
+  }, [submission, exam, i18n.language]);
+
+  const fetchAIAnalysis = async () => {
+    if (!submission || !exam) return;
+    setAnalyzing(true);
+    try {
+      const response = await aiService.analyzeStudentWeakness({
+        submissionId: submission._id || submission.id,
+        submissionData: submission,
+        examData: {
+          name: exam.name,
+          subject: exam.subject?.name || exam.subject
+        },
+        language: i18n.language || 'vi' // Pass current language
+      });
+      if (response && response.data && response.data.analysis) {
+        setAiAnalysis(response.data.analysis);
+        // Optimistically update submission to prevent re-fetching loop
+        setSubmission(prev => ({
+          ...prev,
+          aiAnalysis: response.data.analysis,
+          analysisLanguage: i18n.language || 'vi'
+        }));
+      }
+    } catch (err) {
+      console.error("AI Analysis failed", err);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const loadLeaderboard = async (examId) => {
     try {
       const response = await examStatsService.getExamLeaderboard(examId);
@@ -99,898 +220,923 @@ const ExamResultDetail = () => {
   // Update activeTab if the current tab has no questions
   useEffect(() => {
     if (!exam) return;
-    
+
     const examData = exam;
     const questions = examData?.questions || [];
-    
+
     const mcqCount = questions.filter(q => q.questionId?.type === 'mcq').length;
     const tfCount = questions.filter(q => q.questionId?.type === 'tf').length;
     const shortCount = questions.filter(q => q.questionId?.type === 'short').length;
     const essayCount = questions.filter(q => q.questionId?.type === 'essay').length;
-    
+
     const availableTabs = [];
     if (mcqCount > 0) availableTabs.push('mcq');
     if (tfCount > 0) availableTabs.push('tf');
     if (shortCount > 0) availableTabs.push('short');
     if (essayCount > 0) availableTabs.push('essay');
-    
+
     // If current activeTab doesn't have questions, switch to first available tab
     if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
       setActiveTab(availableTabs[0]);
     }
   }, [exam, activeTab]);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
+  const handleGenerateMindmap = async () => {
+    if (!submission) return;
 
-  if (!submission || !exam) {
-    return (
-      <div style={{ padding: '24px' }}>
-        <Card>
-          <Alert
-            message={t('takeExam.submissionNotFound') || 'Submission not found'}
-            type="error"
-            action={
-              <Button onClick={() => navigate('/student/results')}>
-                {t('common.back') || 'Back'}
-              </Button>
-            }
-          />
-        </Card>
-      </div>
-    );
-  }
-
-  const examData = exam;
-  const questions = examData?.questions || [];
-  const answers = submission.answers || [];
-  const canViewAnswers = examData?.viewExamAndAnswer !== undefined && examData?.viewExamAndAnswer !== 0;
-  // Check if score can be viewed based on viewMark setting (0 = never, 1 = after completion, 2 = after all finish)
-  const canViewScore = examData?.viewMark !== 0;
-
-  // Create answer map for easy lookup
-  const answerMap = {};
-  answers.forEach(answer => {
-    const questionId = answer.questionId || (answer.question?._id?._id || answer.question?._id || answer.question?.id);
-    if (questionId) {
-      answerMap[questionId] = answer;
-    }
-  });
-
-  // Get questions by type with answers
-  const getQuestionsByType = (type) => {
-    return questions
-      .map((q, index) => {
-        const question = (q.questionId && typeof q.questionId === 'object' && q.questionId.text !== undefined)
-          ? q.questionId
-          : null;
-
-        if (!question || question.type !== type) return null;
-
-        const questionId = question._id?.toString() || question.id?.toString();
-        const answer = answerMap[questionId];
-        const isCorrect = answer?.isCorrect;
-        const userAnswer = answer?.value || answer?.selectedAnswer;
-        const correctAnswer = question.answer || question.correctAnswer;
-
-        return {
-          question,
-          questionId,
-          answer,
-          isCorrect,
-          userAnswer,
-          correctAnswer,
-          index,
-          marks: q.marks || 1,
-          earnedMarks: answer?.points || answer?.earnedMarks || 0,
-        };
-      })
-      .filter(q => q !== null);
-  };
-
-  const mcqQuestions = getQuestionsByType('mcq');
-  const tfQuestions = getQuestionsByType('tf');
-  const shortQuestions = getQuestionsByType('short');
-  const essayQuestions = getQuestionsByType('essay');
-
-  // Filter questions based on filterType
-  const filterQuestions = (questionList) => {
-    return questionList.filter(q => {
-      if (filterType === 'all') return true;
-      if (filterType === 'correct') return q.isCorrect;
-      if (filterType === 'incorrect') return !q.isCorrect;
-      return true;
-    });
-  };
-
-  // Format number - remove decimal if it's a whole number
-  const formatNumber = (num) => {
-    if (typeof num !== 'number') return num || 0;
-    const rounded = Number(num.toFixed(2));
-    return rounded % 1 === 0 ? Math.round(rounded) : rounded;
-  };
-
-  const filteredMcqQuestions = filterQuestions(mcqQuestions);
-  const filteredTfQuestions = filterQuestions(tfQuestions);
-  const filteredShortQuestions = filterQuestions(shortQuestions);
-  const filteredEssayQuestions = filterQuestions(essayQuestions);
-
-  const mathJaxConfig = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']],
-      processEscapes: true,
-      processEnvironments: true,
-    },
-    options: {
-      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-    },
-  };
-
-  // Helper to clean TEXT parts (OCR errors, Chemical formulas)
-  const cleanTextSegment = (text) => {
-    return text
-      // Specific phrases where 'đ' likely means 'độ'
-      .replace(/\bđ\s+lớn/g, 'độ lớn')
-      .replace(/\bđ\s+lệch/g, 'độ lệch')
-      .replace(/\bđ\s+cao/g, 'độ cao')
-      .replace(/\bđ\s+sâu/g, 'độ sâu')
-      .replace(/\bđ\s+cứng/g, 'độ cứng')
-      .replace(/biên\s+đ\b/g, 'biên độ')
-      .replace(/mật\s+đ\b/g, 'mật độ')
-      .replace(/tốc\s+đ\b/g, 'tốc độ')
-
-      // Fix broken words
-      .replace(/đi[\ufffd\?]{1,4}n/g, 'điện')
-      .replace(/ch[\ufffd\?]{1,5}t/g, 'chất')
-      .replace(/đi[^a-zA-Z\s0-9]{1,4}n/g, 'điện')
-      .replace(/\bv[\ufffd\?]{1,4}\b/g, 'và')
-
-      .replace(/\bđin\b/g, 'điện')
-      .replace(/ngun/g, 'nguồn')
-      .replace(/cưng/g, 'cường')
-      .replace(/trưng/g, 'trường')
-      .replace(/bưc/g, 'bước')
-      .replace(/thưng/g, 'thường')
-      .replace(/[\ufffd\?]{2,}/g, '')
-
-      // Auto-format Chemical Formulas (e.g., CO2, H2O)
-      // Only apply this to TEXT segments, avoiding latex interference
-      .replace(/(?<!\\)\b((?:[A-Z][a-z]?\d*|\((?:[A-Z][a-z]?\d*)+\)\d*){2,})\b/g, (match) => {
-        const formatted = match.replace(/(\d+)/g, '_$1');
-        return `$\\mathrm{${formatted}}$`;
-      })
-      .replace(/(?<!\\)\b([A-Z][a-z]?\d+)\b/g, (match) => {
-        const formatted = match.replace(/(\d+)/g, '_$1');
-        return `$\\mathrm{${formatted}}$`;
+    setGeneratingMindmap(true);
+    try {
+      const response = await mindmapService.generateFromExamReview({
+        submissionId: submission._id || submission.id,
+        type: 'student_review',
+        language: i18n.language || 'vi'
       });
-  };
 
-  // Helper to clean MATH parts (fix minor LaTeX errors)
-  const cleanMathSegment = (text) => {
-    // Fix Latex concatenation errors (e.g. \pit -> \pi t)
-    return text.replace(/\\(pi|alpha|beta|gamma|delta|omega|sigma|theta|lambda|mu)([a-zA-Z0-9])/g, '\\$1 $2');
-  };
-
-  const renderMathContent = (content) => {
-    if (!content) return '';
-
-    const contentStr = typeof content === 'string' ? content : String(content);
-
-    // 1. Split by Math Delimiters to protect Math from Text Cleaning
-    // Regex matches $...$ OR \(...\)
-    const tokens = contentStr.split(/(\$[^$]+\$|\\\(.+?\\\))/g);
-
-    // 2. Process each token appropriately
-    const processedStr = tokens.map(token => {
-      const isDollar = token.startsWith('$') && token.endsWith('$');
-      const isParen = token.startsWith('\\(') && token.endsWith('\\)');
-
-      if (isDollar || isParen) {
-        return cleanMathSegment(token);
-      } else {
-        return cleanTextSegment(token);
-      }
-    }).join('');
-
-    // 3. Split by lines to preserve structure
-    const lines = processedStr.split('\n');
-
-    return (
-      <>
-        {lines.map((line, index) => {
-          if (!line.trim()) return <br key={index} />;
-
-          // 4. Robust Mixed Content Parsing
-          const chunks = line.split(/(\$[^$]+\$|\\\(.+?\\\))/g);
-
-          return (
-            <div key={index} style={{
-              fontFamily: 'inherit',
-              whiteSpace: 'pre-wrap',
-              wordWrap: 'break-word',
-              marginBottom: 4
-            }}>
-              {chunks.map((chunk, i) => {
-                // Case 1: Existing LaTeX block ($...$) or (\(...\))
-                const isDollar = chunk.startsWith('$') && chunk.endsWith('$');
-                const isParen = chunk.startsWith('\\(') && chunk.endsWith('\\)');
-
-                if (isDollar || isParen) {
-                  let rawMath = chunk;
-                  if (isDollar) rawMath = chunk.slice(1, -1);
-                  if (isParen) rawMath = chunk.slice(2, -2);
-
-                  return (
-                    <MathJax key={i} inline>
-                      {`$${rawMath}$`}
-                    </MathJax>
-                  );
-                }
-
-                // Case 2: Mixed Text with loose LaTeX cmd
-                const subParts = chunk.split(/(\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*)/g);
-
-                return (
-                  <span key={i}>
-                    {subParts.map((sub, j) => {
-                      if (sub.match(/^\\[a-zA-Z]+/)) {
-                        return (
-                          <MathJax key={j} inline>
-                            {`$${sub}$`}
-                          </MathJax>
-                        );
-                      }
-                      return <span key={j}>{sub}</span>;
-                    })}
-                  </span>
-                );
-              })}
-            </div>
-          );
-        })}
-      </>
-    );
-  };
-
-  const leaderboardColumns = [
-    {
-      title: t('takeExam.rank') || 'Rank',
-      dataIndex: 'rank',
-      key: 'rank',
-      width: 60,
-      render: (rank) => {
-        if (rank === 1) {
-          return (
-            <img
-              src="/1st-medal.png"
-              alt="1st Place"
-              style={{ width: 32, height: 32, objectFit: 'contain' }}
-            />
-          );
-        }
-        if (rank === 2) {
-          return (
-            <img
-              src="/2nd-medal.png"
-              alt="2nd Place"
-              style={{ width: 32, height: 32, objectFit: 'contain' }}
-            />
-          );
-        }
-        if (rank === 3) {
-          return (
-            <img
-              src="/3rd-medal.png"
-              alt="3rd Place"
-              style={{ width: 32, height: 32, objectFit: 'contain' }}
-            />
-          );
-        }
-        // Color palette for ranks 4+
-        const colors = [
-          { bg: '#e6f7ff', border: '#91d5ff', text: '#1890ff' }, // blue
-          { bg: '#f6ffed', border: '#b7eb8f', text: '#52c41a' }, // green
-          { bg: '#fff7e6', border: '#ffd591', text: '#fa8c16' }, // orange
-          { bg: '#f9f0ff', border: '#d3adf7', text: '#722ed1' }, // purple
-          { bg: '#fff0f6', border: '#ffadd2', text: '#eb2f96' }, // pink
-          { bg: '#e6fffb', border: '#87e8de', text: '#13c2c2' }, // cyan
-          { bg: '#fcffe6', border: '#eaff8f', text: '#a0d911' }, // lime
-          { bg: '#fff1f0', border: '#ffa39e', text: '#f5222d' }, // red
-        ];
-        const colorIndex = (rank - 4) % colors.length;
-        const color = colors[colorIndex];
-        return (
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              backgroundColor: color.bg,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 600,
-              fontSize: 14,
-              color: color.text,
-              border: `2px solid ${color.border}`,
-            }}
-          >
-            {rank}
-          </div>
-        );
-      }
-    },
-    {
-      title: t('takeExam.studentName') || 'Student',
-      key: 'student',
-      width: 80,
-      ellipsis: true,
-      render: (_, record) => record.student?.name || '-'
-    },
-    {
-      title: t('takeExam.score') || 'Score',
-      dataIndex: 'score',
-      key: 'score',
-      width: 60,
-      render: (score, record) => {
-        if (!canViewScore) return '--';
-        return formatNumber(score);
-      }
+    if (response && response.data && (response.data.data?._id || response.data._id)) {
+      const mindmapId = response.data.data?._id || response.data._id;
+      message.success(t('submissionDetail.mindmapCreated') || 'Mindmap created successfully!');
+      setCreatedMindmapId(mindmapId); // Set ID instead of navigating
     }
-  ];
+  } catch (err) {
+    console.error("Mindmap generation failed", err);
+    message.error(t('minmap.createError') || 'Failed to create mindmap');
+  } finally {
+    setGeneratingMindmap(false);
+  }
+};
 
-  // Render MCQ question
-  const renderMCQQuestion = (item) => {
-    const { question, isCorrect, userAnswer, correctAnswer, index, questionId } = item;
-    const choices = question.choices || [];
-
-    return (
-      <Card
-        key={questionId || index}
-        className="question-card"
-        style={{ marginBottom: 24 }}
-      >
-        <div className="question-card-header">
-          <div className="question-title">
-            <Text strong style={{ fontSize: 16 }}>
-              {t('submissionDetail.question') || 'Question'} {index + 1}
-            </Text>
-            <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
-              ID: {questionId}
-            </Text>
-          </div>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            size="small"
-          />
-        </div>
-
-        <Divider />
-
-        <div className="question-content">
-          <div className="question-text-wrapper">
-            <Paragraph style={{
-              fontSize: 16,
-              marginBottom: 16,
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'inherit'
-            }}>
-              {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
-            </Paragraph>
-
-            {question.images && question.images.length > 0 ? (
-              <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {question.images.map((imgUrl, idx) => (
-                  <img
-                    key={idx}
-                    src={imgUrl}
-                    alt={`Question ${idx + 1}`}
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '300px',
-                      objectFit: 'contain',
-                      borderRadius: '8px',
-                      border: '1px solid #f0f0f0'
-                    }}
-                  />
-                ))}
-              </div>
-            ) : question.image ? (
-              <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
-                <img
-                  src={question.image}
-                  alt="Question"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '300px',
-                    objectFit: 'contain',
-                    borderRadius: '8px',
-                    border: '1px solid #f0f0f0'
-                  }}
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div className="choices-list">
-            {choices.map((choice) => {
-              const isSelected = userAnswer === choice.key;
-              const isCorrectChoice = correctAnswer === choice.key;
-
-              let choiceClassName = 'choice-item';
-              if (isCorrectChoice) {
-                choiceClassName += ' choice-correct';
-              } else if (isSelected && !isCorrect) {
-                choiceClassName += ' choice-incorrect';
-              }
-
-              return (
-                <div key={choice.key} className={choiceClassName}>
-                  <div className="choice-content">
-                    <Text strong style={{ marginRight: 8 }}>{choice.key}.</Text>
-                    <span style={{
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      whiteSpace: 'pre-wrap',
-                      fontFamily: 'inherit'
-                    }}>
-                      {renderMathContent(choice.text)}
-                    </span>
-                    {/* Render choice image if exists */}
-                    {choice.image && (
-                      <div style={{ marginLeft: '12px' }}>
-                        <img
-                          src={choice.image}
-                          alt={`Choice ${choice.key}`}
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '150px',
-                            objectFit: 'contain',
-                            borderRadius: '4px',
-                            border: '1px solid #f0f0f0'
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {isCorrectChoice && (
-                    <div className="choice-icon correct-icon">
-                      <CheckCircleOutlined />
-                    </div>
-                  )}
-                  {isSelected && !isCorrect && (
-                    <div className="choice-icon incorrect-icon">
-                      <CloseCircleOutlined />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="correct-answer-section">
-            <Text style={{ fontSize: 14 }}>
-              {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer}</Text>
-            </Text>
-          </div>
-
-          {/* Explanation Section */}
-          {question.explanation && (
-            <div style={{
-              marginTop: 16,
-              padding: '12px 16px',
-              backgroundColor: '#f6ffed',
-              borderRadius: 8,
-              border: '1px solid #b7eb8f'
-            }}>
-              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
-                {t('questions.explanation') || 'Giải thích'}:
-              </Text>
-              <div style={{
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {renderMathContent(question.explanation)}
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  };
-
-  // Render True/False question
-  const renderTFQuestion = (item) => {
-    const { question, isCorrect, userAnswer, correctAnswer, index, questionId } = item;
-
-    return (
-      <Card
-        key={questionId || index}
-        className="question-card"
-        style={{ marginBottom: 24 }}
-      >
-        <div className="question-card-header">
-          <div className="question-title">
-            <Text strong style={{ fontSize: 16 }}>
-              {t('submissionDetail.question') || 'Question'} {index + 1}
-            </Text>
-            <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
-              ID: {questionId}
-            </Text>
-          </div>
-        </div>
-
-        <Divider />
-
-        <div className="question-content">
-          <Paragraph style={{
-            fontSize: 16,
-            marginBottom: 16,
-            wordWrap: 'break-word',
-            overflowWrap: 'break-word',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'inherit'
-          }}>
-            {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
-          </Paragraph>
-
-          {question.images && question.images.length > 0 && (
-            <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-              {question.images.map((imgUrl, idx) => (
-                <img
-                  key={idx}
-                  src={imgUrl}
-                  alt={`Question ${idx + 1}`}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '300px',
-                    objectFit: 'contain',
-                    borderRadius: '8px',
-                    border: '1px solid #f0f0f0'
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          <div className="choices-list" style={{ marginTop: 16, marginBottom: 16 }}>
-            {[
-              { key: 'true', text: t('questions.true') || 'True', value: true },
-              { key: 'false', text: t('questions.false') || 'False', value: false }
-            ].map((choice) => {
-              const userAnswerBool = userAnswer === 'true' || userAnswer === true;
-              const correctAnswerBool = correctAnswer === 'true' || correctAnswer === true;
-              const isSelected = userAnswerBool === choice.value;
-              const isCorrectChoice = correctAnswerBool === choice.value;
-
-              let choiceClassName = 'choice-item';
-              if (isCorrectChoice) {
-                choiceClassName += ' choice-correct';
-              } else if (isSelected && !isCorrect) {
-                choiceClassName += ' choice-incorrect';
-              }
-
-              return (
-                <div key={choice.key} className={choiceClassName}>
-                  <div className="choice-content">
-                    <Text strong style={{ marginRight: 8 }}>{choice.key.toUpperCase()[0]}.</Text>
-                    <span>{choice.text}</span>
-                  </div>
-
-                  {isCorrectChoice && (
-                    <div className="choice-icon correct-icon">
-                      <CheckCircleOutlined />
-                    </div>
-                  )}
-                  {isSelected && !isCorrect && (
-                    <div className="choice-icon incorrect-icon">
-                      <CloseCircleOutlined />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="correct-answer-section">
-            <Text style={{ fontSize: 14 }}>
-              {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer === true || correctAnswer === 'true' ? (t('questions.true') || 'True') : (t('questions.false') || 'False')}</Text>
-            </Text>
-          </div>
-
-          {/* Explanation Section */}
-          {question.explanation && (
-            <div style={{
-              marginTop: 16,
-              padding: '12px 16px',
-              backgroundColor: '#f6ffed',
-              borderRadius: 8,
-              border: '1px solid #b7eb8f'
-            }}>
-              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
-                {t('questions.explanation') || 'Giải thích'}:
-              </Text>
-              <div style={{
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {renderMathContent(question.explanation)}
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  };
-
-  // Render Short Answer question
-  const renderShortQuestion = (item) => {
-    const { question, isCorrect, userAnswer, correctAnswer, index, questionId } = item;
-
-    return (
-      <Card
-        key={questionId || index}
-        className="question-card"
-        style={{ marginBottom: 24 }}
-      >
-        <div className="question-card-header">
-          <div className="question-title">
-            <Text strong style={{ fontSize: 16 }}>
-              {t('submissionDetail.question') || 'Question'} {index + 1}
-            </Text>
-            <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
-              ID: {questionId}
-            </Text>
-          </div>
-          {isCorrect ? (
-            <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
-          ) : (
-            <CloseCircleOutlined style={{ fontSize: 24, color: '#ff4d4f' }} />
-          )}
-        </div>
-
-        <Divider />
-
-        <div className="question-content">
-          <Paragraph style={{
-            fontSize: 16,
-            marginBottom: 16,
-            wordWrap: 'break-word',
-            overflowWrap: 'break-word',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'inherit'
-          }}>
-            {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
-          </Paragraph>
-
-          {question.images && question.images.length > 0 && (
-            <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-              {question.images.map((imgUrl, idx) => (
-                <img
-                  key={idx}
-                  src={imgUrl}
-                  alt={`Question ${idx + 1}`}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '300px',
-                    objectFit: 'contain',
-                    borderRadius: '8px',
-                    border: '1px solid #f0f0f0'
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          <div style={{ marginTop: 16 }}>
-            <Text strong>{t('submissionDetail.yourAnswer') || 'Your Answer'}: </Text>
-            <div style={{
-              padding: '12px',
-              backgroundColor: isCorrect ? '#f6ffed' : '#fff2e8',
-              border: `1px solid ${isCorrect ? '#b7eb8f' : '#ffbb96'}`,
-              borderRadius: '4px',
-              marginTop: 8
-            }}>
-              <Text>{userAnswer || t('submissionDetail.noAnswer') || 'No answer'}</Text>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 12 }}>
-            <Text strong>{t('submissionDetail.correctAnswer') || 'Correct Answer'}: </Text>
-            <div style={{
-              padding: '12px',
-              backgroundColor: '#f6ffed',
-              border: '1px solid #b7eb8f',
-              borderRadius: '4px',
-              marginTop: 8
-            }}>
-              <Text>{correctAnswer}</Text>
-            </div>
-          </div>
-
-          {/* Explanation Section */}
-          {question.explanation && (
-            <div style={{
-              marginTop: 16,
-              padding: '12px 16px',
-              backgroundColor: '#f6ffed',
-              borderRadius: 8,
-              border: '1px solid #b7eb8f'
-            }}>
-              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
-                {t('questions.explanation') || 'Giải thích'}:
-              </Text>
-              <div style={{
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {renderMathContent(question.explanation)}
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  };
-
-  // Render Essay question
-  const renderEssayQuestion = (item) => {
-    const { question, isCorrect, userAnswer, correctAnswer, index, questionId, earnedMarks, marks } = item;
-
-    return (
-      <Card
-        key={questionId || index}
-        className="question-card"
-        style={{ marginBottom: 24 }}
-      >
-        <div className="question-card-header">
-          <div className="question-title">
-            <Text strong style={{ fontSize: 16 }}>
-              {t('submissionDetail.question') || 'Question'} {index + 1}
-            </Text>
-            <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
-              ID: {questionId}
-            </Text>
-          </div>
-          <div>
-            <Text strong style={{ fontSize: 16 }}>
-              {t('submissionDetail.score') || 'Score'}: {formatNumber(earnedMarks)}/{formatNumber(marks)}
-            </Text>
-          </div>
-        </div>
-
-        <Divider />
-
-        <div className="question-content">
-          <Paragraph style={{
-            fontSize: 16,
-            marginBottom: 16,
-            wordWrap: 'break-word',
-            overflowWrap: 'break-word',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'inherit'
-          }}>
-            {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
-          </Paragraph>
-
-          {question.images && question.images.length > 0 && (
-            <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-              {question.images.map((imgUrl, idx) => (
-                <img
-                  key={idx}
-                  src={imgUrl}
-                  alt={`Question ${idx + 1}`}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '300px',
-                    objectFit: 'contain',
-                    borderRadius: '8px',
-                    border: '1px solid #f0f0f0'
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          <div style={{ marginTop: 16 }}>
-            <Text strong>{t('submissionDetail.yourAnswer') || 'Your Answer'}: </Text>
-            <div style={{
-              padding: '12px',
-              backgroundColor: '#f5f5f5',
-              border: '1px solid #d9d9d9',
-              borderRadius: '4px',
-              marginTop: 8,
-              minHeight: '100px'
-            }}>
-              <Paragraph style={{
-                margin: 0,
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word'
-              }}>
-                {userAnswer || t('submissionDetail.noAnswer') || 'No answer'}
-              </Paragraph>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 12 }}>
-            <Text strong>{t('submissionDetail.sampleAnswer') || 'Sample Answer'}: </Text>
-            <div style={{
-              padding: '12px',
-              backgroundColor: '#f6ffed',
-              border: '1px solid #b7eb8f',
-              borderRadius: '4px',
-              marginTop: 8,
-              minHeight: '100px'
-            }}>
-              <Paragraph style={{
-                margin: 0,
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word'
-              }}>
-                {correctAnswer}
-              </Paragraph>
-            </div>
-          </div>
-
-          {/* Explanation Section */}
-          {question.explanation && (
-            <div style={{
-              marginTop: 16,
-              padding: '12px 16px',
-              backgroundColor: '#f6ffed',
-              borderRadius: 8,
-              border: '1px solid #b7eb8f'
-            }}>
-              <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
-                {t('questions.explanation') || 'Giải thích'}:
-              </Text>
-              <div style={{
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {renderMathContent(question.explanation)}
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  };
-
+if (loading) {
   return (
-    <MathJaxContext config={mathJaxConfig}>
-      <div className="exam-result-detail-container">
-        {/* Header */}
-        <div className="result-header">
-          <div className="header-left">
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/student/results')}
-              style={{ marginBottom: 16 }}
-            >
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <Spin size="large" />
+    </div>
+  );
+}
+
+if (!submission || !exam) {
+  return (
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <Alert
+          message={t('takeExam.submissionNotFound') || 'Submission not found'}
+          type="error"
+          action={
+            <Button onClick={() => navigate('/student/results')}>
               {t('common.back') || 'Back'}
             </Button>
-            <Title level={2} style={{ margin: 0 }}>
-              {examData?.name || 'Exam Results'}
-            </Title>
+          }
+        />
+      </Card>
+    </div>
+  );
+}
+
+const examData = exam;
+const questions = examData?.questions || [];
+const answers = submission.answers || [];
+const canViewAnswers = examData?.viewExamAndAnswer !== undefined && examData?.viewExamAndAnswer !== 0;
+// Check if score can be viewed based on viewMark setting (0 = never, 1 = after completion, 2 = after all finish)
+const canViewScore = examData?.viewMark !== 0;
+
+// Create answer map for easy lookup
+const answerMap = {};
+answers.forEach(answer => {
+  const questionId = answer.questionId || (answer.question?._id?._id || answer.question?._id || answer.question?.id);
+  if (questionId) {
+    answerMap[questionId] = answer;
+  }
+});
+
+// Get questions by type with answers
+const getQuestionsByType = (type) => {
+  return questions
+    .map((q, index) => {
+      const question = (q.questionId && typeof q.questionId === 'object' && q.questionId.text !== undefined)
+        ? q.questionId
+        : null;
+
+      if (!question || question.type !== type) return null;
+
+      const questionId = question._id?.toString() || question.id?.toString();
+      const answer = answerMap[questionId];
+      const isCorrect = answer?.isCorrect;
+      const userAnswer = answer?.value || answer?.selectedAnswer;
+      const correctAnswer = question.answer || question.correctAnswer;
+
+      return {
+        question,
+        questionId,
+        answer,
+        isCorrect,
+        userAnswer,
+        correctAnswer,
+        index,
+        marks: q.marks || 1,
+        earnedMarks: answer?.points || answer?.earnedMarks || 0,
+      };
+    })
+    .filter(q => q !== null);
+};
+
+const mcqQuestions = getQuestionsByType('mcq');
+const tfQuestions = getQuestionsByType('tf');
+const shortQuestions = getQuestionsByType('short');
+const essayQuestions = getQuestionsByType('essay');
+
+// Filter questions based on filterType
+const filterQuestions = (questionList) => {
+  return questionList.filter(q => {
+    if (filterType === 'all') return true;
+    if (filterType === 'correct') return q.isCorrect;
+    if (filterType === 'incorrect') return !q.isCorrect;
+    return true;
+  });
+};
+
+// Format number - remove decimal if it's a whole number
+const formatNumber = (num) => {
+  if (typeof num !== 'number') return num || 0;
+  const rounded = Number(num.toFixed(2));
+  return rounded % 1 === 0 ? Math.round(rounded) : rounded;
+};
+
+const filteredMcqQuestions = filterQuestions(mcqQuestions);
+const filteredTfQuestions = filterQuestions(tfQuestions);
+const filteredShortQuestions = filterQuestions(shortQuestions);
+const filteredEssayQuestions = filterQuestions(essayQuestions);
+
+const mathJaxConfig = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true,
+    processEnvironments: true,
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+  },
+};
+
+// Helper to clean TEXT parts (OCR errors, Chemical formulas)
+const cleanTextSegment = (text) => {
+  return text
+    // Specific phrases where 'đ' likely means 'độ'
+    .replace(/\bđ\s+lớn/g, 'độ lớn')
+    .replace(/\bđ\s+lệch/g, 'độ lệch')
+    .replace(/\bđ\s+cao/g, 'độ cao')
+    .replace(/\bđ\s+sâu/g, 'độ sâu')
+    .replace(/\bđ\s+cứng/g, 'độ cứng')
+    .replace(/biên\s+đ\b/g, 'biên độ')
+    .replace(/mật\s+đ\b/g, 'mật độ')
+    .replace(/tốc\s+đ\b/g, 'tốc độ')
+
+    // Fix broken words
+    .replace(/đi[\ufffd\?]{1,4}n/g, 'điện')
+    .replace(/ch[\ufffd\?]{1,5}t/g, 'chất')
+    .replace(/đi[^a-zA-Z\s0-9]{1,4}n/g, 'điện')
+    .replace(/\bv[\ufffd\?]{1,4}\b/g, 'và')
+
+    .replace(/\bđin\b/g, 'điện')
+    .replace(/ngun/g, 'nguồn')
+    .replace(/cưng/g, 'cường')
+    .replace(/trưng/g, 'trường')
+    .replace(/bưc/g, 'bước')
+    .replace(/thưng/g, 'thường')
+    .replace(/[\ufffd\?]{2,}/g, '')
+
+    // Auto-format Chemical Formulas (e.g., CO2, H2O)
+    // Only apply this to TEXT segments, avoiding latex interference
+    .replace(/(?<!\\)\b((?:[A-Z][a-z]?\d*|\((?:[A-Z][a-z]?\d*)+\)\d*){2,})\b/g, (match) => {
+      const formatted = match.replace(/(\d+)/g, '_$1');
+      return `$\\mathrm{${formatted}}$`;
+    })
+    .replace(/(?<!\\)\b([A-Z][a-z]?\d+)\b/g, (match) => {
+      const formatted = match.replace(/(\d+)/g, '_$1');
+      return `$\\mathrm{${formatted}}$`;
+    });
+};
+
+// Helper to clean MATH parts (fix minor LaTeX errors)
+const cleanMathSegment = (text) => {
+  // Fix Latex concatenation errors (e.g. \pit -> \pi t)
+  return text.replace(/\\(pi|alpha|beta|gamma|delta|omega|sigma|theta|lambda|mu)([a-zA-Z0-9])/g, '\\$1 $2');
+};
+
+const renderMathContent = (content) => {
+  if (!content) return '';
+
+  const contentStr = typeof content === 'string' ? content : String(content);
+
+  // 1. Split by Math Delimiters to protect Math from Text Cleaning
+  // Regex matches $...$ OR \(...\)
+  const tokens = contentStr.split(/(\$[^$]+\$|\\\(.+?\\\))/g);
+
+  // 2. Process each token appropriately
+  const processedStr = tokens.map(token => {
+    const isDollar = token.startsWith('$') && token.endsWith('$');
+    const isParen = token.startsWith('\\(') && token.endsWith('\\)');
+
+    if (isDollar || isParen) {
+      return cleanMathSegment(token);
+    } else {
+      return cleanTextSegment(token);
+    }
+  }).join('');
+
+  // 3. Split by lines to preserve structure
+  const lines = processedStr.split('\n');
+
+  return (
+    <>
+      {lines.map((line, index) => {
+        if (!line.trim()) return <br key={index} />;
+
+        // 4. Robust Mixed Content Parsing
+        const chunks = line.split(/(\$[^$]+\$|\\\(.+?\\\))/g);
+
+        return (
+          <div key={index} style={{
+            fontFamily: 'inherit',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
+            marginBottom: 4
+          }}>
+            {chunks.map((chunk, i) => {
+              // Case 1: Existing LaTeX block ($...$) or (\(...\))
+              const isDollar = chunk.startsWith('$') && chunk.endsWith('$');
+              const isParen = chunk.startsWith('\\(') && chunk.endsWith('\\)');
+
+              if (isDollar || isParen) {
+                let rawMath = chunk;
+                if (isDollar) rawMath = chunk.slice(1, -1);
+                if (isParen) rawMath = chunk.slice(2, -2);
+
+                return (
+                  <MathJax key={i} inline>
+                    {`$${rawMath}$`}
+                  </MathJax>
+                );
+              }
+
+              // Case 2: Mixed Text with loose LaTeX cmd
+              const subParts = chunk.split(/(\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*)/g);
+
+              return (
+                <span key={i}>
+                  {subParts.map((sub, j) => {
+                    if (sub.match(/^\\[a-zA-Z]+/)) {
+                      return (
+                        <MathJax key={j} inline>
+                          {`$${sub}$`}
+                        </MathJax>
+                      );
+                    }
+                    return <span key={j}>{sub}</span>;
+                  })}
+                </span>
+              );
+            })}
           </div>
-          <div className="header-right">
+        );
+      })}
+    </>
+  );
+};
+
+const leaderboardColumns = [
+  {
+    title: t('takeExam.rank') || 'Rank',
+    dataIndex: 'rank',
+    key: 'rank',
+    width: 60,
+    render: (rank) => {
+      if (rank === 1) {
+        return (
+          <img
+            src="/1st-medal.png"
+            alt="1st Place"
+            style={{ width: 32, height: 32, objectFit: 'contain' }}
+          />
+        );
+      }
+      if (rank === 2) {
+        return (
+          <img
+            src="/2nd-medal.png"
+            alt="2nd Place"
+            style={{ width: 32, height: 32, objectFit: 'contain' }}
+          />
+        );
+      }
+      if (rank === 3) {
+        return (
+          <img
+            src="/3rd-medal.png"
+            alt="3rd Place"
+            style={{ width: 32, height: 32, objectFit: 'contain' }}
+          />
+        );
+      }
+      // Color palette for ranks 4+
+      const colors = [
+        { bg: '#e6f7ff', border: '#91d5ff', text: '#1890ff' }, // blue
+        { bg: '#f6ffed', border: '#b7eb8f', text: '#52c41a' }, // green
+        { bg: '#fff7e6', border: '#ffd591', text: '#fa8c16' }, // orange
+        { bg: '#f9f0ff', border: '#d3adf7', text: '#722ed1' }, // purple
+        { bg: '#fff0f6', border: '#ffadd2', text: '#eb2f96' }, // pink
+        { bg: '#e6fffb', border: '#87e8de', text: '#13c2c2' }, // cyan
+        { bg: '#fcffe6', border: '#eaff8f', text: '#a0d911' }, // lime
+        { bg: '#fff1f0', border: '#ffa39e', text: '#f5222d' }, // red
+      ];
+      const colorIndex = (rank - 4) % colors.length;
+      const color = colors[colorIndex];
+      return (
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            backgroundColor: color.bg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 600,
+            fontSize: 14,
+            color: color.text,
+            border: `2px solid ${color.border}`,
+          }}
+        >
+          {rank}
+        </div>
+      );
+    }
+  },
+  {
+    title: t('takeExam.studentName') || 'Student',
+    key: 'student',
+    width: 80,
+    ellipsis: true,
+    render: (_, record) => record.student?.name || '-'
+  },
+  {
+    title: t('takeExam.score') || 'Score',
+    dataIndex: 'score',
+    key: 'score',
+    width: 60,
+    render: (score, record) => {
+      if (!canViewScore) return '--';
+      return formatNumber(score);
+    }
+  }
+];
+
+// Render MCQ question
+const renderMCQQuestion = (item) => {
+  const { question, isCorrect, userAnswer, correctAnswer, index, questionId } = item;
+  const choices = question.choices || [];
+
+  return (
+    <Card
+      key={questionId || index}
+      className="question-card"
+      style={{ marginBottom: 24 }}
+    >
+      <div className="question-card-header">
+        <div className="question-title">
+          <Text strong style={{ fontSize: 16 }}>
+            {t('submissionDetail.question') || 'Question'} {index + 1}
+          </Text>
+          <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+            ID: {questionId}
+          </Text>
+        </div>
+        <Button
+          type="text"
+          icon={<EditOutlined />}
+          size="small"
+        />
+      </div>
+
+      <Divider />
+
+      <div className="question-content">
+        <div className="question-text-wrapper">
+          <Paragraph style={{
+            fontSize: 16,
+            marginBottom: 16,
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+            whiteSpace: 'pre-wrap',
+            fontFamily: 'inherit'
+          }}>
+            {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
+          </Paragraph>
+
+          {question.images && question.images.length > 0 ? (
+            <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+              {question.images.map((imgUrl, idx) => (
+                <img
+                  key={idx}
+                  src={imgUrl}
+                  alt={`Question ${idx + 1}`}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    border: '1px solid #f0f0f0'
+                  }}
+                />
+              ))}
+            </div>
+          ) : question.image ? (
+            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+              <img
+                src={question.image}
+                alt="Question"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '300px',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  border: '1px solid #f0f0f0'
+                }}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        <div className="choices-list">
+          {choices.map((choice) => {
+            const isSelected = userAnswer === choice.key;
+            const isCorrectChoice = correctAnswer === choice.key;
+
+            let choiceClassName = 'choice-item';
+            if (isCorrectChoice) {
+              choiceClassName += ' choice-correct';
+            } else if (isSelected && !isCorrect) {
+              choiceClassName += ' choice-incorrect';
+            }
+
+            return (
+              <div key={choice.key} className={choiceClassName}>
+                <div className="choice-content">
+                  <Text strong style={{ marginRight: 8 }}>{choice.key}.</Text>
+                  <span style={{
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'inherit'
+                  }}>
+                    {renderMathContent(choice.text)}
+                  </span>
+                  {/* Render choice image if exists */}
+                  {choice.image && (
+                    <div style={{ marginLeft: '12px' }}>
+                      <img
+                        src={choice.image}
+                        alt={`Choice ${choice.key}`}
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '150px',
+                          objectFit: 'contain',
+                          borderRadius: '4px',
+                          border: '1px solid #f0f0f0'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {isCorrectChoice && (
+                  <div className="choice-icon correct-icon">
+                    <CheckCircleOutlined />
+                  </div>
+                )}
+                {isSelected && !isCorrect && (
+                  <div className="choice-icon incorrect-icon">
+                    <CloseCircleOutlined />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="correct-answer-section">
+          <Text style={{ fontSize: 14 }}>
+            {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer}</Text>
+          </Text>
+        </div>
+
+        {/* Explanation Section */}
+        {question.explanation && (
+          <div style={{
+            marginTop: 16,
+            padding: '12px 16px',
+            backgroundColor: '#f6ffed',
+            borderRadius: 8,
+            border: '1px solid #b7eb8f'
+          }}>
+            <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+              {t('questions.explanation') || 'Giải thích'}:
+            </Text>
+            <div style={{
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              whiteSpace: 'pre-wrap'
+            }}>
+              {renderMathContent(question.explanation)}
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+};
+
+// Render True/False question
+const renderTFQuestion = (item) => {
+  const { question, isCorrect, userAnswer, correctAnswer, index, questionId } = item;
+
+  return (
+    <Card
+      key={questionId || index}
+      className="question-card"
+      style={{ marginBottom: 24 }}
+    >
+      <div className="question-card-header">
+        <div className="question-title">
+          <Text strong style={{ fontSize: 16 }}>
+            {t('submissionDetail.question') || 'Question'} {index + 1}
+          </Text>
+          <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+            ID: {questionId}
+          </Text>
+        </div>
+      </div>
+
+      <Divider />
+
+      <div className="question-content">
+        <Paragraph style={{
+          fontSize: 16,
+          marginBottom: 16,
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          whiteSpace: 'pre-wrap',
+          fontFamily: 'inherit'
+        }}>
+          {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
+        </Paragraph>
+
+        {question.images && question.images.length > 0 && (
+          <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+            {question.images.map((imgUrl, idx) => (
+              <img
+                key={idx}
+                src={imgUrl}
+                alt={`Question ${idx + 1}`}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '300px',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  border: '1px solid #f0f0f0'
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="choices-list" style={{ marginTop: 16, marginBottom: 16 }}>
+          {[
+            { key: 'true', text: t('questions.true') || 'True', value: true },
+            { key: 'false', text: t('questions.false') || 'False', value: false }
+          ].map((choice) => {
+            const userAnswerBool = userAnswer === 'true' || userAnswer === true;
+            const correctAnswerBool = correctAnswer === 'true' || correctAnswer === true;
+            const isSelected = userAnswerBool === choice.value;
+            const isCorrectChoice = correctAnswerBool === choice.value;
+
+            let choiceClassName = 'choice-item';
+            if (isCorrectChoice) {
+              choiceClassName += ' choice-correct';
+            } else if (isSelected && !isCorrect) {
+              choiceClassName += ' choice-incorrect';
+            }
+
+            return (
+              <div key={choice.key} className={choiceClassName}>
+                <div className="choice-content">
+                  <Text strong style={{ marginRight: 8 }}>{choice.key.toUpperCase()[0]}.</Text>
+                  <span>{choice.text}</span>
+                </div>
+
+                {isCorrectChoice && (
+                  <div className="choice-icon correct-icon">
+                    <CheckCircleOutlined />
+                  </div>
+                )}
+                {isSelected && !isCorrect && (
+                  <div className="choice-icon incorrect-icon">
+                    <CloseCircleOutlined />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="correct-answer-section">
+          <Text style={{ fontSize: 14 }}>
+            {t('submissionDetail.correctAnswer') || 'Đáp án đúng'}: <Text strong>{correctAnswer === true || correctAnswer === 'true' ? (t('questions.true') || 'True') : (t('questions.false') || 'False')}</Text>
+          </Text>
+        </div>
+
+        {/* Explanation Section */}
+        {question.explanation && (
+          <div style={{
+            marginTop: 16,
+            padding: '12px 16px',
+            backgroundColor: '#f6ffed',
+            borderRadius: 8,
+            border: '1px solid #b7eb8f'
+          }}>
+            <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+              {t('questions.explanation') || 'Giải thích'}:
+            </Text>
+            <div style={{
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              whiteSpace: 'pre-wrap'
+            }}>
+              {renderMathContent(question.explanation)}
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+};
+
+// Render Short Answer question
+const renderShortQuestion = (item) => {
+  const { question, isCorrect, userAnswer, correctAnswer, index, questionId } = item;
+
+  return (
+    <Card
+      key={questionId || index}
+      className="question-card"
+      style={{ marginBottom: 24 }}
+    >
+      <div className="question-card-header">
+        <div className="question-title">
+          <Text strong style={{ fontSize: 16 }}>
+            {t('submissionDetail.question') || 'Question'} {index + 1}
+          </Text>
+          <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+            ID: {questionId}
+          </Text>
+        </div>
+        {isCorrect ? (
+          <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+        ) : (
+          <CloseCircleOutlined style={{ fontSize: 24, color: '#ff4d4f' }} />
+        )}
+      </div>
+
+      <Divider />
+
+      <div className="question-content">
+        <Paragraph style={{
+          fontSize: 16,
+          marginBottom: 16,
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          whiteSpace: 'pre-wrap',
+          fontFamily: 'inherit'
+        }}>
+          {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
+        </Paragraph>
+
+        {question.images && question.images.length > 0 && (
+          <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+            {question.images.map((imgUrl, idx) => (
+              <img
+                key={idx}
+                src={imgUrl}
+                alt={`Question ${idx + 1}`}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '300px',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  border: '1px solid #f0f0f0'
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        <div style={{ marginTop: 16 }}>
+          <Text strong>{t('submissionDetail.yourAnswer') || 'Your Answer'}: </Text>
+          <div style={{
+            padding: '12px',
+            backgroundColor: isCorrect ? '#f6ffed' : '#fff2e8',
+            border: `1px solid ${isCorrect ? '#b7eb8f' : '#ffbb96'}`,
+            borderRadius: '4px',
+            marginTop: 8
+          }}>
+            <Text>{userAnswer || t('submissionDetail.noAnswer') || 'No answer'}</Text>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <Text strong>{t('submissionDetail.correctAnswer') || 'Correct Answer'}: </Text>
+          <div style={{
+            padding: '12px',
+            backgroundColor: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: '4px',
+            marginTop: 8
+          }}>
+            <Text>{correctAnswer}</Text>
+          </div>
+        </div>
+
+        {/* Explanation Section */}
+        {question.explanation && (
+          <div style={{
+            marginTop: 16,
+            padding: '12px 16px',
+            backgroundColor: '#f6ffed',
+            borderRadius: 8,
+            border: '1px solid #b7eb8f'
+          }}>
+            <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+              {t('questions.explanation') || 'Giải thích'}:
+            </Text>
+            <div style={{
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              whiteSpace: 'pre-wrap'
+            }}>
+              {renderMathContent(question.explanation)}
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+};
+
+// Render Essay question
+const renderEssayQuestion = (item) => {
+  const { question, isCorrect, userAnswer, correctAnswer, index, questionId, earnedMarks, marks } = item;
+
+  return (
+    <Card
+      key={questionId || index}
+      className="question-card"
+      style={{ marginBottom: 24 }}
+    >
+      <div className="question-card-header">
+        <div className="question-title">
+          <Text strong style={{ fontSize: 16 }}>
+            {t('submissionDetail.question') || 'Question'} {index + 1}
+          </Text>
+          <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+            ID: {questionId}
+          </Text>
+        </div>
+        <div>
+          <Text strong style={{ fontSize: 16 }}>
+            {t('submissionDetail.score') || 'Score'}: {formatNumber(earnedMarks)}/{formatNumber(marks)}
+          </Text>
+        </div>
+      </div>
+
+      <Divider />
+
+      <div className="question-content">
+        <Paragraph style={{
+          fontSize: 16,
+          marginBottom: 16,
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          whiteSpace: 'pre-wrap',
+          fontFamily: 'inherit'
+        }}>
+          {renderMathContent((question.text || question.name || "").replace(/^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i, ""))}
+        </Paragraph>
+
+        {question.images && question.images.length > 0 && (
+          <div style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+            {question.images.map((imgUrl, idx) => (
+              <img
+                key={idx}
+                src={imgUrl}
+                alt={`Question ${idx + 1}`}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '300px',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  border: '1px solid #f0f0f0'
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        <div style={{ marginTop: 16 }}>
+          <Text strong>{t('submissionDetail.yourAnswer') || 'Your Answer'}: </Text>
+          <div style={{
+            padding: '12px',
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #d9d9d9',
+            borderRadius: '4px',
+            marginTop: 8,
+            minHeight: '100px'
+          }}>
+            <Paragraph style={{
+              margin: 0,
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word'
+            }}>
+              {userAnswer || t('submissionDetail.noAnswer') || 'No answer'}
+            </Paragraph>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <Text strong>{t('submissionDetail.sampleAnswer') || 'Sample Answer'}: </Text>
+          <div style={{
+            padding: '12px',
+            backgroundColor: '#f6ffed',
+            border: '1px solid #b7eb8f',
+            borderRadius: '4px',
+            marginTop: 8,
+            minHeight: '100px'
+          }}>
+            <Paragraph style={{
+              margin: 0,
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word'
+            }}>
+              {correctAnswer}
+            </Paragraph>
+          </div>
+        </div>
+
+        {/* Explanation Section */}
+        {question.explanation && (
+          <div style={{
+            marginTop: 16,
+            padding: '12px 16px',
+            backgroundColor: '#f6ffed',
+            borderRadius: 8,
+            border: '1px solid #b7eb8f'
+          }}>
+            <Text strong style={{ color: '#52c41a', marginBottom: 8, display: 'block' }}>
+              {t('questions.explanation') || 'Giải thích'}:
+            </Text>
+            <div style={{
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              whiteSpace: 'pre-wrap'
+            }}>
+              {renderMathContent(question.explanation)}
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+};
+
+return (
+  <MathJaxContext config={mathJaxConfig}>
+    <div className="exam-result-detail-container">
+      {/* Header */}
+      <div className="result-header">
+        <div className="header-left">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate('/student/results')}
+            style={{ marginBottom: 16 }}
+          >
+            {t('common.back') || 'Back'}
+          </Button>
+          <Title level={2} style={{ margin: 0 }}>
+            {examData?.name || 'Exam Results'}
+          </Title>
+        </div>
+        <div className="header-right">
+          <Space>
             <Space.Compact>
               <Button
                 type={filterType === 'all' ? 'primary' : 'default'}
@@ -1011,245 +1157,301 @@ const ExamResultDetail = () => {
                 {t('studentResults.filterIncorrect') || 'Sai'}
               </Button>
             </Space.Compact>
-          </div>
+          </Space>
         </div>
+      </div>
 
-        {/* Score and Leaderboard Section */}
-        <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
-          <Col xs={24} lg={showLeaderboard && leaderboard.length > 0 ? 12 : 24}>
-            {/* Score Summary */}
-            <Card className="result-summary-card" style={{ height: '100%' }}>
-              <Row gutter={24}>
-                {canViewScore ? (
-                  <>
-                    <Col xs={24} sm={12} md={12}>
-                      <Statistic
-                        title={t('takeExam.yourScore') || 'Your Score'}
-                        value={formatNumber(submission.score)}
-                        suffix={`/ ${formatNumber(submission.maxScore)}`}
-                        valueStyle={{ color: '#1890ff' }}
-                      />
-                    </Col>
-                    <Col xs={24} sm={12} md={12}>
-                      <Statistic
-                        title={t('takeExam.percentage') || 'Percentage'}
-                        value={submission.percentage || 0}
-                        suffix="%"
-                        valueStyle={{
-                          color: submission.percentage >= 80 ? '#52c41a' :
-                            submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
-                        }}
-                      />
-                    </Col>
-                  </>
-                ) : (
+      {/* Score and Leaderboard Section */}
+      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+        <Col xs={24} lg={showLeaderboard && leaderboard.length > 0 ? 12 : 24}>
+          {/* Score Summary */}
+          <Card className="result-summary-card" style={{ height: '100%' }}>
+            <Row gutter={24}>
+              {canViewScore ? (
+                <>
                   <Col xs={24} sm={12} md={12}>
-                    <Alert
-                      message={t('exams.viewMarkNever') || 'Điểm số không được hiển thị'}
-                      description={t('exams.viewMarkNeverDesc') || 'Giáo viên đã thiết lập không hiển thị điểm cho bài thi này.'}
-                      type="info"
-                      showIcon
+                    <Statistic
+                      title={t('takeExam.yourScore') || 'Your Score'}
+                      value={formatNumber(submission.score)}
+                      suffix={`/ ${formatNumber(submission.maxScore)}`}
+                      valueStyle={{ color: '#1890ff' }}
                     />
                   </Col>
-                )}
+                  <Col xs={24} sm={12} md={12}>
+                    <Statistic
+                      title={t('takeExam.percentage') || 'Percentage'}
+                      value={submission.percentage || 0}
+                      suffix="%"
+                      valueStyle={{
+                        color: submission.percentage >= 80 ? '#52c41a' :
+                          submission.percentage >= 50 ? '#faad14' : '#ff4d4f'
+                      }}
+                    />
+                  </Col>
+                </>
+              ) : (
                 <Col xs={24} sm={12} md={12}>
-                  <Statistic
-                    title={t('takeExam.status') || 'Status'}
-                    value={
-                      submission.status || 'Submitted'
-                    }
+                  <Alert
+                    message={t('exams.viewMarkNever') || 'Điểm số không được hiển thị'}
+                    description={t('exams.viewMarkNeverDesc') || 'Giáo viên đã thiết lập không hiển thị điểm cho bài thi này.'}
+                    type="info"
+                    showIcon
                   />
                 </Col>
-                <Col xs={24} sm={12} md={12}>
-                  <Statistic
-                    title={t('takeExam.timeSpent') || 'Time Spent'}
-                    value={Math.floor((submission.timeSpent || 0) / 60)}
-                    suffix={t('takeExam.minutes') || 'minutes'}
-                  />
-                </Col>
-              </Row>
+              )}
+              <Col xs={24} sm={12} md={12}>
+                <Statistic
+                  title={t('takeExam.status') || 'Status'}
+                  value={
+                    submission.status || 'Submitted'
+                  }
+                />
+              </Col>
+              <Col xs={24} sm={12} md={12}>
+                <Statistic
+                  title={t('takeExam.timeSpent') || 'Time Spent'}
+                  value={Math.floor((submission.timeSpent || 0) / 60)}
+                  suffix={t('takeExam.minutes') || 'minutes'}
+                />
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+
+        {/* Leaderboard */}
+        {showLeaderboard && leaderboard.length > 0 && (
+          <Col xs={24} lg={12}>
+            <Card
+              title={<><TrophyOutlined /> {t('takeExam.leaderboard') || 'Leaderboard'}</>}
+              style={{ height: '100%' }}
+              bodyStyle={{ padding: '12px' }}
+            >
+              <Table
+                columns={leaderboardColumns}
+                dataSource={leaderboard}
+                rowKey="rank"
+                pagination={{ pageSize: 5, size: 'small' }}
+                size="small"
+                scroll={false}
+              />
             </Card>
           </Col>
-
-          {/* Leaderboard */}
-          {showLeaderboard && leaderboard.length > 0 && (
-            <Col xs={24} lg={12}>
-              <Card
-                title={<><TrophyOutlined /> {t('takeExam.leaderboard') || 'Leaderboard'}</>}
-                style={{ height: '100%' }}
-                bodyStyle={{ padding: '12px' }}
-              >
-                <Table
-                  columns={leaderboardColumns}
-                  dataSource={leaderboard}
-                  rowKey="rank"
-                  pagination={{ pageSize: 5, size: 'small' }}
-                  size="small"
-                  scroll={false}
-                />
-              </Card>
-            </Col>
-          )}
-        </Row>
-
-        {/* Questions and Answers */}
-        {canViewAnswers ? (
-          <Card>
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={[
-                mcqQuestions.length > 0 && {
-                  key: 'mcq',
-                  label: `${t('questions.mcq') || 'Multiple Choice'} (${filteredMcqQuestions.length})`,
-                  children: (
-                    <div className="questions-list">
-                      {filteredMcqQuestions.length === 0 ? (
-                        <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
-                      ) : (
-                        filteredMcqQuestions.map(renderMCQQuestion)
-                      )}
-                    </div>
-                  ),
-                },
-                tfQuestions.length > 0 && {
-                  key: 'tf',
-                  label: `${t('questions.tf') || 'True/False'} (${filteredTfQuestions.length})`,
-                  children: (
-                    <div className="questions-list">
-                      {filteredTfQuestions.length === 0 ? (
-                        <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
-                      ) : (
-                        filteredTfQuestions.map(renderTFQuestion)
-                      )}
-                    </div>
-                  ),
-                },
-                shortQuestions.length > 0 && {
-                  key: 'short',
-                  label: `${t('questions.short') || 'Short Answer'} (${filteredShortQuestions.length})`,
-                  children: (
-                    <div className="questions-list">
-                      {filteredShortQuestions.length === 0 ? (
-                        <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
-                      ) : (
-                        filteredShortQuestions.map(renderShortQuestion)
-                      )}
-                    </div>
-                  ),
-                },
-                essayQuestions.length > 0 && {
-                  key: 'essay',
-                  label: `${t('questions.essay') || 'Essay'} (${filteredEssayQuestions.length})`,
-                  children: (
-                    <div className="questions-list">
-                      {filteredEssayQuestions.length === 0 ? (
-                        <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
-                      ) : (
-                        filteredEssayQuestions.map(renderEssayQuestion)
-                      )}
-                    </div>
-                  ),
-                },
-              ].filter(Boolean)}
-            />
-          </Card>
-        ) : (
-          <Card className="congratulations-card" style={{ border: 'none', overflow: 'hidden' }}>
-            <div style={{
-              textAlign: 'center',
-              padding: '64px 24px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '12px',
-              color: '#fff',
-              position: 'relative'
-            }}>
-              {/* Decorative elements */}
-              <div style={{
-                position: 'absolute',
-                top: '20px',
-                left: '20px',
-                fontSize: '48px',
-                opacity: 0.3
-              }}>🎉</div>
-              <div style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                fontSize: '48px',
-                opacity: 0.3
-              }}>🎊</div>
-              <div style={{
-                position: 'absolute',
-                bottom: '20px',
-                left: '40px',
-                fontSize: '36px',
-                opacity: 0.3
-              }}>⭐</div>
-              <div style={{
-                position: 'absolute',
-                bottom: '20px',
-                right: '40px',
-                fontSize: '36px',
-                opacity: 0.3
-              }}>✨</div>
-
-              {/* Main content */}
-              <div style={{ fontSize: '72px', marginBottom: '24px' }}>
-                🎉
-              </div>
-              <Title level={2} style={{ color: '#fff', marginBottom: '16px', fontSize: '32px' }}>
-                {t('takeExam.congratulations') || 'Chúc mừng bạn đã hoàn thành bài thi!'}
-              </Title>
-              <Text style={{ fontSize: '18px', color: 'rgba(255, 255, 255, 0.95)', display: 'block', marginBottom: '32px' }}>
-                {t('takeExam.examSubmitted') || 'Bài thi của bạn đã được nộp thành công'}
-              </Text>
-
-              {/* Score highlight */}
-              {canViewScore && (
-                <div style={{
-                  marginTop: '40px',
-                  padding: '32px',
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  borderRadius: '12px',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-                }}>
-                  <Row gutter={32} justify="center">
-                    <Col xs={12} sm={8}>
-                      <div>
-                        <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
-                          {formatNumber(submission.score)}
-                        </Text>
-                        <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                          {t('takeExam.totalScore') || 'Tổng điểm'}
-                        </Text>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={8}>
-                      <div>
-                        <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
-                          {submission.percentage || 0}%
-                        </Text>
-                        <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                          {t('takeExam.percentage') || 'Phần trăm'}
-                        </Text>
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
-              )}
-
-              {/* Success icon */}
-              <div style={{ marginTop: '32px' }}>
-                <CheckCircleOutlined style={{ fontSize: '56px', color: '#52c41a' }} />
-              </div>
-            </div>
-          </Card>
         )}
-      </div>
-    </MathJaxContext>
-  );
+      </Row>
+
+      {/* AI Analysis Section */}
+      <Card
+        className="ai-feedback-card"
+        style={{ marginBottom: 24 }}
+        title={<span><StarFilled style={{ color: '#faad14' }} /> AI Personal Feedback</span>}
+      >
+        {analyzing ? (
+          <div style={{ textAlign: 'center', padding: 20 }}><Spin tip="AI is analyzing your result..." /></div>
+        ) : aiAnalysis ? (
+          <div style={{ lineHeight: '1.6' }}>
+            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <Button
+              type="primary"
+              icon={<ThunderboltFilled />}
+              onClick={fetchAIAnalysis}
+              size="large"
+              shape="round"
+              style={{ background: 'linear-gradient(90deg, #1890ff, #722ed1)', border: 'none' }}
+            >
+              {t('submissionDetail.analyzeWithAI') || "Analyze Result with AI"}
+            </Button>
+          </div>
+        )}
+
+        {aiAnalysis && !analyzing && (
+          <div style={{ marginTop: 16, textAlign: 'center', borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
+            {createdMindmapId ? (
+              <Button
+                icon={<EyeOutlined />}
+                type="default"
+                onClick={() => navigate(`/student/mindmaps/${createdMindmapId}`)}
+                size="large"
+                className="view-mindmap-btn"
+                style={{ borderColor: '#52c41a', color: '#52c41a' }}
+              >
+                {t('submissionDetail.viewImprovementMindmap') || 'View Improvement Mindmap'}
+              </Button>
+            ) : (
+              <Button
+                icon={<DeploymentUnitOutlined />}
+                type="primary"
+                onClick={handleGenerateMindmap}
+                loading={generatingMindmap}
+                size="large"
+              >
+                {t('submissionDetail.createImprovementMindmap') || 'Create Improvement Roadmap'}
+              </Button>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* Questions and Answers */}
+      {canViewAnswers ? (
+        <Card>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={[
+              mcqQuestions.length > 0 && {
+                key: 'mcq',
+                label: `${t('questions.mcq') || 'Multiple Choice'} (${filteredMcqQuestions.length})`,
+                children: (
+                  <div className="questions-list">
+                    {filteredMcqQuestions.length === 0 ? (
+                      <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
+                    ) : (
+                      filteredMcqQuestions.map(renderMCQQuestion)
+                    )}
+                  </div>
+                ),
+              },
+              tfQuestions.length > 0 && {
+                key: 'tf',
+                label: `${t('questions.tf') || 'True/False'} (${filteredTfQuestions.length})`,
+                children: (
+                  <div className="questions-list">
+                    {filteredTfQuestions.length === 0 ? (
+                      <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
+                    ) : (
+                      filteredTfQuestions.map(renderTFQuestion)
+                    )}
+                  </div>
+                ),
+              },
+              shortQuestions.length > 0 && {
+                key: 'short',
+                label: `${t('questions.short') || 'Short Answer'} (${filteredShortQuestions.length})`,
+                children: (
+                  <div className="questions-list">
+                    {filteredShortQuestions.length === 0 ? (
+                      <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
+                    ) : (
+                      filteredShortQuestions.map(renderShortQuestion)
+                    )}
+                  </div>
+                ),
+              },
+              essayQuestions.length > 0 && {
+                key: 'essay',
+                label: `${t('questions.essay') || 'Essay'} (${filteredEssayQuestions.length})`,
+                children: (
+                  <div className="questions-list">
+                    {filteredEssayQuestions.length === 0 ? (
+                      <Empty description={t('submissionDetail.noQuestions') || 'No questions found'} />
+                    ) : (
+                      filteredEssayQuestions.map(renderEssayQuestion)
+                    )}
+                  </div>
+                ),
+              },
+            ].filter(Boolean)}
+          />
+        </Card>
+      ) : (
+        <Card className="congratulations-card" style={{ border: 'none', overflow: 'hidden' }}>
+          <div style={{
+            textAlign: 'center',
+            padding: '64px 24px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '12px',
+            color: '#fff',
+            position: 'relative'
+          }}>
+            {/* Decorative elements */}
+            <div style={{
+              position: 'absolute',
+              top: '20px',
+              left: '20px',
+              fontSize: '48px',
+              opacity: 0.3
+            }}>🎉</div>
+            <div style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              fontSize: '48px',
+              opacity: 0.3
+            }}>🎊</div>
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '40px',
+              fontSize: '36px',
+              opacity: 0.3
+            }}>⭐</div>
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              right: '40px',
+              fontSize: '36px',
+              opacity: 0.3
+            }}>✨</div>
+
+            {/* Main content */}
+            <div style={{ fontSize: '72px', marginBottom: '24px' }}>
+              🎉
+            </div>
+            <Title level={2} style={{ color: '#fff', marginBottom: '16px', fontSize: '32px' }}>
+              {t('takeExam.congratulations') || 'Chúc mừng bạn đã hoàn thành bài thi!'}
+            </Title>
+            <Text style={{ fontSize: '18px', color: 'rgba(255, 255, 255, 0.95)', display: 'block', marginBottom: '32px' }}>
+              {t('takeExam.examSubmitted') || 'Bài thi của bạn đã được nộp thành công'}
+            </Text>
+
+            {/* Score highlight */}
+            {canViewScore && (
+              <div style={{
+                marginTop: '40px',
+                padding: '32px',
+                background: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+              }}>
+                <Row gutter={32} justify="center">
+                  <Col xs={12} sm={8}>
+                    <div>
+                      <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
+                        {formatNumber(submission.score)}
+                      </Text>
+                      <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                        {t('takeExam.totalScore') || 'Tổng điểm'}
+                      </Text>
+                    </div>
+                  </Col>
+                  <Col xs={12} sm={8}>
+                    <div>
+                      <Text strong style={{ fontSize: '40px', color: '#fff', display: 'block', marginBottom: '8px' }}>
+                        {submission.percentage || 0}%
+                      </Text>
+                      <Text style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                        {t('takeExam.percentage') || 'Phần trăm'}
+                      </Text>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            )}
+
+            {/* Success icon */}
+            <div style={{ marginTop: '32px' }}>
+              <CheckCircleOutlined style={{ fontSize: '56px', color: '#52c41a' }} />
+            </div>
+          </div>
+        </Card>
+      )}
+    </div>
+  </MathJaxContext>
+);
 };
 
 export default ExamResultDetail;
