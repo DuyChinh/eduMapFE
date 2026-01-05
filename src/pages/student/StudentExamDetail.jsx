@@ -11,7 +11,8 @@ import {
   ReloadOutlined,
   RightOutlined,
   UserOutlined,
-  WarningOutlined
+  WarningOutlined,
+  DeploymentUnitOutlined
 } from '@ant-design/icons';
 import {
   Alert,
@@ -38,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import examStatsService from '../../api/examStatsService';
 import useAuthStore from '../../store/authStore';
+import mindmapService from '../../api/mindmapService';
 import './StudentExamDetail.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -59,6 +61,7 @@ const StudentExamDetail = () => {
   const [activityLoading, setActivityLoading] = useState(false);
   const [comment, setComment] = useState('');
   const [editingComment, setEditingComment] = useState(false);
+  const [generatingMindmap, setGeneratingMindmap] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('mcq');
 
@@ -237,6 +240,30 @@ const StudentExamDetail = () => {
       console.error('Error resetting attempt:', error);
       const errorMessage = typeof error === 'string' ? error : (error?.response?.data?.message || error?.message || t('submissionDetail.resetAttemptFailed'));
       messageApi.error(errorMessage);
+    }
+  };
+
+  const handleGenerateMindmap = async () => {
+    setGeneratingMindmap(true);
+    try {
+      const response = await mindmapService.generateFromExamReview({
+        submissionId: submissionId || submissionData?._id,
+        type: 'student_review'
+      });
+
+      if (response && response.data && response.data.data?._id) {
+        messageApi.success(t('submissionDetail.mindmapGenerated') || 'Mindmap generated successfully!');
+        navigate(`/teacher/mindmaps/${response.data.data._id}`);
+      } else if (response && response.data && response.data._id) {
+        // Handle case where data structure is different
+        messageApi.success(t('submissionDetail.mindmapGenerated') || 'Mindmap generated successfully!');
+        navigate(`/teacher/mindmaps/${response.data._id}`);
+      }
+    } catch (error) {
+      console.error('Mindmap generation failed', error);
+      messageApi.error(t('submissionDetail.mindmapFailed') || 'Failed to generate mindmap: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setGeneratingMindmap(false);
     }
   };
 
@@ -459,9 +486,20 @@ const StudentExamDetail = () => {
           >
             {t('common.back')}
           </Button>
-          <Title level={2} style={{ margin: 0, wordBreak: 'break-word' }}>
-            {exam.name || t('submissionDetail.examName')}
-          </Title>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <Title level={2} style={{ margin: 0, wordBreak: 'break-word' }}>
+              {exam.name || t('submissionDetail.examName')}
+            </Title>
+            <Button
+              icon={<DeploymentUnitOutlined />}
+              type="primary"
+              onClick={handleGenerateMindmap}
+              loading={generatingMindmap}
+              style={{ marginLeft: 16 }}
+            >
+              {t('submissionDetail.createImprovementMindmap') || 'Tạo lộ trình cải thiện (Mindmap)'}
+            </Button>
+          </div>
         </div>
 
         <Row gutter={[24, 24]}>
@@ -589,6 +627,8 @@ const StudentExamDetail = () => {
                     </Popconfirm>
                   )}
                 </Space>
+
+
 
                 <Divider />
 

@@ -4,7 +4,7 @@ import { MathJax, MathJaxContext } from 'better-react-mathjax';
 
 const { Title, Text, Paragraph } = Typography;
 
-const QuestionPreview = ({ questionData, subjects = [] }) => {
+const QuestionPreview = ({ questionData, subjects = [], showCorrectAnswer = false, hideChoices = false }) => {
   const { t, i18n } = useTranslation();
 
   // Function to get subject name from ID based on current language
@@ -212,8 +212,35 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
     if (questionData.answer === undefined && questionData.type !== 'tf') return null;
 
     if (questionData.type === 'mcq') {
-      const answerIndex = parseInt(questionData.answer);
-      const answerText = questionData.choices?.[answerIndex] || '';
+      let answerText = '';
+      const answerVal = questionData.answer;
+
+      // Try to find choice by matching 'key' (e.g., 'A' === choice.key)
+      // or by index if answerVal is a number
+      if (questionData.choices && Array.isArray(questionData.choices)) {
+        // 1. Try to find by key (most common for saved questions)
+        let foundChoice = questionData.choices.find(c =>
+          (typeof c === 'object' && c.key === answerVal) ||
+          (c === answerVal) // if choice is simple string matching answer
+        );
+
+        // 2. If not found, try by index if answerVal is a number or numeric string
+        if (!foundChoice) {
+          const index = parseInt(answerVal);
+          if (!isNaN(index) && index >= 0 && index < questionData.choices.length) {
+            foundChoice = questionData.choices[index];
+          }
+        }
+
+        if (foundChoice) {
+          answerText = (typeof foundChoice === 'object') ? (foundChoice.text || '') : foundChoice;
+        } else {
+          // 3. Fallback: just display the answer value itself if it looks like content
+          // (unless it's just 'A', 'B' which isn't helpful without content)
+          answerText = answerVal;
+        }
+      }
+
       return (
         <div style={{
           wordWrap: 'break-word',
@@ -453,7 +480,14 @@ const QuestionPreview = ({ questionData, subjects = [] }) => {
         )}
 
         {/* Choices */}
-        {renderChoices()}
+        {!hideChoices && renderChoices()}
+
+        {/* Correct Answer (Optional) */}
+        {showCorrectAnswer && (
+          <div style={{ marginTop: '16px' }}>
+            {renderAnswer()}
+          </div>
+        )}
 
         {/* Explanation */}
         {questionData.explanation && (
