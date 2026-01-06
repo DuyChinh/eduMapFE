@@ -1146,7 +1146,10 @@
     "aiAnalysisPrompt": "AIによるパーソナライズされたフィードバックを取得",
     "createImprovementMindmap": "改善ロードマップを作成 (マインドマップ)",
     "mindmapCreated": "改善ロードマップを作成しました！",
-    "viewImprovementMindmap": "改善ロードマップを表示"
+    "mindmapCreated": "改善ロードマップを作成しました！",
+    "viewImprovementMindmap": "改善ロードマップを表示",
+    "question": "問題",
+    "correctAnswer": "正解"
   },
   "feed": {
     "fetchFailed": "フィードの読み込みに失敗しました",

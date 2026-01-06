@@ -1088,6 +1088,7 @@
     "autoStarting": "Auto-starting exam...",
     "days": "days",
     "hours": "hours",
+    "minutes": "minutes",
     "seconds": "seconds",
     "submissionNotFound": "Submission not found",
     "yourScore": "Your Score",
@@ -1232,7 +1233,10 @@
     "aiAnalysisPrompt": "Get personalized AI feedback",
     "createImprovementMindmap": "Create Improvement Roadmap (Mindmap)",
     "mindmapCreated": "Improvement roadmap created!",
-    "viewImprovementMindmap": "View Improvement Roadmap"
+    "mindmapCreated": "Improvement roadmap created!",
+    "viewImprovementMindmap": "View Improvement Roadmap",
+    "question": "Question",
+    "correctAnswer": "Correct Answer"
   },
   "feed": {
     "fetchFailed": "Failed to load feed",
