@@ -12,7 +12,10 @@ import {
   RightOutlined,
   UserOutlined,
   WarningOutlined,
-  DeploymentUnitOutlined
+  DeploymentUnitOutlined,
+  VideoCameraOutlined,
+  UserDeleteOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import {
   Alert,
@@ -31,7 +34,8 @@ import {
   Tabs,
   Tag,
   Timeline,
-  Typography
+  Typography,
+  Image
 } from 'antd';
 import { MathJax, MathJaxContext } from 'better-react-mathjax';
 import { useEffect, useState } from 'react';
@@ -150,6 +154,10 @@ const StudentExamDetail = () => {
       paste_attempt: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
       right_click: <CloseCircleOutlined style={{ color: '#faad14' }} />,
       beforeunload: <WarningOutlined style={{ color: '#ff4d4f' }} />,
+      no_face: <UserDeleteOutlined style={{ color: '#ff4d4f' }} />,
+      multiple_faces: <TeamOutlined style={{ color: '#ff4d4f' }} />,
+      camera_denied: <VideoCameraOutlined style={{ color: '#ff4d4f' }} />,
+      face_mismatch: <UserDeleteOutlined style={{ color: '#ff4d4f' }} />,
     };
     return icons[type] || <ClockCircleOutlined />;
   };
@@ -166,16 +174,21 @@ const StudentExamDetail = () => {
       right_click: 'orange',
       beforeunload: 'red',
       visibility: 'orange',
+      no_face: 'red',
+      multiple_faces: 'red',
+      camera_denied: 'red',
+      face_mismatch: 'red',
     };
     return colors[type] || 'default';
   };
 
   const getActivityDisplayText = (activity) => {
-    // Priority: meta.reason > action > type
+    // Priority: meta.reason > formatActivityType(type/event)
     if (activity.meta?.reason) {
       return activity.meta.reason;
     }
-    return activity.action || activity.type || activity.event || '-';
+    const type = activity.type || activity.event || '-';
+    return formatActivityType(type);
   };
 
   const getActivitySummary = () => {
@@ -202,6 +215,10 @@ const StudentExamDetail = () => {
       submit: t('submissionDetail.activityTypes.submit'),
       copy_attempt: t('submissionDetail.activityTypes.copyAttempt'),
       paste_attempt: t('submissionDetail.activityTypes.pasteAttempt'),
+      no_face: t('submissionDetail.activityTypes.noFace'),
+      multiple_faces: t('submissionDetail.activityTypes.multipleFaces'),
+      camera_denied: t('submissionDetail.activityTypes.cameraDenied'),
+      face_mismatch: t('submissionDetail.activityTypes.faceMismatch') || 'Face Mismatch',
     };
     return typeMap[type] || type;
   };
@@ -567,6 +584,26 @@ const StudentExamDetail = () => {
                   <Text strong>{t('submissionDetail.timeSpent')}: </Text>
                   <Text>{formatTimeSpent(submissionData.timeSpent)}</Text>
                 </div>
+
+                {submissionData.proctoringData?.referenceFaceImage && (
+                  <div className="detail-item" style={{ flexDirection: 'column', alignItems: 'center', marginTop: 12 }}>
+                    <Text strong>{t('submissionDetail.referenceFace') || 'Candidate Verification'}: </Text>
+                    <div style={{ marginTop: 8, textAlign: 'center' }}>
+                      <Image
+                        src={submissionData.proctoringData.referenceFaceImage}
+                        width={150}
+                        style={{ borderRadius: 8, border: '2px solid #1890ff', objectFit: 'cover' }}
+                        fallback="https://via.placeholder.com/150?text=Error"
+                      />
+                      <div style={{ marginTop: 4 }}>
+                        <Tag color="blue">{t('submissionDetail.referenceImage') || 'Reference Image'}</Tag>
+                      </div>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        ({t('common.clickToZoom') || 'Click to zoom'})
+                      </Text>
+                    </div>
+                  </div>
+                )}
 
                 <div className="detail-item">
                   <Text strong>{t('submissionDetail.submittedAt')}: </Text>
