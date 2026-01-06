@@ -28,7 +28,17 @@
     "haveAccount": "アカウントをお持ちですか？",
     "registerNow": "今すぐ登録",
     "loginNow": "今すぐログイン",
-    "googleLogin": "Googleでログイン"
+    "googleLogin": "Googleでログイン",
+    "welcome": "ようこそ",
+    "selectRolePrompt": "役割を選択して続行してください",
+    "student": "学生",
+    "studentDescription": "学習して試験を受けたい",
+    "continueAsStudent": "学生として続行",
+    "teacher": "教師",
+    "teacherDescription": "試験を作成してクラスを管理したい",
+    "continueAsTeacher": "教師として続行",
+    "roleSelectionSuccess": "役割の選択に成功しました",
+    "roleSelectionError": "役割の選択に失敗しました"
   },
   "dashboard": {
     "home": "ホーム",

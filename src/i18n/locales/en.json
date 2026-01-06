@@ -28,7 +28,17 @@
     "haveAccount": "Already have an account?",
     "registerNow": "Register now",
     "loginNow": "Login now",
-    "googleLogin": "Login with Google"
+    "googleLogin": "Login with Google",
+    "welcome": "Welcome",
+    "selectRolePrompt": "Select your role to continue",
+    "student": "Student",
+    "studentDescription": "I want to learn and take exams",
+    "continueAsStudent": "Continue as Student",
+    "teacher": "Teacher",
+    "teacherDescription": "I want to create exams and manage classes",
+    "continueAsTeacher": "Continue as Teacher",
+    "roleSelectionSuccess": "Role selected successfully",
+    "roleSelectionError": "Failed to select role"
   },
   "dashboard": {
     "home": "Home",

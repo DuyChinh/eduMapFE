@@ -28,7 +28,17 @@
     "haveAccount": "Đã có tài khoản?",
     "registerNow": "Đăng ký ngay",
     "loginNow": "Đăng nhập ngay",
-    "googleLogin": "Đăng nhập với Google"
+    "googleLogin": "Đăng nhập với Google",
+    "welcome": "Chào mừng",
+    "selectRolePrompt": "Chọn vai trò của bạn để tiếp tục",
+    "student": "Học sinh",
+    "studentDescription": "Tôi muốn học tập và làm bài thi",
+    "continueAsStudent": "Tiếp tục với vai trò Học sinh",
+    "teacher": "Giáo viên",
+    "teacherDescription": "Tôi muốn tạo đề thi và quản lý lớp học",
+    "continueAsTeacher": "Tiếp tục với vai trò Giáo viên",
+    "roleSelectionSuccess": "Chọn vai trò thành công",
+    "roleSelectionError": "Lỗi khi chọn vai trò"
   },
   "dashboard": {
     "home": "Trang chủ",

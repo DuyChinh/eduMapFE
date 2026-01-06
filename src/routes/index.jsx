@@ -14,6 +14,7 @@ import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import ResetPassword from '../pages/auth/ResetPassword';
 import VerifyOTP from '../pages/auth/VerifyOTP';
+import RoleSelection from '../pages/auth/RoleSelection';
 
 // Teacher Pages
 import StudentExamDetail from '../pages/student/StudentExamDetail';
@@ -69,6 +70,10 @@ const RootRedirect = () => {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
+  if (!user?.role) {
+    return <Navigate to="/select-role" replace />;
+  }
+
   if (user?.role === USER_ROLES.TEACHER) {
     return <Navigate to={ROUTES.TEACHER_DASHBOARD} replace />;
   } else if (user?.role === USER_ROLES.STUDENT) {
@@ -95,6 +100,14 @@ const router = createBrowserRouter(
       <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
       <Route path="/auth/callback" element={<GoogleCallback />} />
       <Route path="/auth/google/callback" element={<GoogleCallback />} />
+      <Route 
+        path="/select-role" 
+        element={
+          <ProtectedRoute>
+            <RoleSelection />
+          </ProtectedRoute>
+        } 
+      />
 
       {/* Teacher Routes */}
       <Route
