@@ -354,7 +354,7 @@ const UploadQuestionsPdfModal = ({ visible, onClose, onSuccess, subjects }) => {
             width={1000}
             title={t('questions.pdf.title')}
             maskClosable={false}
-            destroyOnClose
+            destroyOnHidden
             style={{ top: 20 }}
         >
             <Steps current={currentStep} style={{ marginBottom: 24 }}>

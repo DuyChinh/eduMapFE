@@ -111,3 +111,33 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 .mb-1 { margin-bottom: 8px; }
 .mb-2 { margin-bottom: 16px; }
 .mb-3 { margin-bottom: 24px; }
+
+/* Ensure all modals appear above header (header z-index: 1001) */
+.ant-modal,
+.ant-modal-mask,
+.ant-modal-wrap {
+  z-index: 2000 !important;
+}
+
+/* Ensure dropdowns and popovers also appear above header */
+.ant-dropdown,
+.ant-popover,
+.ant-select-dropdown,
+.ant-picker-dropdown {
+  z-index: 2000 !important;
+}
+
+/* Ensure all custom modals appear above header */
+.modal-overlay,
+.delete-modal-overlay,
+[class*="modal-overlay"],
+[class*="Modal-overlay"] {
+  z-index: 2000 !important;
+}
+
+.modal-content,
+.delete-modal-content,
+[class*="modal-content"],
+[class*="Modal-content"] {
+  z-index: 2001 !important;
+}

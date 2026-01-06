@@ -120,6 +120,7 @@
     "public": "公開",
     "private": "非公開",
     "back": "戻る",
+    "goHome": "ホームへ",
     "backToDashboard": "ダッシュボードに戻る",
     "student": "学生",
     "add": "追加",
@@ -144,8 +145,15 @@
     "deleteClass": "クラスを削除しますか？",
     "deleteClassMessage": "このクラスを削除してもよろしいですか",
     "deletePost": "投稿を削除しますか？",
-    "deletePostMessage": "この投稿を削除してもよろしいですか",
-    "close": "閉じる"
+    "deletePostMessage": "この投稿を削除してもよろしいですか？",
+    "all": "すべて",
+    "startDate": "開始日",
+    "endDate": "終了日",
+    "index": "No.",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "clickToZoom": "クリックして拡大",
+    "language": "言語"
   },
   "qrScanner": {
     "title": "QRコードをスキャン",
@@ -192,6 +200,7 @@
     "loginNow": "今すぐログイン",
     "nameRequired": "氏名を入力してください！",
     "nameMinLength": "氏名は2文字以上である必要があります！",
+    "nameMaxLength": "氏名は128文字を超えてはいけません！",
     "confirmPasswordRequired": "パスワードを確認してください！",
     "passwordMismatch": "パスワードが一致しません！",
     "registerSuccess": "登録成功！ログインしてください。",
@@ -717,7 +726,7 @@
     "examPasswordMinLength": "パスワードは空にできません！",
     "examPasswordPlaceholder": "試験パスワードを入力...",
     "maxAttempts": "最大試行回数",
-    "maxAttemptsRequired": "最大試行回数を入力してください！",
+    "maxAttemptsRequired": "テスト回数を入力してください（無制限の場合は0を入力）！",
     "maxAttemptsMin": "最大試行回数は0より大きい必要があります！",
     "fee": "料金",
     "status": "ステータス",
@@ -930,6 +939,10 @@
   },
   "takeExam": {
     "fullscreenRequired": "フルスクリーンが必要です",
+    "minutes": "分",
+    "calculatingScore": "スコア計算中...",
+    "confirmSubmit": "提出してもよろしいですか？",
+    "unansweredQuestions": "未回答の質問があります。それでも提出しますか？",
     "fullscreenRequiredDesc": "この試験にはフルスクリーンモードが必要です。「フルスクリーンに入る」をクリックして続行してください。",
     "enterFullscreen": "フルスクリーンに入る",
     "loading": "試験を読み込み中...",
@@ -938,6 +951,9 @@
     "failedToStart": "試験を開始できませんでした",
     "timeRemaining": "残り時間",
     "timeUp": "時間切れです！試験を提出しています...",
+    "timeExpiredAutoSubmit": "試験時間が終了しました。試験は自動的に提出されています...",
+    "examAutoSubmitted": "試験が自動的に提出されました！",
+    "autoSubmitFailed": "試験の自動提出に失敗しました。先生に連絡してください。",
     "timeWarning": "時間警告",
     "onlyTimeRemaining": "残り",
     "question": "問題",
@@ -1026,7 +1042,47 @@
     "passwordPlaceholder": "試験パスワードを入力",
     "invalidPassword": "パスワードが正しくありません",
     "startExam": "試験を開始",
-    "failedToStart": "試験を開始できませんでした"
+    "failedToStart": "試験を開始できませんでした",
+    "loginRequired": "この試験を受けるにはログインが必要です",
+    "enterYourName": "氏名を入力してください",
+    "guestNamePlaceholder": "氏名",
+    "guestNameRequired": "氏名を入力してください",
+    "guestNameTooLong": "氏名は128文字以内で入力してください",
+    "examPassword": "試験パスワード",
+    "or": "または",
+    "loginToTakeExam": "ログインして受験する"
+  },
+  "guestExam": {
+    "sessionExpired": "セッションが終了しました",
+    "failedToLoad": "試験の読み込みに失敗しました",
+    "question": "問題",
+    "marks": "点",
+    "guestMode": "ゲスト",
+    "submit": "提出",
+    "previous": "前へ",
+    "next": "次へ",
+    "true": "正しい",
+    "false": "誤り",
+    "enterAnswer": "回答を入力",
+    "confirmSubmit": "提出確認",
+    "submitWarning": "本当に提出しますか？提出後は回答を変更できません。",
+    "answered": "回答済み",
+    "unanswered": "未回答",
+    "flagged": "フラグ付き",
+    "submitNow": "今すぐ提出",
+    "submitFailed": "提出に失敗しました",
+    "noQuestions": "問題がありません"
+  },
+  "guestResult": {
+    "examCompleted": "試験完了！",
+    "timeSpent": "所要時間",
+    "score": "スコア",
+    "lateSubmission": "遅延提出",
+    "thankYouMessage": "試験を完了していただきありがとうございます。結果は記録されました。",
+    "failedToLoad": "結果の読み込みに失敗しました",
+    "errorTitle": "エラー",
+    "notFound": "結果が見つかりません",
+    "registerCTA": "詳細な解答やその他の機能についてはEduMapに登録してください"
   },
   "reports": {
     "title": "クラスレポート",
@@ -1368,7 +1424,7 @@
       "free": {
         "title": "無料",
         "features": [
-          "1500 AIリクエスト / 日",
+          "5 AIリクエスト / 日",
           "基本的なマインドマップ機能",
           "コミュニティサポート",
           "公開ライブラリへのアクセス"
@@ -1377,7 +1433,7 @@
       "plus": {
         "title": "Plus",
         "features": [
-          "2000 AIリクエスト / 日",
+          "10 AIリクエスト / 日",
           "高度なマインドマップ出力",
           "優先サポート",
           "広告なし"
@@ -1386,7 +1442,7 @@
       "pro": {
         "title": "Pro",
         "features": [
-          "5000 AIリクエスト / 日",
+          "15 AIリクエスト / 日",
           "無制限のマインドマップ",
           "24時間365日専用サポート",
           "新機能への早期アクセス"
@@ -1405,5 +1461,100 @@
     "noFaceWarning": "警告：顔が検出されません！画面に戻ってください。",
     "multipleFacesWarning": "警告：複数の人が検出されました！一人で受験してください。",
     "cameraDeniedWarning": "警告：カメラにアクセスできません！試験がキャンセルされる可能性があります。"
+  },
+  "payment": {
+    "title": "支払い",
+    "history": "取引履歴",
+    "pending": "保留中",
+    "success": "成功",
+    "failed": "失敗",
+    "loading": "読み込み中...",
+    "processing": "処理中...",
+    "verifyTransaction": "取引を確認中...",
+    "paymentSuccess": "支払い成功！",
+    "paymentFailed": "支払い失敗！",
+    "paymentPending": "支払い保留中...",
+    "vipActivated": "サブスクリプションはすぐに有効化されました。",
+    "thankYou": "VIPに登録していただきありがとうございます。",
+    "experienceNow": "今すぐ体験",
+    "close": "閉じる",
+    "bankConfig": {
+      "title": "銀行振込による支払い",
+      "instruction": "QRコードをスキャンするか、以下の口座詳細に振り込んでください。システムは支払いを受け取ると自動的に有効化します。",
+      "bank": "銀行",
+      "accountOwner": "口座名義人",
+      "accountNumber": "口座番号",
+      "amount": "金額",
+      "content": "振込内容（必須）",
+      "copy": "コピーしました！"
+    },
+    "result": {
+      "successTitle": "支払い成功！",
+      "failedTitle": "支払い失敗！",
+      "successMessage": "取引成功！",
+      "failedMessage": "取引失敗",
+      "homeButton": "ホームに戻る",
+      "retryButton": "再試行",
+      "loadingTitle": "支払い結果を処理中...",
+      "loadingDesc": "ブラウザを閉じないでください。"
+    },
+    "historyModal": {
+      "txnRef": "取引参照",
+      "amount": "金額",
+      "content": "内容",
+      "status": "ステータス",
+      "date": "日付",
+      "loadError": "取引履歴の読み込みに失敗しました。",
+      "items": "件"
+    },
+    "selection": {
+      "title": "支払い方法を選択",
+      "vnpay": "VNPayで支払う (ATM/Visa)",
+      "sepay": "QRコードで支払う (24時間転送)"
+    }
+  },
+  "profile": {
+    "title": "プロフィール",
+    "editProfile": "プロフィール編集",
+    "saveChanges": "変更を保存",
+    "cancel": "キャンセル",
+    "uploadAvatar": "アバター変更",
+    "uploading": "アップロード中...",
+    "accountInfo": "アカウント情報",
+    "additionalInfo": "追加情報",
+    "fullName": "氏名",
+    "email": "メールアドレス",
+    "role": "役割",
+    "accountStatus": "アカウント状態",
+    "phone": "電話番号",
+    "dob": "生年月日",
+    "address": "住所",
+    "studentId": "学生ID",
+    "memberSince": "登録日",
+    "joined": "参加",
+    "notProvided": "未設定",
+    "enterName": "氏名を入力",
+    "enterPhone": "電話番号",
+    "enterAddress": "住所を入力",
+    "selectDate": "日付選択",
+    "validation": {
+      "nameRequired": "氏名を入力してください！",
+      "nameMin": "名前は2文字以上で入力してください！",
+      "nameMax": "名前は50文字以内で入力してください！",
+      "phoneInvalid": "有効な電話番号を入力してください！",
+      "phoneMin": "電話番号は10桁以上で入力してください！",
+      "phoneMax": "電話番号は15桁以内で入力してください！"
+    },
+    "uploadHint": "最大サイズ: 5MB • 対応形式: JPG, PNG, GIF, WEBP",
+    "uploadError": {
+      "type": "画像ファイルのみアップロード可能です！",
+      "size": "画像は5MB以下にしてください！",
+      "failed": "アバターのアップロードに失敗しました。再試行してください。"
+    },
+    "updateSuccess": "プロフィールを更新しました！",
+    "subscriptionPlan": "サブスクリプションプラン",
+    "expiresOn": "有効期限",
+    "daysLeft": "日残り",
+    "expired": "期限切れ"
   }
 }

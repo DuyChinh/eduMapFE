@@ -199,20 +199,49 @@ const TakeExam = () => {
           timerIntervalRef.current = null;
         }
 
-        // Start timer
-        if (remaining > 0) {
-          timerIntervalRef.current = setInterval(() => {
-            setTimeRemaining((prev) => {
-              if (prev <= 1) {
-                if (handleTimeUpRef.current) {
-                  handleTimeUpRef.current();
-                }
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
+        // If time has already expired, auto-submit the exam
+        if (remaining <= 0) {
+          // Show message and auto-submit
+          message.info(t("takeExam.timeExpiredAutoSubmit") || "Time has expired. Your exam is being submitted automatically...");
+          
+          // Auto-submit the exam
+          try {
+            const answersArray = Object.entries(initialAnswers).map(
+              ([questionId, value]) => ({
+                questionId,
+                value,
+              })
+            );
+            await updateSubmissionAnswers(submissionResult._id, answersArray);
+            const response = await submitExam(submissionResult._id);
+            
+            const submissionData = response.data?.data || response.data || response;
+            const submissionId = submissionData?._id || response.data?._id || response.data?.data?._id || response._id;
+            
+            message.success(t("takeExam.examAutoSubmitted") || "Your exam has been automatically submitted!");
+            navigate(`/student/results/${submissionId}`, { replace: true });
+            return true;
+          } catch (submitError) {
+            console.error("Auto-submit failed:", submitError);
+            // If auto-submit fails, redirect to dashboard with error message
+            message.error(t("takeExam.autoSubmitFailed") || "Failed to auto-submit exam. Please contact your teacher.");
+            navigate("/student/dashboard", { replace: true });
+            return false;
+          }
         }
+
+        // Start timer only if there's time remaining
+        timerIntervalRef.current = setInterval(() => {
+          setTimeRemaining((prev) => {
+            if (prev <= 1) {
+              if (handleTimeUpRef.current) {
+                handleTimeUpRef.current();
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
 
         if (autoSaveIntervalRef.current) {
           clearInterval(autoSaveIntervalRef.current);

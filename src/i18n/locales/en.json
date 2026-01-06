@@ -95,6 +95,7 @@
     "languageChanged": "Language changed to"
   },
   "common": {
+    "selectAll": "Select All",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -120,6 +121,7 @@
     "public": "Public",
     "private": "Private",
     "back": "Back",
+    "goHome": "Go Home",
     "backToDashboard": "Back to Dashboard",
     "student": "Student",
     "add": "Add",
@@ -144,8 +146,15 @@
     "deleteClass": "Delete Class?",
     "deleteClassMessage": "Are you sure you want to delete this class",
     "deletePost": "Delete Post?",
-    "deletePostMessage": "Are you sure you want to delete this post",
-    "close": "Close"
+    "deletePostMessage": "Are you sure you want to delete this post?",
+    "all": "All",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "index": "No.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "clickToZoom": "Click to zoom",
+    "language": "Language"
   },
   "qrScanner": {
     "title": "Scan QR Code",
@@ -481,7 +490,6 @@
     "tags": "Tags",
     "isPublic": "Public",
     "answer": "Answer",
-    "images": "Images",
     "choices": "Choices",
     "createdAt": "Created At",
     "viewDetails": "View Details",
@@ -765,7 +773,7 @@
     "examPasswordMinLength": "Password cannot be empty!",
     "examPasswordPlaceholder": "Enter exam password...",
     "maxAttempts": "Max Attempts",
-    "maxAttemptsRequired": "Please enter max attempts!",
+    "maxAttemptsRequired": "Please enter max attempts (enter 0 for unlimited)!",
     "maxAttemptsMin": "Max attempts must be greater than 0!",
     "fee": "Fee",
     "status": "Status",
@@ -823,7 +831,9 @@
     "viewExamNever": "Never",
     "viewExamAfterCompletion": "After Completion",
     "viewExamAfterAllFinish": "After All Finish",
+    "startTimeRequired": "Please select start time!",
     "selectStartTime": "Select Start Time",
+    "endTimeRequired": "Please select end time!",
     "selectEndTime": "Select End Time",
     "startTimeMustBeBeforeEndTime": "Start time must be before end time!",
     "endTimeMustBeAfterStartTime": "End time must be after start time!",
@@ -1023,6 +1033,10 @@
   },
   "takeExam": {
     "fullscreenRequired": "Fullscreen Required",
+    "minutes": "minutes",
+    "calculatingScore": "Calculating Score...",
+    "confirmSubmit": "Are you sure you want to submit?",
+    "unansweredQuestions": "You have unresponsive questions. Do you still want to pay?",
     "fullscreenRequiredDesc": "This exam requires fullscreen mode. Please click \"Enter Fullscreen\" to continue.",
     "enterFullscreen": "Enter Fullscreen",
     "loading": "Loading exam...",
@@ -1037,6 +1051,9 @@
     "failedToStart": "Failed to start exam",
     "timeRemaining": "Time Remaining",
     "timeUp": "Time is up! Submitting your exam...",
+    "timeExpiredAutoSubmit": "Time has expired. Your exam is being submitted automatically...",
+    "examAutoSubmitted": "Your exam has been automatically submitted!",
+    "autoSubmitFailed": "Failed to auto-submit exam. Please contact your teacher.",
     "timeWarning": "Time Warning",
     "onlyTimeRemaining": "Only",
     "question": "Question",
@@ -1094,7 +1111,6 @@
     "late": "Late",
     "submitted": "Submitted",
     "timeSpent": "Time Spent",
-    "minutes": "minutes",
     "leaderboard": "Leaderboard",
     "rank": "Rank",
     "studentName": "Student",
@@ -1128,7 +1144,47 @@
     "passwordPlaceholder": "Enter exam password",
     "invalidPassword": "Invalid password",
     "startExam": "Start Exam",
-    "failedToStart": "Failed to start exam"
+    "failedToStart": "Failed to start exam",
+    "loginRequired": "Please log in to take this exam",
+    "enterYourName": "Enter your name",
+    "guestNamePlaceholder": "Full name",
+    "guestNameRequired": "Please enter your name",
+    "guestNameTooLong": "Name cannot exceed 128 characters",
+    "examPassword": "Exam password",
+    "or": "or",
+    "loginToTakeExam": "Log in to take exam"
+  },
+  "guestExam": {
+    "sessionExpired": "Session expired",
+    "failedToLoad": "Failed to load exam",
+    "question": "Question",
+    "marks": "marks",
+    "guestMode": "Guest",
+    "submit": "Submit",
+    "previous": "Previous",
+    "next": "Next",
+    "true": "True",
+    "false": "False",
+    "enterAnswer": "Enter your answer",
+    "confirmSubmit": "Confirm Submit",
+    "submitWarning": "Are you sure you want to submit? You cannot modify your answers after submission.",
+    "answered": "Answered",
+    "unanswered": "Unanswered",
+    "flagged": "Flagged",
+    "submitNow": "Submit Now",
+    "submitFailed": "Failed to submit",
+    "noQuestions": "No questions available"
+  },
+  "guestResult": {
+    "examCompleted": "Exam Completed!",
+    "timeSpent": "Time Spent",
+    "score": "Score",
+    "lateSubmission": "Late Submission",
+    "thankYouMessage": "Thank you for completing the exam. Your result has been recorded.",
+    "failedToLoad": "Failed to load result",
+    "errorTitle": "Error",
+    "notFound": "Result not found",
+    "registerCTA": "Register EduMap for detailed answers and more features"
   },
   "reports": {
     "title": "Class Report",
@@ -1471,7 +1527,7 @@
       "free": {
         "title": "Free",
         "features": [
-          "1500 AI Requests / Day",
+          "5 AI Requests / Day",
           "Basic Mindmap Features",
           "Community Support",
           "Access to Public Library"
@@ -1480,7 +1536,7 @@
       "plus": {
         "title": "Plus",
         "features": [
-          "2000 AI Requests / Day",
+          "10 AI Requests / Day",
           "Advanced Mindmap Export",
           "Priority Support",
           "No Ads"
@@ -1489,7 +1545,7 @@
       "pro": {
         "title": "Pro",
         "features": [
-          "5000 AI Requests / Day",
+          "15 AI Requests / Day",
           "Unlimited Mindmaps",
           "24/7 Dedicated Support",
           "Early Access to Features"
@@ -1516,5 +1572,100 @@
     "noFaceWarning": "Warning: No face detected! Please return to the screen.",
     "no_face": "No Face Detected",
     "cameraDeniedWarning": "Warning: Camera access denied! The exam may be cancelled."
+  },
+  "payment": {
+    "title": "Payment",
+    "history": "Transaction History",
+    "pending": "Pending",
+    "success": "Success",
+    "failed": "Failed",
+    "loading": "Loading...",
+    "processing": "Processing...",
+    "verifyTransaction": "Verifying transaction...",
+    "paymentSuccess": "Payment Successful!",
+    "paymentFailed": "Payment Failed!",
+    "paymentPending": "Payment Pending...",
+    "vipActivated": "Your subscription has been activated immediately.",
+    "thankYou": "Thank you for subscribing to VIP.",
+    "experienceNow": "Experience Now",
+    "close": "Close",
+    "bankConfig": {
+      "title": "Payment via Bank Transfer",
+      "instruction": "Please scan the QR code or transfer to the account details below. The system will automatically activate upon receiving payment.",
+      "bank": "Bank",
+      "accountOwner": "Account Owner",
+      "accountNumber": "Account Number",
+      "amount": "Amount",
+      "content": "Transfer Content (Required)",
+      "copy": "Copied!"
+    },
+    "result": {
+      "successTitle": "Payment Successful!",
+      "failedTitle": "Payment Failed!",
+      "successMessage": "Transaction Successful!",
+      "failedMessage": "Transaction Failed",
+      "homeButton": "Back to Home",
+      "retryButton": "Try Again",
+      "loadingTitle": "Processing payment result...",
+      "loadingDesc": "Please do not close the browser."
+    },
+    "historyModal": {
+      "txnRef": "Txn Ref",
+      "amount": "Amount",
+      "content": "Content",
+      "status": "Status",
+      "date": "Date",
+      "loadError": "Failed to load transaction history.",
+      "items": "transactions"
+    },
+    "selection": {
+      "title": "Select Payment Method",
+      "vnpay": "Pay via VNPay (ATM/Visa)",
+      "sepay": "Pay via QR Code (24/7 Transfer)"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "uploadAvatar": "Change Avatar",
+    "uploading": "Uploading...",
+    "accountInfo": "Account Information",
+    "additionalInfo": "Additional Information",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "role": "Role",
+    "accountStatus": "Account Status",
+    "phone": "Phone Number",
+    "dob": "Date of Birth",
+    "address": "Address",
+    "studentId": "Student ID",
+    "memberSince": "Member Since",
+    "joined": "Joined",
+    "notProvided": "Not provided",
+    "enterName": "Enter your full name",
+    "enterPhone": "Phone number",
+    "enterAddress": "Enter your address",
+    "selectDate": "Select date",
+    "validation": {
+      "nameRequired": "Please enter your name!",
+      "nameMin": "Name must be at least 2 characters!",
+      "nameMax": "Name cannot exceed 50 characters!",
+      "phoneInvalid": "Please enter a valid phone number!",
+      "phoneMin": "Phone number must be at least 10 digits!",
+      "phoneMax": "Phone number cannot exceed 15 digits!"
+    },
+    "uploadHint": "Max size: 5MB • Supported: JPG, PNG, GIF, WEBP",
+    "uploadError": {
+      "type": "You can only upload image files!",
+      "size": "Image must be smaller than 5MB!",
+      "failed": "Failed to upload avatar. Please try again."
+    },
+    "updateSuccess": "Profile updated successfully!",
+    "subscriptionPlan": "Subscription Plan",
+    "expiresOn": "Expires On",
+    "daysLeft": "days left",
+    "expired": "Expired"
   }
 }
