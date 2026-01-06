@@ -34,7 +34,8 @@ import {
   Tabs,
   Tag,
   Timeline,
-  Typography
+  Typography,
+  Image
 } from 'antd';
 import { MathJax, MathJaxContext } from 'better-react-mathjax';
 import { useEffect, useState } from 'react';
@@ -156,6 +157,7 @@ const StudentExamDetail = () => {
       no_face: <UserDeleteOutlined style={{ color: '#ff4d4f' }} />,
       multiple_faces: <TeamOutlined style={{ color: '#ff4d4f' }} />,
       camera_denied: <VideoCameraOutlined style={{ color: '#ff4d4f' }} />,
+      face_mismatch: <UserDeleteOutlined style={{ color: '#ff4d4f' }} />,
     };
     return icons[type] || <ClockCircleOutlined />;
   };
@@ -175,6 +177,7 @@ const StudentExamDetail = () => {
       no_face: 'red',
       multiple_faces: 'red',
       camera_denied: 'red',
+      face_mismatch: 'red',
     };
     return colors[type] || 'default';
   };
@@ -215,6 +218,7 @@ const StudentExamDetail = () => {
       no_face: t('submissionDetail.activityTypes.noFace'),
       multiple_faces: t('submissionDetail.activityTypes.multipleFaces'),
       camera_denied: t('submissionDetail.activityTypes.cameraDenied'),
+      face_mismatch: t('submissionDetail.activityTypes.faceMismatch') || 'Face Mismatch',
     };
     return typeMap[type] || type;
   };
@@ -580,6 +584,26 @@ const StudentExamDetail = () => {
                   <Text strong>{t('submissionDetail.timeSpent')}: </Text>
                   <Text>{formatTimeSpent(submissionData.timeSpent)}</Text>
                 </div>
+
+                {submissionData.proctoringData?.referenceFaceImage && (
+                  <div className="detail-item" style={{ flexDirection: 'column', alignItems: 'center', marginTop: 12 }}>
+                    <Text strong>{t('submissionDetail.referenceFace') || 'Candidate Verification'}: </Text>
+                    <div style={{ marginTop: 8, textAlign: 'center' }}>
+                      <Image
+                        src={submissionData.proctoringData.referenceFaceImage}
+                        width={150}
+                        style={{ borderRadius: 8, border: '2px solid #1890ff', objectFit: 'cover' }}
+                        fallback="https://via.placeholder.com/150?text=Error"
+                      />
+                      <div style={{ marginTop: 4 }}>
+                        <Tag color="blue">{t('submissionDetail.referenceImage') || 'Reference Image'}</Tag>
+                      </div>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        ({t('common.clickToZoom') || 'Click to zoom'})
+                      </Text>
+                    </div>
+                  </div>
+                )}
 
                 <div className="detail-item">
                   <Text strong>{t('submissionDetail.submittedAt')}: </Text>

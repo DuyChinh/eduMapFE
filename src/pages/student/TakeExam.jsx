@@ -327,16 +327,7 @@ const TakeExam = () => {
     };
 
     // Add event listeners based on monitoring level
-    // screenExit: Only monitor visibility changes (tab switch, minimize)
-    if (autoMonitoring === 'screenExit') {
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      window.addEventListener("beforeunload", handleBeforeUnload);
 
-      return () => {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-      };
-    }
 
     // fullMonitoring (or any other value): Full monitoring
     // Add all event listeners
@@ -653,8 +644,20 @@ const TakeExam = () => {
     }
   }, [submission, exam, referenceLandmarks, loading]);
 
-  const handleFaceCaptured = (landmarks) => {
+  const handleFaceCaptured = async (landmarks, imageData) => {
     setReferenceLandmarks(landmarks);
+
+    // Upload face image to server if available
+    if (imageData && submission) {
+      try {
+        const { updateFaceImage } = await import("../../api/submissionService");
+        await updateFaceImage(submission._id, imageData);
+      } catch (error) {
+        console.error("Failed to upload face image:", error);
+        // Don't block exam start on upload failure, just log it
+      }
+    }
+
     setShowVerificationModal(false);
     message.success(t('proctor.identityVerified') || 'Identity Verified Successfully');
   };

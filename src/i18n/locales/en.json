@@ -843,7 +843,7 @@
     "securitySettings": "Security Settings",
     "autoMonitoring": "Monitoring Mode",
     "monitoringOff": "Monitoring Off",
-    "monitoringScreenExit": "Screen Exit Warning",
+    "monitoringScreenExit": "Screen Monitoring (No Camera)",
     "monitoringFull": "Full Monitoring (Camera & Screen Exit)",
     "studentVerification": "Student Verification",
     "noStudentVerification": "No Student Verification",
@@ -1202,6 +1202,8 @@
     "examName": "Exam",
     "unknownStudent": "Unknown Student",
     "detailedInfo": "Detailed Info",
+    "referenceFace": "Candidate Verification",
+    "referenceImage": "Reference Image",
     "score": "Score",
     "comment": "Comment",
     "commentPlaceholder": "Enter your comment...",
@@ -1231,7 +1233,8 @@
       "pasteAttempt": "Paste Attempt",
       "noFace": "No Face Detected",
       "multipleFaces": "Multiple Faces Detected",
-      "cameraDenied": "Camera Off"
+      "cameraDenied": "Camera Off",
+      "faceMismatch": "Face Mismatch"
     },
     "severity": {
       "low": "Low",

@@ -790,7 +790,7 @@
     "securitySettings": "セキュリティ設定",
     "autoMonitoring": "監視モード",
     "monitoringOff": "監視オフ",
-    "monitoringScreenExit": "画面離脱警告",
+    "monitoringScreenExit": "画面監視（カメラなし）",
     "monitoringFull": "完全監視（カメラ＆画面離脱）",
     "studentVerification": "学生認証",
     "noStudentVerification": "学生認証なし",
@@ -1100,6 +1100,8 @@
     "examName": "試験",
     "unknownStudent": "不明な学生",
     "detailedInfo": "詳細情報",
+    "referenceFace": "受験者の本人確認",
+    "referenceImage": "参照画像",
     "score": "スコア",
     "comment": "コメント",
     "commentPlaceholder": "コメントを入力...",
@@ -1129,7 +1131,8 @@
       "pasteAttempt": "貼り付け試行",
       "noFace": "顔が検出されません",
       "multipleFaces": "複数の顔が検出されました",
-      "cameraDenied": "カメラオフ"
+      "cameraDenied": "カメラオフ",
+      "faceMismatch": "顔が一致しません"
     },
     "severity": {
       "low": "低",

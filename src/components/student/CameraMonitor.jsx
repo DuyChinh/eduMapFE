@@ -53,7 +53,7 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
                     return;
                 }
 
-                console.log('MediaPipe Face Landmarker loaded');
+                // console.log('MediaPipe Face Landmarker loaded');
                 landmarkerRef.current = landmarker;
                 setModelLoaded(true);
                 startCamera(isCancelled); // Pass cancellation status check logic if needed, or rely on ref check in startCamera
@@ -263,8 +263,22 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
     const performCapture = () => {
         if (!landmarkerRef.current || !videoRef.current) return;
         const result = landmarkerRef.current.detectForVideo(videoRef.current, performance.now());
+
         if (result.faceLandmarks && result.faceLandmarks.length > 0) {
-            if (onCapture) onCapture(result.faceLandmarks[0]);
+            // Create canvas to capture image
+            const canvas = document.createElement('canvas');
+            canvas.width = videoRef.current.videoWidth;
+            canvas.height = videoRef.current.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            // Draw video frame
+            ctx.scale(-1, 1);
+            ctx.drawImage(videoRef.current, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+            if (onCapture) onCapture(result.faceLandmarks[0], imageDataUrl);
         } else {
             messageApi.error(t('proctor.captureError') || 'No face detected. Please look at the camera.');
         }

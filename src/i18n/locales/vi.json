@@ -837,7 +837,7 @@
     "securitySettings": "Cài đặt bảo mật",
     "autoMonitoring": "Chế độ giám sát",
     "monitoringOff": "Tắt giám sát",
-    "monitoringScreenExit": "Cảnh báo rời màn hình",
+    "monitoringScreenExit": "Giám sát màn hình (Không Camera)",
     "monitoringFull": "Giám sát toàn diện (Camera & Rời màn hình)",
     "studentVerification": "Xác thực học sinh",
     "noStudentVerification": "Không xác thực học sinh",
@@ -1182,6 +1182,8 @@
     "examName": "Bài thi",
     "unknownStudent": "Học sinh",
     "detailedInfo": "Thông tin chi tiết",
+    "referenceFace": "Xác minh thí sinh",
+    "referenceImage": "Ảnh tham chiếu",
     "score": "Điểm số",
     "comment": "Nhận xét",
     "commentPlaceholder": "Nhập nhận xét của bạn...",
@@ -1211,7 +1213,8 @@
       "pasteAttempt": "Cố gắng dán",
       "noFace": "Không thấy khuôn mặt",
       "multipleFaces": "Phát hiện nhiều người",
-      "cameraDenied": "Tắt Camera"
+      "cameraDenied": "Tắt Camera",
+      "faceMismatch": "Khuôn mặt không khớp"
     },
     "severity": {
       "low": "Thấp",

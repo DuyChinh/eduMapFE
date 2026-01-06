@@ -64,7 +64,7 @@ const EditExam = () => {
   const [currentSubjectId, setCurrentSubjectId] = useState(null);
   const [grades, setGrades] = useState([]);
   const classesFetchedRef = useRef(false); // Track if classes have been fetched
-  
+
   // Delete modal state
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [questionToRemove, setQuestionToRemove] = useState(null);
@@ -299,10 +299,10 @@ const EditExam = () => {
   const distributeMarksEvenly = (questions) => {
     const totalMarks = form.getFieldValue('totalMarks') || 100;
     if (questions.length === 0) return questions;
-    
+
     // Calculate exact marks per question (keep full precision)
     const marksPerQuestion = totalMarks / questions.length;
-    
+
     return questions.map((q) => {
       return {
         ...q,
@@ -344,7 +344,7 @@ const EditExam = () => {
       marks: 1,
       isRequired: true,
     }));
-    
+
     setSelectedQuestions([...selectedQuestions, ...questionsWithDetails]);
     message.success(`${t('common.add')} ${newQuestions.length} ${t('questions.items') || 'questions'}`);
   };
@@ -373,7 +373,7 @@ const EditExam = () => {
 
   const handleConfirmRemoveQuestion = () => {
     if (!questionToRemove) return;
-    
+
     const questionId = questionToRemove._id || questionToRemove.id;
     const updated = selectedQuestions
       .filter(q => (q._id || q.id) !== questionId)
@@ -456,7 +456,7 @@ const EditExam = () => {
         const marksValue = record.marks;
         // Truncate to 2 decimal places for display (not rounding)
         const displayValue = marksValue != null ? Math.floor(marksValue * 100) / 100 : 0;
-        
+
         return (
           <InputNumber
             min={0}
@@ -474,10 +474,10 @@ const EditExam = () => {
       key: 'actions',
       width: 80,
       render: (_, record) => (
-        <Button 
-          type="text" 
-          danger 
-          icon={<DeleteOutlined />} 
+        <Button
+          type="text"
+          danger
+          icon={<DeleteOutlined />}
           size="small"
           onClick={() => handleRemoveQuestionClick(record)}
         />
@@ -490,9 +490,9 @@ const EditExam = () => {
     const totalQuestionMarks = calculateTotalQuestionMarks();
     // Allow small difference (0.01) due to decimal precision
     if (Math.abs(totalQuestionMarks - values.totalMarks) >= 0.01) {
-      message.error(t('exams.marksMismatchWithValues', { 
-        questionMarks: truncateToDecimals(totalQuestionMarks), 
-        totalMarks: values.totalMarks 
+      message.error(t('exams.marksMismatchWithValues', {
+        questionMarks: truncateToDecimals(totalQuestionMarks),
+        totalMarks: values.totalMarks
       }));
       return;
     }
@@ -654,7 +654,7 @@ const EditExam = () => {
                     {grades.map(grade => {
                       const currentLang = localStorage.getItem('language') || 'vi';
                       let gradeName = grade.name;
-                      
+
                       switch (currentLang) {
                         case 'en':
                           gradeName = grade.name_en || grade.name;
@@ -663,7 +663,7 @@ const EditExam = () => {
                           gradeName = grade.name_jp || grade.name;
                           break;
                       }
-                      
+
                       return (
                         <Option key={grade._id} value={grade._id}>
                           {gradeName}
@@ -923,13 +923,13 @@ const EditExam = () => {
                 </Form.Item>
               </Space>
 
-              <Form.Item 
-                name="blockLateEntry" 
+              <Form.Item
+                name="blockLateEntry"
                 valuePropName="checked"
                 style={{ marginBottom: '12px' }}
               >
-                <Switch 
-                  checkedChildren={t('exams.allowLateEntryAnytime')} 
+                <Switch
+                  checkedChildren={t('exams.allowLateEntryAnytime')}
                   unCheckedChildren={t('exams.blockLateEntry')}
                   onChange={(checked) => {
                     if (checked) {
@@ -950,7 +950,7 @@ const EditExam = () => {
                 {({ getFieldValue }) => {
                   const blockLateEntry = getFieldValue('blockLateEntry');
                   return !blockLateEntry ? (
-                    <Form.Item 
+                    <Form.Item
                       label={t('exams.lateEntryGracePeriod')}
                       name="lateEntryGracePeriod"
                       tooltip={t('exams.lateEntryGracePeriodTooltip')}
