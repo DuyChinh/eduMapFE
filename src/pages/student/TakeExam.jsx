@@ -40,8 +40,10 @@ import {
 import useAuthStore from "../../store/authStore";
 import useThemeStore from "../../store/themeStore";
 import "./TakeExam.css";
+import CameraMonitor from "../../components/student/CameraMonitor";
 
 const { Title, Text, Paragraph } = Typography;
+
 
 const TakeExam = () => {
   const { examId } = useParams();
@@ -130,14 +132,14 @@ const TakeExam = () => {
 
         // Re-order questions based on questionOrder (prefer top-level result, fallback to submission)
         const questionOrder = result.questionOrder || submissionResult.questionOrder;
-        
+
         if (questionOrder && questionOrder.length > 0) {
           const orderedQuestions = [];
           const questionMap = new Map();
-          
+
           examData.questions.forEach(q => {
-             const qId = q.questionId._id || q.questionId;
-             questionMap.set(qId.toString(), q);
+            const qId = q.questionId._id || q.questionId;
+            questionMap.set(qId.toString(), q);
           });
 
           questionOrder.forEach(qId => {
@@ -145,18 +147,18 @@ const TakeExam = () => {
               orderedQuestions.push(questionMap.get(qId.toString()));
             }
           });
-          
+
           // Add any remaining questions that might not be in the order list (fallback)
           examData.questions.forEach(q => {
-             const qId = q.questionId._id || q.questionId;
-             if (!questionOrder.includes(qId.toString())) {
-               orderedQuestions.push(q);
-             }
+            const qId = q.questionId._id || q.questionId;
+            if (!questionOrder.includes(qId.toString())) {
+              orderedQuestions.push(q);
+            }
           });
 
           // Only update if we successfully matched questions
           if (orderedQuestions.length > 0) {
-             examData.questions = orderedQuestions;
+            examData.questions = orderedQuestions;
           }
         }
 
@@ -354,16 +356,7 @@ const TakeExam = () => {
     };
 
     // Add event listeners based on monitoring level
-    // screenExit: Only monitor visibility changes (tab switch, minimize)
-    if (autoMonitoring === 'screenExit') {
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      window.addEventListener("beforeunload", handleBeforeUnload);
 
-      return () => {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-      };
-    }
 
     // fullMonitoring (or any other value): Full monitoring
     // Add all event listeners
@@ -402,7 +395,7 @@ const TakeExam = () => {
         console.error("Error attempting to enable fullscreen:", err);
         // If automatic entry fails (likely), we ensure the modal shows
         if (!document.fullscreenElement) {
-           handleFullscreenChangeEnforce();
+          handleFullscreenChangeEnforce();
         }
       }
     };
@@ -427,7 +420,7 @@ const TakeExam = () => {
     // Check immediately on mount. If not in fullscreen, show the modal.
     // We can't auto-request fullscreen without user interaction, so we show the modal.
     if (!document.fullscreenElement) {
-       handleFullscreenChangeEnforce();
+      handleFullscreenChangeEnforce();
     }
 
     document.addEventListener("fullscreenchange", handleFullscreenChangeEnforce);
@@ -669,6 +662,36 @@ const TakeExam = () => {
     }
   }, [submission, answers, navigate]);
 
+  // --- FACE VERIFICATION LOGIC ---
+  const [referenceLandmarks, setReferenceLandmarks] = useState(null);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+
+  // Trigger Verification if AutoMonitoring is ON
+  useEffect(() => {
+    if (submission && exam?.autoMonitoring === 'fullMonitoring' && !referenceLandmarks && !loading) {
+      setShowVerificationModal(true);
+    }
+  }, [submission, exam, referenceLandmarks, loading]);
+
+  const handleFaceCaptured = async (landmarks, imageData) => {
+    setReferenceLandmarks(landmarks);
+
+    // Upload face image to server if available
+    if (imageData && submission) {
+      try {
+        const { updateFaceImage } = await import("../../api/submissionService");
+        await updateFaceImage(submission._id, imageData);
+      } catch (error) {
+        console.error("Failed to upload face image:", error);
+        // Don't block exam start on upload failure, just log it
+      }
+    }
+
+    setShowVerificationModal(false);
+    message.success(t('proctor.identityVerified') || 'Identity Verified Successfully');
+  };
+  // -------------------------------
+
   // Handle time up
   const handleTimeUp = useCallback(async () => {
     if (timerIntervalRef.current) {
@@ -691,6 +714,23 @@ const TakeExam = () => {
       [questionId]: value,
     }));
   };
+
+  const handleProctorViolation = useCallback((type, details) => {
+    if (!submission) return;
+
+    let priority = 'medium';
+    if (type === 'multiple_faces') priority = 'high';
+    if (type === 'camera_denied') priority = 'high';
+
+    logProctorEvent(submission._id, type, priority, details);
+
+    // Optional: Show warning message
+    if (type === 'multiple_faces' && details.count > 1) {
+      // Debounce this in real app
+      message.warning(t('proctor.multipleFacesWarning') || 'Warning: Multiple faces detected!');
+    }
+  }, [submission, t]);
+
   // Navigation
   const goToQuestion = (index) => {
     setCurrentQuestionIndex(index);
@@ -1133,7 +1173,7 @@ const TakeExam = () => {
     if (!currentQ) return { displayIndex: globalIndex + 1, sectionTitle: null };
 
     const currentType = currentQ.questionId.type || 'mcq';
-    
+
     // Find how many questions of the same type appear BEFORE this one
     let localIndex = 0;
     for (let i = 0; i <= globalIndex; i++) {
@@ -1144,7 +1184,7 @@ const TakeExam = () => {
 
     // Check if it's the first one of this type
     const isFirstInSection = globalIndex === 0 || (exam.questions[globalIndex - 1].questionId.type || 'mcq') !== currentType;
-    
+
     return {
       displayIndex: localIndex,
       sectionTitle: TYPE_LABELS[currentType],
@@ -1279,9 +1319,9 @@ const TakeExam = () => {
                 return (
                   <div key={index}>
                     {isFirstInSection && (
-                      <div className="section-header" style={{ 
-                        padding: '16px 24px', 
-                        background: isDarkMode ? '#1f2937' : '#e6f7ff', 
+                      <div className="section-header" style={{
+                        padding: '16px 24px',
+                        background: isDarkMode ? '#1f2937' : '#e6f7ff',
                         borderBottom: `1px solid ${isDarkMode ? '#374151' : '#1890ff'}`,
                         borderTop: index > 0 ? `1px solid ${isDarkMode ? '#374151' : '#f0f0f0'}` : 'none',
                         marginBottom: 16,
@@ -1292,59 +1332,80 @@ const TakeExam = () => {
                         {sectionTitle}
                       </div>
                     )}
-                  <Card className="question-item-card">
-                    <div className="question-item-header">
-                      <Text strong className="question-number">
-                        {t("takeExam.questionNumber")} {displayIndex}
-                      </Text>
-                      <Button
-                        type="text"
-                        icon={<FlagOutlined />}
-                        onClick={(e) => toggleFlag(index, e)}
-                        className={`flag-button ${flaggedQuestions.has(index) ? "flagged" : ""
-                          }`}
-                        title={
-                          flaggedQuestions.has(index)
-                            ? t("takeExam.unflagQuestion")
-                            : t("takeExam.flagQuestion")
-                        }
-                      />
-                    </div>
+                    <Card className="question-item-card">
+                      <div className="question-item-header">
+                        <Text strong className="question-number">
+                          {t("takeExam.questionNumber")} {displayIndex}
+                        </Text>
+                        <Button
+                          type="text"
+                          icon={<FlagOutlined />}
+                          onClick={(e) => toggleFlag(index, e)}
+                          className={`flag-button ${flaggedQuestions.has(index) ? "flagged" : ""
+                            }`}
+                          title={
+                            flaggedQuestions.has(index)
+                              ? t("takeExam.unflagQuestion")
+                              : t("takeExam.flagQuestion")
+                          }
+                        />
+                      </div>
 
-                    <div className="question-item-content">
-                      <Paragraph
-                        className="question-text"
-                        style={{
-                          wordWrap: "break-word",
-                          overflowWrap: "break-word",
-                          whiteSpace: "pre-wrap",
-                          fontFamily: "inherit",
-                        }}
-                      >
-                        {renderMathContent(
-                          (question.text || question.name || "").replace(
-                            /^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i,
-                            ""
-                          )
-                        )}
-                      </Paragraph>
-
-                      {/* Render question images */}
-                      {question.images && question.images.length > 0 ? (
-                        <div
+                      <div className="question-item-content">
+                        <Paragraph
+                          className="question-text"
                           style={{
-                            marginBottom: "16px",
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: "8px",
-                            justifyContent: "center",
+                            wordWrap: "break-word",
+                            overflowWrap: "break-word",
+                            whiteSpace: "pre-wrap",
+                            fontFamily: "inherit",
                           }}
                         >
-                          {question.images.map((imgUrl, idx) => (
+                          {renderMathContent(
+                            (question.text || question.name || "").replace(
+                              /^(Câu(\s+hỏi)?|Question)\s+\d+[:.]\s*/i,
+                              ""
+                            )
+                          )}
+                        </Paragraph>
+
+                        {/* Render question images */}
+                        {question.images && question.images.length > 0 ? (
+                          <div
+                            style={{
+                              marginBottom: "16px",
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "8px",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {question.images.map((imgUrl, idx) => (
+                              <img
+                                key={idx}
+                                src={imgUrl}
+                                alt={`Question Illustration ${idx + 1}`}
+                                style={{
+                                  maxWidth: "100%",
+                                  maxHeight: "400px",
+                                  objectFit: "contain",
+                                  borderRadius: "8px",
+                                  border: "1px solid #f0f0f0",
+                                }}
+                              />
+                            ))}
+                          </div>
+                        ) : question.image ? (
+                          <div
+                            style={{
+                              marginBottom: "16px",
+                              display: "flex",
+                              justifyContent: "center",
+                            }}
+                          >
                             <img
-                              key={idx}
-                              src={imgUrl}
-                              alt={`Question Illustration ${idx + 1}`}
+                              src={question.image}
+                              alt="Question Illustration"
                               style={{
                                 maxWidth: "100%",
                                 maxHeight: "400px",
@@ -1353,189 +1414,168 @@ const TakeExam = () => {
                                 border: "1px solid #f0f0f0",
                               }}
                             />
-                          ))}
-                        </div>
-                      ) : question.image ? (
-                        <div
-                          style={{
-                            marginBottom: "16px",
-                            display: "flex",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <img
-                            src={question.image}
-                            alt="Question Illustration"
-                            style={{
-                              maxWidth: "100%",
-                              maxHeight: "400px",
-                              objectFit: "contain",
-                              borderRadius: "8px",
-                              border: "1px solid #f0f0f0",
-                            }}
-                          />
-                        </div>
-                      ) : null}
+                          </div>
+                        ) : null}
 
-                      {/* Render question based on type */}
-                      {question.type === "mcq" && (
-                        <Radio.Group
-                          value={answers[questionId]}
-                          onChange={(e) =>
-                            handleAnswerChange(questionId, e.target.value)
-                          }
-                          className="question-options"
-                        >
-                          <Space
-                            direction="vertical"
-                            size="middle"
-                            style={{ width: "100%" }}
-                          >
-                            {question.choices?.map((choice, idx) => {
-                              const isSelected =
-                                answers[questionId] === choice.key;
-                              const choiceRefKey = `${questionId}-${idx}`;
-
-                              // Initialize refs array for this question if not exists
-                              if (!choiceOptionsRefs.current[questionId]) {
-                                choiceOptionsRefs.current[questionId] = [];
-                              }
-
-                              return (
-                                <div
-                                  key={idx}
-                                  ref={(el) => {
-                                    if (el) {
-                                      choiceOptionsRefs.current[questionId][
-                                        idx
-                                      ] = el;
-                                    }
-                                  }}
-                                  className={`choice-option ${isSelected ? "choice-selected" : ""
-                                    }`}
-                                  onClick={() => handleAnswerChange(questionId, choice.key)}
-                                >
-                                  <Radio
-                                    value={choice.key}
-                                    className="choice-radio-new"
-                                  >
-                                    <span
-                                      className="choice-label"
-                                      style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        marginRight: "4px",
-                                      }}
-                                    >
-                                      {String.fromCharCode(65 + idx)}:
-                                    </span>
-                                    <span
-                                      style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        wordWrap: "break-word",
-                                        overflowWrap: "break-word",
-                                        whiteSpace: "pre-wrap",
-                                        fontFamily: "inherit",
-                                      }}
-                                    >
-                                      {renderMathContent(choice.text)}
-                                    </span>
-                                    {/* Render choice image if exists */}
-                                    {choice.image && (
-                                      <div
-                                        style={{
-                                          marginTop: "8px",
-                                          marginLeft: "24px",
-                                        }}
-                                      >
-                                        <img
-                                          src={choice.image}
-                                          alt={`Choice ${String.fromCharCode(
-                                            65 + idx
-                                          )}`}
-                                          style={{
-                                            maxWidth: "100%",
-                                            maxHeight: "150px",
-                                            objectFit: "contain",
-                                            borderRadius: "4px",
-                                            border: "1px solid #f0f0f0",
-                                          }}
-                                        />
-                                      </div>
-                                    )}
-                                  </Radio>
-                                </div>
-                              );
-                            })}
-                          </Space>
-                        </Radio.Group>
-                      )}
-
-                      {question.type === "tf" && (
-                        <Radio.Group
-                          value={answers[questionId]}
-                          onChange={(e) =>
-                            handleAnswerChange(questionId, e.target.value)
-                          }
-                          className="question-options"
-                        >
-                          <Space direction="vertical" size="middle">
-                            <div
-                              className={`choice-option ${answers[questionId] === "true"
-                                ? "choice-selected"
-                                : ""
-                                }`}
-                            >
-                              <Radio
-                                value="true"
-                                className="choice-radio-new"
-                              >
-                                <span className="choice-label">A:</span>
-                                {t("takeExam.true")}
-                              </Radio>
-                            </div>
-                            <div
-                              className={`choice-option ${answers[questionId] === "false"
-                                ? "choice-selected"
-                                : ""
-                                }`}
-                            >
-                              <Radio
-                                value="false"
-                                className="choice-radio-new"
-                              >
-                                <span className="choice-label">B:</span>
-                                {t("takeExam.false")}
-                              </Radio>
-                            </div>
-                          </Space>
-                        </Radio.Group>
-                      )}
-
-                      {(question.type === "short" ||
-                        question.type === "essay") && (
-                          <Input.TextArea
-                            rows={question.type === "essay" ? 8 : 4}
-                            value={answers[questionId] || ""}
+                        {/* Render question based on type */}
+                        {question.type === "mcq" && (
+                          <Radio.Group
+                            value={answers[questionId]}
                             onChange={(e) =>
                               handleAnswerChange(questionId, e.target.value)
                             }
-                            placeholder={t("takeExam.enterYourAnswer")}
-                            className="answer-textarea"
-                          />
+                            className="question-options"
+                          >
+                            <Space
+                              direction="vertical"
+                              size="middle"
+                              style={{ width: "100%" }}
+                            >
+                              {question.choices?.map((choice, idx) => {
+                                const isSelected =
+                                  answers[questionId] === choice.key;
+                                const choiceRefKey = `${questionId}-${idx}`;
+
+                                // Initialize refs array for this question if not exists
+                                if (!choiceOptionsRefs.current[questionId]) {
+                                  choiceOptionsRefs.current[questionId] = [];
+                                }
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    ref={(el) => {
+                                      if (el) {
+                                        choiceOptionsRefs.current[questionId][
+                                          idx
+                                        ] = el;
+                                      }
+                                    }}
+                                    className={`choice-option ${isSelected ? "choice-selected" : ""
+                                      }`}
+                                    onClick={() => handleAnswerChange(questionId, choice.key)}
+                                  >
+                                    <Radio
+                                      value={choice.key}
+                                      className="choice-radio-new"
+                                    >
+                                      <span
+                                        className="choice-label"
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          marginRight: "4px",
+                                        }}
+                                      >
+                                        {String.fromCharCode(65 + idx)}:
+                                      </span>
+                                      <span
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          wordWrap: "break-word",
+                                          overflowWrap: "break-word",
+                                          whiteSpace: "pre-wrap",
+                                          fontFamily: "inherit",
+                                        }}
+                                      >
+                                        {renderMathContent(choice.text)}
+                                      </span>
+                                      {/* Render choice image if exists */}
+                                      {choice.image && (
+                                        <div
+                                          style={{
+                                            marginTop: "8px",
+                                            marginLeft: "24px",
+                                          }}
+                                        >
+                                          <img
+                                            src={choice.image}
+                                            alt={`Choice ${String.fromCharCode(
+                                              65 + idx
+                                            )}`}
+                                            style={{
+                                              maxWidth: "100%",
+                                              maxHeight: "150px",
+                                              objectFit: "contain",
+                                              borderRadius: "4px",
+                                              border: "1px solid #f0f0f0",
+                                            }}
+                                          />
+                                        </div>
+                                      )}
+                                    </Radio>
+                                  </div>
+                                );
+                              })}
+                            </Space>
+                          </Radio.Group>
                         )}
 
-                      {(question.type === "mcq" || question.type === "tf") &&
-                        !isAnswered && (
-                          <div className="question-placeholder">
-                            <Text type="secondary">
-                              {t("takeExam.selectCorrectAnswer")}
-                            </Text>
-                          </div>
+                        {question.type === "tf" && (
+                          <Radio.Group
+                            value={answers[questionId]}
+                            onChange={(e) =>
+                              handleAnswerChange(questionId, e.target.value)
+                            }
+                            className="question-options"
+                          >
+                            <Space direction="vertical" size="middle">
+                              <div
+                                className={`choice-option ${answers[questionId] === "true"
+                                  ? "choice-selected"
+                                  : ""
+                                  }`}
+                              >
+                                <Radio
+                                  value="true"
+                                  className="choice-radio-new"
+                                >
+                                  <span className="choice-label">A:</span>
+                                  {t("takeExam.true")}
+                                </Radio>
+                              </div>
+                              <div
+                                className={`choice-option ${answers[questionId] === "false"
+                                  ? "choice-selected"
+                                  : ""
+                                  }`}
+                              >
+                                <Radio
+                                  value="false"
+                                  className="choice-radio-new"
+                                >
+                                  <span className="choice-label">B:</span>
+                                  {t("takeExam.false")}
+                                </Radio>
+                              </div>
+                            </Space>
+                          </Radio.Group>
                         )}
-                    </div>
-                  </Card>
+
+                        {(question.type === "short" ||
+                          question.type === "essay") && (
+                            <Input.TextArea
+                              rows={question.type === "essay" ? 8 : 4}
+                              value={answers[questionId] || ""}
+                              onChange={(e) =>
+                                handleAnswerChange(questionId, e.target.value)
+                              }
+                              placeholder={t("takeExam.enterYourAnswer")}
+                              className="answer-textarea"
+                            />
+                          )}
+
+                        {(question.type === "mcq" || question.type === "tf") &&
+                          !isAnswered && (
+                            <div className="question-placeholder">
+                              <Text type="secondary">
+                                {t("takeExam.selectCorrectAnswer")}
+                              </Text>
+                            </div>
+                          )}
+                      </div>
+                    </Card>
                   </div>
                 );
               })
@@ -1552,7 +1592,7 @@ const TakeExam = () => {
 
                 return (
                   <Card key={questionId} className="question-item-card single-view-card">
-                     {sectionTitle && (
+                    {sectionTitle && (
                       <div style={{
                         marginBottom: 12,
                         padding: '8px 12px',
@@ -1956,11 +1996,11 @@ const TakeExam = () => {
               style={{
                 background: isDarkMode
                   ? (answeredCount === totalQuestions
-                      ? 'linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(82, 196, 26, 0.15) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.15) 100%)')
+                    ? 'linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(82, 196, 26, 0.15) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.15) 100%)')
                   : (answeredCount === totalQuestions
-                      ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)'
-                      : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)'),
+                    ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)'
+                    : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)'),
                 borderRadius: 16,
                 padding: '20px 24px',
                 marginBottom: 24,
@@ -2036,6 +2076,42 @@ const TakeExam = () => {
             </Space>
           </div>
         </Modal>
+
+        {/* Face Proctoring Monitor */}
+        {/* Identity Verification Modal */}
+        <Modal
+          open={showVerificationModal}
+          title={t('proctor.verifyIdentity') || "Identity Verification"}
+          footer={null}
+          closable={false}
+          maskClosable={false}
+          centered
+          width={360}
+          zIndex={2001}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <Paragraph style={{ marginBottom: 20 }}>
+              {t('proctor.verifyDesc') || "Please align your face to verify identity before starting."}
+            </Paragraph>
+            {showVerificationModal && (
+              <div style={{ height: 350 }}>
+                <CameraMonitor
+                  active={true}
+                  captureMode={true}
+                  onCapture={handleFaceCaptured}
+                />
+              </div>
+            )}
+          </div>
+        </Modal>
+
+        {submission && (
+          <CameraMonitor
+            active={!submitting && exam?.autoMonitoring === 'fullMonitoring' && !!referenceLandmarks}
+            onViolation={handleProctorViolation}
+            referenceLandmarks={referenceLandmarks}
+          />
+        )}
       </div>
     </MathJaxContext>
   );
