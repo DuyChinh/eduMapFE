@@ -62,7 +62,9 @@ const GoogleCallback = () => {
           message.success('Google login successful!');
           
           // Redirect based on user role
-          if (user.role === USER_ROLES.TEACHER) {
+          if (!user.role) {
+            navigate('/select-role', { replace: true });
+          } else if (user.role === USER_ROLES.TEACHER) {
             navigate(ROUTES.TEACHER_DASHBOARD, { replace: true });
           } else {
             navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
@@ -108,7 +110,9 @@ const GoogleCallback = () => {
           message.success('Google login successful!');
           
           // Redirect based on user role
-          if (user.role === USER_ROLES.TEACHER) {
+          if (!user.role) {
+            navigate('/select-role', { replace: true });
+          } else if (user.role === USER_ROLES.TEACHER) {
             navigate(ROUTES.TEACHER_DASHBOARD, { replace: true });
           } else {
             navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });
@@ -147,7 +151,9 @@ const GoogleCallback = () => {
             message.success('Google login successful!');
             
             // Redirect based on user role
-            if (user.role === USER_ROLES.TEACHER) {
+            if (!user.role) {
+              navigate('/select-role', { replace: true });
+            } else if (user.role === USER_ROLES.TEACHER) {
               navigate(ROUTES.TEACHER_DASHBOARD, { replace: true });
             } else {
               navigate(ROUTES.STUDENT_DASHBOARD, { replace: true });

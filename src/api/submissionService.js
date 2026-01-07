@@ -10,14 +10,14 @@ import examService from './examService';
  */
 export const startSubmission = async (examId, password = '', isShareCode = false) => {
   let actualExamId = examId;
-  
+
   // If it's a share code, get the exam first
   if (isShareCode) {
     const examResponse = await examService.getExamByShareCode(examId);
     // examService returns { ok: true, data: {...} } or just data
     actualExamId = examResponse.data?._id || examResponse._id;
   }
-  
+
   const response = await axiosInstance.post('/submissions/start', {
     examId: actualExamId,
     password
@@ -92,6 +92,32 @@ export const getExamLeaderboard = async (examId) => {
 export const getMySubmissions = async (params = {}) => {
   const response = await axiosInstance.get('/submissions/me', { params });
   // axiosInstance interceptor already returns response.data
+  return response;
+};
+
+/**
+ * Upload reference face image
+ * @param {string} submissionId - Submission ID
+ * @param {Blob|File|string} imageFile - The image file or base64 string
+ * @returns {Promise} - Result with image URL
+ */
+export const updateFaceImage = async (submissionId, imageFile) => {
+  const formData = new FormData();
+
+  // Convert base64 data URI to Blob if needed
+  if (typeof imageFile === 'string' && imageFile.startsWith('data:')) {
+    const fetchResponse = await fetch(imageFile);
+    const blob = await fetchResponse.blob();
+    formData.append('image', blob, 'face_capture.jpg');
+  } else {
+    formData.append('image', imageFile);
+  }
+
+  const response = await axiosInstance.post(`/submissions/${submissionId}/face-image`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response;
 };
 

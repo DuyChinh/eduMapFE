@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, Button, App, Tabs, Card } from 'antd';
+import { Form, Input, Button, App, Card } from 'antd';
 import { UserOutlined, LockOutlined, GoogleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import useAuthStore from '../../store/authStore';
@@ -12,7 +12,6 @@ import './AuthPages.css';
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('student');
   const [emailForForgotPassword, setEmailForForgotPassword] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,17 +89,6 @@ const Login = () => {
     });
   };
 
-  const tabItems = [
-    {
-      key: 'student',
-      label: t('role.student'),
-    },
-    {
-      key: 'teacher',
-      label: t('role.teacher'),
-    },
-  ];
-
   return (
     <div className="auth-container">
       <div className="auth-left">
@@ -128,14 +116,6 @@ const Login = () => {
           <div className="auth-header">
             <img src="/logo.png" alt="Logo" className="auth-logo" />
           </div>
-
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={tabItems}
-            centered
-            className="role-tabs"
-          />
 
           <h2 className="auth-title">{t('auth.login')}</h2>
           <p className="auth-subtitle">
