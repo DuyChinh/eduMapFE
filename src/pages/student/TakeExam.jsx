@@ -80,6 +80,7 @@ const TakeExam = () => {
   const passwordModalShownRef = useRef(false);
   const examStartedRef = useRef(false);
   const choiceOptionsRefs = useRef({});
+  const cameraMonitorRef = useRef(null);
 
   // Store refs for functions that will be defined later
   const handleTimeUpRef = useRef(null);
@@ -203,7 +204,7 @@ const TakeExam = () => {
         if (remaining <= 0) {
           // Show message and auto-submit
           message.info(t("takeExam.timeExpiredAutoSubmit") || "Time has expired. Your exam is being submitted automatically...");
-          
+
           // Auto-submit the exam
           try {
             const answersArray = Object.entries(initialAnswers).map(
@@ -214,10 +215,10 @@ const TakeExam = () => {
             );
             await updateSubmissionAnswers(submissionResult._id, answersArray);
             const response = await submitExam(submissionResult._id);
-            
+
             const submissionData = response.data?.data || response.data || response;
             const submissionId = submissionData?._id || response.data?._id || response.data?.data?._id || response._id;
-            
+
             message.success(t("takeExam.examAutoSubmitted") || "Your exam has been automatically submitted!");
             navigate(`/student/results/${submissionId}`, { replace: true });
             return true;
@@ -230,30 +231,38 @@ const TakeExam = () => {
           }
         }
 
-        // Start timer only if there's time remaining
-        timerIntervalRef.current = setInterval(() => {
-          setTimeRemaining((prev) => {
-            if (prev <= 1) {
-              if (handleTimeUpRef.current) {
-                handleTimeUpRef.current();
+        // Start timer only if there's time remaining AND verification is complete (or not needed)
+        // If proctoring is enabled, we wait for referenceLandmarks to be set
+        const isVerificationNeeded = examData.autoMonitoring === 'fullMonitoring';
+        const isVerified = !isVerificationNeeded || (isVerificationNeeded && referenceLandmarks);
+
+        if (isVerified) {
+          timerIntervalRef.current = setInterval(() => {
+            setTimeRemaining((prev) => {
+              if (prev <= 1) {
+                if (handleTimeUpRef.current) {
+                  handleTimeUpRef.current();
+                }
+                return 0;
               }
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+              return prev - 1;
+            });
+          }, 1000);
+        }
 
         if (autoSaveIntervalRef.current) {
           clearInterval(autoSaveIntervalRef.current);
           autoSaveIntervalRef.current = null;
         }
 
-        // Start auto-save
-        autoSaveIntervalRef.current = setInterval(() => {
-          if (handleAutoSaveRef.current) {
-            handleAutoSaveRef.current();
-          }
-        }, 5000);
+        // Start auto-save only if verified
+        if (isVerified) {
+          autoSaveIntervalRef.current = setInterval(() => {
+            if (handleAutoSaveRef.current) {
+              handleAutoSaveRef.current();
+            }
+          }, 5000);
+        }
 
         message.success(t("takeExam.examStarted"));
 
@@ -286,12 +295,21 @@ const TakeExam = () => {
     }
 
     // Define event handlers
-    const handleVisibilityChange = () => {
+    // Define event handlers
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
+        let imageBlob = null;
+        if (cameraMonitorRef.current) {
+          try {
+            imageBlob = await cameraMonitorRef.current.getSnapshot();
+          } catch (e) {
+            console.error("Failed to capture evidence for visibility change", e);
+          }
+        }
         logProctorEvent(submission._id, "visibility", "medium", {
           visible: false,
           reason: "Tab switched or minimized",
-        });
+        }, imageBlob);
       } else {
         logProctorEvent(submission._id, "visibility", "low", { visible: true });
       }
@@ -688,6 +706,28 @@ const TakeExam = () => {
     }
 
     setShowVerificationModal(false);
+
+    // Start timer and autosave after successful verification
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    timerIntervalRef.current = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          if (handleTimeUpRef.current) {
+            handleTimeUpRef.current();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    if (autoSaveIntervalRef.current) clearInterval(autoSaveIntervalRef.current);
+    autoSaveIntervalRef.current = setInterval(() => {
+      if (handleAutoSaveRef.current) {
+        handleAutoSaveRef.current();
+      }
+    }, 5000);
+
     message.success(t('proctor.identityVerified') || 'Identity Verified Successfully');
   };
   // -------------------------------
@@ -715,14 +755,14 @@ const TakeExam = () => {
     }));
   };
 
-  const handleProctorViolation = useCallback((type, details) => {
+  const handleProctorViolation = useCallback((type, details, imageBlob = null) => {
     if (!submission) return;
 
     let priority = 'medium';
     if (type === 'multiple_faces') priority = 'high';
     if (type === 'camera_denied') priority = 'high';
 
-    logProctorEvent(submission._id, type, priority, details);
+    logProctorEvent(submission._id, type, priority, details, imageBlob);
 
     // Optional: Show warning message
     if (type === 'multiple_faces' && details.count > 1) {
