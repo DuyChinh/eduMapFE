@@ -901,43 +901,60 @@ const StudentExamDetail = () => {
                                   dot={getActivityIcon(activity.type || activity.event)}
                                   color={getActivityColor(activity.type || activity.event)}
                                 >
-                                  <div>
-                                    <Text strong>{getActivityDisplayText(activity)}</Text>
-                                    <br />
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                      {activity.timestamp
-                                        ? new Date(activity.timestamp).toLocaleString('vi-VN')
-                                        : activity.createdAt
-                                          ? new Date(activity.createdAt).toLocaleString('vi-VN')
-                                          : '-'
-                                      }
-                                    </Text>
-                                    {activity.meta?.visible !== undefined && (
-                                      <div style={{ marginTop: 4 }}>
-                                        <Text type="secondary" style={{ fontSize: 12 }}>
-                                          {activity.meta.visible
-                                            ? t('submissionDetail.tabVisible')
-                                            : t('submissionDetail.tabHidden')
-                                          }
-                                        </Text>
-                                      </div>
-                                    )}
-                                    {activity.severity && (
-                                      <div style={{ marginTop: 4 }}>
-                                        <Tag
-                                          color={
-                                            activity.severity === 'high' ? 'red' :
-                                              activity.severity === 'medium' ? 'orange' : 'default'
-                                          }
-                                          size="small"
-                                        >
-                                          {t(`submissionDetail.severity.${activity.severity}`)}
-                                        </Tag>
-                                        {activity.isSuspicious && (
-                                          <Tag color="red" size="small" style={{ marginLeft: 4 }}>
-                                            {t('submissionDetail.suspicious')}
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                                    <div>
+                                      <Text strong>{getActivityDisplayText(activity)}</Text>
+                                      <br />
+                                      <Text type="secondary" style={{ fontSize: 12 }}>
+                                        {activity.timestamp
+                                          ? new Date(activity.timestamp).toLocaleString('vi-VN')
+                                          : activity.createdAt
+                                            ? new Date(activity.createdAt).toLocaleString('vi-VN')
+                                            : '-'
+                                        }
+                                      </Text>
+                                      {activity.meta?.visible !== undefined && (
+                                        <div style={{ marginTop: 4 }}>
+                                          <Text type="secondary" style={{ fontSize: 12 }}>
+                                            {activity.meta.visible
+                                              ? t('submissionDetail.tabVisible')
+                                              : t('submissionDetail.tabHidden')
+                                            }
+                                          </Text>
+                                        </div>
+                                      )}
+                                      {activity.severity && (
+                                        <div style={{ marginTop: 4 }}>
+                                          <Tag
+                                            color={
+                                              activity.severity === 'high' ? 'red' :
+                                                activity.severity === 'medium' ? 'orange' : 'default'
+                                            }
+                                            size="small"
+                                          >
+                                            {t(`submissionDetail.severity.${activity.severity}`)}
                                           </Tag>
-                                        )}
+                                          {activity.isSuspicious && (
+                                            <Tag color="red" size="small" style={{ marginLeft: 4 }}>
+                                              {t('submissionDetail.suspicious')}
+                                            </Tag>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {activity.evidenceUrl && (
+                                      <div style={{ flexShrink: 0 }}>
+                                        <Image
+                                          src={activity.evidenceUrl}
+                                          width={100}
+                                          height={75}
+                                          style={{ objectFit: 'cover', borderRadius: 4, border: '1px solid #d9d9d9' }}
+                                          placeholder={
+                                            <div style={{ width: 100, height: 75, background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                              <Spin size="small" />
+                                            </div>
+                                          }
+                                        />
                                       </div>
                                     )}
                                   </div>
