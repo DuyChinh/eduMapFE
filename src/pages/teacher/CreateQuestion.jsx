@@ -55,7 +55,7 @@ const CreateQuestion = () => {
     isPublic: true
   });
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Fetch subjects on component mount
   useEffect(() => {
@@ -501,11 +501,30 @@ const CreateQuestion = () => {
                   notFoundContent={t('questions.noSubjectsFound')}
                   style={{ width: '100%' }}
                 >
-                  {Array.isArray(subjects) && subjects.map(subject => (
-                    <Option key={subject._id || subject.id} value={subject._id || subject.id}>
-                      {subject.name}
-                    </Option>
-                  ))}
+                  {Array.isArray(subjects) && subjects.map(subject => {
+                    // Get subject name based on current language
+                    const currentLang = i18n.language || 'vi';
+                    let subjectName = subject.name;
+                    
+                    switch (currentLang) {
+                      case 'en':
+                        subjectName = subject.name_en || subject.name;
+                        break;
+                      case 'jp':
+                        subjectName = subject.name_jp || subject.name;
+                        break;
+                      case 'vi':
+                      default:
+                        subjectName = subject.name;
+                        break;
+                    }
+                    
+                    return (
+                      <Option key={subject._id || subject.id} value={subject._id || subject.id}>
+                        {subjectName}
+                      </Option>
+                    );
+                  })}
                 </Select>
               </Form.Item>
 
