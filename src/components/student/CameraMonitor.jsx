@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import { Card, Spin, Typography, Alert, App, Button } from 'antd';
 import { WarningOutlined, VideoCameraOutlined, CheckCircleOutlined, CameraOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,7 @@ import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
 const { Text } = Typography;
 
-const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, referenceLandmarks }) => {
+const CameraMonitor = forwardRef(({ active, onViolation, captureMode = false, onCapture, referenceLandmarks }, ref) => {
     const { t } = useTranslation();
     const { message: messageApi } = App.useApp();
     const videoRef = useRef(null);
@@ -92,14 +92,7 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { width: 320, height: 240 }
             });
-
-            // CRITICAL: Check if we should still be running
-            // If active changed to false OR unmounted while waiting for stream
             if (!isMountedRef.current || (streamRef.current === null && !active && !videoRef.current)) {
-                // Wait, simply checking !isMountedRef.current is the safest for unmount.
-                // Checking active via props is tricky due to closure, but checking if videoRef.current is valid suggests we are mounted.
-                // Better: If videoRef.current is null, we are likely unmounted or shouldn't play.
-
                 if (!videoRef.current) {
                     stream.getTracks().forEach(track => track.stop());
                     return;
@@ -140,14 +133,12 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
         }
     };
 
-    // --- BIOMETRIC UTILS ---
+    //BIOMETRIC UTILS
     const getDistance = (p1, p2) => {
         return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2) + Math.pow(p1.z - p2.z, 2));
     };
 
     const getFaceSignature = (landmarks) => {
-        // Key Identifiers: Eyes, Nose, Mouth, Cheeks (Face Width), Jaw
-        // Indices based on Mesh topology
         const leftEye = landmarks[33];
         const rightEye = landmarks[263];
         const nose = landmarks[1];
@@ -178,7 +169,8 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
     };
 
     // Debug Log Throttling
-    const lastDebugLogRef = useRef(0);
+    // Debug Log Throttling
+    // const lastDebugLogRef = useRef(0);
 
     const compareSignatures = (sig1, sig2) => {
         if (!sig1 || !sig2) return 1;
@@ -187,18 +179,10 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
         const d2 = Math.abs(sig1.r2 - sig2.r2);
         const d3 = Math.abs(sig1.r3 - sig2.r3);
 
-        // Weighted average (Face Width r2 is usually very distinctive)
         const weightedDiff = (d1 * 1 + d2 * 1.5 + d3 * 1) / 3.5;
-
-        const now = Date.now();
-        if (now - lastDebugLogRef.current > 1000) {
-            lastDebugLogRef.current = now;
-            console.log(`Face Check | Diff: ${weightedDiff.toFixed(3)} | R1(Chin): ${d1.toFixed(3)}, R2(Width): ${d2.toFixed(3)}, R3(Mouth): ${d3.toFixed(3)}`);
-        }
 
         return weightedDiff;
     };
-    // -----------------------
 
     const detectLoop = async () => {
         if (!landmarkerRef.current || !videoRef.current) return;
@@ -213,9 +197,15 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
                 const faces = result.faceLandmarks;
 
                 if (faces.length === 0) {
-                    if (!captureMode) handleViolation('no_face');
+                    if (!captureMode) {
+                        const blob = await getSnapshotBlob();
+                        handleViolation('no_face', {}, 'noFaceWarning', blob);
+                    }
                 } else if (faces.length > 1) {
-                    if (!captureMode) handleViolation('multiple_faces', { count: faces.length });
+                    if (!captureMode) {
+                        const blob = await getSnapshotBlob();
+                        handleViolation('multiple_faces', { count: faces.length }, 'multipleFacesWarning', blob);
+                    }
                 } else {
                     if (!captureMode) {
                         if (referenceLandmarks) {
@@ -225,18 +215,18 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
                             if (currentSig && refSig) {
                                 const diff = compareSignatures(currentSig, refSig);
 
-                                // STRICT THRESHOLD: 0.12 (12%)
                                 if (diff > 0.12) {
-                                    handleViolation('face_mismatch', { diff: diff.toFixed(3) }, 'faceMismatchWarning');
+                                    const blob = await getSnapshotBlob();
+                                    handleViolation('face_mismatch', { diff: diff.toFixed(3) }, 'faceMismatchWarning', blob);
                                 }
                             }
                         } else {
                             // Warn if monitoring but no reference (Should not happen if flow is correct)
-                            const now = Date.now();
+                            /* const now = Date.now();
                             if (now - lastDebugLogRef.current > 2000) {
                                 lastDebugLogRef.current = now; // Update timestamp for this specific log
                                 console.warn("Monitoring active but NO Reference Landmarks found. Skipping verification.");
-                            }
+                            } */
                         }
                     }
                 }
@@ -249,15 +239,62 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
         requestRef.current = requestAnimationFrame(detectLoop);
     };
 
-    const handleViolation = (type, data, textKey) => {
-        const now = Date.now();
-        if (now - lastViolationRef.current[type] > 5000) {
-            lastViolationRef.current[type] = now;
-            const warningText = t(`proctor.${textKey || type}`);
-            messageApi.warning(warningText);
-            if (onViolation) onViolation(type, data);
+    const getSnapshotBlob = async () => {
+        if (!videoRef.current) {
+            return null;
+        }
+
+        try {
+            const video = videoRef.current;
+            const canvas = document.createElement('canvas');
+            // Force 320x240 if video dimensions not yet available (rare but possible)
+            canvas.width = video.videoWidth || 320;
+            canvas.height = video.videoHeight || 240;
+            const ctx = canvas.getContext('2d');
+
+            // Mirror image to match video feed
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Use synchronous toDataURL to ensure we capture before tab throttling
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+
+            // Convert to Blob synchronously
+            const byteString = atob(dataURL.split(',')[1]);
+            const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeString });
+
+            return blob;
+
+        } catch (e) {
+            console.error("Snapshot failed with error:", e);
+            return null;
         }
     };
+
+    const handleViolation = (type, data, textKey, imageBlob = null) => {
+        const now = Date.now();
+        if (now - lastViolationRef.current[type] > 15000) { // Increased throttle for evidence to 15s
+            lastViolationRef.current[type] = now;
+
+            const warningText = t(`proctor.${textKey || type}`);
+            messageApi.warning(warningText);
+            if (onViolation) onViolation(type, data, imageBlob);
+        }
+    };
+
+    // Expose capture method to parent via ref
+    useImperativeHandle(ref, () => ({
+        getSnapshot: async () => {
+            return await getSnapshotBlob();
+        }
+    }));
 
     // Exposed Capture Function
     const performCapture = () => {
@@ -334,6 +371,6 @@ const CameraMonitor = ({ active, onViolation, captureMode = false, onCapture, re
             )}
         </Card>
     );
-};
+});
 
 export default CameraMonitor;
